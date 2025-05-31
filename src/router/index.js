@@ -1,17 +1,29 @@
 import { createRouter, createWebHistory } from 'vue-router';
-import authRoutes from './routes/auth';
+import AdminLayout from '@/layouts/AdminLayout.vue';
+import AuthLayout from '@/layouts/AuthLayout.vue';
+import Login from '@/pages/auth/Login.vue';
+import Dashboard from '@/pages/dashboard/Dashboard.vue';
+import ProductList from '@/pages/products/san-pham/List.vue';
+import { useAuthStore } from '@/store/modules/auth';
+
 
 const routes = [
-  ...authRoutes,
   {
     path: '/',
-    redirect: '/login',
+    redirect: '/dashboard',
+    component: AdminLayout,
+    meta: { requiresAuth: true },
+    children: [
+      { path: '/dashboard', component: Dashboard },
+      { path: '/products/san-pham/list', component: ProductList },
+    ],
   },
   {
-    path: '/dashboard',
-    name: 'Dashboard',
-    component: () => import('@/pages/dashboard/Dashboard.vue'),
-    meta: { layout: 'AdminLayout' },
+    path: '/auth',
+    component: AuthLayout,
+    children: [
+      { path: 'login', component: Login },
+    ],
   },
 ];
 
@@ -20,10 +32,14 @@ const router = createRouter({
   routes,
 });
 
+// Navigation Guard
 router.beforeEach((to, from, next) => {
-  const layout = to.meta.layout || 'AdminLayout';
-  to.meta.layoutComponent = layout;
-  next();
+  const authStore = useAuthStore();
+  if (to.meta.requiresAuth && !authStore.isAuthenticated) {
+    next('/auth/login');
+  } else {
+    next();
+  }
 });
 
 export default router;
