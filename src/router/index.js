@@ -5,7 +5,7 @@ const routes = [
   ...authRoutes,
   {
     path: '/',
-    redirect: '/dashboard',
+    redirect: '/login',
   },
   {
     path: '/dashboard',
