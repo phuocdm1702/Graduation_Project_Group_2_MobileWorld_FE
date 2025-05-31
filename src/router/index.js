@@ -2,7 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router';
 import AdminLayout from '@/layouts/AdminLayout.vue';
 import AuthLayout from '@/layouts/AuthLayout.vue';
 import Login from '@/pages/auth/Login.vue';
-import Dashboard from '@/pages/dashboard/Dashboard.vue';
+import Home from '@/pages/home/Home.vue';
 import ProductList from '@/pages/products/san-pham/List.vue';
 import { useAuthStore } from '@/store/modules/auth';
 
@@ -10,11 +10,11 @@ import { useAuthStore } from '@/store/modules/auth';
 const routes = [
   {
     path: '/',
-    redirect: '/dashboard',
+    redirect: '/home',
     component: AdminLayout,
     meta: { requiresAuth: true },
     children: [
-      { path: '/dashboard', component: Dashboard },
+      { path: '/home', component: Home },
       { path: '/products/san-pham/list', component: ProductList },
     ],
   },

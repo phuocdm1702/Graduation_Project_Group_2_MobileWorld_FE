@@ -29,8 +29,8 @@ export const useAuthStore = defineStore('auth', {
         const uiStore = useUiStore();
         uiStore.openSidebar();
 
-        // Điều hướng đến dashboard
-        router.push('/dashboard');
+        // Điều hướng đến home
+        router.push('/home');
       } else {
         throw new Error('Tài khoản hoặc mật khẩu không đúng');
       }

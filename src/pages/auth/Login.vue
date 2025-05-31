@@ -89,7 +89,7 @@ export default {
 
       if (username.value === validUsername && password.value === validPassword) {
         authStore.login({ username: username.value });
-        router.push('/dashboard');
+        router.push('/home');
       } else {
         error.value = 'Invalid username or password!';
       }
