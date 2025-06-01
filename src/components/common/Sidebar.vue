@@ -3,11 +3,9 @@
     class="modern-sidebar fixed-top h-100"
     :class="isSidebarOpen ? 'w-280px' : 'w-70px'"
   >
-    <div class="sidebar-background"></div>
-    
     <div class="sidebar-header">
       <div class="logo-container">
-        <img class="logo-icon" src="/images/logos/logo.png" alt="Logo">
+        <img class="logo-icon" src="/images/logos/logo2.png" alt="Logo">
         <div class="logo-text" :class="{ 'logo-hidden': !isSidebarOpen }">
           Mobile World
         </div>
@@ -128,7 +126,15 @@
     </nav>
     
     <div class="sidebar-footer">
-      <div class="user-profile">
+      <!-- User Profile -->
+      <div
+        class="user-profile"
+        :class="{ 'user-profile-collapsed': !isSidebarOpen }"
+        @click="openUserModal"
+        role="button"
+        tabindex="0"
+        aria-label="Open user menu"
+      >
         <div class="avatar">
           <img 
             src="#" 
@@ -138,23 +144,73 @@
           />
           <span class="avatar-fallback">A</span>
         </div>
-        <div class="user-info" :class="{ 'info-hidden': !isSidebarOpen }">
+        <div class="user-info" :class="{ 'text-hidden': !isSidebarOpen }">
           <div class="user-name">Admin User</div>
           <div class="user-role">Administrator</div>
         </div>
+        <div v-if="!isSidebarOpen" class="nav-tooltip">
+          User Menu
+          <div class="tooltip-arrow"></div>
+        </div>
       </div>
     </div>
+
+    <!-- User Modal -->
+    <transition name="modal-fade">
+      <div v-if="isUserModalOpen" class="user-modal">
+        <div class="modal-overlay" @click="closeUserModal"></div>
+        <div class="modal-content">
+          <div class="modal-header">
+            <h3>Cài đặt quản trị viên</h3>
+            <button class="modal-close-btn" @click="closeUserModal">
+              <i class="bi bi-x-lg"></i>
+            </button>
+          </div>
+          <div class="modal-body">
+            <button class="modal-btn" @click="toggleDarkMode">
+              <i class="bi bi-moon-stars-fill"></i>
+              Thay đổi giao diện tối
+            </button>
+            <button class="modal-btn" @click="goToSettings">
+              <i class="bi bi-gear-fill"></i>
+              Cài đặt
+            </button>
+            <button class="modal-btn" @click="goToAccountInfo">
+              <i class="bi bi-person-fill"></i>
+              Thông tin tài khoản
+            </button>
+            <button class="modal-btn logout" @click="openLogoutConfirmModal">
+              <i class="bi bi-box-arrow-right"></i>
+              Đăng xuất
+            </button>
+          </div>
+        </div>
+      </div>
+    </transition>
+
+    <!-- Notification Modal -->
+    <notification-modal
+      ref="notificationModal"
+      :type="notificationType"
+      :message="notificationMessage"
+      :confirmText="notificationConfirmText"
+      :onConfirm="notificationOnConfirm"
+      :onCancel="notificationOnCancel"
+      :isLoading="isLoading"
+      @close="resetNotification"
+    />
   </aside>
 </template>
 
 <script setup>
 import { ref, computed } from 'vue';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import { useUiStore } from '@/store/modules/ui';
+import NotificationModal from './NotificationModal.vue';
 import {
   HomeIcon,
   CubeIcon,
-  DocumentTextIcon ,
+  DocumentTextIcon,
   UserIcon,
   ShoppingCartIcon,
   TagIcon,
@@ -163,7 +219,16 @@ import {
 
 const uiStore = useUiStore();
 const route = useRoute();
+const router = useRouter();
 const isSidebarOpen = computed(() => uiStore.isSidebarOpen);
+const isUserModalOpen = ref(false);
+const notificationModal = ref(null);
+const notificationType = ref('');
+const notificationMessage = ref('');
+const notificationConfirmText = ref('Xác nhận');
+const notificationOnConfirm = ref(() => {});
+const notificationOnCancel = ref(() => {});
+const isLoading = ref(false);
 
 const menuItems = ref([
   { name: 'Trang chủ', path: '/home', icon: HomeIcon },
@@ -229,13 +294,11 @@ const toggleSidebar = () => {
 
 const toggleSubmenu = (item) => {
   if (isSidebarOpen.value) {
-    // Close all other submenus
     menuItems.value.forEach(menuItem => {
       if (menuItem !== item && menuItem.children) {
         menuItem.isOpen = false;
       }
     });
-    // Toggle the clicked submenu
     item.isOpen = !item.isOpen;
   }
 };
@@ -243,6 +306,61 @@ const toggleSubmenu = (item) => {
 const handleImageError = (event) => {
   event.target.style.display = 'none';
   event.target.nextElementSibling.style.display = 'flex';
+};
+
+const openUserModal = () => {
+  isUserModalOpen.value = true;
+};
+
+const closeUserModal = () => {
+  isUserModalOpen.value = false;
+};
+
+const toggleDarkMode = () => {
+  console.log('Toggle dark mode');
+  notificationType.value = 'success';
+  notificationMessage.value = 'Đã thay đổi giao diện thành công!';
+  notificationConfirmText.value = 'OK';
+  notificationOnConfirm.value = () => {};
+  notificationOnCancel.value = () => {};
+  notificationModal.value.openModal();
+};
+
+const goToSettings = () => {
+  router.push('/settings');
+  closeUserModal();
+};
+
+const goToAccountInfo = () => {
+  router.push('/account-info');
+  closeUserModal();
+};
+
+const openLogoutConfirmModal = () => {
+  notificationType.value = 'confirm';
+  notificationMessage.value = 'Bạn có chắc chắn muốn đăng xuất?';
+  notificationConfirmText.value = 'Đăng xuất';
+  notificationOnConfirm.value = async () => {
+    isLoading.value = true; // Start loading
+    console.log('Logout confirmed');
+    await new Promise(resolve => setTimeout(resolve, 1500)); // 1.5s delay
+    isLoading.value = false; // Stop loading
+    router.push('/auth/login');
+    closeUserModal();
+  };
+  notificationOnCancel.value = () => {
+    console.log('Logout cancelled');
+  };
+  notificationModal.value.openModal();
+};
+
+const resetNotification = () => {
+  notificationType.value = '';
+  notificationMessage.value = '';
+  notificationConfirmText.value = 'Xác nhận';
+  notificationOnConfirm.value = () => {};
+  notificationOnCancel.value = () => {};
+  isLoading.value = false;
 };
 
 // Animation hooks for submenu
@@ -305,10 +423,6 @@ const leave = (el, done) => {
   width: 70px;
 }
 
-.sidebar-background {
-  display: none;
-}
-
 .sidebar-header {
   position: relative;
   padding: 1.5rem 1rem;
@@ -335,7 +449,8 @@ const leave = (el, done) => {
   color: transparent;
   background-clip: text;
   flex-shrink: 0;
-  width: 50px;
+  width: 40px;
+  margin-right: 5px;
   height: 40px;
   display: flex;
   align-items: center;
@@ -345,7 +460,7 @@ const leave = (el, done) => {
 .logo-text {
   font-size: 1.25rem;
   font-weight: 700;
-    background-image: linear-gradient(135deg, #002962, #0052cc);
+  background-image: linear-gradient(135deg, #002962, #0052cc);
   -webkit-background-clip: text;
   color: transparent;
   background-clip: text;
@@ -522,12 +637,13 @@ const leave = (el, done) => {
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
   opacity: 0;
   visibility: hidden;
-  transition: all 0.2s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   pointer-events: none;
   z-index: 1001;
 }
 
-.nav-item:hover .nav-tooltip {
+.nav-item:hover .nav-tooltip,
+.user-profile:hover .nav-tooltip {
   opacity: 1;
   visibility: visible;
   transform: translateY(-50%) translateX(4px);
@@ -646,22 +762,39 @@ const leave = (el, done) => {
   flex: 1;
 }
 
+/* Sidebar footer layout */
 .sidebar-footer {
   padding: 1rem;
   border-top: 1px solid #e9ecef;
   background-color: #ffffff;
   flex-shrink: 0;
-  min-height: 80px;
   display: flex;
   align-items: center;
+  justify-content: center; /* Center content for collapsed state */
+  gap: 0.75rem;
+  min-height: 80px;
 }
 
+/* User Profile */
 .user-profile {
   display: flex;
   align-items: center;
+  flex: 1;
+  min-width: 0;
   gap: 0.75rem;
-  width: 100%;
-  overflow: hidden;
+  cursor: pointer;
+  transition: background-color 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 8px;
+}
+
+.user-profile-collapsed {
+  flex: 0; /* Prevent expanding in collapsed state */
+  justify-content: center; /* Center avatar in collapsed state */
+  padding: 0; /* Remove padding for tighter fit */
+}
+
+.user-profile:hover {
+  background-color: #e9ecef;
 }
 
 .avatar {
@@ -701,16 +834,17 @@ const leave = (el, done) => {
 .user-info {
   flex: 1;
   min-width: 0;
+  overflow: hidden;
   opacity: 1;
   transform: translateX(0);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  overflow: hidden;
 }
 
-.info-hidden {
+.user-info.text-hidden {
   opacity: 0;
   transform: translateX(-20px);
   width: 0;
+  margin-left: 0;
 }
 
 .user-name {
@@ -729,6 +863,136 @@ const leave = (el, done) => {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+/* User Modal */
+.user-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(2px);
+}
+
+.modal-content {
+  position: relative;
+  background: #ffffff;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 320px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  overflow: hidden;
+  z-index: 2001;
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #002962;
+}
+
+.modal-close-btn {
+  background: none;
+  border: none;
+  font-size: 1rem;
+  color: #6c757d;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.modal-close-btn:hover {
+  color: #002962;
+}
+
+.modal-body {
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.modal-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border: none;
+  border-radius: 8px;
+  background: #f8f9fa;
+  color: #000000;
+  font-size: 0.95rem;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.modal-btn:hover {
+  background: linear-gradient(135deg, #002962, #0052cc);
+  color: #ffffff;
+  transform: translateX(4px);
+}
+
+.modal-btn i {
+  font-size: 1.1rem;
+}
+
+.modal-btn.logout {
+  background: linear-gradient(135deg, #dc3545, #c82333);
+  color: #ffffff;
+}
+
+.modal-btn.logout:hover {
+  background: linear-gradient(135deg, #c82333, #b21f2d);
+  transform: translateX(4px);
+}
+
+.modal-btn:hover i {
+  transform: scale(1.1);
+}
+
+/* Modal Animation */
+.modal-fade-enter-active,
+.modal-fade-leave-active {
+  transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.modal-fade-enter-from,
+.modal-fade-leave-to {
+  opacity: 0;
+}
+
+.modal-content {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.modal-fade-enter-from .modal-content,
+.modal-fade-leave-to .modal-content {
+  transform: translateY(-20px);
+  opacity: 0;
 }
 
 .sidebar-nav::-webkit-scrollbar {

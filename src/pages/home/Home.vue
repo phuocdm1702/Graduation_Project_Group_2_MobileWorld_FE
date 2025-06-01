@@ -51,8 +51,8 @@
           <div class="card border-0 shadow-sm h-100 stat-card" style="background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px);">
             <div class="card-body p-4">
               <div class="d-flex justify-content-between align-items-start mb-3">
-                <div class="icon-container rounded-3 d-flex align-items-center justify-content-center" 
-                     style="width: 48px; height: 48px; background: linear-gradient(135deg, #002962, #0052cc);">
+                <div class="icon-container rounded-3 d-flex align-items-center justify-content-center gradient-custom-blue" 
+                     style="width: 48px; height: 48px;">
                   <i class="bi bi-bag text-white"></i>
                 </div>
                 <span class="fs-3 fw-bold stat-number" style="color: #002962;">{{ totalSales }}</span>
@@ -67,11 +67,11 @@
           <div class="card border-0 shadow-sm h-100 stat-card" style="background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px);">
             <div class="card-body p-4">
               <div class="d-flex justify-content-between align-items-start mb-3">
-                <div class="icon-container rounded-3 d-flex align-items-center justify-content-center" 
-                     style="width: 48px; height: 48px; background: linear-gradient(135deg, #28a745, #1e7e34);">
+                <div class="icon-container rounded-3 d-flex align-items-center justify-content-center gradient-custom-green" 
+                     style="width: 48px; height: 48px;">
                   <i class="bi bi-currency-dollar text-white"></i>
                 </div>
-                <span class="fs-3 fw-bold stat-number text-success">{{ totalRevenue }}</span>
+                <span class="fs-3 fw-bold stat-number" style="color: #28a745;">{{ totalRevenue }}</span>
               </div>
               <h5 class="card-title text-dark mb-1">Doanh thu</h5>
               <p class="card-text text-muted small mb-0">Tháng này</p>
@@ -83,11 +83,11 @@
           <div class="card border-0 shadow-sm h-100 stat-card" style="background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px);">
             <div class="card-body p-4">
               <div class="d-flex justify-content-between align-items-start mb-3">
-                <div class="icon-container rounded-3 d-flex align-items-center justify-content-center" 
-                     style="width: 48px; height: 48px; background: linear-gradient(135deg, #002962, #003ba3);">
+                <div class="icon-container rounded-3 d-flex align-items-center justify-content-center gradient-custom-yellow" 
+                     style="width: 48px; height: 48px;">
                   <i class="bi bi-people text-white"></i>
                 </div>
-                <span class="fs-3 fw-bold stat-number" style="color: #002962;">{{ totalCustomers }}</span>
+                <span class="fs-3 fw-bold stat-number" style="color: #FFA000;">{{ totalCustomers }}</span>
               </div>
               <h5 class="card-title text-dark mb-1">Khách hàng</h5>
               <p class="card-text text-muted small mb-0">Tổng số</p>
@@ -99,11 +99,11 @@
           <div class="card border-0 shadow-sm h-100 stat-card" style="background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px);">
             <div class="card-body p-4">
               <div class="d-flex justify-content-between align-items-start mb-3">
-                <div class="icon-container rounded-3 d-flex align-items-center justify-content-center" 
-                     style="width: 48px; height: 48px; background: linear-gradient(135deg, #fd7e14, #e8590c);">
+                <div class="icon-container rounded-3 d-flex align-items-center justify-content-center gradient-custom-orange" 
+                     style="width: 48px; height: 48px;">
                   <i class="bi bi-box text-white"></i>
                 </div>
-                <span class="fs-3 fw-bold stat-number text-warning">{{ totalProducts }}</span>
+                <span class="fs-3 fw-bold stat-number" style="color: #fd7e14;">{{ totalProducts }}</span>
               </div>
               <h5 class="card-title text-dark mb-1">Sản phẩm</h5>
               <p class="card-text text-muted small mb-0">Trong kho</p>
@@ -124,7 +124,7 @@
             <div class="card-body">
               <div class="list-group list-group-flush">
                 <div v-for="(activity, index) in recentActivities" :key="activity.id" 
-                     class="list-group-item border-0 px-0 py-3 activity-item" 
+                     class="list-group-item border-0 px-3 py-3 activity-item" 
                      :style="`background: rgba(248, 249, 250, 0.5); animation-delay: ${index * 0.1}s;`">
                   <div class="d-flex align-items-center">
                     <div class="activity-icon rounded-circle d-flex align-items-center justify-content-center me-3" 
@@ -175,21 +175,21 @@
                 <span class="text-muted">Server</span>
                 <div class="d-flex align-items-center">
                   <div class="bg-success rounded-circle me-2 pulse-dot" style="width: 8px; height: 8px;"></div>
-                  <span class="text-success small fw-medium">Hoạt động</span>
+                  <span class="small fw-medium" style="color: #28a745;">Hoạt động</span>
                 </div>
               </div>
               <div class="d-flex justify-content-between align-items-center mb-3 status-item">
                 <span class="text-muted">Database</span>
                 <div class="d-flex align-items-center">
                   <div class="bg-success rounded-circle me-2 pulse-dot" style="width: 8px; height: 8px;"></div>
-                  <span class="text-success small fw-medium">Bình thường</span>
+                  <span class="small fw-medium" style="color: #28a745;">Bình thường</span>
                 </div>
               </div>
               <div class="d-flex justify-content-between align-items-center status-item">
                 <span class="text-muted">Backup</span>
                 <div class="d-flex align-items-center">
                   <div class="bg-warning rounded-circle me-2 pulse-dot" style="width: 8px; height: 8px;"></div>
-                  <span class="text-warning small fw-medium">Đang xử lý</span>
+                  <span class="small fw-medium" style="color: #FFA000;">Đang xử lý</span>
                 </div>
               </div>
             </div>
@@ -219,7 +219,7 @@ export default {
           description: 'Khách hàng Nguyễn Văn A đã đặt hàng',
           time: '5 phút',
           icon: 'bi bi-bag-check',
-          bgColor: 'bg-primary'
+          bgColor: 'gradient-custom-blue'
         },
         {
           id: 2,
@@ -227,7 +227,7 @@ export default {
           description: 'Đơn hàng #12344 đã được thanh toán',
           time: '10 phút',
           icon: 'bi bi-check-circle',
-          bgColor: 'bg-success'
+          bgColor: 'gradient-custom-green'
         },
         {
           id: 3,
@@ -235,7 +235,7 @@ export default {
           description: 'Đã thêm 5 sản phẩm vào kho',
           time: '1 giờ',
           icon: 'bi bi-plus-circle',
-          bgColor: 'bg-info'
+          bgColor: 'gradient-custom-orange'
         },
         {
           id: 4,
@@ -243,29 +243,29 @@ export default {
           description: 'Trần Thị B đã đăng ký tài khoản',
           time: '2 giờ',
           icon: 'bi bi-person-plus',
-          bgColor: 'bg-warning'
+          bgColor: 'gradient-custom-yellow'
         }
       ],
       quickActions: [
         {
           name: 'Tạo đơn hàng',
           icon: 'bi bi-plus-lg',
-          bgColor: 'bg-primary'
+          bgColor: 'gradient-custom-blue'
         },
         {
           name: 'Quản lý kho',
           icon: 'bi bi-boxes',
-          bgColor: 'bg-success'
+          bgColor: 'gradient-custom-green'
         },
         {
           name: 'Báo cáo',
           icon: 'bi bi-bar-chart',
-          bgColor: 'bg-info'
+          bgColor: 'gradient-custom-orange'
         },
         {
           name: 'Cài đặt',
           icon: 'bi bi-gear',
-          bgColor: 'bg-secondary'
+          bgColor: 'gradient-custom-gray'
         }
       ]
     }
@@ -327,6 +327,26 @@ export default {
   50% {
     box-shadow: 0 0 20px rgba(0, 94, 226, 0.5);
   }
+}
+
+.gradient-custom-blue {
+  background: linear-gradient(135deg, #002962, #0052cc);
+}
+
+.gradient-custom-yellow {
+  background: linear-gradient(135deg, #FFA000, #FFB300);
+}
+
+.gradient-custom-orange {
+  background: linear-gradient(135deg, #fd7e14, #e8590c);
+}
+
+.gradient-custom-green {
+  background: linear-gradient(135deg, #28a745, #1e7e34);
+}
+
+.gradient-custom-gray {
+  background: linear-gradient(135deg, #6c757d, #495057);
 }
 
 /* Main card animations */
@@ -400,7 +420,7 @@ export default {
 }
 
 .activity-item:hover {
-  transform: translateX(10px);
+  transform: translateX(5px);
   background: rgba(0, 94, 226, 0.05) !important;
 }
 
@@ -421,6 +441,7 @@ export default {
 
 .quick-action-btn:hover {
   background: rgba(0, 94, 226, 0.1) !important;
+  color: #0052cc;
   transform: translateX(8px) scale(1.02);
   border-color: rgba(0, 94, 226, 0.2) !important;
 }

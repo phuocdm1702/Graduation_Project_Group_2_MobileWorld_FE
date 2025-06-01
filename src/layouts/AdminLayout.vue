@@ -3,7 +3,7 @@
     <Sidebar />
 
     <div class="flex-grow-1" :class="{ 'ms-0': !isSidebarOpen, 'ms-280px': isSidebarOpen }">
-      <div class="container-fluid p-4">
+      <div class="container-fluid p-2">
         <router-view />
       </div>
     </div>

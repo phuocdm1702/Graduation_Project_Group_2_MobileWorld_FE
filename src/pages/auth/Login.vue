@@ -44,7 +44,7 @@
         </div>
         <button
           type="submit"
-          class="btn btn-primary w-100 fw-semibold py-2 rounded-3 animate-button"
+          class="btn w-100 fw-semibold py-2 rounded-3 animate-button"
           :disabled="isLoading"
         >
           Sign In
@@ -137,15 +137,21 @@ export default {
 
 .animate-button {
   transition: all 0.3s ease-in-out;
+  background: linear-gradient(135deg, #002962, #0052cc);
+  color: #e9ecef;
 }
 
 .animate-button:hover:not(:disabled) {
   transform: translateY(-2px);
+  color: #e9ecef;
   box-shadow: 0 4px 10px rgba(0, 123, 255, 0.3);
 }
 
 .text-primary {
-  color: #0056b3 !important;
+  background-image: linear-gradient(135deg, #002962, #0052cc);
+  -webkit-background-clip: text;
+  color: transparent !important;
+  background-clip: text;
 }
 
 .form-control {
@@ -168,6 +174,10 @@ export default {
 
 .hover-underline:hover:not(.disabled-link) {
   text-decoration: underline !important;
+  background-image: linear-gradient(135deg, #002962, #0052cc);
+  -webkit-background-clip: text;
+  color: transparent;
+  background-clip: text;
 }
 
 .icon-inside-input {
