@@ -1,6 +1,6 @@
 <!-- AdminLayout.vue -->
 <template>
-  <div class="d-flex flex-column flex-md-row">
+  <div class="d-flex flex-column flex-md-row background-admin">
     <Sidebar />
 
     <div
@@ -37,6 +37,9 @@ const toggleSidebar = () => {
 </script>
 
 <style scoped>
+.background-admin {
+  background-color: rgba(218, 218, 218, 0.289);
+}
 .content-wrapper {
   transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   width: calc(100% - 5px);

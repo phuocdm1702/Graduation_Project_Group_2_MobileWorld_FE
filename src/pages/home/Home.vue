@@ -36,7 +36,7 @@
             <div class="col-lg-4 text-end d-none d-lg-block">
               <div class="badge fs-6 px-3 py-2 status-badge" style="background: linear-gradient(135deg, #002962, #0052cc);">
                 <div class="d-flex align-items-center">
-                  <div class="bg-success rounded-circle me-2 pulse-dot" style="width: 8px; height: 8px;"></div>
+                  <div class="rounded-circle me-2 pulse-dot gradient-custom-green" style="width: 8px; height: 8px;"></div>
                   <span class="text-white fw-semibold">Đang hoạt động</span>
                 </div>
               </div>
@@ -253,12 +253,12 @@ export default {
           bgColor: 'gradient-custom-blue'
         },
         {
-          name: 'Quản lý kho',
+          name: 'Quản lý Sản Phẩm',
           icon: 'bi bi-boxes',
           bgColor: 'gradient-custom-green'
         },
         {
-          name: 'Báo cáo',
+          name: 'Thống Kê',
           icon: 'bi bi-bar-chart',
           bgColor: 'gradient-custom-blue'
         },
@@ -470,12 +470,10 @@ export default {
   color: #003ba3 !important;
 }
 
-/* Global smooth transitions */
 * {
   transition: color 0.3s ease, background-color 0.3s ease;
 }
 
-/* Responsive animations */
 @media (max-width: 768px) {
   .stat-card:hover {
     transform: translateY(-4px) scale(1.01);
@@ -486,7 +484,6 @@ export default {
   }
 }
 
-/* Reduce motion for accessibility */
 @media (prefers-reduced-motion: reduce) {
   * {
     animation-duration: 0.01ms !important;
