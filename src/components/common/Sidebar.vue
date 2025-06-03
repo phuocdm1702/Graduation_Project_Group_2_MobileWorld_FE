@@ -232,7 +232,7 @@ const isLoading = ref(false);
 
 const menuItems = ref([
   { name: 'Trang chủ', path: '/home', icon: HomeIcon },
-  { name: 'Bán Hàng', path: '/sale', icon: ShoppingCartIcon },
+  { name: 'Bán Hàng', path: '/sales/ban-hang/sale', icon: ShoppingCartIcon },
   { name: 'Hóa đơn', path: '/orders/hoa-don/list', icon: DocumentTextIcon },
   { 
     name: 'Sản phẩm', 
@@ -242,16 +242,15 @@ const menuItems = ref([
       { name: 'Sản phẩm', path: '/products/san-pham/list' },
       { name: 'Nhà sản xuất', path: '/products/nha-san-xuat' },
       { name: 'Cụm Camera', path: '/products/cum-camera' },
-      { name: 'Cổng Nhé Mạng', path: '/products/cong-nhe-mang' },
-      { name: 'Hình', path: '/products/hinh' },
-      { name: 'Hỗ trợ Cổng Nhé', path: '/products/ho-tro-cong-nhe' },
+      { name: 'Hình Ảnh', path: '/products/hinh' },
+      { name: 'Hỗ trợ Cổng Sạc', path: '/products/ho-tro-cong-nhe' },
       { name: 'Sạc', path: '/products/sac' },
       { name: 'RAM', path: '/products/ram' },
       { name: 'Bộ Nhớ Trong', path: '/products/bo-nho-trong' },
       { name: 'Bộ Nhớ Ngoài', path: '/products/bo-nho-ngoai' },
       { name: 'CPU', path: '/products/cpu' },
       { name: 'GPU', path: '/products/gpu' },
-      { name: 'Cổng Nhé Mạng', path: '/products/cong-nhe-mang' },
+      { name: 'Công Nghệ Mạng', path: '/products/cong-nhe-mang' },
       { name: 'Hệ điều hành', path: '/products/he-dieu-hanh' },
       { name: 'Kháng bụi - Kháng Nước', path: '/products/khang-bui-khang-nuoc' },
       { name: 'Màu sắc', path: '/products/mau-sac' },

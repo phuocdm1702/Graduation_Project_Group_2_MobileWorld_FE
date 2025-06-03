@@ -1,6 +1,6 @@
 <template>
-  <div class="container-fluid py-4">
-    <div class="container">
+  <div class="container-fluid py-4 ">
+    <div>
       <!-- Welcome Card -->
       <div class="card shadow-lg border-0 mb-4 welcome-card" style="background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(15px);">
         <div class="card-body p-4">
@@ -83,11 +83,11 @@
           <div class="card border-0 shadow-sm h-100 stat-card" style="background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px);">
             <div class="card-body p-4">
               <div class="d-flex justify-content-between align-items-start mb-3">
-                <div class="icon-container rounded-3 d-flex align-items-center justify-content-center gradient-custom-yellow" 
+                <div class="icon-container rounded-3 d-flex align-items-center justify-content-center gradient-custom-blue" 
                      style="width: 48px; height: 48px;">
                   <i class="bi bi-people text-white"></i>
                 </div>
-                <span class="fs-3 fw-bold stat-number" style="color: #FFA000;">{{ totalCustomers }}</span>
+                <span class="fs-3 fw-bold stat-number" style="color: #002962;">{{ totalCustomers }}</span>
               </div>
               <h5 class="card-title text-dark mb-1">Khách hàng</h5>
               <p class="card-text text-muted small mb-0">Tổng số</p>
@@ -99,11 +99,11 @@
           <div class="card border-0 shadow-sm h-100 stat-card" style="background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px);">
             <div class="card-body p-4">
               <div class="d-flex justify-content-between align-items-start mb-3">
-                <div class="icon-container rounded-3 d-flex align-items-center justify-content-center gradient-custom-orange" 
+                <div class="icon-container rounded-3 d-flex align-items-center justify-content-center gradient-custom-green" 
                      style="width: 48px; height: 48px;">
                   <i class="bi bi-box text-white"></i>
                 </div>
-                <span class="fs-3 fw-bold stat-number" style="color: #fd7e14;">{{ totalProducts }}</span>
+                <span class="fs-3 fw-bold stat-number" style="color: #28a745;">{{ totalProducts }}</span>
               </div>
               <h5 class="card-title text-dark mb-1">Sản phẩm</h5>
               <p class="card-text text-muted small mb-0">Trong kho</p>
@@ -235,7 +235,7 @@ export default {
           description: 'Đã thêm 5 sản phẩm vào kho',
           time: '1 giờ',
           icon: 'bi bi-plus-circle',
-          bgColor: 'gradient-custom-orange'
+          bgColor: 'gradient-custom-blue'
         },
         {
           id: 4,
@@ -243,7 +243,7 @@ export default {
           description: 'Trần Thị B đã đăng ký tài khoản',
           time: '2 giờ',
           icon: 'bi bi-person-plus',
-          bgColor: 'gradient-custom-yellow'
+          bgColor: 'gradient-custom-green'
         }
       ],
       quickActions: [
@@ -260,7 +260,7 @@ export default {
         {
           name: 'Báo cáo',
           icon: 'bi bi-bar-chart',
-          bgColor: 'gradient-custom-orange'
+          bgColor: 'gradient-custom-blue'
         },
         {
           name: 'Cài đặt',
