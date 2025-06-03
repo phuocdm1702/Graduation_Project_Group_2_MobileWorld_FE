@@ -117,22 +117,22 @@ export default {
 /* Type-specific styling */
 .toast-success {
   border-left: 6px solid #2ecc71;
-  background: linear-gradient(90deg, rgba(46, 204, 113, 0.1) 0%, rgba(255, 255, 255, 0.98) 20%);
+  background: #ffffff;
 }
 
 .toast-error {
   border-left: 6px solid #e74c3c;
-  background: linear-gradient(90deg, rgba(231, 76, 60, 0.1) 0%, rgba(255, 255, 255, 0.98) 20%);
+  background: #ffffff;
 }
 
 .toast-warning {
   border-left: 6px solid #f1c40f;
-  background: linear-gradient(90deg, rgba(241, 196, 15, 0.1) 0%, rgba(255, 255, 255, 0.98) 20%);
+  background: #ffffff;
 }
 
 .toast-info {
   border-left: 6px solid #3498db;
-  background: linear-gradient(90deg, rgba(52, 152, 219, 0.1) 0%, rgba(255, 255, 255, 0.98) 20%);
+  background: #ffffff;
 }
 
 /* Toast header styling */

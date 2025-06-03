@@ -1,18 +1,19 @@
-<!-- AdminLayout.vue -->
+<!-- src/layouts/AdminLayout.vue -->
 <template>
-  <div class="d-flex flex-column flex-md-row background-admin">
+  <div class="d-flex flex-column flex-md-row background-admin min-vh-100">
     <Sidebar />
 
     <div
-      class="content-wrapper flex-grow-1"
+      class="content-wrapper flex-grow-1 d-flex flex-column"
       :class="{
         'ms-sidebar-open': isSidebarOpen,
         'ms-sidebar-closed': !isSidebarOpen
       }"
     >
-      <div class="container-fluid p-2">
+      <div class="container-fluid p-2 flex-grow-1">
         <router-view />
       </div>
+      <Footer />
     </div>
 
     <div
@@ -27,6 +28,7 @@
 import { computed } from 'vue';
 import { useUiStore } from '@/store/modules/ui';
 import Sidebar from '@/components/common/Sidebar.vue';
+import Footer from '@/components/common/Footer.vue';
 
 const uiStore = useUiStore();
 const isSidebarOpen = computed(() => uiStore.isSidebarOpen);
@@ -43,7 +45,6 @@ const toggleSidebar = () => {
 .content-wrapper {
   transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   width: calc(100% - 5px);
-  min-height: 100vh; 
 }
 
 .ms-sidebar-open {
