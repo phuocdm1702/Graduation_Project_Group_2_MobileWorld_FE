@@ -41,7 +41,13 @@
                 <span class="fw-bold text-dark">{{ invoice.code }}</span>
                 <span class="badge gradient-custom-yellow text-white px-3 py-1">{{ invoice.status }}</span>
               </div>
-              <small class="text-muted">{{ invoice.items.length }} sản phẩm</small>
+              
+              <div class="d-flex align-items-center justify-content-between mt-2">
+                <small class="text-muted">{{ invoice.items.length }} sản phẩm</small>
+                <button class="btn btn-sm btn-outline-danger delete-invoice-btn" @click.stop="confirmCancelInvoice(invoice)">
+                  <i class="bi bi-trash"></i>
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -60,9 +66,9 @@
               <i class="bi bi-qr-code-scan me-2"></i>Quét QR
             </button>
           </div>
-          <div class="card-body p-4">
+          <div class="card-body p-2">
             <!-- Cart Table -->
-            <DataTable title="" :headers="cartHeaders" :data="cartItems" :pageSizeOptions="[5, 10, 20]">
+            <DataTable title="" :headers="cartHeaders" :data="cartItems" :pageSizeOptions="[5, 10]">
               <template #name="{ item }">
                 <span class="text-muted">{{ item.name }}</span>
               </template>
@@ -76,8 +82,8 @@
                 <span class="text-muted">{{ item.storage }}</span>
               </template>
               <template #imei="{ item }">
-                <button class="btn btn-sm btn-outline-info btn-view" @click="showIMEIModalForItem(item)">
-                  <i class="bi bi-eye"></i> Xem
+                <button class="btn btn-sm btn-view" @click="showIMEIModalForItem(item)">
+                  <i class="bi bi-eye"></i>
                 </button>
               </template>
               <template #price="{ item }">
@@ -106,7 +112,7 @@
 
             <!-- Product Filters and Table -->
             <div class="mt-4">
-              <div class="row g-3 mb-3">
+              <div class="row g-3 p-2">
                 <div class="col-md-3">
                   <input v-model="productSearchQuery" type="text" class="form-control shadow-none"
                     placeholder="Tìm kiếm sản phẩm..." style="background: rgba(255, 255, 255, 0.95);" />
@@ -130,7 +136,7 @@
                   </select>
                 </div>
               </div>
-              <DataTable title="" :headers="productHeaders" :data="filteredProducts" :pageSizeOptions="[5, 10, 20]"
+              <DataTable title="" :headers="productHeaders" :data="filteredProducts" :pageSizeOptions="[5, 10]"
                 @scroll="handleScroll">
                 <template #code="{ item }">
                   <span class="text-muted">{{ item.code }}</span>
@@ -153,7 +159,7 @@
                 <template #actions="{ item }">
                   <button class="btn btn-sm px-4 py-2 add-to-cart-btn gradient-custom-blue text-white"
                     @click="showIMEIList(item)" :disabled="!activeInvoiceId">
-                    Chọn
+                    <i class="bi bi-cart-plus-fill"></i>
                   </button>
                 </template>
               </DataTable>
@@ -162,13 +168,15 @@
         </div>
 
         <!-- IMEI Modal for Cart Item -->
-        <div v-if="showCartIMEIModal" class="modal fade show d-block" tabindex="-1" style="background: rgba(0, 0, 0, 0.5);">
+        <div v-if="showCartIMEIModal" class="modal fade show d-block" tabindex="-1"
+          style="background: rgba(0, 0, 0, 0.5);">
           <div class="modal-dialog modal-dialog-centered modal-lg">
-            <div class="modal-content shadow-lg p-4 gradient-modal"
+            <div class="modal-content shadow-lg p-2 gradient-modal"
               style="background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(15px); border-radius: 12px;">
               <div class="modal-header border-0 d-flex justify-content-between align-items-center">
                 <h5 class="modal-title fw-bold text-dark">
-                  IMEI của {{ selectedCartItem?.name }} ({{ selectedCartItem?.color }}, {{ selectedCartItem?.ram }}, {{ selectedCartItem?.storage }})
+                  IMEI của {{ selectedCartItem?.name }} ({{ selectedCartItem?.color }}, {{ selectedCartItem?.ram }}, {{
+                  selectedCartItem?.storage }})
                 </h5>
                 <button class="btn btn-outline-secondary btn-close-custom" @click="closeCartIMEIModal">
                   <i class="bi bi-x-lg"></i>
@@ -204,11 +212,12 @@
         <!-- IMEI Modal for Product Selection -->
         <div v-if="showIMEIModal" class="modal fade show d-block" tabindex="-1" style="background: rgba(0, 0, 0, 0.5);">
           <div class="modal-dialog modal-dialog-centered modal-lg">
-            <div class="modal-content shadow-lg p-4 gradient-modal"
+            <div class="modal-content shadow-lg p-2 gradient-modal"
               style="background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(15px); border-radius: 12px;">
               <div class="modal-header border-0 d-flex justify-content-between align-items-center">
                 <h5 class="modal-title fw-bold text-dark">
-                  Chọn IMEI cho {{ selectedProduct?.name }} ({{ selectedProduct?.color }}, {{ selectedProduct?.ram }}, {{ selectedProduct?.storage }})
+                  Chọn IMEI cho {{ selectedProduct?.name }} ({{ selectedProduct?.color }}, {{ selectedProduct?.ram }},
+                  {{ selectedProduct?.storage }})
                 </h5>
                 <button class="btn btn-outline-secondary btn-close-custom" @click="closeIMEIModal">
                   <i class="bi bi-x-lg"></i>
@@ -230,16 +239,18 @@
                     Không có IMEI nào khả dụng.
                   </div>
                 </div>
-                <div v-if="selectedIMEIs.length > 0" class="mt-4">
-                  <h6 class="fw-semibold text-dark">IMEI đã chọn:</h6>
-                  <div class="d-flex flex-wrap gap-2">
-                    <span v-for="imei in selectedIMEIs" :key="imei"
-                      class="badge bg-primary text-white py-2 px-3 d-flex align-items-center">
-                      {{ imei }}
-                      <button class="btn btn-sm btn-light ms-2" @click="removeIMEI(imei)" style="line-height: 1;">
-                        <i class="bi bi-x text-danger"></i>
+                <div v-if="selectedIMEIs.length > 0"
+                  class="selected-imei-container mt-4 animate__animated animate__fadeIn">
+                  <h6 class="selected-imei-title fw-semibold text-dark mb-3">IMEI đã chọn:</h6>
+                  <div class="selected-imei-list d-flex flex-wrap gap-2">
+                    <div v-for="imei in selectedIMEIs" :key="imei"
+                      class="imei-badge d-flex align-items-center p-2 rounded shadow-sm">
+                      <i class="bi bi-upc-scan me-2 text-primary" style="font-size: 1.1rem;"></i>
+                      <span class="imei-text fw-medium text-dark">{{ imei }}</span>
+                      <button class="delete-imei-btn ms-2" @click="removeIMEI(imei)" title="Xóa IMEI">
+                        <i class="bi bi-x"></i>
                       </button>
-                    </span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -257,7 +268,8 @@
         </div>
 
         <!-- Discount Modal -->
-        <div v-if="showDiscountModal" class="modal fade show d-block" tabindex="-1" style="background: rgba(0, 0, 0, 0.5);">
+        <div v-if="showDiscountModal" class="modal fade show d-block" tabindex="-1"
+          style="background: rgba(0, 0, 0, 0.5);">
           <div class="modal-dialog modal-dialog-centered modal-lg">
             <div class="modal-content shadow-lg gradient-modal"
               style="background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(15px); border-radius: 16px;">
@@ -271,12 +283,14 @@
                 <!-- Tabs for Private and Public Discounts -->
                 <ul class="nav nav-tabs mb-4" style="border-bottom: 2px solid rgba(0, 94, 226, 0.2);">
                   <li class="nav-item">
-                    <button class="nav-link" :class="{ 'active': activeTab === 'private' }" @click="activeTab = 'private'">
+                    <button class="nav-link" :class="{ 'active': activeTab === 'private' }"
+                      @click="activeTab = 'private'">
                       Mã Riêng
                     </button>
                   </li>
                   <li class="nav-item">
-                    <button class="nav-link" :class="{ 'active': activeTab === 'public' }" @click="activeTab = 'public'">
+                    <button class="nav-link" :class="{ 'active': activeTab === 'public' }"
+                      @click="activeTab = 'public'">
                       Mã Công Khai
                     </button>
                   </li>
@@ -286,7 +300,8 @@
                 <div v-show="activeTab === 'private'" class="discount-section animate__animated animate__fadeIn">
                   <h6 class="fw-semibold text-dark mb-4 text-center">Mã Giảm Giá Riêng</h6>
                   <div v-if="privateDiscountCodes.length === 0" class="empty-state text-center py-5">
-                    <div class="empty-icon-container rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center gradient-custom-blue"
+                    <div
+                      class="empty-icon-container rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center gradient-custom-blue"
                       style="width: 60px; height: 60px;">
                       <i class="bi bi-gift text-white" style="font-size: 2rem;"></i>
                     </div>
@@ -299,7 +314,8 @@
                           <div class="d-flex justify-content-between align-items-start">
                             <div>
                               <h6 class="discount-code fw-bold text-primary mb-1">{{ code.code }}</h6>
-                              <p class="mb-1">Giảm <span class="highlight-text fw-semibold text-success">{{ formatPrice(code.value) }}</span></p>
+                              <p class="mb-1">Giảm <span class="highlight-text fw-semibold text-success">{{
+                                  formatPrice(code.value) }}</span></p>
                             </div>
                             <span class="badge bg-primary text-white px-2 py-1">Riêng</span>
                           </div>
@@ -323,8 +339,11 @@
                           <div class="d-flex justify-content-between align-items-start">
                             <div>
                               <h6 class="discount-code fw-bold text-primary mb-1">{{ code.code }}</h6>
-                              <p class="mb-1">Giảm <span class="highlight-text fw-semibold text-success">{{ code.percent }}%</span></p>
-                              <p class="mb-1">Đơn tối thiểu: <span class="fw-semibold">{{ formatPrice(code.minOrder) }}</span></p>
+                              <p class="mb-1">Giảm <span class="highlight-text fw-semibold text-success">{{ code.percent
+                                  }}%</span></p>
+                              <p class="mb-1">Đơn tối thiểu: <span class="fw-semibold">{{ formatPrice(code.minOrder)
+                                  }}</span>
+                              </p>
                               <p class="text-muted small">Hết hạn: {{ code.expiry }}</p>
                             </div>
                             <span class="badge bg-success text-white px-2 py-1">Công khai</span>
@@ -446,23 +465,22 @@
               </div>
             </div>
 
-<div class="voucher-section mb-4">
-  <h6 class="fw-semibold text-dark mb-3">Mã Giảm Giá</h6>
-  <button class="btn select-btn gradient-custom-blue text-white w-100" @click="showDiscountModal = true">
-    Chọn mã giảm giá
-  </button>
-  <div class="mt-3 text-end">
-    <p class="text-muted fw-medium">Tổng tiền hàng: {{ formatPrice(totalPrice) }}</p>
-    <p class="text-muted fw-medium">Giảm giá: -{{ formatPrice(discount) }}</p>
-    <p class="fw-bold fs-4 text-success">
-      Tổng thanh toán: {{ formatPrice(totalPrice - discount) }}
-    </p>
-    <!-- Thêm gợi ý mua thêm -->
-    <p v-if="suggestAdditionalPurchase.message" class="fw-medium mt-2" style="color: orangered;">
-      <i class="bi bi-info-circle me-2"></i>{{ suggestAdditionalPurchase.message }}
-    </p>
-  </div>
-</div>
+            <div class="voucher-section mb-4">
+              <h6 class="fw-semibold text-dark mb-3">Mã Giảm Giá</h6>
+              <button class="btn select-btn gradient-custom-blue text-white w-100" @click="showDiscountModal = true">
+                Chọn mã giảm giá
+              </button>
+              <div class="mt-3 text-end">
+                <p class="text-muted fw-medium">Tổng tiền hàng: {{ formatPrice(totalPrice) }}</p>
+                <p class="text-muted fw-medium">Giảm giá: -{{ formatPrice(discount) }}</p>
+                <p class="fw-bold fs-4 text-success">
+                  Tổng thanh toán: {{ formatPrice(totalPrice - discount) }}
+                </p>
+                <p v-if="suggestAdditionalPurchase.message" class="fw-medium mt-2" style="color: orangered;">
+                  <i class="bi bi-info-circle me-2"></i>{{ suggestAdditionalPurchase.message }}
+                </p>
+              </div>
+            </div>
 
             <div class="mb-4">
               <h6 class="fw-semibold text-dark">Phương thức thanh toán</h6>
@@ -495,6 +513,12 @@
                     placeholder="Nhập số tiền mặt" min="0" />
                 </div>
               </div>
+              <!-- Hiển thị mã QR khi chọn chuyển khoản hoặc cả hai -->
+              <div v-if="showQRCode" class="mt-3 text-center qr-code-container">
+                <h6 class="fw-semibold text-dark">Quét mã QR để thanh toán</h6>
+                <qrcode-vue :value="qrCodeValue" :size="200" level="H" />
+                <p class="text-muted mt-2">Số tiền: {{ formatPrice(qrCodeAmount) }}</p>
+              </div>
             </div>
 
             <button class="btn w-100 py-3 pay-btn gradient-custom-green text-white" @click="ThanhToan"
@@ -508,9 +532,10 @@
     </div>
 
     <!-- Customer Modal -->
-    <div v-if="isCustomerModalOpen" class="modal fade show d-block" tabindex="-1" style="background: rgba(0, 0, 0, 0.5);">
+    <div v-if="isCustomerModalOpen" class="modal fade show d-block" tabindex="-1"
+      style="background: rgba(0, 0, 0, 0.5);">
       <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content shadow-lg p-4 gradient-modal"
+        <div class="modal-content shadow-lg p-2 gradient-modal"
           style="background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(15px); border-radius: 12px;">
           <div class="modal-header border-0 d-flex justify-content-between align-items-center">
             <h5 class="modal-title fw-bold text-dark">Thêm khách hàng mới</h5>
@@ -594,6 +619,7 @@ import HeaderCard from '@/components/common/HeaderCard.vue';
 import DataTable from '@/components/common/DataTable.vue';
 import NotificationModal from '@/components/common/NotificationModal.vue';
 import ToastNotification from '@/components/common/ToastNotification.vue';
+import QrcodeVue from 'qrcode.vue';
 
 export default {
   name: 'Sale',
@@ -602,6 +628,7 @@ export default {
     DataTable,
     NotificationModal,
     ToastNotification,
+    QrcodeVue,
   },
   setup() {
     // State
@@ -642,16 +669,36 @@ export default {
     const notificationType = ref('confirm');
     const notificationMessage = ref('');
     const isNotificationLoading = ref(false);
-    const notificationOnConfirm = ref(() => { });
-    const notificationOnCancel = ref(() => { });
+    const notificationOnConfirm = ref(() => {});
+    const notificationOnCancel = ref(() => {});
     const notificationModal = ref(null);
     const toastNotification = ref(null);
-    const activeTab = ref('private'); // New state for tab switching
+    const activeTab = ref('private');
+    const qrCodeValue = ref('');
+    const qrCodeAmount = ref(0);
 
     // Sample data
     const products = ref([
       { id: 1, name: 'iPhone 13', code: 'IP13', color: 'Xanh', ram: '4GB', storage: '128GB', price: 15000000 },
       { id: 2, name: 'Samsung Galaxy S21', code: 'SGS21', color: 'Đen', ram: '8GB', storage: '256GB', price: 18000000 },
+      { id: 3, name: 'Xiaomi 12 Pro', code: 'XM12P', color: 'Trắng', ram: '8GB', storage: '256GB', price: 20000000 },
+      { id: 4, name: 'Oppo Find X5', code: 'OPFX5', color: 'Xanh Dương', ram: '12GB', storage: '512GB', price: 25000000 },
+      { id: 5, name: 'Vivo V23', code: 'VV23', color: 'Vàng', ram: '6GB', storage: '128GB', price: 12000000 },
+      { id: 6, name: 'iPhone 14 Pro', code: 'IP14P', color: 'Tím', ram: '6GB', storage: '256GB', price: 28000000 },
+      { id: 7, name: 'Samsung Galaxy Z Fold 4', code: 'SGZF4', color: 'Xám', ram: '12GB', storage: '512GB', price: 40000000 },
+      { id: 8, name: 'Huawei P50', code: 'HWP50', color: 'Đen', ram: '8GB', storage: '256GB', price: 22000000 },
+      { id: 9, name: 'Realme GT 2', code: 'RMGT2', color: 'Xanh Lá', ram: '8GB', storage: '128GB', price: 14000000 },
+      { id: 10, name: 'OnePlus 10 Pro', code: 'OP10P', color: 'Đen', ram: '12GB', storage: '256GB', price: 23000000 },
+      { id: 11, name: 'iPhone 12 Mini', code: 'IP12M', color: 'Đỏ', ram: '4GB', storage: '64GB', price: 13000000 },
+      { id: 12, name: 'Samsung Galaxy A73', code: 'SGA73', color: 'Trắng', ram: '6GB', storage: '128GB', price: 11000000 },
+      { id: 13, name: 'Xiaomi Redmi Note 11', code: 'XMRN11', color: 'Xanh Dương', ram: '4GB', storage: '64GB', price: 6000000 },
+      { id: 14, name: 'Oppo Reno 8', code: 'OPR8', color: 'Vàng', ram: '8GB', storage: '256GB', price: 17000000 },
+      { id: 15, name: 'Vivo Y70s', code: 'VY70S', color: 'Đen', ram: '6GB', storage: '128GB', price: 8000000 },
+      { id: 16, name: 'iPhone SE 2022', code: 'IPSE22', color: 'Trắng', ram: '4GB', storage: '128GB', price: 12000000 },
+      { id: 17, name: 'Samsung Galaxy S22 Ultra', code: 'SGS22U', color: 'Đỏ', ram: '12GB', storage: '512GB', price: 30000000 },
+      { id: 18, name: 'Huawei Mate 50', code: 'HWM50', color: 'Bạc', ram: '8GB', storage: '256GB', price: 24000000 },
+      { id: 19, name: 'Realme 9 Pro', code: 'RM9P', color: 'Xanh', ram: '6GB', storage: '128GB', price: 9000000 },
+      { id: 20, name: 'OnePlus Nord 2', code: 'OPN2', color: 'Xám', ram: '8GB', storage: '256GB', price: 15000000 }
     ]);
     const availableIMEIs = ref([
       { id: 1, imei: '123456789012345' },
@@ -738,12 +785,65 @@ export default {
       return cartItems.value.reduce((sum, item) => sum + item.price * item.quantity, 0);
     });
 
+    const suggestAdditionalPurchase = computed(() => {
+      if (!publicDiscountCodes.value.length) {
+        return {
+          message: 'Không có mã giảm giá công khai nào khả dụng.',
+          additionalAmount: 0,
+          bestDiscount: null,
+        };
+      }
+
+      const bestDiscount = publicDiscountCodes.value.reduce((best, code) => {
+        if (totalPrice.value >= code.minOrder) {
+          return code.value > (best?.value || 0) ? code : best;
+        }
+        return code.value > (best?.value || 0) && (!best || code.minOrder < best.minOrder) ? code : best;
+      }, null);
+
+      if (!bestDiscount) {
+        return {
+          message: 'Không có mã giảm giá phù hợp.',
+          additionalAmount: 0,
+          bestDiscount: null,
+        };
+      }
+
+      if (totalPrice.value >= bestDiscount.minOrder) {
+        return {
+          message: `Bạn có thể áp dụng mã ${bestDiscount.code} để được giảm ${formatPrice(bestDiscount.value)}.`,
+          additionalAmount: 0,
+          bestDiscount,
+        };
+      }
+
+      const additionalAmount = bestDiscount.minOrder - totalPrice.value;
+      return {
+        message: `Mua thêm ${formatPrice(additionalAmount)} để sử dụng mã ${bestDiscount.code} và được giảm ${formatPrice(bestDiscount.value)}.`,
+        additionalAmount,
+        bestDiscount,
+      };
+    });
+
+    const showQRCode = computed(() => {
+      if (paymentMethod.value === 'transfer') {
+        qrCodeAmount.value = totalPrice.value - discount.value;
+        generateQRCode(qrCodeAmount.value);
+        return true;
+      } else if (paymentMethod.value === 'both' && tienChuyenKhoan.value > 0) {
+        qrCodeAmount.value = tienChuyenKhoan.value;
+        generateQRCode(tienChuyenKhoan.value);
+        return true;
+      }
+      return false;
+    });
+
     // Methods
     const showToast = (type, message, isLoading = false, duration = 3000) => {
       toastNotification.value.addToast({ type, message, isLoading, duration });
     };
 
-    const showConfirm = (message, onConfirm, onCancel = () => { }) => {
+    const showConfirm = (message, onConfirm, onCancel = () => {}) => {
       notificationType.value = 'confirm';
       notificationMessage.value = message;
       notificationOnConfirm.value = onConfirm;
@@ -756,8 +856,8 @@ export default {
       notificationType.value = 'confirm';
       notificationMessage.value = '';
       isNotificationLoading.value = false;
-      notificationOnConfirm.value = () => { };
-      notificationOnCancel.value = () => { };
+      notificationOnConfirm.value = () => {};
+      notificationOnCancel.value = () => {};
     };
 
     const createNewPendingInvoice = () => {
@@ -785,6 +885,28 @@ export default {
       activeInvoiceId.value = invoice.id;
       cartItems.value = invoice.items;
       showToast('success', `Đã tải hóa đơn ${invoice.code}`);
+    };
+
+    const confirmCancelInvoice = (invoice) => {
+      showConfirm(
+        `Bạn có chắc chắn muốn hủy hóa đơn ${invoice.code}?`,
+        () => cancelInvoice(invoice),
+        () => {}
+      );
+    };
+
+    const cancelInvoice = (invoice) => {
+      isNotificationLoading.value = true;
+      setTimeout(() => {
+        pendingInvoices.value = pendingInvoices.value.filter((inv) => inv.id !== invoice.id);
+        if (activeInvoiceId.value === invoice.id) {
+          activeInvoiceId.value = null;
+          cartItems.value = [];
+        }
+        isNotificationLoading.value = false;
+        showToast('success', `Đã hủy hóa đơn ${invoice.code}`);
+        resetNotification();
+      }, 500);
     };
 
     const scanQR = () => {
@@ -845,6 +967,29 @@ export default {
       const invoice = pendingInvoices.value.find((inv) => inv.id === activeInvoiceId.value);
       if (invoice) invoice.items = cartItems.value;
       showToast('success', `Đã xóa sản phẩm ${item.name} khỏi giỏ hàng`);
+    };
+
+    const deleteIMEI = (imei) => {
+      if (!selectedCartItem.value) return;
+
+      const imeiArray = selectedCartItem.value.imei.split(', ').filter(i => i !== imei);
+      selectedCartItem.value.imei = imeiArray.join(', ');
+      selectedCartItem.value.quantity = imeiArray.length;
+
+      if (imeiArray.length === 0) {
+        cartItems.value = cartItems.value.filter(item => item.id !== selectedCartItem.value.id);
+      }
+
+      const invoice = pendingInvoices.value.find((inv) => inv.id === activeInvoiceId.value);
+      if (invoice) {
+        invoice.items = cartItems.value;
+      }
+
+      if (imeiArray.length === 0) {
+        closeCartIMEIModal();
+      }
+
+      showToast('success', `Đã xóa IMEI ${imei}`);
     };
 
     const searchCustomers = () => {
@@ -924,56 +1069,22 @@ export default {
       }
     };
 
-    // Trong phần setup
-const suggestAdditionalPurchase = computed(() => {
-  if (!publicDiscountCodes.value.length) {
-    return {
-      message: 'Không có mã giảm giá công khai nào khả dụng.',
-      additionalAmount: 0,
-      bestDiscount: null,
-    };
-  }
-
-  // Tìm voucher công khai có giá trị giảm giá tốt nhất
-  const bestDiscount = publicDiscountCodes.value.reduce((best, code) => {
-    if (totalPrice.value >= code.minOrder) {
-      // Nếu tổng tiền hàng đã đủ điều kiện áp dụng
-      return code.value > (best?.value || 0) ? code : best;
-    }
-    // Nếu chưa đủ điều kiện, tìm voucher có giá trị giảm giá cao nhất
-    return code.value > (best?.value || 0) && (!best || code.minOrder < best.minOrder) ? code : best;
-  }, null);
-
-  if (!bestDiscount) {
-    return {
-      message: 'Không có mã giảm giá phù hợp.',
-      additionalAmount: 0,
-      bestDiscount: null,
-    };
-  }
-
-  // Nếu tổng tiền hàng đã đủ điều kiện áp dụng voucher
-  if (totalPrice.value >= bestDiscount.minOrder) {
-    return {
-      message: `Bạn có thể áp dụng mã ${bestDiscount.code} để được giảm ${formatPrice(bestDiscount.value)}.`,
-      additionalAmount: 0,
-      bestDiscount,
-    };
-  }
-
-  // Tính số tiền cần mua thêm để đạt mức tối thiểu
-  const additionalAmount = bestDiscount.minOrder - totalPrice.value;
-  return {
-    message: `Mua thêm ${formatPrice(additionalAmount)} để sử dụng mã ${bestDiscount.code} và được giảm ${formatPrice(bestDiscount.value)}.`,
-    additionalAmount,
-    bestDiscount,
-  };
-});
-
     const selectPayment = (method) => {
       paymentMethod.value = method;
       tienChuyenKhoan.value = 0;
       tienMat.value = 0;
+      qrCodeValue.value = '';
+    };
+
+    const generateQRCode = (amount) => {
+      const bankInfo = {
+        bankName: 'YourBank',
+        accountNumber: '1234567890',
+        accountHolder: 'Your Company Name',
+        amount: amount,
+        description: `Thanh toán hóa đơn ${activeInvoiceId.value || 'HDXXX'}`,
+      };
+      qrCodeValue.value = `Bank: ${bankInfo.bankName}, Account: ${bankInfo.accountNumber}, Holder: ${bankInfo.accountHolder}, Amount: ${bankInfo.amount}, Description: ${bankInfo.description}`;
     };
 
     const ThanhToan = () => {
@@ -985,12 +1096,28 @@ const suggestAdditionalPurchase = computed(() => {
         showToast('error', 'Giỏ hàng trống');
         return;
       }
+      const totalPayment = totalPrice.value - discount.value;
+      if (paymentMethod.value === 'both') {
+        const totalInput = (tienChuyenKhoan.value || 0) + (tienMat.value || 0);
+        if (totalInput !== totalPayment) {
+          showToast('error', `Số tiền thanh toán (${formatPrice(totalInput)}) không khớp với tổng thanh toán (${formatPrice(totalPayment)})`);
+          return;
+        }
+        if (tienChuyenKhoan.value < 0 || tienMat.value < 0) {
+          showToast('error', 'Số tiền thanh toán không được âm');
+          return;
+        }
+      } else if (paymentMethod.value === 'transfer') {
+        if (!qrCodeValue.value) {
+          showToast('error', 'Không thể tạo mã QR. Vui lòng thử lại.');
+          return;
+        }
+      }
       showConfirm('Bạn có chắc chắn muốn thanh toán?', createOrder);
     };
 
     const createOrder = () => {
       isCreatingOrder.value = true;
-      showToast('success', 'Đang xử lý thanh toán...', true, 0);
       setTimeout(() => {
         pendingInvoices.value = pendingInvoices.value.filter((inv) => inv.id !== activeInvoiceId.value);
         cartItems.value = [];
@@ -1087,9 +1214,14 @@ const suggestAdditionalPurchase = computed(() => {
       notificationOnCancel,
       notificationModal,
       toastNotification,
-      activeTab, // Expose activeTab to template
+      activeTab,
+      qrCodeValue,
+      qrCodeAmount,
+      showQRCode,
       createNewPendingInvoice,
       loadPendingInvoice,
+      confirmCancelInvoice,
+      cancelInvoice,
       scanQR,
       showIMEIList,
       showIMEIModalForItem,
@@ -1099,6 +1231,7 @@ const suggestAdditionalPurchase = computed(() => {
       removeIMEI,
       addProductWithIMEIs,
       removeItem,
+      deleteIMEI,
       searchCustomers,
       openCustomerModal,
       handleProvinceChange,
@@ -1110,6 +1243,7 @@ const suggestAdditionalPurchase = computed(() => {
       applyPrivateDiscount,
       applyPublicDiscount,
       selectPayment,
+      generateQRCode,
       ThanhToan,
       createOrder,
       formatPrice,
@@ -1126,7 +1260,7 @@ const suggestAdditionalPurchase = computed(() => {
 @keyframes fadeInUp {
   from {
     opacity: 0;
-    transform: translateY(20px);
+    transform: translateY(15px);
   }
   to {
     opacity: 1;
@@ -1137,7 +1271,7 @@ const suggestAdditionalPurchase = computed(() => {
 @keyframes slideInLeft {
   from {
     opacity: 0;
-    transform: translateX(-20px);
+    transform: translateX(-15px);
   }
   to {
     opacity: 1;
@@ -1150,14 +1284,14 @@ const suggestAdditionalPurchase = computed(() => {
     box-shadow: 0 0 5px rgba(0, 94, 226, 0.3);
   }
   50% {
-    box-shadow: 0 0 15px rgba(0, 94, 226, 0.5);
+    box-shadow: 0 0 12px rgba(0, 94, 226, 0.5);
   }
 }
 
 @keyframes zoomIn {
   from {
     opacity: 0;
-    transform: scale(0.95);
+    transform: scale(0.97);
   }
   to {
     opacity: 1;
@@ -1178,14 +1312,14 @@ const suggestAdditionalPurchase = computed(() => {
 }
 
 .gradient-modal {
-  animation: slideInLeft 0.5s ease-out;
+  animation: slideInLeft 0.35s ease-out;
 }
 
 .btn-orange {
   background-color: #ff6200;
   color: white;
   border: none;
-  transition: background-color 0.3s ease;
+  transition: background-color 0.2s ease;
 }
 
 .btn-orange:hover {
@@ -1193,18 +1327,18 @@ const suggestAdditionalPurchase = computed(() => {
 }
 
 .search-card {
-  animation: fadeInUp 0.6s ease-out 0.2s both;
+  animation: fadeIn-Up 0.4s ease-out 0.1s both;
 }
 
 .bill-card {
-  animation: fadeInUp 0.8s ease-out;
+  animation: fadeInUp 0.3s ease-out;
 }
 
 .product-card,
 .customer-card,
 .order-card {
-  animation: slideInLeft 0.8s ease-out;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  animation: slideInLeft 0.5s ease-out;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .add-bill-btn,
@@ -1213,7 +1347,7 @@ const suggestAdditionalPurchase = computed(() => {
 .select-btn,
 .pay-btn,
 .btn-apply {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .add-to-cart-btn:hover,
@@ -1230,11 +1364,11 @@ const suggestAdditionalPurchase = computed(() => {
 }
 
 .empty-icon-container {
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
 }
 
 .empty-icon-container:hover {
-  animation: gentleGlow 2s infinite;
+  animation: gentleGlow 1.5s infinite;
 }
 
 .modal.fade.show {
@@ -1255,7 +1389,7 @@ const suggestAdditionalPurchase = computed(() => {
   justify-content: center;
   border-radius: 8px;
   border: 1px solid rgba(0, 94, 226, 0.2);
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
 }
 
 .btn-close-custom:hover {
@@ -1265,7 +1399,7 @@ const suggestAdditionalPurchase = computed(() => {
 
 .form-select,
 .form-control {
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
   border: 2px solid rgba(0, 94, 226, 0.1);
   border-radius: 8px;
 }
@@ -1278,7 +1412,6 @@ const suggestAdditionalPurchase = computed(() => {
 
 .overflow-x-auto {
   scrollbar-width: thin;
-  scrollbar-color: thin;
   scrollbar-color: rgba(0, 94, 226, 0.3) transparent;
 }
 
@@ -1296,7 +1429,7 @@ const suggestAdditionalPurchase = computed(() => {
 }
 
 .cursor-pointer {
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
 }
 
 .cursor-pointer:hover {
@@ -1304,7 +1437,7 @@ const suggestAdditionalPurchase = computed(() => {
 }
 
 .btn-outline-secondary {
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
 }
 
 .btn-outline-secondary:hover {
@@ -1312,8 +1445,14 @@ const suggestAdditionalPurchase = computed(() => {
   color: #0052cc;
 }
 
+.btn-view {
+  border-color: #002962;
+  color: #002962;
+}
+
 .btn-view:hover {
   color: #ffffff;
+  background-color: #002962;
 }
 
 .text-dark {
@@ -1352,7 +1491,7 @@ const suggestAdditionalPurchase = computed(() => {
 .imei-card {
   border: 1px solid rgba(0, 94, 226, 0.1);
   border-radius: 8px;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
 }
 
 .imei-card:hover {
@@ -1366,14 +1505,123 @@ const suggestAdditionalPurchase = computed(() => {
 
 .imei-item i {
   color: #0052cc;
-  transition: color 0.3s ease;
+  transition: color 0.2s ease;
 }
 
 .imei-item:hover i {
   color: #003ba3;
 }
 
+.selected-imei-container {
+  margin-top: 1.5rem;
+  animation: fadeIn 0.3s ease-out;
+}
+
+.selected-imei-title {
+  color: #002962;
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+}
+
+.selected-imei-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.imei-badge {
+  background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+  border: 1px solid rgba(0, 94, 226, 0.1);
+  border-radius: 10px;
+  padding: 0.5rem 0.75rem;
+  display: flex;
+  align-items: center;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.imei-badge:hover {
+  background: linear-gradient(135deg, #ffffff, #f1f3f5);
+  box-shadow: 0 4px 8px rgba(0, 94, 226, 0.2);
+  transform: translateY(-1px);
+}
+
+.imei-badge .bi-upc-scan {
+  color: #0052cc;
+  font-size: 1.1rem;
+  margin-right: 0.5rem;
+  transition: color 0.2s ease;
+}
+
+.imei-badge:hover .bi-upc-scan {
+  color: #003ba3;
+}
+
+.imei-text {
+  color: #002962;
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
 .delete-imei-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border-radius: 8px;
+  border: none;
+  color: #d32f2f;
+  background: linear-gradient(135deg, #ffffff, #f1f3f5);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+
+.delete-imei-btn:hover {
+  background: linear-gradient(135deg, #ff4d4f, #e63946);
+  box-shadow: 0 4px 8px rgba(255, 75, 75, 0.3);
+  transform: translateY(-1px);
+}
+
+.delete-imei-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+  background: linear-gradient(135deg, #e63946, #d32f2f);
+}
+
+.delete-imei-btn .bi-x {
+  color: #dc3545;
+  font-size: 1rem;
+  transition: color 0.2s ease;
+}
+
+.delete-imei-btn:hover .bi-x {
+  color: #ffffff;
+}
+
+.delete-imei-btn::after {
+  content: '';
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  transform: scale(0);
+  transition: transform 0.3s ease;
+  pointer-events: none;
+}
+
+.delete-imei-btn:active::after {
+  transform: scale(2);
+  opacity: 0;
+}
+
+.delete-invoice-btn {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1381,32 +1629,31 @@ const suggestAdditionalPurchase = computed(() => {
   height: 32px;
   padding: 0;
   border-radius: 8px;
-  background: linear-gradient(135deg, #ff4d4f, #d32f2f);
-  border: none;
-  transition: all 0.3s ease;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(211, 47, 47, 0.3);
+  background: linear-gradient(135deg, #ffffff, #f1f3f5);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.delete-imei-btn:hover {
-  background: linear-gradient(135deg, #ff7875, #e53935);
+.delete-invoice-btn:hover {
+  background: linear-gradient(135deg, #ff4d4f, #e63946);
+  box-shadow: 0 4px 8px rgba(255, 75, 75, 0.3);
   transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
 
-.delete-imei-btn:active {
-  transform: translateY(0);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-}
-
-.delete-imei-btn i {
-  color: white;
+.delete-invoice-btn .bi-trash {
+  color: #dc3545;
   font-size: 1rem;
+  transition: color 0.2s ease;
+}
+
+.delete-invoice-btn:hover .bi-trash {
+  color: #ffffff;
 }
 
 .discount-card {
   border: 1px solid rgba(0, 94, 226, 0.1);
   border-radius: 12px;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
 }
 
 .discount-card:hover {
@@ -1457,7 +1704,7 @@ const suggestAdditionalPurchase = computed(() => {
   font-weight: 500;
   border: none;
   padding: 0.75rem 1.5rem;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
 }
 
 .nav-tabs .nav-link.active {
@@ -1480,13 +1727,22 @@ const suggestAdditionalPurchase = computed(() => {
   border-color: #0052cc;
 }
 
+.qr-code-container {
+  border: 1px solid rgba(0, 94, 226, 0.2);
+  border-radius: 8px;
+  padding: 1rem;
+  background: #fff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
 @media (max-width: 768px) {
   .bill-card,
   .product-card,
   .customer-card,
   .order-card {
-    animation: fadeInUp 0.6s ease-out;
+    animation: fadeInUp 0.4s ease-out;
   }
+
   .add-bill-btn,
   .add-to-cart-btn,
   .add-customer-btn,
@@ -1494,8 +1750,24 @@ const suggestAdditionalPurchase = computed(() => {
   .btn-apply {
     padding: 0.5rem 1rem;
   }
+
   .nav-tabs .nav-link {
     padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+  }
+
+  .imei-badge {
+    padding: 0.4rem 0.6rem;
+    font-size: 0.9rem;
+  }
+  .imei-badge .bi-upc-scan {
+    font-size: 1rem;
+  }
+  .delete-imei-btn {
+    width: 24px;
+    height: 24px;
+  }
+  .delete-imei-btn .bi-x {
     font-size: 0.9rem;
   }
 }
@@ -1508,9 +1780,8 @@ const suggestAdditionalPurchase = computed(() => {
   }
 }
 
-/* Animate.css for tab transitions */
 .animate__animated {
-  --animate-duration: 0.3s;
+  --animate-duration: 0.2s;
 }
 
 .animate__fadeIn {

@@ -2,10 +2,14 @@
   <transition name="modal-fade">
     <div v-if="isVisible" class="notification-modal">
       <div class="modal-overlay" @click="closeModal"></div>
-      <div class="modal-content">
+      <div class="modal-content" :class="`modal-${props.type}`">
         <div class="modal-header">
           <h3>{{ title }}</h3>
-          <button v-if="type !== 'confirm' && !isLoading" class="modal-close-btn" @click="closeModal">
+          <button
+            v-if="type !== 'confirm' && !isLoading"
+            class="modal-close-btn"
+            @click="closeModal"
+          >
             <i class="bi bi-x-lg"></i>
           </button>
         </div>
@@ -17,17 +21,13 @@
           <div v-else>
             <div class="message">{{ message }}</div>
             <div v-if="type === 'confirm'" class="action-buttons">
-              <button class="btn btn-cancel" @click="cancelAction">
-                Hủy
-              </button>
+              <button class="btn btn-cancel" @click="cancelAction">Hủy</button>
               <button class="btn btn-confirm" @click="confirmAction">
                 {{ confirmText }}
               </button>
             </div>
             <div v-else class="btn btn-ok" @click="closeModal">
-              <button class="ok">
-                OK
-              </button>
+              <button class="ok">OK</button>
             </div>
           </div>
         </div>
@@ -37,14 +37,15 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
-import Loading from '../common/Loading.vue';
+import { ref, computed } from "vue";
+import Loading from "../common/Loading.vue";
 
 const props = defineProps({
   type: {
     type: String,
     required: true,
-    validator: (value) => ['success', 'error', 'warning', 'confirm'].includes(value),
+    validator: (value) =>
+      ["success", "error", "warning", "confirm"].includes(value),
   },
   message: {
     type: String,
@@ -52,7 +53,7 @@ const props = defineProps({
   },
   confirmText: {
     type: String,
-    default: 'Xác nhận',
+    default: "Xác nhận",
   },
   onConfirm: {
     type: Function,
@@ -68,22 +69,22 @@ const props = defineProps({
   },
 });
 
-const emit = defineEmits(['close']);
+const emit = defineEmits(["close"]);
 
 const isVisible = ref(false);
 
 const title = computed(() => {
   switch (props.type) {
-    case 'success':
-      return 'Thành công';
-    case 'error':
-      return 'Lỗi';
-    case 'warning':
-      return 'Cảnh báo';
-    case 'confirm':
-      return 'Xác nhận';
+    case "success":
+      return "Thành công";
+    case "error":
+      return "Lỗi";
+    case "warning":
+      return "Cảnh báo";
+    case "confirm":
+      return "Xác nhận";
     default:
-      return 'Thông báo';
+      return "Thông báo";
   }
 });
 
@@ -93,12 +94,12 @@ const openModal = () => {
 
 const closeModal = () => {
   isVisible.value = false;
-  emit('close');
+  emit("close");
 };
 
 const confirmAction = () => {
   props.onConfirm();
-  // Do not close modal here; let the onConfirm handle it
+  closeModal();
 };
 
 const cancelAction = () => {
@@ -145,6 +146,20 @@ defineExpose({
   z-index: 3001;
 }
 
+/* Định dạng màu sắc viền cho modal theo type */
+.modal-success .modal-header {
+  border-left: 4px solid #28a745;
+}
+.modal-error .modal-header {
+  border-left: 4px solid #dc3545;
+}
+.modal-warning .modal-header {
+  border-left: 4px solid #ffc107;
+}
+.modal-confirm .modal-header {
+  border-left: 4px solid #007bff;
+}
+
 .modal-header {
   display: flex;
   align-items: center;
@@ -159,6 +174,8 @@ defineExpose({
   font-weight: 600;
   color: #002962;
 }
+
+.modal-closeっていう
 
 .modal-close-btn {
   background: none;
@@ -210,35 +227,58 @@ defineExpose({
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/* Màu sắc cho nút OK theo type */
 .btn-ok {
-  background: linear-gradient(135deg, #002962, #0052cc);
+  color: #ffffff;
+}
+.modal-success .btn-ok {
+  background: linear-gradient(135deg, #28a745, #218838);
+}
+.modal-success .btn-ok:hover {
+  background: linear-gradient(135deg, #218838, #1e7e34);
+  color: #ffffff;
+}
+.modal-error .btn-ok {
+  background: linear-gradient(135deg, #dc3545, #c82333);
+}
+.modal-error .btn-ok:hover {
+  background: linear-gradient(135deg, #c82333, #b21f2d);
+  color: #ffffff;
+}
+.modal-warning .btn-ok {
+  background: linear-gradient(135deg, #ffc107, #e0a800);
+}
+.modal-warning .btn-ok:hover {
+  background: linear-gradient(135deg, #e0a800, #c69500);
+  color: #ffffff;
+}
+.modal-confirm .btn-ok {
+  background: linear-gradient(135deg, #007bff, #0052cc);
+}
+.modal-confirm .btn-ok:hover {
+  background: linear-gradient(135deg, #0052cc, #003087);
   color: #ffffff;
 }
 
-.btn-ok:hover {
-  background: linear-gradient(135deg, #0052cc, #007bff);
-  transform: translateY(-2px);
-}
-
+/* Nút Cancel */
 .btn-cancel {
   background: #e9ecef;
   color: #000000;
 }
-
 .btn-cancel:hover {
   background: #dee2e6;
   transform: translateY(-2px);
 }
 
+/* Nút Confirm */
 .btn-confirm {
-  background: linear-gradient(135deg, #dc3545, #c82333);
+  background: linear-gradient(135deg, #007bff, #0052cc);
   color: #ffffff;
 }
-
 .btn-confirm:hover {
-  background: linear-gradient(135deg, #c82333, #b21f2d);
-  color: #ffffff;
+  background: linear-gradient(135deg, #0052cc, #003087);
   transform: translateY(-2px);
+  color: #ffffff;
 }
 
 /* Modal Animation */

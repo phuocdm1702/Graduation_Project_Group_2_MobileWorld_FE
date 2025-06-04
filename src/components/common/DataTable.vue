@@ -106,13 +106,13 @@ export default {
     },
     pageSizeOptions: {
       type: Array,
-      default: () => [5, 10, 25, 50]
+      default: () => [5, 10, 15]
     }
   },
   data() {
     return {
       currentPage: 1,
-      itemsPerPage: this.pageSizeOptions[1] || 5
+      itemsPerPage: 5
     };
   },
   computed: {
@@ -252,6 +252,10 @@ export default {
 
 .form-select:hover {
   background: rgba(0, 94, 226, 0.1) !important;
+}
+
+th, td {
+  text-align: center;
 }
 
 @media (max-width: 768px) {

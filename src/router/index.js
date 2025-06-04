@@ -4,7 +4,7 @@ import AuthLayout from '@/layouts/AuthLayout.vue';
 import Login from '@/pages/auth/Login.vue';
 import Home from '@/pages/home/Home.vue';
 import ProductList from '@/pages/products/san-pham/List.vue';
-import Sale from '@/pages/sales/sale.vue';
+import Sell from '@/pages/sells/Sell.vue';
 import { useAuthStore } from '@/store/modules/auth';
 
 
@@ -17,7 +17,7 @@ const routes = [
     children: [
       { path: '/home', component: Home },
       { path: '/products/san-pham/list', component: ProductList },
-      { path: '/sales/sale', component: Sale},
+      { path: '/sell', component: Sell},
     ],
   },
   {

@@ -1,4 +1,3 @@
-<!-- src/components/common/Footer.vue -->
 <template>
   <footer class="modern-footer">
     <!-- Main Footer Content -->
@@ -10,7 +9,7 @@
             <div class="footer-brand">
               <div class="brand-logo">
                 <div class="logo-placeholder">
-                  <img src="/images/logos/logo2.png" alt="">
+                  <img src="/images/logos/logo2.png" alt="Mobile World Logo">
                 </div>
                 <h4 class="brand-name">Mobile World</h4>
               </div>
@@ -21,8 +20,7 @@
               <div class="contact-info">
                 <div class="contact-item">
                   <i class="contact-icon">📍</i>
-                  <span>Tòa nhà FPT Polytechnic, 13 phố Trịnh Văn Bô,
-                  phường Phương Canh, quận Nam Từ Liêm, TP Hà Nội</span>
+                  <span>Tòa nhà FPT Polytechnic, 13 phố Trịnh Văn Bô, phường Phương Canh, quận Nam Từ Liêm, TP Hà Nội</span>
                 </div>
                 <div class="contact-item">
                   <i class="contact-icon">📞</i>
@@ -88,19 +86,19 @@
                 </p>
                 <div class="team-avatars">
                   <div class="avatar-item" title="Frontend Developer">
-                    <img src="/images/avatars/lePhuc2.jfif" alt="">
+                    <img src="/images/avatars/lePhuc2.jfif" alt="Frontend Developer">
                   </div>
                   <div class="avatar-item" title="Backend Developer">
-                     <img src="/images/avatars/phuoc.jpg" alt="">
+                    <img src="/images/avatars/phuoc.jpg" alt="Backend Developer">
                   </div>
                   <div class="avatar-item" title="Frontend Developer">
-                     <img src="/images/avatars/khoa.jpg" alt="">
+                    <img src="/images/avatars/khoa.jpg" alt="Frontend Developer">
                   </div>
                   <div class="avatar-item" title="Backend Developer">
-                     <img src="/images/avatars/minh.jpg" alt="">
+                    <img src="/images/avatars/minh.jpg" alt="Backend Developer">
                   </div>
                   <div class="avatar-item" title="Backend Developer">
-                     <img src="/images/avatars/huan1.jpg" alt="">
+                    <img src="/images/avatars/huan1.jpg" alt="Backend Developer">
                   </div>
                 </div>
                 <div class="social-links">
@@ -151,10 +149,12 @@
   border-image: linear-gradient(135deg, #002962 0%, #0052cc 100%) 1;
   border-image-slice: 1;
   margin-top: auto;
+  transition: all 0.3s ease; /* Smooth transition for layout changes */
 }
 
 .footer-main {
-  padding: 60px 0 40px;
+  padding: 4vw 0 3vw; /* Use vw for fluid padding */
+  transition: padding 0.3s ease;
 }
 
 .footer-brand {
@@ -164,73 +164,74 @@
 .brand-logo {
   display: flex;
   align-items: center;
-  gap: 15px;
-  margin-bottom: 20px;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap; /* Allow wrapping for smaller screens */
+  transition: flex-direction 0.3s ease;
 }
 
 .logo-placeholder {
-  width: 50px;
-  height: 50px;
+  width: clamp(40px, 5vw, 50px); /* Fluid size */
+  height: clamp(40px, 5vw, 50px);
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .logo-placeholder img {
-    width: 50px;
-  height: 50px;
-}
-
-.logo-text {
-  color: white;
-  font-weight: bold;
-  font-size: 18px;
+  width: 100%;
+  height: 100%;
+  object-fit: contain; /* Prevent distortion */
 }
 
 .brand-name {
   color: #2c3e50;
   font-weight: 700;
-  font-size: 1.5rem;
+  font-size: clamp(1.2rem, 2.5vw, 1.5rem); /* Fluid font size */
   margin: 0;
+  transition: font-size 0.3s ease;
 }
 
 .brand-description {
   color: #6c757d;
   line-height: 1.6;
-  margin-bottom: 25px;
-  font-size: 0.95rem;
+  margin-bottom: 1.5rem;
+  font-size: clamp(0.85rem, 1.5vw, 0.95rem);
 }
 
 .contact-info {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 0.75rem;
 }
 
 .contact-item {
   display: flex;
   align-items: flex-start;
-  gap: 10px;
+  gap: 0.625rem;
   color: #495057;
-  font-size: 0.9rem;
+  font-size: clamp(0.8rem, 1.5vw, 0.9rem);
+  flex-wrap: wrap; /* Prevent text overflow */
 }
 
 .contact-icon {
-  font-size: 16px;
-  margin-top: 2px;
+  font-size: 1rem;
+  margin-top: 0.125rem;
 }
 
 .footer-section {
   height: 100%;
+  text-align: left;
+  transition: text-align 0.3s ease;
 }
 
 .section-title {
   color: #2c3e50;
   font-weight: 600;
-  font-size: 1.1rem;
-  margin-bottom: 25px;
+  font-size: clamp(1rem, 2vw, 1.1rem);
+  margin-bottom: 1.5rem;
   position: relative;
-  padding-bottom: 10px;
+  padding-bottom: 0.625rem;
 }
 
 .section-title::after {
@@ -242,6 +243,7 @@
   height: 2px;
   background: linear-gradient(135deg, #007bff, #0056b3);
   border-radius: 1px;
+  transition: left 0.3s ease, transform 0.3s ease;
 }
 
 .footer-links {
@@ -251,26 +253,26 @@
 }
 
 .footer-links li {
-  margin-bottom: 12px;
+  margin-bottom: 0.75rem;
 }
 
 .footer-links a {
   color: #6c757d;
   text-decoration: none;
-  font-size: 0.9rem;
+  font-size: clamp(0.8rem, 1.5vw, 0.9rem);
   transition: all 0.3s ease;
   position: relative;
 }
 
 .footer-links a:hover {
   color: #005aba;
-  padding-left: 8px;
+  padding-left: 0.5rem;
 }
 
 .footer-links a::before {
   content: '';
   position: absolute;
-  left: -8px;
+  left: -0.5rem;
   top: 50%;
   transform: translateY(-50%);
   width: 4px;
@@ -288,25 +290,26 @@
 .team-info {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 1.25rem;
 }
 
 .team-description {
   color: #6c757d;
-  font-size: 0.9rem;
+  font-size: clamp(0.8rem, 1.5vw, 0.9rem);
   margin: 0;
   line-height: 1.5;
 }
 
 .team-avatars {
   display: flex;
-  width: max-content;
-  gap: 8px;
+  flex-wrap: wrap; /* Allow avatars to wrap */
+  gap: 0.5rem;
+  justify-content: flex-start;
 }
 
 .avatar-item {
-  width: 45px;
-  height: 45px;
+  width: clamp(35px, 4vw, 45px);
+  height: clamp(35px, 4vw, 45px);
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -350,7 +353,6 @@
   border-radius: 50%;
   opacity: 0;
   transition: opacity 0.3s ease;
-  pointer-events: none;
 }
 
 .avatar-item:hover::after {
@@ -359,16 +361,13 @@
 
 .social-links {
   display: flex;
-  gap: 12px;
-}
-
-.social-links a {
-  color: #005aba;
+  gap: 0.75rem;
+  flex-wrap: wrap;
 }
 
 .social-link {
-  width: 36px;
-  height: 36px;
+  width: clamp(30px, 3vw, 36px);
+  height: clamp(30px, 3vw, 36px);
   background: #fff;
   border: 2px solid #dee2e6;
   border-radius: 8px;
@@ -376,7 +375,7 @@
   align-items: center;
   justify-content: center;
   text-decoration: none;
-  font-size: 16px;
+  font-size: clamp(0.8rem, 1.5vw, 1rem);
   transition: all 0.3s ease;
 }
 
@@ -391,26 +390,30 @@
 .footer-bottom {
   background: #fff;
   border-top: 1px solid #dee2e6;
-  padding: 20px 0;
+  padding: 1.5vw 0;
+  transition: padding 0.3s ease;
 }
 
 .copyright-text {
   color: #6c757d;
-  font-size: 0.9rem;
+  font-size: clamp(0.8rem, 1.5vw, 0.9rem);
   margin: 0;
+  transition: text-align 0.3s ease;
 }
 
 .footer-bottom-links {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 15px;
+  gap: 0.9375rem;
+  flex-wrap: wrap;
+  transition: justify-content 0.3s ease;
 }
 
 .footer-bottom-links a {
   color: #6c757d;
   text-decoration: none;
-  font-size: 0.9rem;
+  font-size: clamp(0.8rem, 1.5vw, 0.9rem);
   transition: color 0.3s ease;
 }
 
@@ -425,7 +428,7 @@
 /* Responsive Design */
 @media (max-width: 992px) {
   .footer-main {
-    padding: 40px 0 30px;
+    padding: 3vw 0 2vw;
   }
   
   .brand-logo {
@@ -435,7 +438,7 @@
   
   .footer-section {
     text-align: center;
-    margin-bottom: 30px;
+    margin-bottom: 1.5rem;
   }
   
   .section-title::after {
@@ -446,21 +449,21 @@
 
 @media (max-width: 768px) {
   .footer-main {
-    padding: 30px 0 20px;
+    padding: 2.5vw 0 1.5vw;
   }
   
   .brand-logo {
     flex-direction: column;
-    gap: 10px;
+    gap: 0.625rem;
   }
   
   .logo-placeholder {
-    width: 50px;
-    height: 50px;
+    width: clamp(35px, 4vw, 45px);
+    height: clamp(35px, 4vw, 45px);
   }
   
   .brand-name {
-    font-size: 1.3rem;
+    font-size: clamp(1.1rem, 2vw, 1.3rem);
   }
   
   .team-avatars {
@@ -473,7 +476,7 @@
   
   .footer-bottom-links {
     justify-content: center;
-    margin-top: 15px;
+    margin-top: 0.9375rem;
   }
   
   .copyright-text {
@@ -483,30 +486,37 @@
 
 @media (max-width: 576px) {
   .footer-main {
-    padding: 25px 0 15px;
+    padding: 2vw 0 1vw;
   }
   
   .contact-item {
-    font-size: 0.85rem;
+    font-size: clamp(0.75rem, 1.5vw, 0.85rem);
   }
   
   .footer-links a {
-    font-size: 0.85rem;
+    font-size: clamp(0.75rem, 1.5vw, 0.85rem);
   }
   
   .section-title {
-    font-size: 1rem;
+    font-size: clamp(0.9rem, 1.8vw, 1rem);
   }
   
   .avatar-item {
-    width: 38px;
-    height: 38px;
+    width: clamp(30px, 3.5vw, 38px);
+    height: clamp(30px, 3.5vw, 38px);
   }
   
   .social-link {
-    width: 32px;
-    height: 32px;
-    font-size: 14px;
+    width: clamp(28px, 3vw, 32px);
+    height: clamp(28px, 3vw, 32px);
+    font-size: clamp(0.75rem, 1.5vw, 0.875rem);
+  }
+}
+
+/* Smooth transitions for prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition-duration: 0.01ms !important;
   }
 }
 </style>
