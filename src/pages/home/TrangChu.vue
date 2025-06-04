@@ -202,7 +202,7 @@
 
 <script>
 export default {
-  name: 'Home',
+  name: 'TrangChu',
   data() {
     return {
       username: 'Admin',

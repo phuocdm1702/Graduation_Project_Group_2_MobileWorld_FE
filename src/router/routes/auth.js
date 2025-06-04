@@ -30,7 +30,7 @@ export const useAuthStore = defineStore('auth', {
         uiStore.openSidebar();
 
         // Điều hướng đến home
-        router.push('/home');
+        router.push('/trangChu');
       } else {
         throw new Error('Tài khoản hoặc mật khẩu không đúng');
       }

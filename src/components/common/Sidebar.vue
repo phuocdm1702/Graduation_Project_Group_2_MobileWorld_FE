@@ -231,7 +231,7 @@ const notificationOnCancel = ref(() => {});
 const isLoading = ref(false);
 
 const menuItems = ref([
-  { name: 'Trang chủ', path: '/home', icon: HomeIcon },
+  { name: 'Trang chủ', path: '/trangChu', icon: HomeIcon },
   { name: 'Bán Hàng', path: '/banHang', icon: ShoppingCartIcon },
   { name: 'Hóa đơn', path: '/orders/hoa-don/list', icon: DocumentTextIcon },
   { 

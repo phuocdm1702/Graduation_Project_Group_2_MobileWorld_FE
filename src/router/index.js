@@ -2,7 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router';
 import AdminLayout from '@/layouts/AdminLayout.vue';
 import AuthLayout from '@/layouts/AuthLayout.vue';
 import Login from '@/pages/auth/Login.vue';
-import Home from '@/pages/home/Home.vue';
+import TrangChu from '@/pages/home/TrangChu.vue';
 import ProductList from '@/pages/products/san-pham/List.vue';
 import banHang from '@/pages/sells/banHang.vue';
 import { useAuthStore } from '@/store/modules/auth';
@@ -11,11 +11,11 @@ import { useAuthStore } from '@/store/modules/auth';
 const routes = [
   {
     path: '/',
-    redirect: '/home',
+    redirect: '/trangChu',
     component: AdminLayout,
     meta: { requiresAuth: true },
     children: [
-      { path: '/home', component: Home },
+      { path: '/trangChu', component: TrangChu },
       { path: '/products/san-pham/list', component: ProductList },
       { path: '/banHang', component: banHang},
     ],
