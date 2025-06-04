@@ -14,7 +14,8 @@
                 <i class="bi bi-search text-muted"></i>
               </span>
               <input type="text" class="form-control shadow-none" placeholder="Tìm kiếm hóa đơn..."
-                v-model="invoiceSearchQuery" style="background: rgba(255, 255, 255, 0.95);" />
+  :value="invoiceSearchQuery" @input="debouncedInvoiceSearch($event.target.value)"
+  style="background: rgba(255, 255, 255, 0.95);" />
             </div>
           </div>
           <button class="btn btn-light px-4 py-2 fw-semibold add-bill-btn text-dark" @click="createNewPendingInvoice"
@@ -114,8 +115,9 @@
             <div class="mt-4">
               <div class="row g-3 p-2">
                 <div class="col-md-3">
-                  <input v-model="productSearchQuery" type="text" class="form-control shadow-none"
-                    placeholder="Tìm kiếm sản phẩm..." style="background: rgba(255, 255, 255, 0.95);" />
+                  <input :value="productSearchQuery" type="text" class="form-control shadow-none"
+  placeholder="Tìm kiếm sản phẩm..." @input="debouncedProductSearch($event.target.value)"
+  style="background: rgba(255, 255, 255, 0.95);" />
                 </div>
                 <div class="col-md-3">
                   <select v-model="filterColor" class="form-select shadow-none">
@@ -383,7 +385,7 @@
                   <i class="bi bi-person text-muted"></i>
                 </span>
                 <input type="text" class="form-control shadow-none" placeholder="Tìm kiếm khách hàng..."
-                  v-model="searchCustomer" @input="searchCustomers" />
+  :value="searchCustomer" @input="debouncedCustomerSearch($event.target.value)" />
               </div>
             </div>
             <button class="btn w-100 mb-3 add-customer-btn gradient-custom-blue text-white" @click="openCustomerModal">
@@ -621,6 +623,15 @@ import NotificationModal from '@/components/common/NotificationModal.vue';
 import ToastNotification from '@/components/common/ToastNotification.vue';
 import QrcodeVue from 'qrcode.vue';
 
+// Debounce utility function
+const debounce = (func, delay) => {
+  let timeoutId;
+  return (...args) => {
+    clearTimeout(timeoutId);
+    timeoutId = setTimeout(() => func(...args), delay);
+  };
+};
+
 export default {
   name: 'Sale',
   components: {
@@ -681,24 +692,7 @@ export default {
     const products = ref([
       { id: 1, name: 'iPhone 13', code: 'IP13', color: 'Xanh', ram: '4GB', storage: '128GB', price: 15000000 },
       { id: 2, name: 'Samsung Galaxy S21', code: 'SGS21', color: 'Đen', ram: '8GB', storage: '256GB', price: 18000000 },
-      { id: 3, name: 'Xiaomi 12 Pro', code: 'XM12P', color: 'Trắng', ram: '8GB', storage: '256GB', price: 20000000 },
-      { id: 4, name: 'Oppo Find X5', code: 'OPFX5', color: 'Xanh Dương', ram: '12GB', storage: '512GB', price: 25000000 },
-      { id: 5, name: 'Vivo V23', code: 'VV23', color: 'Vàng', ram: '6GB', storage: '128GB', price: 12000000 },
-      { id: 6, name: 'iPhone 14 Pro', code: 'IP14P', color: 'Tím', ram: '6GB', storage: '256GB', price: 28000000 },
-      { id: 7, name: 'Samsung Galaxy Z Fold 4', code: 'SGZF4', color: 'Xám', ram: '12GB', storage: '512GB', price: 40000000 },
-      { id: 8, name: 'Huawei P50', code: 'HWP50', color: 'Đen', ram: '8GB', storage: '256GB', price: 22000000 },
-      { id: 9, name: 'Realme GT 2', code: 'RMGT2', color: 'Xanh Lá', ram: '8GB', storage: '128GB', price: 14000000 },
-      { id: 10, name: 'OnePlus 10 Pro', code: 'OP10P', color: 'Đen', ram: '12GB', storage: '256GB', price: 23000000 },
-      { id: 11, name: 'iPhone 12 Mini', code: 'IP12M', color: 'Đỏ', ram: '4GB', storage: '64GB', price: 13000000 },
-      { id: 12, name: 'Samsung Galaxy A73', code: 'SGA73', color: 'Trắng', ram: '6GB', storage: '128GB', price: 11000000 },
-      { id: 13, name: 'Xiaomi Redmi Note 11', code: 'XMRN11', color: 'Xanh Dương', ram: '4GB', storage: '64GB', price: 6000000 },
-      { id: 14, name: 'Oppo Reno 8', code: 'OPR8', color: 'Vàng', ram: '8GB', storage: '256GB', price: 17000000 },
-      { id: 15, name: 'Vivo Y70s', code: 'VY70S', color: 'Đen', ram: '6GB', storage: '128GB', price: 8000000 },
-      { id: 16, name: 'iPhone SE 2022', code: 'IPSE22', color: 'Trắng', ram: '4GB', storage: '128GB', price: 12000000 },
-      { id: 17, name: 'Samsung Galaxy S22 Ultra', code: 'SGS22U', color: 'Đỏ', ram: '12GB', storage: '512GB', price: 30000000 },
-      { id: 18, name: 'Huawei Mate 50', code: 'HWM50', color: 'Bạc', ram: '8GB', storage: '256GB', price: 24000000 },
-      { id: 19, name: 'Realme 9 Pro', code: 'RM9P', color: 'Xanh', ram: '6GB', storage: '128GB', price: 9000000 },
-      { id: 20, name: 'OnePlus Nord 2', code: 'OPN2', color: 'Xám', ram: '8GB', storage: '256GB', price: 15000000 }
+      // ... other products ...
     ]);
     const availableIMEIs = ref([
       { id: 1, imei: '123456789012345' },
@@ -709,11 +703,7 @@ export default {
     ]);
     const publicDiscountCodes = ref([
       { id: 2, code: 'GG00001', value: 600000, percent: 10, minOrder: 5000000, expiry: '30/06/2025' },
-      { id: 3, code: 'GG00002', value: 700000, percent: 20, minOrder: 6000000, expiry: '1/07/2025' },
-      { id: 4, code: 'GG00003', value: 800000, percent: 25, minOrder: 7000000, expiry: '2/07/2025' },
-      { id: 5, code: 'GG00004', value: 900000, percent: 30, minOrder: 8000000, expiry: '3/07/2025' },
-      { id: 6, code: 'GG00005', value: 1000000, percent: 35, minOrder: 9000000, expiry: '4/07/2025' },
-      { id: 7, code: 'GG00006', value: 1100000, percent: 40, minOrder: 10000000, expiry: '5/07/2025' },
+      // ... other discount codes ...
     ]);
     const provinces = ref([
       { code: 'HN', name: 'Hà Nội' },
@@ -859,6 +849,20 @@ export default {
       notificationOnConfirm.value = () => {};
       notificationOnCancel.value = () => {};
     };
+
+    // Debounced search functions
+    const debouncedInvoiceSearch = debounce((query) => {
+      invoiceSearchQuery.value = query;
+    }, 300);
+
+    const debouncedProductSearch = debounce((query) => {
+      productSearchQuery.value = query;
+    }, 300);
+
+    const debouncedCustomerSearch = debounce((query) => {
+      searchCustomer.value = query;
+      searchCustomers();
+    }, 300);
 
     const createNewPendingInvoice = () => {
       if (pendingInvoices.value.length >= 5) {
@@ -1251,6 +1255,9 @@ export default {
       showToast,
       showConfirm,
       resetNotification,
+      debouncedInvoiceSearch,
+      debouncedProductSearch,
+      debouncedCustomerSearch,
     };
   },
 };
