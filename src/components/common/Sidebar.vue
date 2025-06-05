@@ -233,7 +233,7 @@ const isLoading = ref(false);
 const menuItems = ref([
   { name: 'Trang chủ', path: '/trangChu', icon: HomeIcon },
   { name: 'Bán Hàng', path: '/banHang', icon: ShoppingCartIcon },
-  { name: 'Hóa đơn', path: '/orders/hoa-don/list', icon: DocumentTextIcon },
+  { name: 'Hóa đơn', path: '/hoaDon', icon: DocumentTextIcon },
   { 
     name: 'Sản phẩm', 
     path: '/products/san-pham', 

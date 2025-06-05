@@ -1,9 +1,7 @@
 <template>
   <div class="container-fluid py-4">
     <div class="card border-0 shadow-sm datatable-card" style="background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px);">
-      <div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center flex-wrap gap-3">
-        <h5 class="mb-0 fw-bold text-dark">{{ title }}</h5>
-      </div>
+       <h5 class="mb-0 fw-bold text-dark">{{ title }}</h5>
 
       <div class="card-body p-0">
         <div class="table-responsive">
@@ -256,6 +254,10 @@ export default {
 
 th, td {
   text-align: center;
+}
+
+th {
+  font-size: 1.1rem;
 }
 
 @media (max-width: 768px) {

@@ -1,11 +1,8 @@
 <template>
-  <div class="header-card relative bg-white to-gray-50 dark:from-gray-800 dark:to-gray-900 rounded-2xl shadow-sm overflow-hidden transition-all duration-300 hover:shadow-2xl hover:-translate-y-1">
-    <div class="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-purple-500/10 opacity-0 hover:opacity-100 transition-opacity duration-300"></div>
-    <div class="relative card-body p-6">
+  <div class="header-card">
       <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <h1 class="header-title sm:text-2xl font-extrabold tracking-tight" :style="{ color: titleColor }">{{ title }}</h1>
       </div>
-    </div>
   </div>
 </template>
 
@@ -43,12 +40,14 @@ export default {
   margin-bottom: 1rem;
   padding: 0.5rem 1rem;
   border-radius: 0.5rem;
+  border: 1px solid rgba(0, 0, 0, 0.115);
+  box-shadow: 0 .125rem .25rem rgba(0, 0, 0, 0.075) !important;
   display: flex;
-  align-items: center;
+  background-color: rgba(255, 255, 255, 0.95);
 }
 
 h1 {
-  font-size: 1.5rem;
+  font-size: 1.7rem;
 }
 
 @keyframes slideIn {

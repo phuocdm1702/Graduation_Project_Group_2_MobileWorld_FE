@@ -4,6 +4,7 @@ import AuthLayout from '@/layouts/AuthLayout.vue';
 import Login from '@/pages/auth/Login.vue';
 import TrangChu from '@/pages/home/TrangChu.vue';
 import ProductList from '@/pages/products/san-pham/List.vue';
+import HoaDon from '@/pages/bills/HoaDon.vue';
 import banHang from '@/pages/sells/banHang.vue';
 import { useAuthStore } from '@/store/modules/auth';
 
@@ -18,6 +19,7 @@ const routes = [
       { path: '/trangChu', component: TrangChu },
       { path: '/products/san-pham/list', component: ProductList },
       { path: '/banHang', component: banHang},
+      { path: '/hoaDon', component: HoaDon },
     ],
   },
   {
