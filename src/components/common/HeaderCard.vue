@@ -20,7 +20,7 @@ export default {
     },
     titleColor: {
       type: String,
-      default: '#1e3a8a',
+      default: '#15803d',
     },
     badgeClass: {
       type: String,

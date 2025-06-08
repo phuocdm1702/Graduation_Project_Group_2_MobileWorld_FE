@@ -20,7 +20,7 @@ export default {
     },
     color: {
       type: String,
-      default: '#002962',
+      default: '#15803d',
     },
   },
 };

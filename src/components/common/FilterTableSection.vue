@@ -32,26 +32,38 @@ defineProps({
 <style scoped>
 .section {
   animation: fadeInUp 0.4s ease-out 0.2s both;
+  display: flex;
+  flex-direction: column;
 }
 
 .section-card {
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(10px);
   border-radius: 12px;
-  border: 1px solid rgba(0, 0, 0, 0.175);
   box-shadow: 0 .125rem .25rem rgba(0, 0, 0, 0.075) !important;
-  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+
 }
 
 .section-header {
   padding: 1.25rem 1.5rem;
   background: linear-gradient(135deg, #f8f9fa, #e9ecef);
-  border-bottom: 1px solid rgba(0, 94, 226, 0.1);
+  border-bottom: 1px solid rgba(52, 211, 153, 0.1);;
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
+  flex-shrink: 0;
+}
+
+.section-body {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
 }
 
 .section-title {
   margin: 0;
-  color: #002962;
   font-weight: 600;
   display: flex;
   align-items: center;
@@ -63,6 +75,7 @@ defineProps({
     opacity: 0;
     transform: translateY(15px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);

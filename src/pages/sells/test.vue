@@ -305,9 +305,9 @@
       </div>
 
       <!-- Order Info Section -->
-      <div class="col-lg-4 d-flex flex-column">
-        <FilterTableSection title="Thông tin đơn" icon="bi bi-info-circle" class="flex-fill">
-          <div class="order-card h-100">
+      <div class="col-lg-4">
+        <FilterTableSection title="Thông tin đơn" icon="bi bi-info-circle" style="height: 100%;">
+          <div class="order-card">
             <div class="form-check form-switch m-3 d-flex justify-content-end gap-2">
               <input
                 class="form-check-input"
@@ -318,276 +318,263 @@
               />
               <label class="form-check-label text-muted">Bán giao hàng</label>
             </div>
-            <div class="card-body p-3 pt-0 d-flex flex-column">
-              <!-- Hiển thị placeholder khi giỏ hàng trống -->
-              <div v-if="cartItems.length === 0" class="empty-cart-message text-center py-5">
-                <div
-                  class="empty-icon-container rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center gradient-custom-teal"
-                  style="width: 60px; height: 60px"
-                >
-                  <i class="bi bi-info-circle text-white" style="font-size: 2rem"></i>
-                </div>
-                <p class="text-muted mb-0 fw-medium">Chưa có sản phẩm trong đơn hàng</p>
-              </div>
-              <!-- Nội dung thông tin đơn khi có sản phẩm -->
-              <div v-else class="d-flex flex-column flex-grow-1">
-                <div v-if="isDelivery" class="mb-5">
-                  <h6 class="fw-bold text-dark mb-2" style="font-size: 1.3rem; letter-spacing: 0.5px;">
-                    Thông tin người nhận
-                  </h6>
-                  <div class="receiver-form bg-white p-3 rounded-3 shadow-sm animate__animated animate__fadeIn"
-                       style="border: 1px solid rgba(52, 211, 153, 0.1); backdrop-filter: blur(5px);">
-                    <div class="row g-4">
-                      <div class="col-md-6">
-                        <label class="form-label fw-medium text-dark mb-2" style="font-size: 0.95rem;">
-                          Tên người nhận <span class="text-danger">*</span>
-                        </label>
-                        <div class="input-group">
-                          <span class="input-group-text bg-light border-end-0">
-                            <i class="bi bi-person text-teal"></i>
-                          </span>
-                          <input
-                            v-model="receiver.name"
-                            type="text"
-                            class="form-control shadow-none border-start-0"
-                            placeholder="Nhập tên người nhận"
-                            :disabled="!isReceiverEditable"
-                            style="border-radius: 0 8px 8px 0; transition: all 0.3s ease;"
-                            @focus="this.classList.add('border-teal')"
-                            @blur="this.classList.remove('border-teal')"
-                          />
-                        </div>
+            <div class="card-body p-3 pt-0">
+              <div v-if="isDelivery" class="mb-5">
+                <h6 class="fw-bold text-dark mb-2" style="font-size: 1.3rem; letter-spacing: 0.5px;">
+                 Thông tin người nhận
+                </h6>
+                <div class="receiver-form bg-white p-3 rounded-3 shadow-sm animate__animated animate__fadeIn"
+                     style="border: 1px solid rgba(52, 211, 153, 0.1); backdrop-filter: blur(5px);">
+                  <div class="row g-4">
+                    <div class="col-md-6">
+                      <label class="form-label fw-medium text-dark mb-2" style="font-size: 0.95rem;">
+                        Tên người nhận <span class="text-danger">*</span>
+                      </label>
+                      <div class="input-group">
+                        <span class="input-group-text bg-light border-end-0">
+                          <i class="bi bi-person text-teal"></i>
+                        </span>
+                        <input
+                          v-model="receiver.name"
+                          type="text"
+                          class="form-control shadow-none border-start-0"
+                          placeholder="Nhập tên người nhận"
+                          :disabled="!isReceiverEditable"
+                          style="border-radius: 0 8px 8px 0; transition: all 0.3s ease;"
+                          @focus="this.classList.add('border-teal')"
+                          @blur="this.classList.remove('border-teal')"
+                        />
                       </div>
-                      <div class="col-md-6">
-                        <label class="form-label fw-medium text-dark mb-2" style="font-size: 0.95rem;">
-                          Số điện thoại <span class="text-danger">*</span>
-                        </label>
-                        <div class="input-group">
-                          <span class="input-group-text bg-light border-end-0">
-                            <i class="bi bi-telephone text-teal"></i>
-                          </span>
-                          <input
-                            v-model="receiver.phone"
-                            type="tel"
-                            class="form-control shadow-none border-start-0"
-                            placeholder="Nhập số điện thoại"
-                            :disabled="!isReceiverEditable"
-                            style="border-radius: 0 8px 8px 0; transition: all 0.3s ease;"
-                            @focus="this.classList.add('border-teal')"
-                            @blur="this.classList.remove('border-teal')"
-                          />
-                        </div>
+                    </div>
+                    <div class="col-md-6">
+                      <label class="form-label fw-medium text-dark mb-2" style="font-size: 0.95rem;">
+                        Số điện thoại <span class="text-danger">*</span>
+                      </label>
+                      <div class="input-group">
+                        <span class="input-group-text bg-light border-end-0">
+                          <i class="bi bi-telephone text-teal"></i>
+                        </span>
+                        <input
+                          v-model="receiver.phone"
+                          type="tel"
+                          class="form-control shadow-none border-start-0"
+                          placeholder="Nhập số điện thoại"
+                          :disabled="!isReceiverEditable"
+                          style="border-radius: 0 8px 8px 0; transition: all 0.3s ease;"
+                          @focus="this.classList.add('border-teal')"
+                          @blur="this.classList.remove('border-teal')"
+                        />
                       </div>
-                      <div class="col-md-6">
-                        <label class="form-label fw-medium text-dark mb-2" style="font-size: 0.95rem;">
-                          Tỉnh/Thành phố <span class="text-danger">*</span>
-                        </label>
-                        <div class="input-group">
-                          <span class="input-group-text bg-light border-end-0">
-                            <i class="bi bi-geo-alt text-teal"></i>
-                          </span>
-                          <select
-                            v-model="receiver.city"
-                            class="form-select shadow-none border-start-0"
-                            :disabled="!isReceiverEditable"
-                            @change="handleReceiverProvinceChange"
-                            style="border-radius: 0 8px 8px 0; transition: all 0.3s ease;"
-                          >
-                            <option value="" disabled>Chọn tỉnh/thành phố</option>
-                            <option v-for="province in provinces" :key="province.code" :value="province.name">
-                              {{ province.name }}
-                            </option>
-                          </select>
-                        </div>
-                      </div>
-                      <div class="col-md-6">
-                        <label class="form-label fw-medium text-dark mb-2" style="font-size: 0.95rem;">
-                          Quận/Huyện <span class="text-danger">*</span>
-                        </label>
-                        <div class="input-group">
-                          <span class="input-group-text bg-light border-end-0">
-                            <i class="bi bi-geo text-teal"></i>
-                          </span>
-                          <select
-                            v-model="receiver.district"
-                            class="form-select shadow-none border-start-0"
-                            :disabled="!isReceiverEditable || !receiver.city"
-                            @change="handleReceiverDistrictChange"
-                            style="border-radius: 0 8px 8px 0; transition: all 0.3s ease;"
-                          >
-                            <option value="" disabled>Chọn quận/huyện</option>
-                            <option v-for="district in districts" :key="district.code" :value="district.name">
-                              {{ district.name }}
-                            </option>
-                          </select>
-                        </div>
-                      </div>
-                      <div class="col-md-6">
-                        <label class="form-label fw-medium text-dark mb-2" style="font-size: 0.95rem;">
-                          Phường/Xã <span class="text-danger">*</span>
-                        </label>
-                        <div class="input-group">
-                          <span class="input-group-text bg-light border-end-0">
-                            <i class="bi bi-geo-fill text-teal"></i>
-                          </span>
-                          <select
-                            v-model="receiver.ward"
-                            class="form-select shadow-none border-start-0"
-                            :disabled="!isReceiverEditable || !receiver.district"
-                            style="border-radius: 0 8px 8px 0; transition: all 0.3s ease;"
-                          >
-                            <option value="" disabled>Chọn phường/xã</option>
-                            <option v-for="ward in wards" :key="ward.code" :value="ward.name">
-                              {{ ward.name }}
-                            </option>
-                          </select>
-                        </div>
-                      </div>
-                      <div class="col-12">
-                        <label class="form-label fw-medium text-dark mb-2" style="font-size: 0.95rem;">
-                          Địa chỉ cụ thể <span class="text-danger">*</span>
-                        </label>
-                        <div class="input-group">
-                          <span class="input-group-text bg-light border-end-0">
-                            <i class="bi bi-house-door text-teal"></i>
-                          </span>
-                          <input
-                            v-model="receiver.address"
-                            type="text"
-                            class="form-control shadow-none border-start-0"
-                            placeholder="Nhập địa chỉ cụ thể (số nhà, tên đường,...)"
-                            :disabled="!isReceiverEditable"
-                            style="border-radius: 0 8px 8px 0; transition: all 0.3s ease;"
-                            @focus="this.classList.add('border-teal')"
-                            @blur="this.classList.remove('border-teal')"
-                          />
-                        </div>
-                      </div>
-                      <div class="mt-4 text-end" v-if="!isReceiverEditable">
-                        <button
-                          class="btn btn-outline-teal btn-sm px-4 py-2"
-                          @click="isReceiverEditable = true"
-                          style="border-radius: 8px; transition: all 0.3s ease;"
+                    </div>
+                    <div class="col-md-6">
+                      <label class="form-label fw-medium text-dark mb-2" style="font-size: 0.95rem;">
+                        Tỉnh/Thành phố <span class="text-danger">*</span>
+                      </label>
+                      <div class="input-group">
+                        <span class="input-group-text bg-light border-end-0">
+                          <i class="bi bi-geo-alt text-teal"></i>
+                        </span>
+                        <select
+                          v-model="receiver.city"
+                          class="form-select shadow-none border-start-0"
+                          :disabled="!isReceiverEditable"
+                          @change="handleReceiverProvinceChange"
+                          style="border-radius: 0 8px 8px 0; transition: all 0.3s ease;"
                         >
-                          <i class="bi bi-pencil-square me-2"></i>Chỉnh sửa
-                        </button>
+                          <option value="" disabled>Chọn tỉnh/thành phố</option>
+                          <option v-for="province in provinces" :key="province.code" :value="province.name">
+                            {{ province.name }}
+                          </option>
+                        </select>
                       </div>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Voucher Section -->
-                <div class="voucher-section mb-5">
-                  <h6 class="fw-bold text-dark mb-2" style="font-size: 1.3rem; letter-spacing: 0.5px;">
-                    Mã Giảm Giá
-                  </h6>
-                  <div class="voucher-container bg-white p-3 rounded-3 shadow-sm animate__animated animate__fadeIn"
-                       style="border: 1px solid rgba(52, 211, 153, 0.1); backdrop-filter: blur(5px);">
-                    <button
-                      class="btn gradient-custom-teal text-white w-100 py-3 fw-medium btn-voucher"
-                      @click="showDiscountModal = true"
-                      style="border-radius: 10px; transition: all 0.3s ease; font-size: 1rem;"
-                      @mouseover="this.style.transform='scale(1.02)'"
-                      @mouseout="this.style.transform='scale(1)'"
-                    >
-                      Chọn mã giảm giá
-                    </button>
-                    <div class="price-info mt-4 p-3 rounded-2 bg-light shadow-sm animate__animated animate__fadeInUp"
-                         style="border-left: 4px solid #34d399;">
-                      <div class="d-flex justify-content-between align-items-center mb-2">
-                        <span class="fw-medium text-dark" style="font-size: 0.95rem;">Tổng tiền hàng:</span>
-                        <span class="fw-bold text-dark">{{ formatPrice(totalPrice) }}</span>
-                      </div>
-                      <div class="d-flex justify-content-between align-items-center mb-2">
-                        <span class="fw-medium text-dark" style="font-size: 0.95rem;">Giảm giá:</span>
-                        <span class="fw-bold text-danger">−{{ formatPrice(discount) }}</span>
-                      </div>
-                      <hr class="my-2" style="border-color: rgba(52, 211, 153, 0.2);">
-                      <div class="d-flex justify-content-between align-items-center">
-                        <span class="fw-bold text-dark" style="font-size: 1.1rem;">Tổng thanh toán:</span>
-                        <span class="fw-bold fs-4 text-success">{{ formatPrice(totalPrice - discount) }}</span>
-                      </div>
-                    </div>
-                    <div
-                      v-if="suggestAdditionalPurchase.message"
-                      class="suggestion-alert mt-3 p-3 rounded-2 animate__animated animate__bounceIn"
-                      style="background: linear-gradient(135deg, #fff3e0, #ffe8cc); border: 1px solid #ff9800;"
-                    >
-                      <p class="fw-medium text-dark mb-0" style="color: #e65100; font-size: 0.95rem;">
-                        <i class="bi bi-info-circle-fill me-2"></i>{{ suggestAdditionalPurchase.message }}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Payment Methods -->
-                <div>
-                  <h6 class="fw-semibold text-dark">Phương thức thanh toán</h6>
-                  <div class="d-flex flex-wrap gap-2 mb-3">
-                    <button
-                      @click="selectPayment('transfer')"
-                      class="btn px-4 py-2 select-btn"
-                      :class="{ 'gradient-custom-teal text-white': paymentMethod === 'transfer', border: paymentMethod !== 'transfer' }"
-                      style="border: 1px solid rgba(52, 211, 153, 0.2)"
-                    >
-                      Chuyển khoản
-                    </button>
-                    <button
-                      @click="selectPayment('cash')"
-                      class="btn px-4 py-2 select-btn"
-                      :class="{ 'gradient-custom-teal text-white': paymentMethod === 'cash', border: paymentMethod !== 'cash' }"
-                      style="border: 1px solid rgba(52, 211, 153, 0.2)"
-                    >
-                      Tiền mặt
-                    </button>
-                    <button
-                      @click="selectPayment('both')"
-                      class="btn px-4 py-2 select-btn"
-                      :class="{ 'gradient-custom-teal text-white': paymentMethod === 'both', border: paymentMethod !== 'both' }"
-                      style="border: 1px solid rgba(52, 211, 153, 0.2)"
-                    >
-                      Cả hai
-                    </button>
-                  </div>
-                  <div v-if="paymentMethod === 'both'" class="row g-3 mt-3">
-                    <div class="col-md-6">
-                      <label class="form-label fw-medium text-dark">Tiền chuyển khoản</label>
-                      <input
-                        v-model.number="tienChuyenKhoan"
-                        type="number"
-                        class="form-control shadow-none"
-                        placeholder="Nhập số tiền chuyển khoản"
-                        min="0"
-                      />
                     </div>
                     <div class="col-md-6">
-                      <label class="form-label fw-medium text-dark">Tiền mặt</label>
-                      <input
-                        v-model.number="tienMat"
-                        type="number"
-                        class="form-control shadow-none"
-                        placeholder="Nhập số tiền mặt"
-                        min="0"
-                      />
+                      <label class="form-label fw-medium text-dark mb-2" style="font-size: 0.95rem;">
+                        Quận/Huyện <span class="text-danger">*</span>
+                      </label>
+                      <div class="input-group">
+                        <span class="input-group-text bg-light border-end-0">
+                          <i class="bi bi-geo text-teal"></i>
+                        </span>
+                        <select
+                          v-model="receiver.district"
+                          class="form-select shadow-none border-start-0"
+                          :disabled="!isReceiverEditable || !receiver.city"
+                          @change="handleReceiverDistrictChange"
+                          style="border-radius: 0 8px 8px 0; transition: all 0.3s ease;"
+                        >
+                          <option value="" disabled>Chọn quận/huyện</option>
+                          <option v-for="district in districts" :key="district.code" :value="district.name">
+                            {{ district.name }}
+                          </option>
+                        </select>
+                      </div>
+                    </div>
+                    <div class="col-md-6">
+                      <label class="form-label fw-medium text-dark mb-2" style="font-size: 0.95rem;">
+                        Phường/Xã <span class="text-danger">*</span>
+                      </label>
+                      <div class="input-group">
+                        <span class="input-group-text bg-light border-end-0">
+                          <i class="bi bi-geo-fill text-teal"></i>
+                        </span>
+                        <select
+                          v-model="receiver.ward"
+                          class="form-select shadow-none border-start-0"
+                          :disabled="!isReceiverEditable || !receiver.district"
+                          style="border-radius: 0 8px 8px 0; transition: all 0.3s ease;"
+                        >
+                          <option value="" disabled>Chọn phường/xã</option>
+                          <option v-for="ward in wards" :key="ward.code" :value="ward.name">
+                            {{ ward.name }}
+                          </option>
+                        </select>
+                      </div>
+                    </div>
+                    <div class="col-12">
+                      <label class="form-label fw-medium text-dark mb-2" style="font-size: 0.95rem;">
+                        Địa chỉ cụ thể <span class="text-danger">*</span>
+                      </label>
+                      <div class="input-group">
+                        <span class="input-group-text bg-light border-end-0">
+                          <i class="bi bi-house-door text-teal"></i>
+                        </span>
+                        <input
+                          v-model="receiver.address"
+                          type="text"
+                          class="form-control shadow-none border-start-0"
+                          placeholder="Nhập địa chỉ cụ thể (số nhà, tên đường,...)"
+                          :disabled="!isReceiverEditable"
+                          style="border-radius: 0 8px 8px 0; transition: all 0.3s ease;"
+                          @focus="this.classList.add('border-teal')"
+                          @blur="this.classList.remove('border-teal')"
+                        />
+                      </div>
+                    </div>
+                    <div class="mt-4 text-end" v-if="!isReceiverEditable">
+                      <button
+                        class="btn btn-outline-teal btn-sm px-4 py-2"
+                        @click="isReceiverEditable = true"
+                        style="border-radius: 8px; transition: all 0.3s ease;"
+                      >
+                        <i class="bi bi-pencil-square me-2"></i>Chỉnh sửa
+                      </button>
                     </div>
                   </div>
-                  <div v-if="showQRCode" class="mt-3 text-center qr-code-container">
-                    <h6 class="fw-semibold text-dark">Quét mã QR để thanh toán</h6>
-                    <qrcode-vue :value="qrCodeValue" :size="200" level="H" />
-                    <p class="text-muted mt-2">Số tiền: {{ formatPrice(qrCodeAmount) }}</p>
-                  </div>
                 </div>
-
-                <!-- Pay Button -->
-                <button
-                  class="btn w-100 py-3 pay-btn gradient-custom-teal text-white mt-auto"
-                  @click="ThanhToan"
-                  :disabled="!activeInvoiceId || cartItems.length === 0 || isCreatingOrder"
-                >
-                  <i class="bi bi-credit-card me-2"></i>
-                  <span class="fw-semibold">Thanh toán</span>
-                </button>
               </div>
+
+              <!-- Voucher Section -->
+              <div class="voucher-section mb-5">
+                <h6 class="fw-bold text-dark mb-2" style="font-size: 1.3rem; letter-spacing: 0.5px;">
+                  Mã Giảm Giá
+                </h6>
+                <div class="voucher-container bg-white p-3 rounded-3 shadow-sm animate__animated animate__fadeIn"
+                     style="border: 1px solid rgba(52, 211, 153, 0.1); backdrop-filter: blur(5px);">
+                  <button
+                    class="btn gradient-custom-teal text-white w-100 py-3 fw-medium btn-voucher"
+                    @click="showDiscountModal = true"
+                    style="border-radius: 10px; transition: all 0.3s ease; font-size: 1rem;"
+                    @mouseover="this.style.transform='scale(1.02)'"
+                    @mouseout="this.style.transform='scale(1)'"
+                  >
+                    Chọn mã giảm giá
+                  </button>
+                  <div class="price-info mt-4 p-3 rounded-2 bg-light shadow-sm animate__animated animate__fadeInUp"
+                       style="border-left: 4px solid #34d399;">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                      <span class="fw-medium text-dark" style="font-size: 0.95rem;">Tổng tiền hàng:</span>
+                      <span class="fw-bold text-dark">{{ formatPrice(totalPrice) }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                      <span class="fw-medium text-dark" style="font-size: 0.95rem;">Giảm giá:</span>
+                      <span class="fw-bold text-danger">−{{ formatPrice(discount) }}</span>
+                    </div>
+                    <hr class="my-2" style="border-color: rgba(52, 211, 153, 0.2);">
+                    <div class="d-flex justify-content-between align-items-center">
+                      <span class="fw-bold text-dark" style="font-size: 1.1rem;">Tổng thanh toán:</span>
+                      <span class="fw-bold fs-4 text-success">{{ formatPrice(totalPrice - discount) }}</span>
+                    </div>
+                  </div>
+                  <div
+                    v-if="suggestAdditionalPurchase.message"
+                    class="suggestion-alert mt-3 p-3 rounded-2 animate__animated animate__bounceIn"
+                    style="background: linear-gradient(135deg, #fff3e0, #ffe8cc); border: 1px solid #ff9800;"
+                  >
+                    <p class="fw-medium text-dark mb-0" style="color: #e65100; font-size: 0.95rem;">
+                      <i class="bi bi-info-circle-fill me-2"></i>{{ suggestAdditionalPurchase.message }}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Payment Methods -->
+              <div>
+                <h6 class="fw-semibold text-dark">Phương thức thanh toán</h6>
+                <div class="d-flex flex-wrap gap-2 mb-3">
+                  <button
+                    @click="selectPayment('transfer')"
+                    class="btn px-4 py-2 select-btn"
+                    :class="{ 'gradient-custom-teal text-white': paymentMethod === 'transfer', border: paymentMethod !== 'transfer' }"
+                    style="border: 1px solid rgba(52, 211, 153, 0.2)"
+                  >
+                    Chuyển khoản
+                  </button>
+                  <button
+                    @click="selectPayment('cash')"
+                    class="btn px-4 py-2 select-btn"
+                    :class="{ 'gradient-custom-teal text-white': paymentMethod === 'cash', border: paymentMethod !== 'cash' }"
+                    style="border: 1px solid rgba(52, 211, 153, 0.2)"
+                  >
+                    Tiền mặt
+                  </button>
+                  <button
+                    @click="selectPayment('both')"
+                    class="btn px-4 py-2 select-btn"
+                    :class="{ 'gradient-custom-teal text-white': paymentMethod === 'both', border: paymentMethod !== 'both' }"
+                    style="border: 1px solid rgba(52, 211, 153, 0.2)"
+                  >
+                    Cả hai
+                  </button>
+                </div>
+                <div v-if="paymentMethod === 'both'" class="row g-3 mt-3">
+                  <div class="col-md-6">
+                    <label class="form-label fw-medium text-dark">Tiền chuyển khoản</label>
+                    <input
+                      v-model.number="tienChuyenKhoan"
+                      type="number"
+                      class="form-control shadow-none"
+                      placeholder="Nhập số tiền chuyển khoản"
+                      min="0"
+                    />
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label fw-medium text-dark">Tiền mặt</label>
+                    <input
+                      v-model.number="tienMat"
+                      type="number"
+                      class="form-control shadow-none"
+                      placeholder="Nhập số tiền mặt"
+                      min="0"
+                    />
+                  </div>
+                </div>
+                <div v-if="showQRCode" class="mt-3 text-center qr-code-container">
+                  <h6 class="fw-semibold text-dark">Quét mã QR để thanh toán</h6>
+                  <qrcode-vue :value="qrCodeValue" :size="200" level="H" />
+                  <p class="text-muted mt-2">Số tiền: {{ formatPrice(qrCodeAmount) }}</p>
+                </div>
+              </div>
+
+              <!-- Pay Button -->
+              <button
+                class="btn w-100 py-3 pay-btn gradient-custom-teal text-white"
+                @click="ThanhToan"
+                :disabled="!activeInvoiceId || cartItems.length === 0 || isCreatingOrder"
+              >
+                <i class="bi bi-credit-card me-2"></i>
+                <span class="fw-semibold">Thanh toán</span>
+              </button>
             </div>
           </div>
         </FilterTableSection>
@@ -1103,74 +1090,11 @@ export default {
   flex-grow: 1;
 }
 
-/* Ensure FilterTableSection takes full height */
-.filter-table-section {
-  flex-grow: 1;
-  display: flex;
-  flex-direction: column;
-}
-
-/* Ensure order-card takes full height */
-.order-card {
-  flex-grow: 1;
-  display: flex;
-  flex-direction: column;
-  max-height: 960px;
-}
-
-/* Ensure card-body inside order-card can scroll and takes full height */
-.order-card .card-body {
-  flex-grow: 1;
-  overflow-y: auto;
-  padding: 1rem;
-  scrollbar-width: thin;
-  scrollbar-color: rgba(52, 211, 153, 0.3) transparent;
-}
-
-/* Customize scrollbar */
-.order-card .card-body::-webkit-scrollbar {
-  width: 8px;
-}
-
-.order-card .card-body::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.order-card .card-body::-webkit-scrollbar-thumb {
-  background: rgba(52, 211, 153, 0.3);
-  border-radius: 4px;
-}
-
-.order-card .card-body::-webkit-scrollbar-thumb:hover {
-  background: rgba(52, 211, 153, 0.5);
-}
-
-/* Ensure sections inside card-body have minimum height */
-.voucher-section,
-.receiver-form,
-.qr-code-container {
-  min-height: 100px;
-}
-
-/* Center content when cart is empty */
-.order-card .empty-cart-message {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  min-height: 200px;
-}
-
 .product-card,
 .customer-card,
 .order-card {
   animation: slideInLeft 0.5s ease-out;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.product-card {
-  height: 100% !important;
 }
 
 .add-bill-btn,
@@ -1580,6 +1504,32 @@ export default {
   box-shadow: 0 2px 4px rgba(52, 211, 153, 0.2);
 }
 
+
+
+.order-card .card-body {
+  max-height: 800px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(52, 211, 153, 0.3) transparent;
+}
+
+.order-card .card-body::-webkit-scrollbar {
+  width: 8px;
+}
+
+.order-card .card-body::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.order-card .card-body::-webkit-scrollbar-thumb {
+  background: rgba(52, 211, 153, 0.3);
+  border-radius: 4px;
+}
+
+.order-card .card-body::-webkit-scrollbar-thumb:hover {
+  background: rgba(52, 211, 153, 0.5);
+}
+
 .product-info-card {
   transition: all 0.3s ease;
   border-radius: 12px;
@@ -1646,6 +1596,26 @@ export default {
   box-shadow: 0 4px 8px rgba(211, 47, 47, 0.3);
 }
 
+.imei-list-container {
+  max-height: 300px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(52, 211, 153, 0.3) transparent;
+}
+
+.imei-list-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.imei-list-container::-webkit-scrollbar-thumb {
+  background-color: rgba(52, 211, 153, 0.3);
+  border-radius: 3px;
+}
+
+.imei-list-container::-webkit-scrollbar-track {
+  background-color: transparent;
+}
+
 @media (max-width: 768px) {
   .bill-card,
   .product-card,
@@ -1697,17 +1667,6 @@ export default {
   }
   .delete-imei-btn .bi-x {
     font-size: 0.9rem;
-  }
-  .order-card .card-body {
-    padding: 0.75rem;
-  }
-  .voucher-section,
-  .receiver-form,
-  .qr-code-container {
-    min-height: 80px;
-  }
-  .order-card .empty-cart-message {
-    min-height: 150px;
   }
 }
 

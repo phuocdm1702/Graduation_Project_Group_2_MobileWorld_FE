@@ -1,100 +1,55 @@
-<!-- src/views/Hoadon.vue -->
 <template>
   <div class="container-fluid py-4 invoice-management">
-    <HeaderCard
-      title="Quản Lý Hóa Đơn"
-      badgeText="Hệ Thống POS"
-      titleColor="#002962"
-      badgeClass="gradient-primary"
-      :backgroundOpacity="0.95"
-    />
+    <HeaderCard title="Quản Lý Hóa Đơn" badgeText="Hệ Thống POS" badgeClass="gradient-custom-teal"
+      :backgroundOpacity="0.95" />
 
     <!-- Filter Section -->
     <FilterTableSection title="Bộ Lọc Tìm Kiếm" icon="bi bi-funnel">
       <div class="m-3">
-        <!-- Search Row -->
-        <div class="row g-3">
+        <!-- Single Row for All Filters -->
+        <div class="row g-4 align-items-end">
+          <!-- Search Input -->
           <div class="col-lg-4 col-md-6">
             <div class="search-group">
               <label class="filter-label">Tìm kiếm</label>
               <div class="search-input-wrapper">
                 <i class="bi bi-search search-icon"></i>
-                <input
-                  type="text"
-                  class="form-control search-input"
-                  placeholder="Mã hóa đơn, khách hàng, SĐT..."
-                  :value="keyword"
-                  @input="debouncedSearch($event.target.value)"
-                />
+                <input type="text" class="form-control search-input" placeholder="Mã hóa đơn, khách hàng, SĐT..."
+                  :value="keyword" @input="debouncedSearch($event.target.value)" />
               </div>
             </div>
           </div>
 
-          <div class="col-lg-3 col-md-6">
-            <div class="filter-group">
-              <label class="filter-label">Loại đơn hàng</label>
-              <select v-model="selectedOrderType" class="form-select filter-select">
-                <option value="">Tất cả loại đơn</option>
-                <option value="online">Online</option>
-                <option value="trực tiếp">Trực tiếp</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="col-lg-5">
+          <!-- Date Range Picker -->
+          <div class="col-lg-4 col-md-6">
             <div class="filter-group">
               <label class="filter-label">Khoảng thời gian</label>
-              <div class="date-range-wrapper">
-                <input
-                  type="date"
-                  v-model="startDate"
-                  class="form-control date-input"
-                  placeholder="Từ ngày"
-                />
-                <span class="date-separator">đến</span>
-                <input
-                  type="date"
-                  v-model="endDate"
-                  class="form-control date-input"
-                  placeholder="Đến ngày"
-                />
+              <div class="date-range-wrapper d-flex align-items-center">
+                <input type="date" v-model="startDate" class="form-control date-input" placeholder="Từ ngày" />
+                <span class="date-separator mx-2">đến</span>
+                <input type="date" v-model="endDate" class="form-control date-input" placeholder="Đến ngày" />
               </div>
             </div>
           </div>
-        </div>
 
-        <!-- Price Range Row -->
-        <div class="row g-3 mb-3">
-          <div class="col-lg-6">
+          <!-- Price Range Slider -->
+          <div class="col-lg-4">
             <div class="filter-group">
-              <label class="filter-label">Khoảng giá trị</label>
-              <div class="price-range-wrapper">
-                <input
-                  type="number"
-                  v-model.number="minAmount"
-                  class="form-control price-input"
-                  placeholder="Giá tối thiểu"
-                />
-                <span class="price-separator">-</span>
-                <input
-                  type="number"
-                  v-model.number="maxAmount"
-                  class="form-control price-input"
-                  placeholder="Giá tối đa"
-                />
-              </div>
-            </div>
-          </div>
-
-          <div class="col-lg-6">
-            <div class="filter-stats">
-              <div class="stat-item">
-                <span class="stat-label">Tổng số hóa đơn:</span>
-                <span class="stat-value">{{ filteredInvoices.length }}</span>
-              </div>
-              <div class="stat-item">
-                <span class="stat-label">Tổng giá trị:</span>
-                <span class="stat-value text-success">{{ formatPrice(totalValue) }}</span>
+              <div class="price-range-container">
+                <label class="filter-label">Khoảng giá trị</label>
+                <div class="dual-range-slider">
+                  <div class="slider-track">
+                    <div class="slider-range" :style="sliderRangeStyle"></div>
+                  </div>
+                  <input type="range" v-model.number="rangeMin" :min="minInvoiceTotal" :max="maxInvoiceTotal"
+                    class="range-slider" style="z-index: 2;" @input="updateRangeMax" />
+                  <input type="range" v-model.number="rangeMax" :min="minInvoiceTotal" :max="maxInvoiceTotal"
+                    class="range-slider" style="z-index: 1;" @input="updateRangeMin" />
+                </div>
+                <div class="range-labels d-flex justify-content-between">
+                  <span>{{ formatPrice(rangeMin) }}</span>
+                  <span>{{ formatPrice(rangeMax) }}</span>
+                </div>
               </div>
             </div>
           </div>
@@ -102,12 +57,27 @@
 
         <!-- Action Buttons -->
         <div class="filter-actions">
-          <button class="btn btn-reset" @click="resetFilters">
-            <i class="bi bi-arrow-clockwise me-2"></i>
-            Đặt lại bộ lọc
-          </button>
+          <!-- Stats Section -->
+          <div class="row g-3">
+            <div class="col-lg-12">
+              <div class="filter-stats d-flex">
+                <div class="stat-item me-4">
+                  <span class="stat-label">Tổng số hóa đơn:</span>
+                  <span class="stat-value">{{ filteredInvoices.length }}</span>
+                </div>
+                <div class="stat-item">
+                  <span class="stat-label">Tổng giá trị:</span>
+                  <span class="stat-value text-success">{{ formatPrice(totalValue) }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
 
           <div class="action-buttons">
+            <button class="btn btn-reset" @click="resetFilters">
+              <i class="bi bi-arrow-clockwise me-2"></i>
+              Đặt lại bộ lọc
+            </button>
             <button class="btn btn-action" @click="exportExcel">
               <i class="bi bi-file-earmark-excel me-2"></i>
               Xuất Excel
@@ -129,31 +99,19 @@
     <div class="tab-section mb-4">
       <ul class="nav nav-tabs invoice-tabs">
         <li class="nav-item">
-          <button
-            class="nav-link"
-            :class="{ 'active': activeTab === 'all' }"
-            @click="setActiveTab('all')"
-          >
+          <button class="nav-link" :class="{ 'active': activeTab === 'all' }" @click="setActiveTab('all')">
             <i class="bi bi-receipt me-2"></i>
             Tất cả hóa đơn
           </button>
         </li>
         <li class="nav-item">
-          <button
-            class="nav-link"
-            :class="{ 'active': activeTab === 'in-store' }"
-            @click="setActiveTab('in-store')"
-          >
+          <button class="nav-link" :class="{ 'active': activeTab === 'in-store' }" @click="setActiveTab('in-store')">
             <i class="bi bi-shop me-2"></i>
             Hóa đơn tại quầy
           </button>
         </li>
         <li class="nav-item">
-          <button
-            class="nav-link"
-            :class="{ 'active': activeTab === 'online' }"
-            @click="setActiveTab('online')"
-          >
+          <button class="nav-link" :class="{ 'active': activeTab === 'online' }" @click="setActiveTab('online')">
             <i class="bi bi-globe me-2"></i>
             Hóa đơn online
           </button>
@@ -164,72 +122,46 @@
     <!-- Status Filter Section -->
     <FilterTableSection title="Bộ Lọc Trạng Thái Hóa Đơn" icon="bi bi-funnel">
       <div class="status-badge d-flex gap-3 m-3" style="width: max-content;">
-        <button
-          type="button"
-          class="btn btn-outline-primary position-relative"
-          @click="setActiveTabByStatus('Chờ xác nhận')"
-        >
+        <button type="button" class="btn btn-outline-primary position-relative"
+          @click="setActiveTabByStatus('Chờ xác nhận')">
           Chờ xác nhận
-          <span
-            class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-warning"
-            v-if="statusCounts['Chờ xác nhận']"
-          >
+          <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill badge-waiting"
+            v-if="statusCounts['Chờ xác nhận']">
             {{ statusCounts['Chờ xác nhận'] > 99 ? '99+' : statusCounts['Chờ xác nhận'] }}
             <span class="visually-hidden">hóa đơn chờ xác nhận</span>
           </span>
         </button>
-        <button
-          type="button"
-          class="btn btn-outline-primary position-relative"
-          @click="setActiveTabByStatus('Chờ giao hàng')"
-        >
+        <button type="button" class="btn btn-outline-primary position-relative"
+          @click="setActiveTabByStatus('Chờ giao hàng')">
           Chờ giao hàng
-          <span
-            class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-warning"
-            v-if="statusCounts['Chờ giao hàng']"
-          >
+          <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill badge-waiting"
+            v-if="statusCounts['Chờ giao hàng']">
             {{ statusCounts['Chờ giao hàng'] > 99 ? '99+' : statusCounts['Chờ giao hàng'] }}
             <span class="visually-hidden">hóa đơn chờ giao hàng</span>
           </span>
         </button>
-        <button
-          type="button"
-          class="btn btn-outline-primary position-relative"
-          @click="setActiveTabByStatus('Đang giao')"
-        >
+        <button type="button" class="btn btn-outline-primary position-relative"
+          @click="setActiveTabByStatus('Đang giao')">
           Đang giao
-          <span
-            class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-warning"
-            v-if="statusCounts['Đang giao']"
-          >
+          <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill badge-waiting"
+            v-if="statusCounts['Đang giao']">
             {{ statusCounts['Đang giao'] > 99 ? '99+' : statusCounts['Đang giao'] }}
             <span class="visually-hidden">hóa đơn đang giao</span>
           </span>
         </button>
-        <button
-          type="button"
-          class="btn btn-outline-primary position-relative"
-          @click="setActiveTabByStatus('Hoàn thành')"
-        >
+        <button type="button" class="btn btn-outline-primary position-relative"
+          @click="setActiveTabByStatus('Hoàn thành')">
           Hoàn thành
-          <span
-            class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-success"
-            v-if="statusCounts['Hoàn thành']"
-          >
+          <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill badge-completed"
+            v-if="statusCounts['Hoàn thành']">
             {{ statusCounts['Hoàn thành'] > 99 ? '99+' : statusCounts['Hoàn thành'] }}
             <span class="visually-hidden">hóa đơn hoàn thành</span>
           </span>
         </button>
-        <button
-          type="button"
-          class="btn btn-outline-primary position-relative"
-          @click="setActiveTabByStatus('Đã hủy')"
-        >
+        <button type="button" class="btn btn-outline-primary position-relative" @click="setActiveTabByStatus('Đã hủy')">
           Đã hủy
-          <span
-            class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
-            v-if="statusCounts['Đã hủy']"
-          >
+          <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill badge-canceled"
+            v-if="statusCounts['Đã hủy']">
             {{ statusCounts['Đã hủy'] > 99 ? '99+' : statusCounts['Đã hủy'] }}
             <span class="visually-hidden">hóa đơn đã hủy</span>
           </span>
@@ -245,18 +177,14 @@
         </div>
         <div class="table-controls">
           <div class="view-toggle">
-            <button
-              class="btn btn-sm"
+            <button class="btn btn-sm"
               :class="{ 'btn-primary': viewMode === 'table', 'btn-outline-secondary': viewMode !== 'table' }"
-              @click="viewMode = 'table'"
-            >
+              @click="viewMode = 'table'">
               <i class="bi bi-table"></i>
             </button>
-            <button
-              class="btn btn-sm"
+            <button class="btn btn-sm"
               :class="{ 'btn-primary': viewMode === 'card', 'btn-outline-secondary': viewMode !== 'card' }"
-              @click="viewMode = 'card'"
-            >
+              @click="viewMode = 'card'">
               <i class="bi bi-grid-3x3-gap"></i>
             </button>
           </div>
@@ -266,7 +194,8 @@
       <div class="table-body">
         <!-- Table View -->
         <div v-if="viewMode === 'table'">
-          <DataTable title="" :headers="headers" :data="filteredInvoices" :pageSizeOptions="[5, 10]">
+          <DataTable title="" :headers="headers" :data="filteredInvoices"
+            :pageSizeOptions="[5, 10, 15, 20, 30, 40, 50]">
             <template #code="{ item }">
               <div class="code-cell">
                 <span class="code-text">{{ item.code }}</span>
@@ -321,11 +250,7 @@
                 <button class="btn btn-sm btn-table" @click="editInvoice(item)" title="Xuất Hóa Đơn">
                   <i class="bi bi-printer-fill"></i>
                 </button>
-                <button
-                  class="btn btn-sm btn-table"
-                  @click="confirmDeleteInvoice(item)"
-                  title="Tải QR"
-                >
+                <button class="btn btn-sm btn-table" @click="confirmDeleteInvoice(item)" title="Tải QR">
                   <i class="bi bi-qr-code"></i>
                 </button>
               </div>
@@ -398,12 +323,7 @@
                   <i class="bi bi-chevron-left"></i>
                 </button>
               </li>
-              <li
-                v-for="page in totalPages"
-                :key="page"
-                class="page-item"
-                :class="{ active: currentPage === page }"
-              >
+              <li v-for="page in totalPages" :key="page" class="page-item" :class="{ active: currentPage === page }">
                 <button class="page-link" @click="currentPage = page">{{ page }}</button>
               </li>
               <li class="page-item" :class="{ disabled: currentPage === totalPages }">
@@ -418,497 +338,23 @@
     </FilterTableSection>
 
     <!-- Modals -->
-    <NotificationModal
-      ref="notificationModal"
-      :type="notificationType"
-      :message="notificationMessage"
-      :isLoading="isNotificationLoading"
-      :onConfirm="notificationOnConfirm"
-      :onCancel="notificationOnCancel"
-      @close="resetNotification"
-    />
+    <NotificationModal ref="notificationModal" :type="notificationType" :message="notificationMessage"
+      :isLoading="isNotificationLoading" :onConfirm="notificationOnConfirm" :onCancel="notificationOnCancel"
+      @close="resetNotification" />
     <ToastNotification ref="toastNotification" />
   </div>
 </template>
 
-<script setup>
-import { ref, computed, onMounted } from 'vue';
-import { useRouter } from 'vue-router';
-import DataTable from '@/components/common/DataTable.vue';
-import NotificationModal from '@/components/common/NotificationModal.vue';
-import ToastNotification from '@/components/common/ToastNotification.vue';
-import HeaderCard from '@/components/common/HeaderCard.vue';
-import FilterTableSection from '@/components/common/FilterTableSection.vue';
+<script>
+import { invoiceManagementLogic } from '../bills/js/HoaDon';
 
-// Debounce utility
-const debounce = (func, delay) => {
-  let timeoutId;
-  return (...args) => {
-    clearTimeout(timeoutId);
-    timeoutId = setTimeout(() => func(...args), delay);
-  };
-};
-
-const router = useRouter();
-
-// State
-const keyword = ref('');
-const selectedOrderType = ref('');
-const minAmount = ref(null);
-const maxAmount = ref(null);
-const startDate = ref('');
-const endDate = ref('');
-const viewMode = ref('table');
-const currentPage = ref(1);
-const itemsPerPage = ref(12);
-const activeTab = ref('all'); // Tab for in-store/online/all
-
-// Sample data
-const invoices = ref([
-  {
-    id: 1,
-    code: 'HD001',
-    employee: 'Nguyễn Văn Nam',
-    customer: 'Nguyễn Văn A',
-    phone: '0123456789',
-    total: 25000000,
-    discount: 2500000,
-    fee: 500000,
-    createdAt: '22/01/2024',
-    type: 'Online',
-    status: 'Chờ xác nhận',
-  },
-  {
-    id: 2,
-    code: 'HD002',
-    employee: 'Trần Thị Lan',
-    customer: 'Trần Thị B',
-    phone: '0987654321',
-    total: 15000000,
-    discount: 1500000,
-    fee: 300000,
-    createdAt: '23/01/2024',
-    type: 'Trực tiếp',
-    status: 'Chờ giao hàng',
-  },
-  {
-    id: 3,
-    code: 'HD003',
-    employee: 'Lê Văn Minh',
-    customer: 'Phạm Văn C',
-    phone: '0369874521',
-    total: 8500000,
-    discount: 850000,
-    fee: 200000,
-    createdAt: '24/01/2024',
-    type: 'Online',
-    status: 'Đang giao',
-  },
-  {
-    id: 4,
-    code: 'HD004',
-    employee: 'Hoàng Thị Mai',
-    customer: 'Vũ Thị D',
-    phone: '0147258369',
-    total: 32000000,
-    discount: 3200000,
-    fee: 650000,
-    createdAt: '25/01/2024',
-    type: 'Trực tiếp',
-    status: 'Hoàn thành',
-  },
-  {
-    id: 5,
-    code: 'HD005',
-    employee: 'Đặng Văn Hùng',
-    customer: 'Bùi Văn E',
-    phone: '0789123456',
-    total: 18750000,
-    discount: 1875000,
-    fee: 375000,
-    createdAt: '26/01/2024',
-    type: 'Online',
-    status: 'Đã hủy',
-  },
-  {
-    id: 6,
-    code: 'HD006',
-    employee: 'Nguyễn Văn Nam',
-    customer: 'Nguyễn Văn A',
-    phone: '0123456789',
-    total: 25000000,
-    discount: 2500000,
-    fee: 500000,
-    createdAt: '22/01/2024',
-    type: 'Online',
-    status: 'Chờ xác nhận',
-  },
-  {
-    id: 7,
-    code: 'HD007',
-    employee: 'Trần Thị Lan',
-    customer: 'Trần Thị B',
-    phone: '0987654321',
-    total: 15000000,
-    discount: 1500000,
-    fee: 300000,
-    createdAt: '23/01/2024',
-    type: 'Trực tiếp',
-    status: 'Chờ xác nhận',
-  },
-  {
-    id: 8,
-    code: 'HD008',
-    employee: 'Lê Văn Minh',
-    customer: 'Phạm Văn C',
-    phone: '0369874521',
-    total: 8500000,
-    discount: 850000,
-    fee: 200000,
-    createdAt: '24/01/2024',
-    type: 'Online',
-    status: 'Hoàn thành',
-  },
-  {
-    id: 9,
-    code: 'HD009',
-    employee: 'Hoàng Thị Mai',
-    customer: 'Vũ Thị D',
-    phone: '0147258369',
-    total: 32000000,
-    discount: 3200000,
-    fee: 650000,
-    createdAt: '25/01/2024',
-    type: 'Trực tiếp',
-    status: 'Hoàn thành',
-  },
-  {
-    id: 10,
-    code: 'HD010',
-    employee: 'Đặng Văn Hùng',
-    customer: 'Bùi Văn E',
-    phone: '0789123456',
-    total: 18750000,
-    discount: 1875000,
-    fee: 375000,
-    createdAt: '26/01/2024',
-    type: 'Online',
-    status: 'Đã hủy',
-  },
-  {
-    id: 11,
-    code: 'HD011',
-    employee: 'Nguyễn Văn Nam',
-    customer: 'Nguyễn Văn A',
-    phone: '0123456789',
-    total: 25000000,
-    discount: 2500000,
-    fee: 500000,
-    createdAt: '22/01/2024',
-    type: 'Online',
-    status: 'Hoàn thành',
-  },
-  {
-    id: 12,
-    code: 'HD012',
-    employee: 'Trần Thị Lan',
-    customer: 'Trần Thị B',
-    phone: '0987654321',
-    total: 15000000,
-    discount: 1500000,
-    fee: 300000,
-    createdAt: '23/01/2024',
-    type: 'Trực tiếp',
-    status: 'Hoàn thành',
-  },
-  {
-    id: 13,
-    code: 'HD013',
-    employee: 'Lê Văn Minh',
-    customer: 'Phạm Văn C',
-    phone: '0369874521',
-    total: 8500000,
-    discount: 850000,
-    fee: 200000,
-    createdAt: '24/01/2024',
-    type: 'Online',
-    status: 'Đã hủy',
-  },
-]);
-
-// Notification state
-const notificationType = ref('confirm');
-const notificationMessage = ref('');
-const isNotificationLoading = ref(false);
-const notificationOnConfirm = ref(() => {});
-const notificationOnCancel = ref(() => {});
-const notificationModal = ref(null);
-const toastNotification = ref(null);
-
-// Headers for DataTable
-const headers = ref([
-  { text: 'Mã hóa đơn', value: 'code' },
-  { text: 'Nhân viên', value: 'employee' },
-  { text: 'Khách hàng', value: 'customer' },
-  { text: 'Tổng giá trị', value: 'total' },
-  { text: 'Loại đơn', value: 'type' },
-  { text: 'Trạng thái', value: 'status' },
-  { text: 'Thao tác', value: 'actions' },
-]);
-
-// Computed properties
-const filteredInvoices = computed(() => {
-  let filtered = invoices.value;
-
-  // Apply tab filter
-  if (activeTab.value === 'in-store') {
-    filtered = filtered.filter((inv) => inv.type.toLowerCase() === 'trực tiếp');
-  } else if (activeTab.value === 'online') {
-    filtered = filtered.filter((inv) => inv.type.toLowerCase() === 'online');
-  }
-
-  // Search filter
-  if (keyword.value) {
-    const query = keyword.value.toLowerCase();
-    filtered = filtered.filter(
-      (inv) =>
-        inv.code.toLowerCase().includes(query) ||
-        inv.customer.toLowerCase().includes(query) ||
-        inv.phone.includes(query) ||
-        inv.employee.toLowerCase().includes(query)
-    );
-  }
-
-  // Order type filter (from select dropdown)
-  if (selectedOrderType.value) {
-    filtered = filtered.filter(
-      (inv) => inv.type.toLowerCase() === selectedOrderType.value.toLowerCase()
-    );
-  }
-
-  // Amount range filter
-  if (minAmount.value !== null && minAmount.value !== '') {
-    filtered = filtered.filter((inv) => inv.total >= minAmount.value);
-  }
-  if (maxAmount.value !== null && maxAmount.value !== '') {
-    filtered = filtered.filter((inv) => inv.total <= maxAmount.value);
-  }
-
-  // Date range filter
-  if (startDate.value) {
-    filtered = filtered.filter((inv) => {
-      const invDate = new Date(inv.createdAt.split('/').reverse().join('-'));
-      return invDate >= new Date(startDate.value);
-    });
-  }
-  if (endDate.value) {
-    filtered = filtered.filter((inv) => {
-      const invDate = new Date(inv.createdAt.split('/').reverse().join('-'));
-      return invDate <= new Date(endDate.value);
-    });
-  }
-
-  return filtered;
-});
-
-const totalValue = computed(() => {
-  return filteredInvoices.value.reduce((sum, inv) => sum + inv.total, 0);
-});
-
-const totalPages = computed(() => {
-  return Math.ceil(filteredInvoices.value.length / itemsPerPage.value);
-});
-
-const paginatedInvoices = computed(() => {
-  const start = (currentPage.value - 1) * itemsPerPage.value;
-  const end = start + itemsPerPage.value;
-  return filteredInvoices.value.slice(start, end);
-});
-
-const statusCounts = computed(() => {
-  return filteredInvoices.value.reduce((acc, inv) => {
-    acc[inv.status] = (acc[inv.status] || 0) + 1;
-    return acc;
-  }, {});
-});
-
-// Methods
-const formatPrice = (price) => {
-  if (price === null || price === undefined) return '0 ₫';
-  return new Intl.NumberFormat('vi-VN', {
-    style: 'currency',
-    currency: 'VND',
-  }).format(price);
-};
-
-const debouncedSearch = debounce((query) => {
-  keyword.value = query;
-  currentPage.value = 1; // Reset to first page when searching
-}, 300);
-
-const resetFilters = () => {
-  keyword.value = '';
-  selectedOrderType.value = '';
-  minAmount.value = null;
-  maxAmount.value = null;
-  startDate.value = '';
-  endDate.value = '';
-  activeTab.value = 'all'; // Reset tab to 'all'
-  currentPage.value = 1;
-
-  toastNotification.value?.addToast({
-    type: 'info',
-    message: 'Đã đặt lại tất cả bộ lọc và tab',
-    duration: 2000,
-  });
-};
-
-const exportExcel = () => {
-  toastNotification.value?.addToast({
-    type: 'success',
-    message: `Đã xuất ${filteredInvoices.value.length} hóa đơn ra Excel`,
-    duration: 3000,
-  });
-};
-
-const scanQR = () => {
-  toastNotification.value?.addToast({
-    type: 'warning',
-    message: 'Chức năng quét QR đang được phát triển',
-    duration: 3000,
-  });
-};
-
-const viewInvoice = (invoice) => {
-  router.push(`/hoa-don/${invoice.id}`);
-};
-
-const editInvoice = (invoice) => {
-  router.push(`/hoa-don/${invoice.id}/edit`);
-};
-
-const confirmDeleteInvoice = (invoice) => {
-  notificationType.value = 'confirm';
-  notificationMessage.value = `Bạn có chắc chắn muốn xóa hóa đơn ${invoice.code}?\nThao tác này không thể hoàn tác.`;
-  notificationOnConfirm.value = () => deleteInvoice(invoice);
-  notificationOnCancel.value = () => {};
-  isNotificationLoading.value = false;
-  notificationModal.value?.openModal();
-};
-
-const deleteInvoice = (invoice) => {
-  isNotificationLoading.value = true;
-
-  setTimeout(() => {
-    invoices.value = invoices.value.filter((inv) => inv.id !== invoice.id);
-    isNotificationLoading.value = false;
-
-    toastNotification.value?.addToast({
-      type: 'success',
-      message: `Đã xóa hóa đơn ${invoice.code} thành công`,
-      duration: 3000,
-    });
-
-    resetNotification();
-  }, 1000);
-};
-
-const resetNotification = () => {
-  notificationType.value = 'confirm';
-  notificationMessage.value = '';
-  isNotificationLoading.value = false;
-  notificationOnConfirm.value = () => {};
-  notificationOnCancel.value = () => {};
-};
-
-const setActiveTab = (tab) => {
-  activeTab.value = tab;
-  currentPage.value = 1; // Reset to first page when switching tabs
-  toastNotification.value?.addToast({
-    type: 'info',
-    message: `Đã chuyển sang tab ${
-      tab === 'all' ? 'Tất cả hóa đơn' : tab === 'in-store' ? 'Hóa đơn tại quầy' : 'Hóa đơn online'
-    }`,
-    duration: 2000,
-  });
-};
-
-const setActiveTabByStatus = (status) => {
-  // Filter invoices by status and determine the most appropriate tab
-  const statusInvoices = filteredInvoices.value.filter((inv) => inv.status === status);
-  if (statusInvoices.length > 0) {
-    const firstType = statusInvoices[0].type.toLowerCase();
-    activeTab.value = firstType === 'trực tiếp' ? 'in-store' : firstType === 'online' ? 'online' : 'all';
-    toastNotification.value?.addToast({
-      type: 'info',
-      message: `Đã lọc theo trạng thái ${status}`,
-      duration: 2000,
-    });
-  }
-  currentPage.value = 1; // Reset to first page
-};
-
-// Badge and icon helpers
-const getStatusBadgeClass = (status) => {
-  switch (status) {
-    case 'Chờ xác nhận':
-      return 'badge-waiting';
-    case 'Chờ giao hàng':
-      return 'badge-shipping';
-    case 'Đang giao':
-      return 'badge-delivering';
-    case 'Hoàn thành':
-      return 'badge-completed';
-    case 'Đã hủy':
-      return 'badge-canceled';
-    default:
-      return 'badge-secondary';
+export default {
+  name: 'InvoiceManagement',
+  components: invoiceManagementLogic.components,
+  setup() {
+    return invoiceManagementLogic.setup();
   }
 };
-
-const getStatusIcon = (status) => {
-  switch (status) {
-    case 'Chờ xác nhận':
-      return 'bi bi-clock';
-    case 'Chờ giao hàng':
-      return 'bi bi-truck';
-    case 'Đang giao':
-      return 'bi bi-arrow-left-right';
-    case 'Hoàn thành':
-      return 'bi bi-check-circle';
-    case 'Đã hủy':
-      return 'bi bi-x-circle';
-    default:
-      return 'bi bi-question-circle';
-  }
-};
-
-const getTypeBadgeClass = (type) => {
-  switch (type.toLowerCase()) {
-    case 'online':
-      return 'badge-info';
-    case 'trực tiếp':
-      return 'badge-primary';
-    default:
-      return 'badge-secondary';
-  }
-};
-
-const getTypeIcon = (type) => {
-  switch (type.toLowerCase()) {
-    case 'online':
-      return 'bi bi-globe';
-    case 'trực tiếp':
-      return 'bi bi-shop';
-    default:
-      return 'bi bi-question-circle';
-  }
-};
-
-// Lifecycle
-onMounted(() => {
-  console.log('Invoice Management loaded with', invoices.value.length, 'invoices');
-});
 </script>
 
 <style scoped>
@@ -936,12 +382,11 @@ onMounted(() => {
 }
 
 @keyframes gentleGlow {
-  0%,
-  100% {
-    box-shadow: 0 0 5px rgba(0, 82, 204, 0.3);
+  0%, 100% {
+    box-shadow: 0 0 5px rgba(52, 211, 153, 0.3);
   }
   50% {
-    box-shadow: 0 0 12px rgba(0, 82, 204, 0.5);
+    box-shadow: 0 0 12px rgba(52, 211, 153, 0.5);
   }
 }
 
@@ -957,9 +402,8 @@ onMounted(() => {
 }
 
 /* Gradient Definitions */
-.gradient-primary {
-  background: linear-gradient(135deg, #002962, #0052cc);
-  color: white;
+.gradient-custom-teal {
+  background: #34d399;
 }
 
 /* Base Styles */
@@ -968,7 +412,116 @@ onMounted(() => {
   background: #f8f9fa;
 }
 
-/* Page Header */
+/* Filter Label and Inputs */
+.filter-label {
+  display: block;
+  font-weight: 600;
+  color: #1f3a44;
+  margin-bottom: 0.5rem;
+  font-size: 0.875rem;
+}
+
+/* Price Range */
+.price-range-container {
+  display: flex;
+  flex-direction: column;
+}
+
+.dual-range-slider {
+  position: relative;
+  width: 100%;
+  height: 20px;
+}
+
+.slider-track {
+  position: absolute;
+  top: 7px;
+  width: 100%;
+  height: 6px;
+  background: #e9ecef;
+  border-radius: 3px;
+}
+
+.slider-range {
+  position: absolute;
+  height: 6px;
+  background: #34d399;
+  border-radius: 3px;
+}
+
+.range-slider {
+  position: absolute;
+  width: 100%;
+  height: 6px;
+  top: 7px;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  background: transparent;
+  pointer-events: none;
+}
+
+.range-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #34d399;
+  cursor: pointer;
+  pointer-events: auto;
+  border: 2px solid #fff;
+  box-shadow: 0 0 4px rgba(0, 0, 0, 0.2);
+}
+
+.range-slider::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #34d399;
+  cursor: pointer;
+  pointer-events: auto;
+  border: none;
+  box-shadow: 0 0 4px rgba(0, 0, 0, 0.2);
+}
+
+.range-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.875rem;
+  color: #1f3a44;
+  font-weight: 500;
+}
+
+/* Filter Stats */
+.filter-stats {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.stat-label {
+  font-size: 0.875rem;
+  color: #1f3a44;
+  font-weight: 500;
+}
+
+.stat-value {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1f3a44;
+}
+
+.stat-value.text-success {
+  color: #16a34a !important;
+}
+
+/* Existing styles retained */
 .page-header {
   animation: fadeInUp 0.4s ease-out 0.1s both;
 }
@@ -992,20 +545,10 @@ onMounted(() => {
 .page-title {
   font-size: 2rem;
   font-weight: 700;
-  color: #002962;
+  color: #1f3a44;
   letter-spacing: -0.025em;
 }
 
-/* Filter Label and Inputs */
-.filter-label {
-  display: block;
-  font-weight: 600;
-  color: #002962;
-  margin-bottom: 0.5rem;
-  font-size: 0.875rem;
-}
-
-/* Search Input */
 .search-group {
   position: relative;
 }
@@ -1025,7 +568,7 @@ onMounted(() => {
 
 .search-input {
   padding-left: 2.5rem;
-  border: 2px solid rgba(0, 82, 204, 0.1);
+  border: 2px solid rgba(52, 211, 153, 0.1);
   border-radius: 8px;
   transition: all 0.2s ease;
   font-size: 0.9rem;
@@ -1033,26 +576,10 @@ onMounted(() => {
 }
 
 .search-input:focus {
-  border-color: #0052cc;
-  box-shadow: 0 0 10px rgba(0, 82, 204, 0.2);
+  border-color: #34d399;
+  box-shadow: 0 0 10px rgba(52, 211, 153, 0.2);
 }
 
-/* Filter Select */
-.filter-select {
-  border: 2px solid rgba(0, 82, 204, 0.1);
-  border-radius: 8px;
-  padding: 0.5rem 1rem;
-  font-size: 0.9rem;
-  transition: all 0.2s ease;
-  background: #f8f9fa;
-}
-
-.filter-select:focus {
-  border-color: #0052cc;
-  box-shadow: 0 0 10px rgba(0, 82, 204, 0.2);
-}
-
-/* Date Range */
 .date-range-wrapper {
   display: flex;
   align-items: center;
@@ -1060,7 +587,7 @@ onMounted(() => {
 }
 
 .date-input {
-  border: 2px solid rgba(0, 82, 204, 0.1);
+  border: 2px solid rgba(52, 211, 153, 0.1);
   border-radius: 8px;
   padding: 0.5rem;
   font-size: 0.9rem;
@@ -1069,71 +596,15 @@ onMounted(() => {
 }
 
 .date-input:focus {
-  border-color: #0052cc;
-  box-shadow: 0 0 10px rgba(0, 82, 204, 0.2);
+  border-color: #34d399;
+  box-shadow: 0 0 10px rgba(52, 211, 153, 0.2);
 }
 
 .date-separator {
-  color: #002962;
+  color: #1f3a44;
   font-weight: 500;
 }
 
-/* Price Range */
-.price-range-wrapper {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.price-input {
-  border: 2px solid rgba(0, 82, 204, 0.1);
-  border-radius: 8px;
-  padding: 0.5rem;
-  font-size: 0.9rem;
-  transition: all 0.2s ease;
-  background: #f8f9fa;
-}
-
-.price-input:focus {
-  border-color: #0052cc;
-  box-shadow: 0 0 10px rgba(0, 82, 204, 0.2);
-}
-
-.price-separator {
-  color: #002962;
-  font-weight: 500;
-}
-
-/* Filter Stats */
-.filter-stats {
-  display: flex;
-  gap: 1.5rem;
-  align-items: center;
-  height: 100%;
-}
-
-.stat-item {
-  display: flex;
-  flex-direction: column;
-}
-
-.stat-label {
-  font-size: 0.875rem;
-  color: #002962;
-  font-weight: 500;
-}
-
-.stat-value {
-  font-size: 1rem;
-  font-weight: 600;
-  color: #002962;
-}
-
-.stat-value.text-success {
-  color: #81c784 !important;
-}
-
-/* Filter Actions */
 .filter-actions {
   display: flex;
   justify-content: space-between;
@@ -1162,11 +633,12 @@ onMounted(() => {
 
 .btn-reset:hover {
   background: #5c636a;
+  color: white;
   box-shadow: 0 0 15px rgba(108, 117, 125, 0.3);
 }
 
 .btn-action {
-  background: linear-gradient(135deg, #002962, #0052cc);
+  background: #34d399;
   color: white;
   border: none;
   text-decoration: none;
@@ -1175,22 +647,22 @@ onMounted(() => {
 }
 
 .btn-action:hover {
-  background: linear-gradient(135deg, #003ba3, #0066ff);
-  box-shadow: 0 0 15px rgba(0, 82, 204, 0.3);
+  background: #16a34a;
+  color: white;
+  box-shadow: 0 0 15px rgba(52, 211, 153, 0.3);
 }
 
-/* Tab Section */
 .tab-section {
   animation: fadeInUp 0.4s ease-out 0.3s both;
 }
 
 .invoice-tabs {
-  border-bottom: 2px solid rgba(0, 82, 204, 0.2);
+  border-bottom: 2px solid rgba(52, 211, 153, 0.2);
   margin-bottom: 1rem;
 }
 
 .nav-tabs .nav-link {
-  color: #002962;
+  color: #1f3a44;
   font-weight: 500;
   border: none;
   padding: 0.75rem 1.5rem;
@@ -1199,23 +671,22 @@ onMounted(() => {
 }
 
 .nav-tabs .nav-link.active {
-  background: linear-gradient(135deg, #002962, #0052cc);
+  background: #16a34a;
   color: white;
-  border-bottom: 3px solid #0052cc;
+  border-bottom: 3px solid #16a34a;
 }
 
 .nav-tabs .nav-link:hover {
-  background: rgba(0, 82, 204, 0.1);
-  color: #0052cc;
+  background: rgba(52, 211, 153, 0.1);
+  color: #16a34a;
 }
 
 .nav-tabs .nav-link.active:hover {
-  background: linear-gradient(135deg, #002962, #0052cc);
+  background: #16a34a;
   color: white;
   cursor: default;
 }
 
-/* Status Badges */
 .status-badge {
   padding: 0.5rem 1rem;
   border-radius: 1rem;
@@ -1229,38 +700,27 @@ onMounted(() => {
 }
 
 .badge-waiting {
-  background: #ffcc80;
-  color: #002962;
-}
-
-.badge-shipping {
-  background: #ffb74d;
-  color: #002962;
-}
-
-.badge-delivering {
-  background: #ffa726;
-  color: #002962;
+  background: #34d399;
+  color: white;
 }
 
 .badge-completed {
-  background: #81c784;
+  background: #16a34a;
   color: white;
 }
 
 .badge-canceled {
-  background: #ef9a9a;
+  background: #dc3545;
   color: white;
 }
 
-/* Table Header (within FilterTableSection) */
 .table-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 1.25rem 1.5rem;
   background: #f8f9fa;
-  border-bottom: 1px solid rgba(0, 82, 204, 0.1);
+  border-bottom: 1px solid rgba(52, 211, 153, 0.1);
 }
 
 .table-title-wrapper {
@@ -1293,22 +753,22 @@ onMounted(() => {
 }
 
 .view-toggle .btn-primary {
-  background: linear-gradient(135deg, #002962, #0052cc);
+  background: linear-gradient(135deg, #34d399, #16a34a);
   border: none;
 }
 
 .view-toggle .btn-primary:hover {
-  background: linear-gradient(135deg, #003ba3, #0066ff);
+  background: linear-gradient(135deg, #16a34a, #15803d);
 }
 
 .view-toggle .btn-outline-secondary {
-  border: 1px solid rgba(0, 82, 204, 0.2);
-  color: #002962;
+  border: 1px solid rgba(52, 211, 153, 0.2);
+  color: #1f3a44;
 }
 
 .view-toggle .btn-outline-secondary:hover {
-  background: rgba(0, 82, 204, 0.1);
-  color: #0052cc;
+  background: rgba(52, 211, 153, 0.1);
+  color: #16a34a;
 }
 
 .code-cell {
@@ -1318,7 +778,7 @@ onMounted(() => {
 
 .code-text {
   font-weight: 600;
-  color: #0052cc;
+  color: #34d399;
 }
 
 .code-date {
@@ -1340,7 +800,7 @@ onMounted(() => {
 
 .employee-name {
   font-weight: 500;
-  color: #002962;
+  color: #1f3a44;
 }
 
 .customer-cell {
@@ -1350,7 +810,7 @@ onMounted(() => {
 
 .customer-name {
   font-weight: 500;
-  color: #002962;
+  color: #1f3a44;
 }
 
 .customer-phone {
@@ -1366,7 +826,7 @@ onMounted(() => {
 
 .total-amount {
   font-weight: 600;
-  color: #00b309 !important;
+  color: #16a34a !important;
 }
 
 .discount-info {
@@ -1388,14 +848,14 @@ onMounted(() => {
 }
 
 .badge-primary {
-  background: linear-gradient(135deg, #002962, #0052cc);
+  background: linear-gradient(135deg, #34d399, #16a34a);
   color: white;
 }
 
 .badge-info {
   background: #f8f9fa;
-  color: #002962;
-  border: 1px solid #0052cc;
+  color: #1f3a44;
+  border: 1px solid #34d399;
 }
 
 .badge-secondary {
@@ -1403,7 +863,6 @@ onMounted(() => {
   color: white;
 }
 
-/* Action Buttons */
 .action-buttons-cell {
   display: flex;
   justify-content: center;
@@ -1419,20 +878,15 @@ onMounted(() => {
 }
 
 .btn-table {
-  color: #003ba3;
+  color: #1f3a44;
   border: none;
 }
 
-.btn-table i{
-  font-size: 1.2rem;
-  font-weight: 800;
+.btn-table:hover {
+  color: #16a34a;
+  text-shadow: 0 0 15px rgba(52, 211, 153, 0.3);
 }
 
-.btn-table:hover {
-  color: #0046bf;
-  text-shadow: 0 0 15px rgba(0, 82, 204, 0.3);
-}
-/* Card View */
 .card-grid {
   padding: 1.5rem;
   display: grid;
@@ -1443,7 +897,7 @@ onMounted(() => {
 .invoice-card {
   background: #f8f9fa;
   backdrop-filter: blur(15px);
-  border: 1px solid rgba(0, 82, 204, 0.1);
+  border: 1px solid rgba(52, 211, 153, 0.1);
   border-radius: 12px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
@@ -1452,7 +906,7 @@ onMounted(() => {
 
 .invoice-card:hover {
   transform: translateY(-5px);
-  box-shadow: 0 6px 12px rgba(0, 82, 204, 0.2);
+  box-shadow: 0 6px 12px rgba(52, 211, 153, 0.2);
 }
 
 .invoice-card-header {
@@ -1461,12 +915,12 @@ onMounted(() => {
   align-items: center;
   padding: 1rem;
   background: #f8f9fa;
-  border-bottom: 1px solid rgba(0, 82, 204, 0.1);
+  border-bottom: 1px solid rgba(52, 211, 153, 0.1);
 }
 
 .invoice-code {
   font-weight: 600;
-  color: #0052cc;
+  color: #34d399;
 }
 
 .invoice-card-body {
@@ -1479,7 +933,7 @@ onMounted(() => {
 
 .customer-name {
   font-weight: 600;
-  color: #002962;
+  color: #1f3a44;
 }
 
 .customer-phone {
@@ -1504,17 +958,17 @@ onMounted(() => {
 
 .detail-value {
   font-weight: 500;
-  color: #002962;
+  color: #1f3a44;
 }
 
 .invoice-amounts {
   padding-top: 1rem;
-  border-top: 1px solid rgba(0, 82, 204, 0.1);
+  border-top: 1px solid rgba(52, 211, 153, 0.1);
 }
 
 .total-amount {
   font-weight: 600;
-  color: #81c784;
+  color: #16a34a;
   font-size: 1.1rem;
 }
 
@@ -1531,13 +985,12 @@ onMounted(() => {
 
 .invoice-card-actions {
   padding: 1rem;
-  border-top: 1px solid rgba(0, 82, 204, 0.1);
+  border-top: 1px solid rgba(52, 211, 153, 0.1);
   display: flex;
   gap: 0.5rem;
   justify-content: flex-end;
 }
 
-/* Pagination */
 .card-pagination {
   padding: 1.5rem;
 }
@@ -1550,26 +1003,26 @@ onMounted(() => {
 .page-item .page-link {
   border-radius: 8px;
   margin: 0 0.25rem;
-  color: #002962;
-  border: 1px solid rgba(0, 82, 204, 0.2);
+  color: #1f3a44;
+  border: 1px solid rgba(52, 211, 153, 0.2);
   transition: all 0.2s ease;
 }
 
 .page-item.active .page-link {
-  background: linear-gradient(135deg, #002962, #0052cc);
-  border-color: #0052cc;
+  background: linear-gradient(135deg, #34d399, #16a34a);
+  border-color: #34d399;
   color: white;
 }
 
 .page-item:not(.disabled) .page-link:hover {
-  background: linear-gradient(135deg, #003ba3, #0066ff);
-  border-color: #0066ff;
+  background: linear-gradient(135deg, #16a34a, #15803d);
+  border-color: #16a34a;
   color: white;
 }
 
 .page-item.disabled .page-link {
   background: #f8f9fa;
-  border-color: rgba(0, 82, 204, 0.2);
+  border-color: rgba(52, 211, 153, 0.2);
   color: #6c757d;
 }
 
@@ -1602,14 +1055,12 @@ onMounted(() => {
     gap: 1rem;
   }
 
-  .date-range-wrapper,
-  .price-range-wrapper {
+  .date-range-wrapper {
     flex-direction: column;
     gap: 0.75rem;
   }
 
-  .date-separator,
-  .price-separator {
+  .date-separator {
     display: none;
   }
 

@@ -9,7 +9,7 @@
             <div class="footer-brand">
               <div class="brand-logo">
                 <div class="logo-placeholder">
-                  <img src="/images/logos/logo2.png" alt="Mobile World Logo">
+                  <img src="/images/logos/logo3.png" alt="Mobile World Logo">
                 </div>
                 <h4 class="brand-name">Mobile World</h4>
               </div>
@@ -146,7 +146,7 @@
 .modern-footer {
   background: linear-gradient(135deg, #e6e7e8 0%, #eef0f1 100%);
   border-top: 3px solid transparent;
-  border-image: linear-gradient(135deg, #002962 0%, #0052cc 100%) 1;
+  border-image: linear-gradient(135deg, #60a5fa 0%, #34d399 100%) 1;
   border-image-slice: 1;
   margin-top: auto;
   transition: all 0.3s ease; /* Smooth transition for layout changes */
@@ -241,7 +241,7 @@
   left: 0;
   width: 30px;
   height: 2px;
-  background: linear-gradient(135deg, #007bff, #0056b3);
+  background: linear-gradient(135deg, #60a5fa, #34d399);
   border-radius: 1px;
   transition: left 0.3s ease, transform 0.3s ease;
 }
@@ -265,7 +265,7 @@
 }
 
 .footer-links a:hover {
-  color: #005aba;
+  color: #15803d;
   padding-left: 0.5rem;
 }
 
@@ -277,7 +277,7 @@
   transform: translateY(-50%);
   width: 4px;
   height: 4px;
-  background: #005aba;
+  background: #15803d;
   border-radius: 50%;
   opacity: 0;
   transition: all 0.3s ease;
@@ -319,7 +319,6 @@
   position: relative;
   overflow: hidden;
   border: 3px solid #fff;
-  box-shadow: 0 3px 12px rgba(0, 123, 255, 0.25);
   background: linear-gradient(135deg, #f8f9fa, #e9ecef);
 }
 
@@ -333,8 +332,7 @@
 
 .avatar-item:hover {
   transform: translateY(-3px) scale(1.1);
-  box-shadow: 0 6px 20px rgba(0, 123, 255, 0.4);
-  border-color: #005aba;
+  border-color: #15803d;
 }
 
 .avatar-item:hover img {
@@ -349,7 +347,6 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: linear-gradient(135deg, rgba(0, 123, 255, 0.1), rgba(0, 123, 255, 0.05));
   border-radius: 50%;
   opacity: 0;
   transition: opacity 0.3s ease;
@@ -368,7 +365,8 @@
 .social-link {
   width: clamp(30px, 3vw, 36px);
   height: clamp(30px, 3vw, 36px);
-  background: #fff;
+  background: linear-gradient(135deg, #60a5fa, #34d399);
+  color: white;
   border: 2px solid #dee2e6;
   border-radius: 8px;
   display: flex;
@@ -380,11 +378,7 @@
 }
 
 .social-link:hover {
-  border-color: #005aba;
-  background: #005aba;
-  color: white;
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
 }
 
 .footer-bottom {
@@ -418,7 +412,7 @@
 }
 
 .footer-bottom-links a:hover {
-  color: #005aba;
+  color: #15803d;
 }
 
 .divider {

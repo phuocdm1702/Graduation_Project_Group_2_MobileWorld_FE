@@ -5,7 +5,7 @@
   >
     <div class="sidebar-header">
       <div class="logo-container">
-        <img class="logo-icon" src="/images/logos/logo2.png" alt="Logo">
+        <img class="logo-icon" src="/images/logos/logo3.png" alt="Logo">
         <div class="logo-text" :class="{ 'logo-hidden': !isSidebarOpen }">
           Mobile World
         </div>
@@ -410,8 +410,8 @@ const leave = (el, done) => {
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  background-color: #ffffff;
-  box-shadow: 2px 0 15px rgba(0, 0, 0, 0.1);
+  background-color: rgba(249, 250, 251, 0.95); /* Màu nền chính của sidebar */
+  box-shadow: 2px 0 15px rgba(0, 0, 0, 0.1); /* Màu bóng */
 }
 
 .w-280px {
@@ -428,8 +428,8 @@ const leave = (el, done) => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border-bottom: 1px solid #e9ecef;
-  background-color: #ffffff;
+  border-bottom: 1px solid rgba(229, 231, 235, 0.5); /* Màu viền */
+  background-color: rgba(249, 250, 251, 0.95); /* Màu nền chính của sidebar */
   flex-shrink: 0;
   min-height: 80px;
 }
@@ -443,14 +443,11 @@ const leave = (el, done) => {
 }
 
 .logo-icon {
-  background-image: linear-gradient(135deg, #002962, #0052cc);
-  -webkit-background-clip: text;
-  color: transparent;
   background-clip: text;
   flex-shrink: 0;
-  width: 40px;
+  width: 50px;
   margin-right: 5px;
-  height: 40px;
+  height: 50px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -459,7 +456,7 @@ const leave = (el, done) => {
 .logo-text {
   font-size: 1.25rem;
   font-weight: 700;
-  background-image: linear-gradient(135deg, #002962, #0052cc);
+  background-color: #15803d; /* Màu xanh lá đậm cho văn bản */
   -webkit-background-clip: text;
   color: transparent;
   background-clip: text;
@@ -481,8 +478,8 @@ const leave = (el, done) => {
   height: 40px;
   border: none;
   border-radius: 8px;
-  background-color: #e9ecef;
-  color: #002962;
+  background-color: rgba(229, 231, 235, 0.5); /* Màu viền làm nền */
+  color: #15803d; /* Màu xanh lá đậm cho văn bản */
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -492,7 +489,7 @@ const leave = (el, done) => {
 }
 
 .toggle-btn:hover {
-  background-color: #dee2e6;
+  background-color: #f0fdf4; /* Màu xanh lá nhạt khi hover */
   transform: scale(1.05);
 }
 
@@ -524,7 +521,7 @@ const leave = (el, done) => {
   margin: 0.25rem 0.75rem;
   padding: 0.75rem;
   border-radius: 12px;
-  color: #000000;
+  color: #111827; /* Màu văn bản chính */
   text-decoration: none;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   min-height: 48px;
@@ -533,21 +530,20 @@ const leave = (el, done) => {
 }
 
 .nav-item:hover {
-  background-color: #e9ecef;
-  color: #002962;
+  background-color: #f0fdf4; /* Màu xanh lá nhạt khi hover */
+  color: #16a34a; /* Màu xanh lá đậm hơn khi hover */
   transform: translateX(4px);
 }
 
 .nav-item-active {
-  background: linear-gradient(135deg, #002962, #0052cc);
-  color: #ffffff;
-  box-shadow: 0 4px 20px rgba(63, 143, 252, 0.2);
+  background: #dcfce7; /* Màu xanh lá rất nhạt cho trạng thái active */
+  color: #15803d; /* Màu xanh lá đậm cho văn bản */
   transform: translateX(4px);
 }
 
 .nav-item-active:hover {
-  background: linear-gradient(135deg, #002962, #0052cc);
-  color: #ffffff;
+  background: #f0fdf4; /* Màu xanh lá nhạt khi hover */
+  color: #16a34a; /* Màu xanh lá đậm hơn khi hover */
 }
 
 .nav-parent {
@@ -555,7 +551,7 @@ const leave = (el, done) => {
 }
 
 .nav-item-expanded {
-  border-left: 3px solid #002962;
+  border-left: 3px solid #15803d; /* Màu xanh lá đậm */
   margin-left: 0.5rem;
   padding-left: 1rem;
 }
@@ -572,12 +568,12 @@ const leave = (el, done) => {
 .icon-svg {
   width: 20px;
   height: 20px;
-  color: #002962;
+  color: #111827; /* Màu văn bản chính */
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .nav-item-active .icon-svg {
-  color: #ffffff;
+  color: #15803d; /* Màu xanh lá đậm cho trạng thái active */
 }
 
 .nav-item:hover .icon-svg {
@@ -606,7 +602,7 @@ const leave = (el, done) => {
 
 .dropdown-arrow {
   font-size: 0.8rem;
-  color: #002962;
+  color: #15803d; /* Màu xanh lá đậm */
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   margin-left: auto;
   padding-right: 0.5rem;
@@ -615,11 +611,11 @@ const leave = (el, done) => {
 
 .dropdown-expanded {
   transform: rotate(180deg) scale(1.1);
-  color: #0056b3;
+  color: #15803d; /* Màu xanh lá đậm */
 }
 
 .nav-item-active .dropdown-arrow {
-  color: #ffffff;
+  color: #15803d; /* Màu xanh lá đậm */
 }
 
 .nav-tooltip {
@@ -628,8 +624,8 @@ const leave = (el, done) => {
   top: 50%;
   transform: translateY(-50%);
   padding: 0.5rem 0.75rem;
-  background: linear-gradient(135deg, #002962, #0052cc);
-  color: #ffffff;
+  color: #ffffff; /* Màu trắng cho văn bản tooltip */
+  background-color: #111827; /* Màu xám đậm cho nền tooltip */
   border-radius: 8px;
   font-size: 0.875rem;
   white-space: nowrap;
@@ -657,16 +653,16 @@ const leave = (el, done) => {
   height: 0;
   border-top: 6px solid transparent;
   border-bottom: 6px solid transparent;
-  border-right: 6px solid #002962;
+  border-right: 6px solid #111827; /* Màu xám đậm cho nền tooltip */
 }
 
 /* Optimized submenu animations */
 .submenu {
   overflow: hidden;
-  background-color: #f8f9fa;
+  background-color: rgba(249, 250, 251, 0.95); /* Màu nền chính của sidebar */
   margin: 0.25rem 0.75rem 0.5rem 0.75rem;
   border-radius: 8px;
-  border-left: 2px solid #dee2e6;
+  border-left: 2px solid rgba(229, 231, 235, 0.5); /* Màu viền */
 }
 
 .submenu-slide-enter-active,
@@ -678,7 +674,7 @@ const leave = (el, done) => {
   display: flex;
   align-items: center;
   padding: 0.6rem 1rem;
-  color: #000000;
+  color: #111827; /* Màu văn bản chính */
   text-decoration: none;
   font-size: 0.9rem;
   border-radius: 6px;
@@ -697,18 +693,18 @@ const leave = (el, done) => {
 }
 
 .submenu-item:hover {
-  background-color: #ffffff;
-  color: #002962;
+  background-color: #f0fdf4; /* Màu xanh lá nhạt khi hover */
+  color: #16a34a; /* Màu xanh lá đậm hơn khi hover */
   transform: translateX(4px);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); /* Màu bóng */
 }
 
 .submenu-item-active {
-  background-color: #ffffff;
-  color: #002962;
+  background-color: #dcfce7; /* Màu xanh lá rất nhạt cho trạng thái active */
+  color: #15803d; /* Màu xanh lá đậm cho văn bản */
   font-weight: 600;
-  border-left: 2px solid #002962;
-  box-shadow: 0 2px 8px rgba(63, 143, 252, 0.2);
+  border-left: 2px solid #15803d; /* Màu xanh lá đậm */
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06); /* Màu bóng */
 }
 
 .submenu-indicator {
@@ -725,21 +721,21 @@ const leave = (el, done) => {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background-color: #dee2e6;
+  background-color: #d1d5db; /* Màu xám nhạt cho dấu chấm không active */
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   transform: scale(0.8);
 }
 
 .submenu-item:hover .indicator-dot {
-  background: linear-gradient(135deg, #002962, #0052cc);
+  background: #16a34a; /* Màu xanh lá đậm hơn khi hover */
   transform: scale(1.2);
-  box-shadow: 0 0 8px rgba(63, 143, 252, 0.4);
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.1); /* Màu bóng */
 }
 
 .indicator-active {
-  background: linear-gradient(135deg, #002962, #0052cc);
+  background: #15803d; /* Màu xanh lá đậm */
   transform: scale(1.4);
-  box-shadow: 0 0 12px rgba(63, 143, 252, 0.6);
+  box-shadow: 0 0 12px rgba(0, 0, 0, 0.1); /* Màu bóng */
   animation: pulse 2s infinite;
 }
 
@@ -764,8 +760,8 @@ const leave = (el, done) => {
 /* Sidebar footer layout */
 .sidebar-footer {
   padding: 1rem;
-  border-top: 1px solid #e9ecef;
-  background-color: #ffffff;
+  border-top: 1px solid rgba(229, 231, 235, 0.5); /* Màu viền */
+  background-color: rgba(249, 250, 251, 0.95); /* Màu nền chính của sidebar */
   flex-shrink: 0;
   display: flex;
   align-items: center;
@@ -793,7 +789,7 @@ const leave = (el, done) => {
 }
 
 .user-profile:hover {
-  background-color: #e9ecef;
+  background-color: #f0fdf4; /* Màu xanh lá nhạt khi hover */
 }
 
 .avatar {
@@ -803,8 +799,8 @@ const leave = (el, done) => {
   position: relative;
   flex-shrink: 0;
   overflow: hidden;
-  border: 2px solid #e9ecef;
-  box-shadow: 0 4px 12px rgba(63, 143, 252, 0.2);
+  border: 2px solid rgba(229, 231, 235, 0.5); /* Màu viền */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); /* Màu bóng */
 }
 
 .avatar-img {
@@ -826,8 +822,8 @@ const leave = (el, done) => {
   justify-content: center;
   font-size: 1rem;
   font-weight: 600;
-  color: #ffffff;
-  background: linear-gradient(135deg, #002962, #0052cc);
+  color: #ffffff; /* Màu trắng cho văn bản */
+  background: #15803d; /* Màu xanh lá đậm cho avatar dự phòng */
 }
 
 .user-info {
@@ -849,7 +845,7 @@ const leave = (el, done) => {
 .user-name {
   font-size: 0.9rem;
   font-weight: 600;
-  color: #000000;
+  color: #111827; /* Màu văn bản chính */
   margin-bottom: 0.125rem;
   white-space: nowrap;
   overflow: hidden;
@@ -858,7 +854,7 @@ const leave = (el, done) => {
 
 .user-role {
   font-size: 0.75rem;
-  color: #6c757d;
+  color: #6b7280; /* Màu xám trung bình cho vai trò người dùng */
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -883,17 +879,17 @@ const leave = (el, done) => {
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.5); /* Màu đen với độ trong suốt 50% cho lớp phủ modal */
   backdrop-filter: blur(2px);
 }
 
 .modal-content {
   position: relative;
-  background: #ffffff;
+  background: #ffffff; /* Màu trắng cho nội dung modal */
   border-radius: 12px;
   width: 100%;
   max-width: 320px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2); /* Màu bóng */
   overflow: hidden;
   z-index: 2001;
 }
@@ -903,27 +899,27 @@ const leave = (el, done) => {
   align-items: center;
   justify-content: space-between;
   padding: 1rem 1.5rem;
-  border-bottom: 1px solid #e9ecef;
+  border-bottom: 1px solid rgba(229, 231, 235, 0.5); /* Màu viền */
 }
 
 .modal-header h3 {
   margin: 0;
   font-size: 1.25rem;
   font-weight: 600;
-  color: #002962;
+  color: #15803d; /* Màu xanh lá đậm cho văn bản */
 }
 
 .modal-close-btn {
   background: none;
   border: none;
   font-size: 1rem;
-  color: #6c757d;
+  color: #6b7280; /* Màu xám trung bình */
   cursor: pointer;
   transition: color 0.2s ease;
 }
 
 .modal-close-btn:hover {
-  color: #002962;
+  color: #15803d; /* Màu xanh lá đậm */
 }
 
 .modal-body {
@@ -940,8 +936,8 @@ const leave = (el, done) => {
   padding: 0.75rem 1rem;
   border: none;
   border-radius: 8px;
-  background: #f8f9fa;
-  color: #000000;
+  background: rgba(249, 250, 251, 0.95); /* Màu nền chính của sidebar */
+  color: #111827; /* Màu văn bản chính */
   font-size: 0.95rem;
   font-weight: 500;
   text-align: left;
@@ -950,8 +946,8 @@ const leave = (el, done) => {
 }
 
 .modal-btn:hover {
-  background: linear-gradient(135deg, #002962, #0052cc);
-  color: #ffffff;
+  background: #f0fdf4; /* Màu xanh lá nhạt khi hover */
+  color: #16a34a; /* Màu xanh lá đậm hơn khi hover */
   transform: translateX(4px);
 }
 
@@ -960,12 +956,12 @@ const leave = (el, done) => {
 }
 
 .modal-btn.logout {
-  background: linear-gradient(135deg, #dc3545, #c82333);
-  color: #ffffff;
+  background: #22c55e; /* Màu xanh lá chính cho nút đăng xuất */
+  color: #ffffff; /* Màu trắng cho văn bản */
 }
 
 .modal-btn.logout:hover {
-  background: linear-gradient(135deg, #c82333, #b21f2d);
+  background: #15803d; /* Màu xanh lá đậm hơn khi hover */
   transform: translateX(4px);
 }
 
@@ -999,16 +995,16 @@ const leave = (el, done) => {
 }
 
 .sidebar-nav::-webkit-scrollbar-track {
-  background: #f8f9fa;
+  background: rgba(249, 250, 251, 0.95); /* Màu nền chính của sidebar */
 }
 
 .sidebar-nav::-webkit-scrollbar-thumb {
-  background: #dee2e6;
+  background: #d1d5db; /* Màu xám nhạt */
   border-radius: 2px;
 }
 
 .sidebar-nav::-webkit-scrollbar-thumb:hover {
-  background: #ced4da;
+  background: #6b7280; /* Màu xám trung bình */
 }
 
 @media (max-width: 768px) {

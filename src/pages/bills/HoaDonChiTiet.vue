@@ -1,174 +1,539 @@
 <template>
-  <div class="container-fluid py-4">
+  <div class="container-fluid py-4 invoice-detail-management animate__animated animate__fadeIn">
+    <!-- Header -->
     <HeaderCard
       title="Hóa Đơn Chi Tiết"
       badgeText="Hệ Thống POS"
-      titleColor="#002962"
-      badgeClass="gradient-custom-blue"
+      badgeClass="gradient-custom-teal"
       :backgroundOpacity="0.95"
+      class="page-header"
     />
 
-    <!-- Bảng Dữ liệu -->
-    <div
-      class="card shadow-lg bill-card"
-      style="background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(15px);"
-    >
-      <div class="card-body p-4">
-        <h5 class="card-title mb-4 fw-bold text-dark">Danh sách chi tiết hóa đơn</h5>
-        <DataTable
-          title=""
-          :headers="headers"
-          :data="details"
-          :pageSizeOptions="[5, 10, 20]"
-        >
-          <template #code="{ item }">
-            <span class="fw-medium" style="color: #002962;">{{ item.code }}</span>
-          </template>
-          <template #invoice="{ item }">
-            <span class="text-muted">{{ item.invoice }}</span>
-          </template>
-          <template #product="{ item }">
-            <span class="text-muted">{{ item.product }}</span>
-          </template>
-          <template #imei="{ item }">
-            <button
-              class="btn btn-sm btn-view"
-              @click="showIMEIModal(item)"
-            >
-              <i class="bi bi-eye"></i>
-            </button>
-          </template>
-          <template #total="{ item }">
-            <span class="fw-semibold" style="color: #28a745;">{{ formatPrice(item.total) }}</span>
-          </template>
-          <template #status="{ item }">
-            <span class="text-muted">{{ item.status }}</span>
-          </template>
-          <template #note="{ item }">
-            <span class="text-muted">{{ item.note }}</span>
-          </template>
-        </DataTable>
-      </div>
-    </div>
-
-    <!-- IMEI Modal -->
-    <div v-if="showIMEIModal" class="modal fade show d-block" tabindex="-1" style="background: rgba(0, 0, 0, 0.5);">
-      <div class="modal-dialog modal-dialog-centered modal-lg">
-        <div
-          class="modal-content shadow-lg p-2 gradient-modal"
-          style="background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(15px); border-radius: 12px;"
-        >
-          <div class="modal-header border-0 d-flex justify-content-between align-items-center">
-            <h5 class="modal-title fw-bold text-dark">
-              IMEI của {{ selectedDetail?.product }}
-            </h5>
-            <button
-              class="btn btn-outline-secondary btn-close-custom"
-              @click="closeIMEIModal"
-            >
-              <i class="bi bi-x-lg"></i>
-            </button>
+    <!-- Status Timeline -->
+    <FilterTableSection title="Trạng Thái Hóa Đơn" icon="bi bi-clock-history">
+      <div class="mx-4 my-5">
+        <div class="timeline-container">
+          <div
+            v-for="(status, index) in timelineStatuses"
+            :key="index"
+            class="timeline-step"
+            :class="{ 'completed': status.completed, 'current': status.current }"
+          >
+            <div class="step-circle">
+              <i :class="status.icon"></i>
+            </div>
+            <div class="step-content">
+              <h6 class="step-title">{{ status.title }}</h6>
+              <p class="step-time">{{ status.time }}</p>
+            </div>
           </div>
-          <div class="modal-body p-4">
-            <div class="imei-list-container">
-              <div
-                v-for="imei in selectedDetail?.imei.split(', ')"
-                :key="imei"
-                class="d-flex justify-content-between align-items-center imei-card mb-3 p-3 bg-light rounded"
-              >
-                <div class="d-flex align-items-center">
-                  <i class="bi bi-upc-scan me-3 text-primary" style="font-size: 1.2rem;"></i>
-                  <span class="text-dark fw-medium">{{ imei }}</span>
-                </div>
-                <button
-                  class="btn btn-danger btn-sm delete-imei-btn"
-                  @click="deleteIMEI(imei)"
+        </div>
+      </div>
+    </FilterTableSection>
+
+    <!-- Thông tin chính -->
+    <div class="row g-4 mb-4 animate__animated animate__zoomIn" style="--animate-delay: 0.3s;">
+      <!-- Thông tin đơn hàng -->
+      <div class="col-lg-6">
+        <FilterTableSection title="Thông Tin Đơn Hàng" icon="bi bi-receipt" class="filter-table-section">
+          <div class="section-body m-3">
+            <div class="info-card glass-card">
+              <div class="card-body">
+                <div
+                  class="info-row"
+                  v-for="(info, index) in orderInfo"
+                  :key="index"
                 >
-                  <i class="bi bi-x-lg"></i>
-                </button>
-              </div>
-              <div v-if="!selectedDetail?.imei" class="text-center text-muted py-4">
-                <i class="bi bi-info-circle me-2"></i>Không có IMEI nào được chọn.
+                  <span class="info-label">{{ info.label }}</span>
+                  <span
+                    class="info-value"
+                    :class="{
+                      'code-text': info.key === 'ma',
+                      'type-badge': info.key === 'loaiDon',
+                      'status-badge': info.key === 'trangThai',
+                      [getBadgeClass(info.key, info.value)]: info.key === 'loaiDon' || info.key === 'trangThai',
+                    }"
+                  >
+                    <i v-if="info.icon" :class="info.icon" class="me-1"></i>
+                    {{ info.value }}
+                  </span>
+                </div>
               </div>
             </div>
           </div>
-          <div class="modal-footer border-0">
-            <button
-              class="btn btn-light px-4 py-2 gradient-custom-blue text-white"
-              @click="closeIMEIModal"
-            >
-              Đóng
-            </button>
+        </FilterTableSection>
+      </div>
+
+      <!-- Thông tin khách hàng -->
+      <div class="col-lg-6">
+        <FilterTableSection title="Thông Tin Khách Hàng" icon="bi bi-person-circle" class="filter-table-section">
+          <div class="section-body m-3">
+            <div class="info-card glass-card">
+              <div class="card-body">
+                <div
+                  class="info-row"
+                  v-for="(info, index) in customerInfo"
+                  :key="index"
+                >
+                  <span class="info-label">{{ info.label }}</span>
+                  <span class="info-value">
+                    {{ info.value || 'Không có' }}
+                  </span>
+                </div>
+              </div>
+            </div>
           </div>
+        </FilterTableSection>
+      </div>
+    </div>
+
+    <!-- Danh sách sản phẩm -->
+    <FilterTableSection title="Danh Sách Sản Phẩm" icon="bi bi-box-seam">
+      <div class="section-body m-3">
+        <div class="product-actions mb-3 d-flex justify-content-end gap-2">
+          <button class="btn btn-action" @click="showAddProductModal">
+            Thêm Sản Phẩm
+          </button>
+          <button class="btn btn-action" @click="showDivinationModal">
+            Quét QR
+          </button>
+        </div>
+        <div class="products-list">
+          <div
+            v-for="product in products"
+            :key="product.id"
+            class="product-card animate__animated animate__zoomIn"
+            style="--animate-delay: 0.4s;"
+          >
+            <div class="product-card-content">
+              <div class="product-image">
+                <img
+                  :src="product.image || '/assets/placeholder-product.png'"
+                  alt="Product Image"
+                  class="product-img"
+                />
+              </div>
+              <div class="product-details">
+                <h6 class="product-name">{{ product.name }}</h6>
+                <div class="product-price">
+                  <span class="price-amount">{{ formatPrice(product.price) }}</span>
+                  <span class="quantity">x{{ product.quantity || 1 }}</span>
+                </div>
+                <div class="product-imei" v-if="product.imei">
+                  <span class="imei-label">IMEI:</span>
+                  <span class="imei-code">{{ truncateIMEI(product.imei) }}</span>
+                </div>
+              </div>
+            </div>
+            <div class="product-card-actions">
+              <button
+                class="btn btn-sm btn-view"
+                @click="showIMEIModal(product)"
+                title="Xem IMEI"
+              >
+                Xem IMEI
+              </button>
+              <button
+                class="btn btn-sm btn-delete"
+                @click="removeProduct(product)"
+                title="Xóa sản phẩm"
+              >
+                Xóa
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </FilterTableSection>
+
+    <!-- Lịch sử thanh toán & Lịch sử hóa đơn & Tổng kết đơn hàng -->
+    <div class="d-flex flex-wrap g-4 mb-4 animate__animated animate__fadeIn" style="--animate-delay: 0.5s;">
+      <!-- Lịch sử thanh toán -->
+      <div class="flex-child flex-history">
+        <FilterTableSection title="Lịch Sử Thanh Toán" icon="bi bi-cash-stack" class="filter-table-section">
+          <div class="section-body m-3">
+            <div class="history-timeline">
+              <div
+                v-for="payment in payments"
+                :key="payment.id"
+                class="history-item"
+                :class="{ 'completed': payment.status === 'completed' }"
+              >
+                <div class="history-dot"></div>
+                <div class="history-content">
+                  <div class="history-title">
+                    {{ payment.method }} - {{ formatPrice(payment.amount) }}
+                  </div>
+                  <div class="history-details">
+                    <span class="code-text">{{ payment.code }}</span>
+                    <span class="ms-2">({{ payment.confirmedBy }})</span>
+                    <span class="history-time">{{ getPaymentTime(payment) }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </FilterTableSection>
+
+        <!-- Lịch sử hóa đơn -->
+        <FilterTableSection title="Lịch Sử Hóa Đơn" icon="bi bi-clock-history" class="filter-table-section">
+          <div class="section-body m-3">
+            <div class="history-timeline">
+              <div
+                v-for="item in history"
+                :key="item.id"
+                class="history-item"
+                :class="{ 'completed': item.status === 'completed' }"
+              >
+                <div class="history-dot"></div>
+                <div class="history-content">
+                  <div class="history-title">
+                    {{ item.action }}
+                  </div>
+                  <div class="history-details">
+                    <span>{{ item.employee }}</span>
+                    <span class="ms-2" style="font-weight: 500;">{{ item.timestamp }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </FilterTableSection>
+      </div>
+
+      <!-- Tổng kết đơn hàng -->
+      <div class="flex-child flex-summary">
+        <FilterTableSection title="Tổng Kết Đơn Hàng" icon="bi bi-calculator" class="filter-table-section">
+          <div class="section-body">
+            <div class="summary-container">
+              <!-- Header thống kê -->
+              <div class="summary-header">
+                <div class="summary-icon">
+                  <i class="bi bi-receipt"></i>
+                </div>
+                <div class="summary-title">
+                  <h4>Chi Tiết Thanh Toán</h4>
+                  <span class="summary-subtitle">Tổng kết đơn hàng</span>
+                </div>
+              </div>
+
+              <!-- Chi tiết thanh toán -->
+              <div class="payment-details">
+                <div class="detail-item">
+                  <div class="detail-left">
+                    <div class="detail-icon subtotal">
+                      <i class="bi bi-bag-check"></i>
+                    </div>
+                    <div class="detail-info">
+                      <span class="detail-label">Tổng tiền hàng</span>
+                      <span class="detail-desc">Giá trị sản phẩm</span>
+                    </div>
+                  </div>
+                  <div class="detail-value">
+                    <span class="amount">{{ formatPrice(totalPrice) }}</span>
+                  </div>
+                </div>
+
+                <div class="detail-item discount-item">
+                  <div class="detail-left">
+                    <div class="detail-icon discount">
+                      <i class="bi bi-percent"></i>
+                    </div>
+                    <div class="detail-info">
+                      <span class="detail-label">Giảm giá</span>
+                      <span class="detail-desc">Khuyến mãi áp dụng</span>
+                    </div>
+                  </div>
+                  <div class="detail-value">
+                    <span class="amount discount-amount">-{{ formatPrice(discount) }}</span>
+                  </div>
+                </div>
+
+                <!-- Divider -->
+                <div class="payment-divider">
+                  <div class="divider-line"></div>
+                  <div class="divider-icon">
+                    <i class="bi bi-calculator"></i>
+                  </div>
+                  <div class="divider-line"></div>
+                </div>
+
+                <!-- Tổng tiền -->
+                <div class="detail-item total-item">
+                  <div class="detail-left">
+                    <div class="detail-icon total">
+                      <i class="bi bi-cash-coin"></i>
+                    </div>
+                    <div class="detail-info">
+                      <span class="detail-label">Thành tiền</span>
+                      <span class="detail-desc">Số tiền phải thanh toán</span>
+                    </div>
+                  </div>
+                  <div class="detail-value">
+                    <span class="amount total-amount">{{ formatPrice(totalPrice - discount) }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Footer actions -->
+              <div class="summary-footer">
+                <div class="payment-status">
+                  <i class="bi bi-check-circle-fill"></i>
+                  <span>Đã xác nhận</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </FilterTableSection>
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div
+      class="action-buttons m-3 animate__animated animate__fadeInUp d-flex gap-2 justify-content-end"
+      style="--animate-delay: 0.6s;"
+    >
+      <router-link to="/hoaDon" class="btn btn-reset">
+        <i class="bi bi-arrow-left me-2"></i> Quay lại
+      </router-link>
+      <button class="btn btn-action" @click="showUpdateModal">
+        Cập nhật
+      </button>
+      <button class="btn btn-action" @click="printInvoice">
+        In hóa đơn
+      </button>
+    </div>
+
+    <!-- IMEI Modal -->
+    <div
+      v-if="isIMEIModalVisible"
+      class="modal-backdrop-blur"
+      @click.self="closeIMEIModal"
+    >
+      <div class="modal-container glass-modal animate__animated animate__zoomIn">
+        <div class="modal-header">
+          <h5 class="modal-title">
+            <i class="bi bi-upc-scan me-2"></i> IMEI của {{ selectedProduct?.name }}
+          </h5>
+          <button class="btn-close-glass" @click="closeIMEIModal">
+            <i class="bi bi-x-lg"></i>
+          </button>
+        </div>
+        <div class="modal-body imei-container">
+          <div class="imei-input mb-3">
+            <div class="input-group">
+              <input
+                v-model="newIMEI"
+                type="text"
+                class="form-control"
+                placeholder="Tìm kiếm hoặc thêm imel"
+                @keyup.enter="addIMEI"
+              />
+              <button class="btn btn-action" @click="addIMEI">
+                <i class="bi bi-plus-circle me-1"></i>
+              </button>
+            </div>
+          </div>
+          <div v-if="selectedProduct?.imei" class="imei-list">
+            <div
+              v-for="imei in selectedProduct.imei.split(', ')"
+              :key="imei"
+              class="imei-item animate__animated animate__fadeIn"
+            >
+              <div class="imei-content">
+                <i class="bi bi-qr-code me-3"></i>
+                <span class="imei-code">{{ imei }}</span>
+              </div>
+              <button
+                class="btn btn-sm btn-delete"
+                @click="deleteIMEI(imei)"
+                title="Xóa IMEI"
+              >
+                <i class="bi bi-x-lg"></i>
+              </button>
+            </div>
+          </div>
+          <div v-else class="empty-state">
+            <i class="bi bi-info-circle"></i>
+            Không có IMEI nào được chọn.
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-reset" @click="closeIMEIModal">
+            Đóng
+          </button>
+          <button class="btn btn-action" @click="saveIMEIChanges">
+            Lưu
+          </button>
         </div>
       </div>
     </div>
 
+    <!-- Update Modal -->
+    <div
+      v-if="isUpdateModalVisible"
+      class="modal-backdrop-blur"
+      @click.self="closeUpdateModal"
+    >
+      <div class="modal-container glass-modal animate__animated animate__zoomIn">
+        <div class="modal-header">
+          <h5 class="modal-title">
+            <i class="bi bi-pencil-square me-2"></i> Cập Nhật Thông Tin
+          </h5>
+          <button class="btn-close-glass" @click="closeUpdateModal">
+            <i class="bi bi-x-lg"></i>
+          </button>
+        </div>
+        <div class="modal-body">
+          <ul class="nav nav-tabs mb-3">
+            <li class="nav-item">
+              <button
+                class="nav-link"
+                :class="{ active: activeTab === 'order' }"
+                @click="activeTab = 'order'"
+              >
+                Thông Tin Đơn Hàng
+              </button>
+            </li>
+            <li class="nav-item">
+              <button
+                class="nav-link"
+                :class="{ active: activeTab === 'customer' }"
+                @click="activeTab = 'customer'"
+              >
+                Thông Tin Khách Hàng
+              </button>
+            </li>
+          </ul>
+          <div v-if="activeTab === 'order'" class="tab-content">
+            <div class="form-group mb-3">
+              <label class="form-label">Mã đơn hàng</label>
+              <input
+                v-model="invoice.ma"
+                type="text"
+                class="form-control"
+                placeholder="Nhập mã đơn hàng"
+              />
+            </div>
+            <div class="form-group mb-3">
+              <label class="form-label">Loại đơn</label>
+              <select v-model="invoice.loaiDon" class="form-select">
+                <option value="Online">Online</option>
+                <option value="Tại quầy">Tại quầy</option>
+              </select>
+            </div>
+            <div class="form-group mb-3">
+              <label class="form-label">Trạng thái</label>
+              <select v-model="invoice.trangThai" class="form-select">
+                <option value="Chờ xác nhận">Chờ xác nhận</option>
+                <option value="Chờ giao hàng">Chờ giao hàng</option>
+                <option value="Đang giao">Đang giao</option>
+                <option value="Hoàn thành">Hoàn thành</option>
+                <option value="Đã hủy">Đã hủy</option>
+              </select>
+            </div>
+          </div>
+          <div v-if="activeTab === 'customer'" class="tab-content">
+            <div class="form-group mb-3">
+              <label class="form-label">Tên khách hàng</label>
+              <input
+                v-model="invoice.idKhachHang.ten"
+                type="text"
+                class="form-control"
+                placeholder="Nhập tên khách hàng"
+              />
+            </div>
+            <div class="form-group mb-3">
+              <label class="form-label">Số điện thoại</label>
+              <input
+                v-model="invoice.soDienThoaiKhachHang"
+                type="text"
+                class="form-control"
+                placeholder="Nhập số điện thoại"
+              />
+            </div>
+            <div class="form-group mb-3">
+              <label class="form-label">Địa chỉ</label>
+              <input
+                v-model="invoice.diaChiKhachHang"
+                type="text"
+                class="form-control"
+                placeholder="Nhập địa chỉ"
+              />
+            </div>
+            <div class="form-group mb-3">
+              <label class="form-label">Email</label>
+              <input
+                v-model="invoice.idKhachHang.email"
+                type="email"
+                class="form-control"
+                placeholder="Nhập email"
+              />
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-reset" @click="closeUpdateModal">
+            Hủy
+          </button>
+          <button class="btn btn-action" @click="saveUpdateChanges">
+            Lưu
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Divination Modal -->
+    <div
+      v-if="isDivinationModalVisible"
+      class="modal-backdrop-blur"
+      @click.self="closeDivinationModal"
+    >
+      <div class="modal-container glass-modal animate__animated animate__zoomIn">
+        <div class="modal-header">
+          <h5 class="modal-title">
+            <i class="bi bi-dice-5 me-2"></i> Quét QR
+          </h5>
+          <button class="btn-close-glass" @click="closeDivinationModal">
+            <i class="bi bi-x-lg"></i>
+          </button>
+        </div>
+        <div class="modal-body">
+          <div class="divination-content text-center">
+            <h6>{{ divinationResult.title }}</h6>
+            <p class="text-muted">{{ divinationResult.description }}</p>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-reset" @click="closeDivinationModal">
+            Đóng
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Notifications -->
+    <NotificationModal
+      ref="notificationModal"
+      :type="notificationType"
+      :message="notificationMessage"
+      :isLoading="isNotificationLoading"
+      :onConfirm="notificationOnConfirm"
+      :onCancel="notificationOnCancel"
+      @close="resetNotification"
+    />
     <ToastNotification ref="toastNotification" />
   </div>
 </template>
 
-<script setup>
-import { ref } from 'vue';
-import HeaderCard from '@/components/common/HeaderCard.vue';
-import DataTable from '@/components/common/DataTable.vue';
-import ToastNotification from '@/components/common/ToastNotification.vue';
+<script>
+import HoaDonChiTiet from './js/HoaDonChiTiet';
 
-// State
-const details = ref([
-  {
-    id: 1,
-    code: 'HDCT001',
-    invoice: 'HD001',
-    product: 'iPhone 14 Pro',
-    imei: '123456789012345',
-    total: 25000000,
-    status: 'Đã thanh toán',
-    note: 'Không có',
-  },
-]);
-const selectedDetail = ref(null);
-const toastNotification = ref(null);
-
-// Headers
-const headers = ref([
-  { text: 'Mã', value: 'code' },
-  { text: 'Hóa đơn', value: 'invoice' },
-  { text: 'Sản phẩm', value: 'product' },
-  { text: 'IMEI', value: 'imei' },
-  { text: 'Tổng tiền', value: 'total' },
-  { text: 'Trạng thái', value: 'status' },
-  { text: 'Ghi chú', value: 'note' },
-]);
-
-// Methods
-const formatPrice = (price) => {
-  return new Intl.NumberFormat('vi-VN', {
-    style: 'currency',
-    currency: 'VND',
-  }).format(price);
-};
-
-const showIMEIModal = (item) => {
-  selectedDetail.value = item;
-  showIMEIModal.value = true;
-};
-
-const closeIMEIModal = () => {
-  showIMEIModal.value = false;
-  selectedDetail.value = null;
-};
-
-const deleteIMEI = (imei) => {
-  toastNotification.value.addToast({
-    type: 'success',
-    message: `Đã xóa IMEI ${imei}`,
-    duration: 3000,
-  });
-};
+export default HoaDonChiTiet;
 </script>
 
 <style scoped>
+/* Animations */
 @keyframes fadeInUp {
   from {
     opacity: 0;
@@ -180,133 +545,926 @@ const deleteIMEI = (imei) => {
   }
 }
 
-@keyframes slideInLeft {
+@keyframes zoomIn {
   from {
     opacity: 0;
-    transform: translateX(-15px);
+    transform: scale(0.97);
   }
   to {
     opacity: 1;
-    transform: translateX(0);
+    transform: scale(1);
   }
 }
 
 @keyframes gentleGlow {
   0%, 100% {
-    box-shadow: 0 0 5px rgba(0, 94, 226, 0.3);
+    box-shadow: 0 0 5px rgba(52, 211, 153, 0.3);
   }
   50% {
-    box-shadow: 0 0 12px rgba(0, 94, 226, 0.5);
+    box-shadow: 0 0 12px rgba(52, 211, 153, 0.5);
   }
 }
 
-.gradient-custom-blue {
-  background: linear-gradient(135deg, #002962, #0052cc);
+/* Gradient Definitions */
+.gradient-custom-teal {
+  background: linear-gradient(135deg, #34d399, #16a34a);
+  color: white;
 }
 
-.bill-card {
-  animation: slideInLeft 0.5s ease-out;
+/* Base Styles */
+.invoice-detail-management {
+  min-height: 100vh;
+  background: #f8f9fa;
 }
 
-.modal.fade.show {
-  background-color: rgba(0, 0, 0, 0.5);
-  z-index: 1050;
+/* Timeline Styles */
+.timeline-container {
+  position: relative;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  max-width: 100%;
+  margin: 0 auto;
 }
-.modal-content {
+
+.timeline-container::before {
+  content: '';
+  position: absolute;
+  top: 25%;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(to right, #34d399, #16a34a);
+  border-radius: 2px;
+  transform: translateY(-50%);
+}
+
+.timeline-step {
+  position: relative;
+  text-align: center;
+  flex: 1;
+  margin: 0 1.5rem;
+  transition: all 0.3s ease;
+}
+
+.step-circle {
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  z-index: 2;
+  margin: 0 auto 1rem;
+  transition: transform 0.3s ease;
+}
+
+.timeline-step.completed .step-circle {
+  background: linear-gradient(135deg, #34d399, #16a34a);
+  color: #ffffff;
+  animation: subtlePulse 2s infinite;
+}
+
+.timeline-step.current .step-circle {
+  background: linear-gradient(135deg, #34d399, #16a34a);
+  color: #ffffff;
+  transform: scale(1.1);
+}
+
+.timeline-step .step-circle {
+  background: #6c757d;
+  color: #e9ecef;
+  border: 2px solid #e5e7eb;
+}
+
+.step-content {
+  padding: 0 0.5rem;
+}
+
+.step-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1f3a44;
+}
+
+.step-time {
+  font-size: 0.85rem;
+  color: #6c757d;
+  margin-top: 0.25rem;
+}
+
+/* Glass Effects */
+.glass-card {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.glass-header {
+  background: rgba(255, 255, 255, 0.95);
+  border-bottom: 1px solid rgba(52, 211, 153, 0.1);
+  padding: 1rem;
+  border-radius: 12px 12px 0 0;
+}
+
+.card-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1f3a44;
+}
+
+/* Info Rows */
+.row.g-4.mb-4 {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+}
+
+.col-lg-6 {
+  display: flex;
+  flex: 1 1 50%;
+  max-width: 50%;
+}
+
+.filter-table-section {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+}
+
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  border-bottom: 1px solid rgba(52, 211, 153, 0.1);
+  flex: 1;
+}
+
+.info-row:last-child {
+  border-bottom: none;
+}
+
+.info-label {
+  font-weight: 500;
+  color: #6c757d;
+  flex-shrink: 0;
+}
+
+.info-value {
+  font-weight: 600;
+  color: #1f3a44;
+  text-align: right;
+  display: flex;
+  align-items: center;
+}
+
+.card-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Product List */
+.product-actions {
+  padding: 0.5rem;
+}
+
+.products-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
+  padding: 1rem;
+}
+
+.product-card {
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(52, 211, 153, 0.1);
   border-radius: 12px;
+  overflow: hidden;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.product-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 24px rgba(52, 211, 153, 0.2);
+  animation: gentleGlow 2s infinite;
+}
+
+.product-card-content {
+  display: flex;
+  align-items: center;
+  padding: 1rem;
+  gap: 1rem;
+}
+
+.product-image {
+  flex: 0 0 80px;
+  height: 80px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #f8f9fa;
+}
+
+.product-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.product-details {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.product-name {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #1f3a44;
+}
+
+.product-price {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.price-amount {
+  font-weight: 600;
+  color: #16a34a;
+  font-size: 1rem;
+}
+
+.quantity {
+  font-size: 0.9rem;
+  color: #6c757d;
+}
+
+.product-imei {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.imei-label {
+  font-size: 0.85rem;
+  color: #6c757d;
+}
+
+.imei-code {
+  font-family: 'Monaco', 'Menlo', monospace;
+  font-size: 0.85rem;
+  color: #34d399;
+  background: rgba(52, 211, 153, 0.1);
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+}
+
+.product-card-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  border-top: 1px solid rgba(52, 211, 153, 0.1);
+  background: rgba(248, 250, 252, 0.9);
+}
+
+/* History Timeline */
+.history-timeline {
+  position: relative;
+  padding-left: 1.5rem;
+}
+
+.history-timeline::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 2px;
+  background: linear-gradient(to bottom, #34d399, #16a34a);
+}
+
+.history-item {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 1.5rem;
+  position: relative;
+}
+
+.history-item.completed .history-dot {
+  background: #34d399;
+}
+
+.history-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #6c757d;
+  position: absolute;
+  left: -6px;
+  top: 0.35rem;
+  z-index: 1;
+}
+
+.history-content {
+  flex: 1;
+  padding-left: 1rem;
+}
+
+.history-title {
+  font-weight: 600;
+  color: #1f3a44;
+  font-size: 1rem;
+  margin-bottom: 0.25rem;
+}
+
+.history-details {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  color: #6c757d;
+}
+
+.history-time {
+  margin-left: auto;
+  font-weight: 500;
+}
+
+/* Summary Styles */
+.summary-container {
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  height: 100%;
+  min-height: 300px;
+}
+
+.summary-header {
+  display: group flex;
+  align-items: center;
+  gap: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid rgba(52, 211, 153, 0.1);
+}
+
+.summary-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #34d399, #16a34a);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 1.25rem;
+}
+
+.summary-title h4 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1f3a44;
+}
+
+.summary-subtitle {
+  font-size: 0.875rem;
+  color: #6c757d;
+}
+
+.payment-details {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1rem 0;
+  flex: 1;
+}
+
+.detail-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 0;
+}
+
+.detail-left {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.detail-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+}
+
+.detail-icon.subtotal {
+  background: rgba(52, 211, 153, 0.1);
+  color: #16a34a;
+}
+
+.detail-icon.discount {
+  background: rgba(255, 165, 0, 0.1);
+  color: #ff8c00;
+}
+
+.detail-icon.total {
+  background: rgba(52, 211, 153, 0.1);
+  color: #16a34a;
+}
+
+.detail-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.detail-label {
+  font-weight: 600;
+  color: #1f3a44;
+  font-size: 0.95rem;
+}
+
+.detail-desc {
+  font-size: 0.8rem;
+  color: #6c757d;
+}
+
+.detail-value .amount {
+  font-weight: 600;
+  font-size: 1rem;
+  color: #1f3a44;
+}
+
+.detail-value .discount-amount {
+  color: #ff8c00;
+}
+
+.detail-value .total-amount {
+  color: #16a34a;
+  font-size: 1.1rem;
+}
+
+.payment-divider {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0.5rem 0;
+}
+
+.divider-line {
+  flex: 1;
+  height: 1px;
+  background: rgba(52, 211, 153, 0.2);
+}
+
+.divider-icon {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: rgba(52, 211, 153, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #34d399;
+  font-size: 0.9rem;
+}
+
+.summary-footer {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(52, 211, 153, 0.1);
+}
+
+.payment-status {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #16a34a;
+}
+
+/* Buttons */
+.btn-reset,
+.btn-action,
+.btn-view,
+.btn-delete {
+  padding: 0.6rem 1.2rem;
+  font-size: 1rem;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.btn-reset {
+  background: #6c757d;
+  color: white;
   border: none;
 }
-.btn-close-custom {
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 8px;
-  border: 1px solid rgba(0, 94, 226, 0.2);
-  transition: all 0.2s ease;
-}
-.btn-close-custom:hover {
-  background-color: rgba(0, 94, 226, 0.1);
-  border-color: #0052cc;
+
+.btn-reset:hover {
+  background: #5c636a;
+  color: white;
+  box-shadow: 0 0 10px rgba(108, 117, 125, 0.3);
 }
 
+.btn-action,
 .btn-view {
-  border-color: #002962;
-  color: #002962;
-}
-.btn-view:hover {
-  color: #ffffff;
-  background-color: #002962;
+  background: #34d399;
+  color: white;
+  border: none;
 }
 
-.delete-imei-btn {
+.btn-action:hover,
+.btn-view:hover {
+  background: #16a34a;
+  color: white;
+  box-shadow: 0 0 10px rgba(52, 211, 153, 0.3);
+}
+
+.btn-delete {
+  background: #dc3545;
+  color: white;
+  border: none;
+}
+
+.btn-delete:hover {
+  background: #c82333;
+  color: white;
+  box-shadow: 0 0 10px rgba(220, 53, 69, 0.3);
+}
+
+/* Badge Styles */
+.type-badge,
+.status-badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 1rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+}
+
+.badge-info {
+  background: #f8f9fa;
+  color: #1f3a44;
+  border: 1px solid #34d399;
+}
+
+.badge-secondary {
+  background: #6c757d;
+  color: white;
+}
+
+.badge-waiting {
+  background: #34d399;
+  color: white;
+}
+
+.badge-shipping {
+  background: #34d399;
+  color: white;
+}
+
+.badge-delivering {
+  background: #34d399;
+  color: white;
+}
+
+.badge-completed {
+  background: #16a34a;
+  color: white;
+}
+
+.badge-canceled {
+  background: #dc3545;
+  color: white;
+}
+
+.code-text {
+  font-family: 'Monaco', 'Menlo', monospace;
+  background: rgba(52, 211, 153, 0.1);
+  color: #34d399;
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+  font-size: 0.875rem;
+}
+
+/* Modal Styles */
+.modal-backdrop-blur {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(8px);
+  z-index: 1040;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow-y: auto;
+  padding: 1rem;
+}
+
+.glass-modal {
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(52, 211, 153, 0.1);
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  max-width: 500px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  background: rgba(255, 255, 255, 0.95);
+  border-bottom: 1px solid rgba(52, 211, 153, 0.1);
+  padding: 1rem;
+  border-radius: 16px 16px 0 0;
+}
+
+.modal-body {
+  padding: 1rem;
+}
+
+.modal-footer {
+  display: flex;
+  gap: 0.5rem;
+  background: rgba(255, 255, 255, 0.95);
+  border-top: 1px solid rgba(52, 211, 153, 0.1);
+  padding: 1rem;
+  border-radius: 0 0 16px 16px;
+}
+
+.btn-close-glass {
+  background: rgba(220, 53, 69, 0.1);
+  border: 1px solid rgba(220, 53, 69, 0.2);
+  color: #dc3545;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
-  padding: 0;
-  border-radius: 8px;
-  border: 1px solid rgba(211, 47, 47, 0.3);
-  background: linear-gradient(135deg, #ffffff, #f1f3f5);
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-}
-.delete-imei-btn:hover {
-  background: linear-gradient(135deg, #ff4d4f, #e63946);
-  box-shadow: 0 4px 8px rgba(255, 75, 75, 0.3);
-  transform: translateY(-1px);
-}
-.delete-imei-btn .bi-x-lg {
-  color: #dc3545;
-  font-size: 1rem;
-  transition: color 0.2s ease;
-}
-.delete-imei-btn:hover .bi-x-lg {
-  color: #ffffff;
+  transition: all 0.3s ease;
 }
 
-.imei-list-container {
-  max-height: 400px;
-  overflow-y: auto;
-  padding: 0.5rem;
-  scrollbar-width: thin;
-  scrollbar-color: rgba(0, 94, 226, 0.3) transparent;
+.btn-close-glass:hover {
+  background: rgba(220, 53, 69, 0.8);
+  color: white;
 }
-.imei-list-container::-webkit-scrollbar {
+
+.imei-container {
+  max-height: 300px;
+  overflow-y: auto;
+  padding-right: 0.5rem;
+}
+
+.imei-container::-webkit-scrollbar {
   width: 6px;
 }
-.imei-list-container::-webkit-scrollbar-thumb {
-  background-color: rgba(0, 94, 226, 0.3);
+
+.imei-container::-webkit-scrollbar-track {
+  background: rgba(52, 211, 153, 0.1);
   border-radius: 3px;
 }
-.imei-list-container::-webkit-scrollbar-track {
-  background-color: transparent;
+
+.imei-container::-webkit-scrollbar-thumb {
+  background: rgba(52, 211, 153, 0.5);
+  border-radius: 3px;
 }
 
-.imei-card {
-  border: 1px solid rgba(0, 94, 226, 0.1);
+.imei-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem;
+  margin-bottom: 0.5rem;
+  background: rgba(52, 211, 153, 0.05);
+  border: 1px solid rgba(52, 211, 153, 0.1);
   border-radius: 8px;
-  transition: all 0.2s ease;
-}
-.imei-card:hover {
-  background-color: #f8f9fa;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.text-dark {
-  color: #002962 !important;
+.imei-item:hover {
+  background: rgba(52, 211, 153, 0.1);
 }
-.text-success {
-  color: #28a745 !important;
+
+.imei-content {
+  display: flex;
+  align-items: center;
+  flex: 1;
 }
-.text-muted {
-  color: #6c757d !important;
+
+.imei-code {
+  font-family: 'Monaco', 'Menlo', monospace;
+  font-weight: 600;
+  color: #1f3a44;
+  font-size: 0.9rem;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 2rem;
+  color: #6c757d;
+}
+
+.empty-state i {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+}
+
+/* Form Styles */
+.form-control,
+.form-select {
+  border: 1px solid rgba(52, 211, 153, 0.2);
+  border-radius: 8px;
+  padding: 0.5rem;
+  transition: all 0.3s ease;
+}
+
+.form-control:focus,
+.form-select:focus {
+  border-color: #34d399;
+  box-shadow: 0 0 5px rgba(52, 211, 153, 0.3);
+}
+
+.form-label {
+  font-weight: 500;
+  color: #1f3a44;
+  margin-bottom: 0.5rem;
+}
+
+.nav-tabs {
+  border-bottom: 1px solid rgba(52, 211, 153, 0.2);
+}
+
+.nav-tabs .nav-link {
+  color: #1f3a44;
+  border: none;
+  border-bottom: 2px solid transparent;
+  transition: all 0.3s ease;
+}
+
+.nav-tabs .nav-link.active {
+  color: #16a34a;
+  border-bottom: 2px solid #34d399;
+  background: rgba(52, 211, 153, 0.05);
+}
+
+.nav-tabs .nav-link:hover {
+  color: #16a34a;
+  background: rgba(52, 211, 153, 0.05);
+}
+
+/* Flex Layout */
+.d-flex.flex-wrap.g-4.mb-4 {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  align-items: stretch;
+}
+
+.flex-child.flex-history {
+  flex: 2 1 65%;
+  display: flex;
+  flex-direction: column;
+}
+
+.flex-child.flex-summary {
+  flex: 1 1 32%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Responsive Design */
+@media (max-width: 992px) {
+  .flex-child.flex-history,
+  .flex-child.flex-summary {
+    flex: 1 1 100%;
+    min-width: unset;
+  }
+
+  .col-lg-6 {
+    flex: 1 1 100%;
+    max-width: 100%;
+  }
 }
 
 @media (max-width: 768px) {
-  .bill-card {
-    animation: fadeInUp 0.4s ease-out;
+  .timeline-container {
+    flex-direction: column;
+    gap: 2rem;
+  }
+
+  .timeline-container::before {
+    top: 0;
+    left: 50%;
+    right: auto;
+    width: 4px;
+    height: 100%;
+    transform: translateX(-50%);
+  }
+
+  .timeline-step {
+    text-align: left;
+    margin: 0;
+  }
+
+  .step-circle {
+    margin: 0 0 0.5rem 0;
+  }
+
+  .step-content {
+    padding-left: 1rem;
+  }
+
+  .info-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
+  }
+
+  .info-value {
+    text-align: left;
+  }
+
+  .products-list {
+    grid-template-columns: 1fr;
+  }
+
+  .product-card-content {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .product-image {
+    width: 100%;
+    height: 150px;
+  }
+
+  .product-card-actions {
+    justify-content: flex-start;
+  }
+
+  .summary-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .detail-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .detail-value {
+    text-align: left;
+  }
+
+  .history-timeline {
+    padding-left: 1rem;
+  }
+
+  .history-dot {
+    width: 10px;
+    height: 10px;
+    left: -5px;
+  }
+
+  .history-content {
+    padding-left: 0.75rem;
+  }
+
+  .glass-modal {
+    width: 90%;
+  }
+}
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }
 </style>

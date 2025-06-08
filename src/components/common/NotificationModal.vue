@@ -148,16 +148,16 @@ defineExpose({
 
 /* Định dạng màu sắc viền cho modal theo type */
 .modal-success .modal-header {
-  border-left: 4px solid #28a745;
+  border-left: 4px solid #34d399;
 }
 .modal-error .modal-header {
   border-left: 4px solid #dc3545;
 }
 .modal-warning .modal-header {
-  border-left: 4px solid #ffc107;
+  border-left: 4px solid #34d399;
 }
 .modal-confirm .modal-header {
-  border-left: 4px solid #007bff;
+  border-left: 4px solid #34d399;
 }
 
 .modal-header {
@@ -165,29 +165,27 @@ defineExpose({
   align-items: center;
   justify-content: space-between;
   padding: 1rem 1.5rem;
-  border-bottom: 1px solid #e9ecef;
+  border-bottom: 1px solid #6b7280;
 }
 
 .modal-header h3 {
   margin: 0;
   font-size: 1.25rem;
   font-weight: 600;
-  color: #002962;
+  color: #34d399;
 }
-
-.modal-closeっていう
 
 .modal-close-btn {
   background: none;
   border: none;
   font-size: 1rem;
-  color: #6c757d;
+  color: #dc3545;
   cursor: pointer;
   transition: color 0.2s ease;
 }
 
 .modal-close-btn:hover {
-  color: #002962;
+  color: #34d399;
 }
 
 .modal-body {
@@ -206,7 +204,6 @@ defineExpose({
 
 .message {
   font-size: 1rem;
-  color: #000000;
   text-align: center;
 }
 
@@ -232,51 +229,52 @@ defineExpose({
   color: #ffffff;
 }
 .modal-success .btn-ok {
-  background: linear-gradient(135deg, #28a745, #218838);
+  background: #34d399;
 }
 .modal-success .btn-ok:hover {
-  background: linear-gradient(135deg, #218838, #1e7e34);
+  background: #2cb888;
   color: #ffffff;
 }
 .modal-error .btn-ok {
-  background: linear-gradient(135deg, #dc3545, #c82333);
+  background: #dc3545;
 }
 .modal-error .btn-ok:hover {
-  background: linear-gradient(135deg, #c82333, #b21f2d);
+  background: #c5303e;
   color: #ffffff;
 }
 .modal-warning .btn-ok {
-  background: linear-gradient(135deg, #ffc107, #e0a800);
+  background: #34d399;
 }
 .modal-warning .btn-ok:hover {
-  background: linear-gradient(135deg, #e0a800, #c69500);
+  background: #2cb888;
   color: #ffffff;
 }
 .modal-confirm .btn-ok {
-  background: linear-gradient(135deg, #007bff, #0052cc);
+  background: #34d399;
 }
 .modal-confirm .btn-ok:hover {
-  background: linear-gradient(135deg, #0052cc, #003087);
+  background: #2cb888;
   color: #ffffff;
 }
 
 /* Nút Cancel */
 .btn-cancel {
-  background: #e9ecef;
-  color: #000000;
+  background: #6b7280;
+  color: #ffffff;
 }
 .btn-cancel:hover {
-  background: #dee2e6;
+  background: #5b616b;
+  color: white;
   transform: translateY(-2px);
 }
 
 /* Nút Confirm */
 .btn-confirm {
-  background: linear-gradient(135deg, #007bff, #0052cc);
+  background: #34d399;
   color: #ffffff;
 }
 .btn-confirm:hover {
-  background: linear-gradient(135deg, #0052cc, #003087);
+  background: #2cb888;
   transform: translateY(-2px);
   color: #ffffff;
 }

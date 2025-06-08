@@ -1,13 +1,13 @@
 <template>
   <div class="container-fluid py-4">
     <div class="card border-0 shadow-sm datatable-card" style="background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px);">
-       <h5 class="mb-0 fw-bold text-dark">{{ title }}</h5>
+      <h5 class="mb-0 fw-bold text-dark">{{ title }}</h5>
 
       <div class="card-body p-0">
         <div class="table-responsive">
           <table class="table table-hover align-middle mb-0">
-            <thead>
-              <tr class="text-muted small" style="background: rgba(0, 94, 226, 0.05);">
+            <thead class="sticky-header">
+              <tr class="text-muted small" style="background: rgba(52, 211, 153, 0.05);">
                 <th class="p-3">STT</th>
                 <th v-for="(header, index) in headers" :key="index" class="p-3">
                   {{ header.text }}
@@ -96,11 +96,11 @@ export default {
     },
     headers: {
       type: Array,
-      required: true // [{ text: 'Tên cột', value: 'key' }, ...]
+      required: true
     },
     data: {
       type: Array,
-      required: true // [{ id: 1, key: 'value', ... }, ...]
+      required: true
     },
     pageSizeOptions: {
       type: Array,
@@ -185,15 +185,15 @@ export default {
 
 @keyframes gentleGlow {
   0%, 100% {
-    box-shadow: 0 0 5px rgba(0, 94, 226, 0.3);
+    box-shadow: 0 0 5px rgba(52, 211, 153, 0.3);
   }
   50% {
-    box-shadow: 0 0 20px rgba(0, 94, 226, 0.5);
+    box-shadow: 0 0 20px rgba(52, 211, 153, 0.5);
   }
 }
 
-.gradient-custom-blue {
-  background: linear-gradient(135deg, #002962, #0052cc);
+.gradient-custom-teal {
+  background: linear-gradient(135deg, #34d399, #10b981);
 }
 
 .gradient-custom-orange {
@@ -201,7 +201,7 @@ export default {
 }
 
 .gradient-custom-green {
-  background: linear-gradient(135deg, #28a745, #1e7e34);
+  background: linear-gradient(135deg, #16a34a, #15803d);
 }
 
 .datatable-card {
@@ -210,7 +210,7 @@ export default {
 }
 
 .datatable-card:hover {
-  box-shadow: 0 12px 25px rgba(0, 94, 226, 0.15) !important;
+  box-shadow: 0 12px 25px rgba(52, 211, 153, 0.15) !important;
 }
 
 .table-row {
@@ -219,22 +219,22 @@ export default {
 }
 
 .table-row:hover {
-  background: rgba(0, 94, 226, 0.05) !important;
+  background: rgba(52, 211, 153, 0.05) !important;
 }
 
 .page-link {
   transition: all 0.3s ease;
   background: rgba(255, 255, 255, 0.9);
-  color: #002962;
+  color: #1f3a44;
 }
 
 .page-link:hover {
-  background: linear-gradient(135deg, #002962, #0052cc);
+  background: linear-gradient(135deg, #34d399, #16a34a);
   color: white;
 }
 
 .page-item.active .page-link {
-  background: linear-gradient(135deg, #002962, #0052cc);
+  background: linear-gradient(135deg, #34d399, #16a34a);
   color: white;
   border-color: transparent;
 }
@@ -246,10 +246,11 @@ export default {
 
 .form-select {
   transition: all 0.3s ease;
+  border: 2px solid rgba(52, 211, 153, 0.1);
 }
 
 .form-select:hover {
-  background: rgba(0, 94, 226, 0.1) !important;
+  background: rgba(52, 211, 153, 0.1) !important;
 }
 
 th, td {
@@ -258,6 +259,38 @@ th, td {
 
 th {
   font-size: 1.1rem;
+}
+
+.sticky-header {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(10px);
+}
+
+.table-responsive {
+  max-height: 450px; 
+  overflow-y: auto; 
+  scrollbar-width: thin; 
+  scrollbar-color: rgba(52, 211, 153, 0.5) rgba(0, 0, 0, 0.1); 
+}
+
+.table-responsive::-webkit-scrollbar {
+  width: 8px;
+}
+
+.table-responsive::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.table-responsive::-webkit-scrollbar-thumb {
+  background: rgba(52, 211, 153, 0.5);
+  border-radius: 4px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb:hover {
+  background: rgba(52, 211, 153, 0.8);
 }
 
 @media (max-width: 768px) {
