@@ -271,12 +271,12 @@ const menuItems = ref([
     isOpen: false,
   },
   { 
-    name: 'Phiếu Giảm giá', 
-    path: '/promotions/phieu-giam-gia', 
+    name: 'Giảm giá', 
+    path: '/promotions/giamGia',
     icon: TagIcon,
     children: [
-      { name: 'Phiếu giảm giá', path: '/promotions/phieu-giam-gia/list' },
-      { name: 'Đợt giảm giá', path: '/promotions/dot-giam-gia' },
+      { name: 'Phiếu giảm giá', path: '/phieuGiamGia' },
+      { name: 'Đợt giảm giá', path: '/dotGiamGia' },
     ],
     isOpen: false,
   },

@@ -222,6 +222,7 @@ const availableIMEIs = ref([
 
     // DataTable headers
     const cartHeaders = ref([
+      { text: 'STT', value: 'stt' },
       { text: "Tên sản phẩm", value: "name" },
       { text: "Màu sắc", value: "color" },
       { text: "RAM", value: "ram" },
@@ -234,6 +235,7 @@ const availableIMEIs = ref([
     ]);
 
     const productHeaders = ref([
+      { text: 'STT', value: 'stt' },
       { text: "Mã sản phẩm", value: "code" },
       { text: "Tên sản phẩm", value: "name" },
       { text: "Màu", value: "color" },

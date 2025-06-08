@@ -222,6 +222,7 @@ export const invoiceManagementLogic = {
 
     // Headers for DataTable
     const headers = ref([
+      { text: 'STT', value: 'stt' },
       { text: 'Mã hóa đơn', value: 'code' },
       { text: 'Nhân viên', value: 'employee' },
       { text: 'Khách hàng', value: 'customer' },

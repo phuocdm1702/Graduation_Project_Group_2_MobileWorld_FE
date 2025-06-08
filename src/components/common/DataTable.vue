@@ -8,7 +8,6 @@
           <table class="table table-hover align-middle mb-0">
             <thead class="sticky-header">
               <tr class="text-muted small" style="background: rgba(52, 211, 153, 0.05);">
-                <th class="p-3">STT</th>
                 <th v-for="(header, index) in headers" :key="index" class="p-3">
                   {{ header.text }}
                 </th>
@@ -21,9 +20,8 @@
                 class="table-row"
                 :style="`animation-delay: ${index * 0.1}s;`"
               >
-                <td class="p-3">{{ index + 1 }}</td>
                 <td v-for="(header, hIndex) in headers" :key="hIndex" class="p-3">
-                  <slot :name="header.value" :item="item">
+                  <slot :name="header.value" :item="item" :index="index">
                     {{ item[header.value] }}
                   </slot>
                 </td>
@@ -91,8 +89,7 @@ export default {
   name: 'DataTable',
   props: {
     title: {
-      type: String,
-      default: 'Danh sách dữ liệu'
+      type: String
     },
     headers: {
       type: Array,
@@ -207,10 +204,6 @@ export default {
 .datatable-card {
   animation: fadeInUp 0.8s ease-out;
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.datatable-card:hover {
-  box-shadow: 0 12px 25px rgba(52, 211, 153, 0.15) !important;
 }
 
 .table-row {

@@ -196,6 +196,9 @@
         <div v-if="viewMode === 'table'">
           <DataTable title="" :headers="headers" :data="filteredInvoices"
             :pageSizeOptions="[5, 10, 15, 20, 30, 40, 50]">
+             <template #stt="{ item, index }">
+    {{ index + 1 }}
+  </template>
             <template #code="{ item }">
               <div class="code-cell">
                 <span class="code-text">{{ item.code }}</span>
