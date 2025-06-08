@@ -574,7 +574,6 @@ export default HoaDonChiTiet;
 /* Base Styles */
 .invoice-detail-management {
   min-height: 100vh;
-  background: #f8f9fa;
 }
 
 /* Timeline Styles */

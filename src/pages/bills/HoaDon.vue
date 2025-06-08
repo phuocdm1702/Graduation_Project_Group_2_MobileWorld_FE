@@ -301,14 +301,14 @@
             </div>
 
             <div class="invoice-card-actions">
-              <button class="btn btn-sm btn-view" @click="viewInvoice(invoice)">
-                <i class="bi bi-eye me-1"></i>Xem
+              <button class="btn btn-sm btn-table" @click="viewInvoice(invoice)">
+                <i class="bi bi-eye me-1"></i> Xem
               </button>
-              <button class="btn btn-sm btn-edit" @click="editInvoice(invoice)">
-                <i class="bi bi-pencil me-1"></i>Sửa
+              <button class="btn btn-sm btn-table" @click="editInvoice(invoice)">
+                <i class="bi bi-printer-fill"></i> Xuất HD
               </button>
-              <button class="btn btn-sm btn-delete" @click="confirmDeleteInvoice(invoice)">
-                <i class="bi bi-trash me-1"></i>Xóa
+              <button class="btn btn-sm btn-table" @click="confirmDeleteInvoice(invoice)">
+                <i class="bi bi-qr-code"></i> Quét HD
               </button>
             </div>
           </div>
@@ -409,7 +409,6 @@ export default {
 /* Base Styles */
 .invoice-management {
   min-height: 100vh;
-  background: #f8f9fa;
 }
 
 /* Filter Label and Inputs */
@@ -866,15 +865,6 @@ export default {
 .action-buttons-cell {
   display: flex;
   justify-content: center;
-}
-
-.btn-view,
-.btn-edit,
-.btn-delete {
-  padding: 0.25rem 0.5rem;
-  font-size: 0.875rem;
-  border-radius: 8px;
-  transition: all 0.2s ease;
 }
 
 .btn-table {
