@@ -1,22 +1,26 @@
 import { createRouter, createWebHistory } from 'vue-router';
-import AdminLayout from '@/layouts/AdminLayout.vue';
-import AuthLayout from '@/layouts/AuthLayout.vue';
-import Login from '@/pages/auth/Login.vue';
-import TrangChu from '@/pages/home/TrangChu.vue';
-import ProductList from '@/pages/products/SanPham.vue';
-import HoaDon from '@/pages/bills/HoaDon.vue';
-import PhieuGiamGia from '@/pages/promotions/PhieuGiamGia.vue';
-import PhieuGiamGiaForm from '@/pages/promotions/PhieuGiamGiaForm.vue';
-import DotGiamGia from '@/pages/promotions/DotGiamGia.vue';
-import DotGiamGiaForm from '@/pages/promotions/DotGiamGiaForm.vue';
-import HoaDonChiTiet from '@/pages/bills/HoaDonChiTiet.vue';
-import banHang from '@/pages/sells/banHang.vue';
-import NhanVien from '@/pages/accounts/NhanVien.vue';
-import NhanVienForm from '@/pages/accounts/NhanVienForm.vue';
-import KhachHang from '@/pages/accounts/KhachHang.vue';
-import KhachHangForm from '@/pages/accounts/KhachHangForm.vue';
-import ThongKe from '@/pages/statistics/ThongKe.vue';
 import { useAuthStore } from '@/store/modules/auth';
+
+// Lazy-load layouts
+const AdminLayout = () => import('@/layouts/AdminLayout.vue');
+const AuthLayout = () => import('@/layouts/AuthLayout.vue');
+
+// Lazy-load pages
+const TrangChu = () => import('@/pages/home/TrangChu.vue');
+const ProductList = () => import('@/pages/products/SanPham.vue');
+const HoaDon = () => import('@/pages/bills/HoaDon.vue');
+const HoaDonChiTiet = () => import('@/pages/bills/HoaDonChiTiet.vue');
+const PhieuGiamGia = () => import('@/pages/promotions/PhieuGiamGia.vue');
+const PhieuGiamGiaForm = () => import('@/pages/promotions/PhieuGiamGiaForm.vue');
+const DotGiamGia = () => import('@/pages/promotions/DotGiamGia.vue');
+const DotGiamGiaForm = () => import('@/pages/promotions/DotGiamGiaForm.vue');
+const banHang = () => import('@/pages/sells/banHang.vue');
+const NhanVien = () => import('@/pages/accounts/NhanVien.vue');
+const NhanVienForm = () => import('@/pages/accounts/NhanVienForm.vue');
+const KhachHang = () => import('@/pages/accounts/KhachHang.vue');
+const KhachHangForm = () => import('@/pages/accounts/KhachHangForm.vue');
+const ThongKe = () => import('@/pages/statistics/ThongKe.vue');
+const Login = () => import('@/pages/auth/Login.vue');
 
 const routes = [
   {
