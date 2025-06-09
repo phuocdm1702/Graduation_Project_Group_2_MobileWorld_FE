@@ -262,11 +262,11 @@ const menuItems = ref([
   },
   { 
     name: 'Tài khoản', 
-    path: '/accounts/tai-khoan', 
+    path: '/accounts', 
     icon: UserIcon,
     children: [
-      { name: 'Nhân viên', path: '/accounts/nhan-vien/list' },
-      { name: 'Khách hàng', path: '/accounts/khach-hang/list' },
+      { name: 'Nhân viên', path: '/nhanVien' },
+      { name: 'Khách hàng', path: '/khachHang' },
     ],
     isOpen: false,
   },

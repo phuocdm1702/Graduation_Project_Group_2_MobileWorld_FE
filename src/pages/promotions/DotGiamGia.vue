@@ -212,7 +212,6 @@
             </template>
             <template #actions="{ item }">
               <div class="action-buttons-cell d-flex gap-2">
-                <router-link to="/dotGiamGia/suaDotGiamGia">
                   <button
                     class="btn btn-sm btn-table"
                     @click="editSale(item)"
@@ -220,7 +219,6 @@
                   >
                     <i class="bi bi-pencil-fill"></i>
                   </button>
-                </router-link>
                 <button
                   class="btn btn-sm btn-table"
                   @click="confirmDeleteSale(item)"
@@ -490,27 +488,31 @@ export default {
     };
 
     const exportExcel = () => {
-      toastNotification.value.showToast("Xuất Excel thành công!", "success");
+      toastNotification.value.addToast({ // Changed from showToast to addToast
+        type: 'success',
+        message: 'Xuất Excel thành công!',
+      });
     };
 
-const editSale = (sale) => {
-  router.push(`/dotGiamGia/form/${sale.id}`);
-};
+    const editSale = (sale) => {
+      router.push(`/dotGiamGia/form/${sale.id}`);
+    };
 
     const confirmDeleteSale = (sale) => {
       notificationType.value = "confirm";
       notificationMessage.value = `Bạn có chắc muốn xóa đợt giảm giá ${sale.code}?`;
       notificationOnConfirm.value = () => deleteSale(sale);
+      notificationOnCancel.value = () => resetNotification();
       isNotificationLoading.value = false;
-      notificationModal.value.show();
+      notificationModal.value.openModal(); // Changed from show to openModal
     };
 
     const deleteSale = (sale) => {
       sales.value = sales.value.filter((s) => s.id !== sale.id);
-      toastNotification.value.showToast(
-        "Xóa đợt giảm giá thành công!",
-        "success"
-      );
+      toastNotification.value.addToast({ // Changed from showToast to addToast
+        type: 'success',
+        message: 'Xóa đợt giảm giá thành công!',
+      });
       resetNotification();
     };
 
@@ -527,7 +529,8 @@ const editSale = (sale) => {
       notificationMessage.value = "";
       isNotificationLoading.value = false;
       notificationOnConfirm.value = () => {};
-      notificationModal.value.hide();
+      notificationOnCancel.value = () => resetNotification();
+      // Removed hide() call as it's not needed; closeModal is handled internally
     };
 
     const getStatusBadgeClass = (status) => {
@@ -595,6 +598,7 @@ const editSale = (sale) => {
       exportExcel,
       editSale,
       confirmDeleteSale,
+      deleteSale,
       notificationModal,
       toastNotification,
       notificationType,

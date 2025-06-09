@@ -387,11 +387,28 @@ export default {
       if (isEditMode.value) {
         // Simulate fetching sale data by ID
         const saleId = parseInt(route.params.id);
-        const sale = sales.find((s) => s.id === saleId); // Assume sales array is available
+        // Placeholder: Replace with actual data fetching logic
+        const sale = { // Mock data for testing
+          id: saleId,
+          name: `Sale ${saleId}`,
+          type: 'Phần trăm',
+          value: 10,
+          maxDiscount: 1000000,
+          startDate: '2025-06-01',
+          expiryDate: '2025-12-31',
+          details: [
+            { id: 1, productId: 1, code: 'SP00001', name: 'iPhone 14', brand: 'Apple', ram: '6GB', storage: '128GB', color: 'Đen', imei: '123456789012345', quantity: 1 },
+            { id: 2, productId: 1, code: 'SP00001', name: 'iPhone 14', brand: 'Apple', ram: '6GB', storage: '256GB', color: 'Trắng', imei: '123456789012346', quantity: 1 },
+          ],
+        };
         if (sale) {
           form.value = { ...sale };
-          // Load associated product details (for simplicity, assume they're stored in sale.details)
           selectedDetails.value = sale.details || [];
+        } else {
+          toastNotification.value.addToast({
+            type: 'error',
+            message: 'Không tìm thấy đợt giảm giá!',
+          });
         }
       }
     };
@@ -459,18 +476,26 @@ export default {
       ) {
         notificationType.value = 'error';
         notificationMessage.value = 'Vui lòng điền đầy đủ thông tin và chọn ít nhất một chi tiết sản phẩm!';
-        notificationModal.value.show();
+        notificationOnConfirm.value = () => {};
+        notificationOnCancel.value = () => resetNotification();
+        notificationModal.value.openModal(); // Changed from show to openModal
         return;
       }
 
       if (isEditMode.value) {
         // Update logic (e.g., API call to update sale)
         console.log('Updated sale:', { ...form.value, details: selectedDetails.value });
-        toastNotification.value.showToast('Cập nhật đợt giảm giá thành công!', 'success');
+        toastNotification.value.addToast({ // Changed from showToast to addToast
+          type: 'success',
+          message: 'Cập nhật đợt giảm giá thành công!',
+        });
       } else {
         // Create logic (e.g., API call to create sale)
         console.log('Created sale:', { ...form.value, details: selectedDetails.value });
-        toastNotification.value.showToast('Thêm đợt giảm giá thành công!', 'success');
+        toastNotification.value.addToast({ // Changed from showToast to addToast
+          type: 'success',
+          message: 'Thêm đợt giảm giá thành công!',
+        });
       }
 
       goBack();
@@ -489,7 +514,8 @@ export default {
       notificationMessage.value = '';
       isNotificationLoading.value = false;
       notificationOnConfirm.value = () => {};
-      notificationModal.value.hide();
+      notificationOnCancel.value = () => resetNotification();
+      // Removed hide() call as it's not needed; closeModal is handled internally
     };
 
     // Lifecycle

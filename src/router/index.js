@@ -11,6 +11,10 @@ import DotGiamGia from '@/pages/promotions/DotGiamGia.vue';
 import DotGiamGiaForm from '@/pages/promotions/DotGiamGiaForm.vue';
 import HoaDonChiTiet from '@/pages/bills/HoaDonChiTiet.vue';
 import banHang from '@/pages/sells/banHang.vue';
+import NhanVien from '@/pages/accounts/NhanVien.vue';
+import NhanVienForm from '@/pages/accounts/NhanVienForm.vue';
+import KhachHang from '@/pages/accounts/KhachHang.vue';
+import KhachHangForm from '@/pages/accounts/KhachHangForm.vue';
 import { useAuthStore } from '@/store/modules/auth';
 
 const routes = [
@@ -29,6 +33,10 @@ const routes = [
       { path: '/phieuGiamGia/form/:id?', component: PhieuGiamGiaForm },
       { path: '/dotGiamGia', component: DotGiamGia },
       { path: '/dotGiamGia/form/:id?', component: DotGiamGiaForm },
+      { path: '/nhanVien', component: NhanVien },
+      { path: '/nhanVien/form/:id?', component: NhanVienForm },
+      { path: '/khachHang', component: KhachHang },
+      { path: '/khachHang/form/:id?', component: KhachHangForm },
     ],
   },
   {

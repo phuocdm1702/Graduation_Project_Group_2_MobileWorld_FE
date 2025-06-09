@@ -222,6 +222,9 @@ export default {
   font-family: 'Inter', sans-serif;
   position: relative;
   overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* Background Shapes */
@@ -327,7 +330,13 @@ export default {
 .login-content {
   position: relative;
   z-index: 2;
-  min-height: 100vh;
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(20px);
+  border-radius: 24px;
+  padding: 3rem;
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  width: 1100px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -413,13 +422,7 @@ export default {
 }
 
 .form-container {
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(20px);
-  border-radius: 24px;
-  padding: 3rem;
-  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.3);
   width: 500px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
   animation: slideUp 0.8s ease-out;
 }
 
@@ -529,10 +532,6 @@ export default {
   height: 2px;
   background: linear-gradient(90deg, #34d399, #60a5fa);
   transition: width 0.3s ease;
-}
-
-.form-input:focus ~ .input-border {
-  width: 100%;
 }
 
 /* Form Options */

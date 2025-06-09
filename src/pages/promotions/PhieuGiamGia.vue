@@ -451,28 +451,35 @@ export default {
     };
 
     const exportExcel = () => {
-      toastNotification.value.showToast('Xuất Excel thành công!', 'success');
+      toastNotification.value.addToast({ // Changed from showToast to addToast
+        type: 'success',
+        message: 'Xuất Excel thành công!',
+      });
     };
 
     const viewVoucher = (voucher) => {
       console.log('View voucher:', voucher);
     };
 
-const editVoucher = (voucher) => {
-  router.push(`/phieuGiamGia/form/${voucher.id}`);
-};
+    const editVoucher = (voucher) => {
+      router.push(`/phieuGiamGia/form/${voucher.id}`);
+    };
 
     const confirmDeleteVoucher = (voucher) => {
       notificationType.value = 'confirm';
       notificationMessage.value = `Bạn có chắc muốn xóa phiếu ${voucher.code}?`;
       notificationOnConfirm.value = () => deleteVoucher(voucher);
+      notificationOnCancel.value = () => resetNotification();
       isNotificationLoading.value = false;
-      notificationModal.value.show();
+      notificationModal.value.openModal(); // Changed from show to openModal
     };
 
     const deleteVoucher = (voucher) => {
       vouchers.value = vouchers.value.filter((v) => v.id !== voucher.id);
-      toastNotification.value.showToast('Xóa phiếu thành công!', 'success');
+      toastNotification.value.addToast({ // Changed from showToast to addToast
+        type: 'success',
+        message: 'Xóa phiếu thành công!',
+      });
       resetNotification();
     };
 
@@ -481,10 +488,10 @@ const editVoucher = (voucher) => {
       vouchers.value = vouchers.value.map((v) =>
         v.id === voucher.id ? { ...v, status: newStatus } : v
       );
-      toastNotification.value.showToast(
-        `Phiếu ${voucher.code} đã được ${newStatus === 'Đang diễn ra' ? 'kích hoạt' : 'tắt'}`,
-        'success'
-      );
+      toastNotification.value.addToast({ // Changed from showToast to addToast
+        type: 'info',
+        message: `Phiếu ${voucher.code} đã được ${newStatus === 'Đang diễn ra' ? 'kích hoạt' : 'tắt'}`,
+      });
     };
 
     const notificationModal = ref(null);
@@ -500,7 +507,8 @@ const editVoucher = (voucher) => {
       notificationMessage.value = '';
       isNotificationLoading.value = false;
       notificationOnConfirm.value = () => {};
-      notificationModal.value.hide();
+      notificationOnCancel.value = () => resetNotification();
+      // Removed hide() call as it's not needed; closeModal is handled internally
     };
 
     const getTypeBadgeClass = (type) => {

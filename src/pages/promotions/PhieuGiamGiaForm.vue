@@ -250,12 +250,32 @@ export default {
     const loadVoucherData = () => {
       if (isEditMode.value) {
         // Simulate fetching voucher data by ID
+        // Note: The original code references an undefined 'vouchers' array.
+        // For demonstration, we'll use a placeholder or skip loading if not defined.
+        // In a real app, fetch from an API or store.
         const voucherId = parseInt(route.params.id);
-        const voucher = vouchers.find((v) => v.id === voucherId); // Assume vouchers array is available
+        // Placeholder: Replace with actual data fetching logic
+        const voucher = { // Mock data for testing
+          id: voucherId,
+          code: `VOUCHER00${voucherId}`,
+          name: `Voucher ${voucherId}`,
+          type: 'Tiền mặt',
+          value: 100000,
+          quantity: 50,
+          startDate: '2025-06-01',
+          endDate: '2025-12-31',
+          note: 'Test voucher',
+          isActive: true,
+          customers: [1, 2], // Example customer IDs
+        };
         if (voucher) {
           formData.value = { ...voucher };
-          // Load associated customers (for simplicity, assume they're stored in voucher.customers)
           selectedCustomers.value = voucher.customers || [];
+        } else {
+          toastNotification.value.addToast({
+            type: 'error',
+            message: 'Không tìm thấy phiếu giảm giá!',
+          });
         }
       }
     };
@@ -275,23 +295,35 @@ export default {
 
     const removeCustomer = (id) => {
       selectedCustomers.value = selectedCustomers.value.filter((cid) => cid !== id);
-      toastNotification.value.showToast('Đã xóa khách hàng!', 'success');
+      toastNotification.value.addToast({ // Changed from showToast to addToast
+        type: 'success',
+        message: 'Đã xóa khách hàng!',
+      });
     };
 
     const submitForm = () => {
       if (!formData.value.code || !formData.value.name || !formData.value.type || formData.value.value == null || formData.value.quantity == null || !formData.value.startDate || !formData.value.endDate) {
-        toastNotification.value.showToast('Vui lòng điền đầy đủ thông tin!', 'error');
+        toastNotification.value.addToast({ // Changed from showToast to addToast
+          type: 'error',
+          message: 'Vui lòng điền đầy đủ thông tin!',
+        });
         return;
       }
 
       if (isEditMode.value) {
         // Update logic (e.g., API call to update voucher)
         console.log('Updated voucher:', { ...formData.value, customers: selectedCustomers.value });
-        toastNotification.value.showToast('Cập nhật phiếu giảm giá thành công!', 'success');
+        toastNotification.value.addToast({ // Changed from showToast to addToast
+          type: 'success',
+          message: 'Cập nhật phiếu giảm giá thành công!',
+        });
       } else {
         // Create logic (e.g., API call to create voucher)
         console.log('Created voucher:', { ...formData.value, customers: selectedCustomers.value });
-        toastNotification.value.showToast('Thêm phiếu giảm giá thành công!', 'success');
+        toastNotification.value.addToast({ // Changed from showToast to addToast
+          type: 'success',
+          message: 'Thêm phiếu giảm giá thành công!',
+        });
       }
 
       // Reset form and navigate back
