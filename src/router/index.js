@@ -3,7 +3,7 @@ import AdminLayout from '@/layouts/AdminLayout.vue';
 import AuthLayout from '@/layouts/AuthLayout.vue';
 import Login from '@/pages/auth/Login.vue';
 import TrangChu from '@/pages/home/TrangChu.vue';
-import ProductList from '@/pages/products/san-pham/List.vue';
+import ProductList from '@/pages/products/SanPham.vue';
 import HoaDon from '@/pages/bills/HoaDon.vue';
 import PhieuGiamGia from '@/pages/promotions/PhieuGiamGia.vue';
 import PhieuGiamGiaForm from '@/pages/promotions/PhieuGiamGiaForm.vue';

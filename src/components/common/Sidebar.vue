@@ -822,8 +822,8 @@ const leave = (el, done) => {
   justify-content: center;
   font-size: 1rem;
   font-weight: 600;
-  color: #ffffff; /* Màu trắng cho văn bản */
-  background: #15803d; /* Màu xanh lá đậm cho avatar dự phòng */
+  color: #ffffff;
+  background: #15803d;
 }
 
 .user-info {
