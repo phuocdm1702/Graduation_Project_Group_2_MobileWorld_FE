@@ -15,6 +15,7 @@ import NhanVien from '@/pages/accounts/NhanVien.vue';
 import NhanVienForm from '@/pages/accounts/NhanVienForm.vue';
 import KhachHang from '@/pages/accounts/KhachHang.vue';
 import KhachHangForm from '@/pages/accounts/KhachHangForm.vue';
+import ThongKe from '@/pages/statistics/ThongKe.vue';
 import { useAuthStore } from '@/store/modules/auth';
 
 const routes = [
@@ -37,6 +38,7 @@ const routes = [
       { path: '/nhanVien/form/:id?', component: NhanVienForm },
       { path: '/khachHang', component: KhachHang },
       { path: '/khachHang/form/:id?', component: KhachHangForm },
+      { path: '/thongKe', component: ThongKe },
     ],
   },
   {

@@ -280,7 +280,7 @@ const menuItems = ref([
     ],
     isOpen: false,
   },
-  { name: 'Thống kê', path: '/statistics/doanh-thu', icon: ChartBarIcon },
+  { name: 'Thống kê', path: '/thongKe', icon: ChartBarIcon },
 ]);
 
 const isActive = (path) => {
