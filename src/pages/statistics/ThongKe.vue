@@ -121,7 +121,7 @@
     </div>
 
     <!-- Charts Section -->
-    <div class="row g-4 mb-4">
+    <div class="row g-4 mb-4 align-items-stretch">
       <!-- Revenue Chart -->
       <div class="col-lg-8">
         <FilterTableSection title="Biểu Đồ Doanh Thu" icon="bi bi-bar-chart-line">
@@ -158,7 +158,7 @@
     </div>
 
     <!-- Additional Charts Row -->
-    <div class="row g-4 mb-4">
+    <div class="row g-4 mb-4 align-items-stretch">
       <!-- Order Status Distribution -->
       <div class="col-lg-6">
         <FilterTableSection title="Phân Bố Trạng Thái Đơn Hàng" icon="bi bi-pie-chart">
@@ -171,7 +171,7 @@
       <!-- Customer Analysis -->
       <div class="col-lg-6">
         <FilterTableSection title="Phân Tích Khách Hàng" icon="bi bi-people">
-          <div class="customer-analysis p-4">
+          <div class="chart-container p-4">
             <div class="row g-3">
               <div class="col-6">
                 <div class="analysis-item text-center">
@@ -199,7 +199,7 @@
     <!-- Detailed Statistics Table -->
     <FilterTableSection title="Bảng Thống Kê Chi Tiết" icon="bi bi-table">
       <div class="table-responsive">
-        <table class="table table-hover statistics-table">
+        <table class="statistics-table">
           <thead>
             <tr>
               <th>Thời gian</th>
@@ -236,38 +236,41 @@
 </template>
 
 <script>
-import { ref, onMounted, onUnmounted, computed, watch, nextTick } from 'vue'
+import { ref, onMounted, onUnmounted, computed, watch, nextTick } from 'vue';
 import HeaderCard from "@/components/common/HeaderCard.vue";
+import FilterTableSection from "@/components/common/FilterTableSection.vue";
 
 export default {
   name: 'Thống Kê',
-  
+  components: {
+    HeaderCard,
+    FilterTableSection
+  },
   setup() {
     // Reactive data
-    const selectedTimeRange = ref('month')
-    const customStartDate = ref('')
-    const customEndDate = ref('')
-    const selectedChartType = ref('line')
-    const revenueChart = ref(null)
-    const statusChart = ref(null)
-    const customerChart = ref(null)
+    const selectedTimeRange = ref('month');
+    const customStartDate = ref('');
+    const customEndDate = ref('');
+    const selectedChartType = ref('line');
+    const revenueChart = ref(null);
+    const statusChart = ref(null);
+    const customerChart = ref(null);
 
     // Chart instances
-    let revenueChartInstance = null
-    let statusChartInstance = null
-    let customerChartInstance = null
+    let revenueChartInstance = null;
+    let statusChartInstance = null;
+    let customerChartInstance = null;
 
     // Chart types
     const chartTypes = ref([
       { value: 'line', label: 'Đường', icon: 'bi bi-graph-up' },
-      { value: 'bar', label: 'Cột', icon: 'bi bi-bar-chart' },
-      { value: 'area', label: 'Vùng', icon: 'bi bi-area-chart' }
-    ])
+      { value: 'bar', label: 'Cột', icon: 'bi bi-bar-chart' }
+    ]);
 
     // Statistics data
-    const totalRevenue = ref(15800000)
-    const totalOrders = ref(1247)
-    const growthRate = ref(18.5)
+    const totalRevenue = ref(15800000);
+    const totalOrders = ref(1247);
+    const growthRate = ref(18.5);
 
     const statisticsCards = ref([
       {
@@ -310,7 +313,7 @@ export default {
         changeClass: 'text-warning',
         trendIcon: 'bi bi-trending-down'
       }
-    ])
+    ]);
 
     const topProducts = ref([
       { id: 1, name: 'iPhone 14 Pro Max', sold: 145, revenue: 2800000, percentage: 100 },
@@ -318,12 +321,12 @@ export default {
       { id: 3, name: 'MacBook Pro M2', sold: 89, revenue: 1950000, percentage: 70 },
       { id: 4, name: 'iPad Air', sold: 67, revenue: 1200000, percentage: 46 },
       { id: 5, name: 'AirPods Pro', sold: 234, revenue: 850000, percentage: 30 }
-    ])
+    ]);
 
     const customerStats = ref({
       new: 156,
       returning: 891
-    })
+    });
 
     const detailedStats = ref([
       { period: 'Hôm nay', revenue: 3200000, orders: 89, avgOrder: 35955, growth: 15.3, status: 'Tốt' },
@@ -332,7 +335,7 @@ export default {
       { period: 'Tuần trước', revenue: 16200000, orders: 498, avgOrder: 32530, growth: -2.1, status: 'Bình thường' },
       { period: 'Tháng này', revenue: 67800000, orders: 1847, avgOrder: 36720, growth: 18.9, status: 'Xuất sắc' },
       { period: 'Tháng trước', revenue: 55600000, orders: 1632, avgOrder: 34069, growth: 7.3, status: 'Tốt' }
-    ])
+    ]);
 
     // Chart data
     const revenueData = ref({
@@ -350,7 +353,7 @@ export default {
         pointRadius: 5,
         pointHoverRadius: 7
       }]
-    })
+    });
 
     const statusData = ref({
       labels: ['Hoàn thành', 'Đang xử lý', 'Chờ xác nhận', 'Đã hủy'],
@@ -367,7 +370,7 @@ export default {
         hoverBorderWidth: 3,
         hoverOffset: 10
       }]
-    })
+    });
 
     const customerData = ref({
       labels: ['T1', 'T2', 'T3', 'T4', 'T5', 'T6'],
@@ -395,42 +398,41 @@ export default {
           pointRadius: 4
         }
       ]
-    })
+    });
 
     // Methods
     const formatPrice = (price) => {
       return new Intl.NumberFormat('vi-VN', {
         style: 'currency',
         currency: 'VND'
-      }).format(price)
-    }
+      }).format(price);
+    };
 
     const getRankClass = (index) => {
-      if (index === 0) return 'rank-gold'
-      if (index === 1) return 'rank-silver'
-      if (index === 2) return 'rank-bronze'
-      return 'rank-default'
-    }
+      if (index === 0) return 'rank-gold';
+      if (index === 1) return 'rank-silver';
+      if (index === 2) return 'rank-bronze';
+      return 'rank-default';
+    };
 
     const getStatusClass = (status) => {
       switch (status) {
-        case 'Xuất sắc': return 'status-excellent'
-        case 'Tốt': return 'status-good'
-        case 'Bình thường': return 'status-normal'
-        default: return 'status-default'
+        case 'Xuất sắc': return 'status-excellent';
+        case 'Tốt': return 'status-good';
+        case 'Bình thường': return 'status-normal';
+        default: return 'status-default';
       }
-    }
+    };
 
     const resetFilters = () => {
-      selectedTimeRange.value = 'month'
-      customStartDate.value = ''
-      customEndDate.value = ''
-      selectedChartType.value = 'line'
-    }
+      selectedTimeRange.value = 'month';
+      customStartDate.value = '';
+      customEndDate.value = '';
+      selectedChartType.value = 'line';
+    };
 
     const exportReport = () => {
-      console.log('Exporting report...')
-      // Implement export functionality here
+      console.log('Exporting report...');
       const data = {
         totalRevenue: totalRevenue.value,
         totalOrders: totalOrders.value,
@@ -438,86 +440,83 @@ export default {
         detailedStats: detailedStats.value,
         topProducts: topProducts.value,
         timeRange: selectedTimeRange.value
-      }
+      };
       
-      // Convert to CSV or Excel format
-      const csvContent = convertToCSV(data)
-      downloadCSV(csvContent, 'bao-cao-thong-ke.csv')
-    }
+      const csvContent = convertToCSV(data);
+      downloadCSV(csvContent, 'bao-cao-thong-ke.csv');
+    };
 
     const printReport = () => {
-      console.log('Printing report...')
-      window.print()
-    }
+      console.log('Printing report...');
+      window.print();
+    };
 
     const convertToCSV = (data) => {
-      let csv = 'Báo cáo thống kê\n\n'
-      csv += 'Tổng quan\n'
-      csv += `Tổng doanh thu,${formatPrice(data.totalRevenue)}\n`
-      csv += `Tổng đơn hàng,${data.totalOrders}\n`
-      csv += `Tăng trưởng,${data.growthRate}%\n\n`
+      let csv = 'Báo cáo thống kê\n\n';
+      csv += 'Tổng quan\n';
+      csv += `Tổng doanh thu,${formatPrice(data.totalRevenue)}\n`;
+      csv += `Tổng đơn hàng,${data.totalOrders}\n`;
+      csv += `Tăng trưởng,${data.growthRate}%\n\n`;
       
-      csv += 'Thống kê chi tiết\n'
-      csv += 'Thời gian,Doanh thu,Số đơn hàng,Giá trị TB/đơn,Tăng trưởng,Trạng thái\n'
+      csv += 'Thống kê chi tiết\n';
+      csv += 'Thời gian,Doanh thu,Số đơn hàng,Giá trị TB/đơn,Tăng trưởng,Trạng thái\n';
       
       data.detailedStats.forEach(row => {
-        csv += `${row.period},${row.revenue},${row.orders},${row.avgOrder},${row.growth}%,${row.status}\n`
-      })
+        csv += `${row.period},${row.revenue},${row.orders},${row.avgOrder},${row.growth}%,${row.status}\n`;
+      });
       
-      return csv
-    }
+      return csv;
+    };
 
     const downloadCSV = (content, filename) => {
-      const blob = new Blob(['\ufeff' + content], { type: 'text/csv;charset=utf-8;' })
-      const link = document.createElement('a')
-      const url = URL.createObjectURL(blob)
-      link.setAttribute('href', url)
-      link.setAttribute('download', filename)
-      link.style.visibility = 'hidden'
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
-    }
+      const blob = new Blob(['\ufeff' + content], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', filename);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    };
 
     // Chart initialization and management
     const loadChartJS = async () => {
       try {
-        // Try to load from CDN first
         if (window.Chart) {
-          return window.Chart
+          return window.Chart;
         }
         
-        // If CDN not available, load dynamically
-        const script = document.createElement('script')
-        script.src = 'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js'
-        document.head.appendChild(script)
+        const script = document.createElement('script');
+        script.src = 'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js';
+        document.head.appendChild(script);
         
         return new Promise((resolve, reject) => {
-          script.onload = () => resolve(window.Chart)
-          script.onerror = reject
-        })
+          script.onload = () => resolve(window.Chart);
+          script.onerror = reject;
+        });
       } catch (error) {
-        console.error('Failed to load Chart.js:', error)
-        return null
+        console.error('Failed to load Chart.js:', error);
+        return null;
       }
-    }
+    };
 
     const initializeCharts = async () => {
-      await nextTick()
+      await nextTick();
       
       try {
-        const Chart = await loadChartJS()
+        const Chart = await loadChartJS();
         if (!Chart) {
-          console.error('Chart.js not available')
-          return
+          console.error('Chart.js not available');
+          return;
         }
 
         // Revenue Chart
         if (revenueChart.value) {
-          const ctx = revenueChart.value.getContext('2d')
+          const ctx = revenueChart.value.getContext('2d');
           
           if (revenueChartInstance) {
-            revenueChartInstance.destroy()
+            revenueChartInstance.destroy();
           }
           
           revenueChartInstance = new Chart(ctx, {
@@ -538,7 +537,7 @@ export default {
                   borderWidth: 1,
                   callbacks: {
                     label: function(context) {
-                      return 'Doanh thu: ' + formatPrice(context.parsed.y)
+                      return 'Doanh thu: ' + formatPrice(context.parsed.y);
                     }
                   }
                 }
@@ -548,7 +547,7 @@ export default {
                   beginAtZero: true,
                   ticks: {
                     callback: function(value) {
-                      return (value / 1000000).toFixed(1) + 'M'
+                      return (value / 1000000).toFixed(1) + 'M';
                     },
                     color: '#6b7280'
                   },
@@ -571,15 +570,15 @@ export default {
                 easing: 'easeInOutQuart'
               }
             }
-          })
+          });
         }
 
         // Status Chart (Doughnut)
         if (statusChart.value) {
-          const ctx = statusChart.value.getContext('2d')
+          const ctx = statusChart.value.getContext('2d');
           
           if (statusChartInstance) {
-            statusChartInstance.destroy()
+            statusChartInstance.destroy();
           }
           
           statusChartInstance = new Chart(ctx, {
@@ -608,7 +607,7 @@ export default {
                   borderWidth: 1,
                   callbacks: {
                     label: function(context) {
-                      return context.label + ': ' + context.parsed + '%'
+                      return context.label + ': ' + context.parsed + '%';
                     }
                   }
                 }
@@ -619,15 +618,15 @@ export default {
                 duration: 1500
               }
             }
-          })
+          });
         }
 
         // Customer Chart
         if (customerChart.value) {
-          const ctx = customerChart.value.getContext('2d')
+          const ctx = customerChart.value.getContext('2d');
           
           if (customerChartInstance) {
-            customerChartInstance.destroy()
+            customerChartInstance.destroy();
           }
           
           customerChartInstance = new Chart(ctx, {
@@ -686,23 +685,23 @@ export default {
                 easing: 'easeInOutCubic'
               }
             }
-          })
+          });
         }
       } catch (error) {
-        console.error('Error initializing charts:', error)
+        console.error('Error initializing charts:', error);
       }
-    }
+    };
 
     // Update revenue chart when chart type changes
     const updateRevenueChart = async () => {
       if (revenueChartInstance && selectedChartType.value) {
         try {
-          const Chart = await loadChartJS()
-          if (!Chart) return
+          const Chart = await loadChartJS();
+          if (!Chart) return;
           
-          revenueChartInstance.destroy()
+          revenueChartInstance.destroy();
           
-          const ctx = revenueChart.value.getContext('2d')
+          const ctx = revenueChart.value.getContext('2d');
           revenueChartInstance = new Chart(ctx, {
             type: selectedChartType.value,
             data: revenueData.value,
@@ -721,7 +720,7 @@ export default {
                   borderWidth: 1,
                   callbacks: {
                     label: function(context) {
-                      return 'Doanh thu: ' + formatPrice(context.parsed.y)
+                      return 'Doanh thu: ' + formatPrice(context.parsed.y);
                     }
                   }
                 }
@@ -731,7 +730,7 @@ export default {
                   beginAtZero: true,
                   ticks: {
                     callback: function(value) {
-                      return (value / 1000000).toFixed(1) + 'M'
+                      return (value / 1000000).toFixed(1) + 'M';
                     },
                     color: '#6b7280'
                   },
@@ -754,104 +753,103 @@ export default {
                 easing: 'easeInOutQuart'
               }
             }
-          })
+          });
         } catch (error) {
-          console.error('Error updating revenue chart:', error)
+          console.error('Error updating revenue chart:', error);
         }
       }
-    }
+    };
 
     // Update chart data based on selected time range
     const updateChartData = () => {
       switch (selectedTimeRange.value) {
         case 'today':
-          revenueData.value.labels = ['6h', '9h', '12h', '15h', '18h', '21h']
-          revenueData.value.datasets[0].data = [500000, 800000, 1200000, 900000, 1500000, 600000]
-          totalRevenue.value = 5500000
-          totalOrders.value = 89
-          growthRate.value = 15.3
-          break
+          revenueData.value.labels = ['6h', '9h', '12h', '15h', '18h', '21h'];
+          revenueData.value.datasets[0].data = [500000, 800000, 1200000, 900000, 1500000, 600000];
+          totalRevenue.value = 5500000;
+          totalOrders.value = 89;
+          growthRate.value = 15.3;
+          break;
         case 'yesterday':
-          revenueData.value.labels = ['6h', '9h', '12h', '15h', '18h', '21h']
-          revenueData.value.datasets[0].data = [450000, 700000, 1100000, 800000, 1300000, 550000]
-          totalRevenue.value = 4900000
-          totalOrders.value = 76
-          growthRate.value = 8.7
-          break
+          revenueData.value.labels = ['6h', '9h', '12h', '15h', '18h', '21h'];
+          revenueData.value.datasets[0].data = [450000, 700000, 1100000, 800000, 1300000, 550000];
+          totalRevenue.value = 4900000;
+          totalOrders.value = 76;
+          growthRate.value = 8.7;
+          break;
         case 'week':
-          revenueData.value.labels = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN']
-          revenueData.value.datasets[0].data = [2800000, 3200000, 2900000, 3500000, 4100000, 3800000, 3200000]
-          totalRevenue.value = 23500000
-          totalOrders.value = 543
-          growthRate.value = 12.4
-          break
+          revenueData.value.labels = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'];
+          revenueData.value.datasets[0].data = [2800000, 3200000, 2900000, 3500000, 4100000, 3800000, 3200000];
+          totalRevenue.value = 23500000;
+          totalOrders.value = 543;
+          growthRate.value = 12.4;
+          break;
         case 'month':
-          revenueData.value.labels = ['Tuần 1', 'Tuần 2', 'Tuần 3', 'Tuần 4']
-          revenueData.value.datasets[0].data = [12000000, 15000000, 13500000, 16800000]
-          totalRevenue.value = 57300000
-          totalOrders.value = 1247
-          growthRate.value = 18.9
-          break
+          revenueData.value.labels = ['Tuần 1', 'Tuần 2', 'Tuần 3', 'Tuần 4'];
+          revenueData.value.datasets[0].data = [12000000, 15000000, 13500000, 16800000];
+          totalRevenue.value = 57300000;
+          totalOrders.value = 1247;
+          growthRate.value = 18.9;
+          break;
         case 'quarter':
-          revenueData.value.labels = ['Tháng 1', 'Tháng 2', 'Tháng 3']
-          revenueData.value.datasets[0].data = [45000000, 52000000, 58000000]
-          totalRevenue.value = 155000000
-          totalOrders.value = 3542
-          growthRate.value = 22.1
-          break
+          revenueData.value.labels = ['Tháng 1', 'Tháng 2', 'Tháng 3'];
+          revenueData.value.datasets[0].data = [45000000, 52000000, 58000000];
+          totalRevenue.value = 155000000;
+          totalOrders.value = 3542;
+          growthRate.value = 22.1;
+          break;
         case 'year':
-          revenueData.value.labels = ['Q1', 'Q2', 'Q3', 'Q4']
-          revenueData.value.datasets[0].data = [155000000, 178000000, 165000000, 192000000]
-          totalRevenue.value = 690000000
-          totalOrders.value = 15847
-          growthRate.value = 28.5
-          break
+          revenueData.value.labels = ['Q1', 'Q2', 'Q3', 'Q4'];
+          revenueData.value.datasets[0].data = [155000000, 178000000, 165000000, 192000000];
+          totalRevenue.value = 690000000;
+          totalOrders.value = 15847;
+          growthRate.value = 28.5;
+          break;
         default:
-          break
+          break;
       }
       
-      // Update charts if they exist
       if (revenueChartInstance) {
-        revenueChartInstance.data = revenueData.value
-        revenueChartInstance.update('active')
+        revenueChartInstance.data = revenueData.value;
+        revenueChartInstance.update('active');
       }
-    }
+    };
 
     // Cleanup function
     const destroyCharts = () => {
       if (revenueChartInstance) {
-        revenueChartInstance.destroy()
-        revenueChartInstance = null
+        revenueChartInstance.destroy();
+        revenueChartInstance = null;
       }
       if (statusChartInstance) {
-        statusChartInstance.destroy()
-        statusChartInstance = null
+        statusChartInstance.destroy();
+        statusChartInstance = null;
       }
       if (customerChartInstance) {
-        customerChartInstance.destroy()
-        customerChartInstance = null
+        customerChartInstance.destroy();
+        customerChartInstance = null;
       }
-    }
+    };
 
     // Watch for chart type changes
     watch(selectedChartType, () => {
-      updateRevenueChart()
-    })
+      updateRevenueChart();
+    });
 
     // Watch for time range changes to update data
     watch(selectedTimeRange, () => {
-      updateChartData()
-    })
+      updateChartData();
+    });
 
     // Initialize charts on mount
     onMounted(() => {
-      setTimeout(initializeCharts, 200) // Small delay to ensure DOM is ready
-    })
+      setTimeout(initializeCharts, 200);
+    });
 
     // Cleanup on unmount
     onUnmounted(() => {
-      destroyCharts()
-    })
+      destroyCharts();
+    });
 
     return {
       selectedTimeRange,
@@ -881,9 +879,9 @@ export default {
       initializeCharts,
       updateRevenueChart,
       updateChartData
-    }
+    };
   }
-}
+};
 </script>
 
 <style scoped>
@@ -1127,7 +1125,7 @@ export default {
 
 /* Chart Containers */
 .chart-container {
-  height: 300px;
+  height: 400px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1142,8 +1140,10 @@ export default {
 
 /* Top Products */
 .top-products-container {
-  max-height: 400px;
+  height: 400px;
   overflow-y: auto;
+  display: flex;
+  flex-direction: column;
 }
 
 .product-item {
@@ -1204,7 +1204,9 @@ export default {
 
 /* Customer Analysis */
 .customer-analysis {
-  height: 350px;
+  height: 400px;
+  display: flex;
+  flex-direction: column;
 }
 
 .analysis-item {
@@ -1225,24 +1227,18 @@ export default {
 }
 
 .customer-growth-chart {
-  height: 150px;
-  margin-top: 1rem;
+  flex-grow: 1;
+  min-height: 0;
 }
 
 /* Statistics Table */
 .statistics-table {
-  background: white;
-  border-radius: 8px;
   overflow: hidden;
-}
-
-.statistics-table thead {
-  background: linear-gradient(135deg, #34d399, #16a34a);
-  color: white;
+  width: 100%;
 }
 
 .statistics-table th {
-  font-weight: 600;
+  font-weight: 700;
   padding: 1rem;
   border: none;
 }
@@ -1301,6 +1297,25 @@ export default {
   color: #6b7280;
 }
 
+/* Ensure equal height for charts and top products */
+.row.align-items-stretch {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.row.align-items-stretch > .col-lg-8,
+.row.align-items-stretch > .col-lg-4,
+.row.align-items-stretch > .col-lg-6 {
+  display: flex;
+  flex-direction: column;
+}
+
+.row.align-items-stretch > .col-lg-8 > *,
+.row.align-items-stretch > .col-lg-4 > *,
+.row.align-items-stretch > .col-lg-6 > * {
+  flex-grow: 1;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
   .filter-actions {
@@ -1337,16 +1352,10 @@ export default {
     font-size: 1.5rem;
   }
 
-  .chart-container {
-    height: 250px;
-  }
-
+  .chart-container,
+  .top-products-container,
   .customer-analysis {
-    height: auto;
-  }
-
-  .analysis-number {
-    font-size: 2rem;
+    height: 300px;
   }
 }
 
@@ -1372,6 +1381,12 @@ export default {
   .rank-number {
     font-size: 0.9rem;
   }
+
+  .chart-container,
+  .top-products-container,
+  .customer-analysis {
+    height: 250px;
+  }
 }
 
 /* Animation Classes */
@@ -1385,11 +1400,6 @@ export default {
 
 .animate__zoomIn {
   animation-name: zoomIn;
-}
-
-/* Scrollbar Styling */
-.top-products-container::-webkit-scrollbar {
-  width: 4px;
 }
 
 /* Scrollbar Styling */
@@ -1442,23 +1452,6 @@ export default {
 /* Enhanced Filter Section */
 .filter-group {
   position: relative;
-}
-
-.filter-group::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -15px;
-  width: 3px;
-  height: 100%;
-  background: linear-gradient(135deg, #34d399, #16a34a);
-  border-radius: 2px;
-  opacity: 0;
-  transition: opacity 0.3s ease;
-}
-
-.filter-group:hover::before {
-  opacity: 1;
 }
 
 /* Enhanced Table Styles */
@@ -1688,7 +1681,6 @@ export default {
 /* Accessibility Enhancements */
 .btn:focus,
 .form-control:focus {
-  outline: 2px solid #34d399;
   outline-offset: 2px;
 }
 
