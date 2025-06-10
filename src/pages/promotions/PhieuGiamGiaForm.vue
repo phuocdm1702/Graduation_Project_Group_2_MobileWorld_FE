@@ -204,7 +204,11 @@ export default {
   setup() {
     const router = useRouter();
     const route = useRoute();
+<<<<<<< Updated upstream
     const apiBaseUrl = 'http://localhost:8080/api'; // Thay bằng URL backend thực tế
+=======
+    const apiBaseUrl = 'http://localhost:8080/api';
+>>>>>>> Stashed changes
 
     // Form Data
     const formData = ref({
@@ -229,13 +233,16 @@ export default {
     const isEditMode = computed(() => !!route.params.id);
 
     const filteredCustomers = computed(() => {
+      if (!customers.value || !Array.isArray(customers.value)) return [];
       return customers.value.filter((customer) =>
-        customer.code.toLowerCase().includes(searchCustomer.value.toLowerCase()) ||
-        customer.name.toLowerCase().includes(searchCustomer.value.toLowerCase())
+        customer && customer.code && customer.name &&
+        (customer.code.toLowerCase().includes(searchCustomer.value.toLowerCase()) ||
+         customer.name.toLowerCase().includes(searchCustomer.value.toLowerCase()))
       );
     });
 
     const selectedCustomersData = computed(() => {
+      if (!customers.value || !Array.isArray(customers.value)) return [];
       return customers.value.filter((customer) => selectedCustomers.value.includes(customer.id));
     });
 
@@ -273,7 +280,11 @@ export default {
             isActive: voucher.riengTu,
           };
 
+<<<<<<< Updated upstream
           // Sử dụng selectedCustomers từ phản hồi
+=======
+          // Sử dụng trực tiếp selectedCustomers từ phản hồi
+>>>>>>> Stashed changes
           if (voucher.selectedCustomers && Array.isArray(voucher.selectedCustomers)) {
             selectedCustomers.value = voucher.selectedCustomers.map(customer => customer.id);
           } else {
@@ -338,7 +349,11 @@ export default {
         moTa: formData.value.note,
         trangThai: formData.value.isActive,
         riengTu: formData.value.isActive,
+<<<<<<< Updated upstream
         customerIds: formData.value.isActive ? selectedCustomers.value : [],
+=======
+        customerIds: selectedCustomers.value,
+>>>>>>> Stashed changes
       };
 
       try {
@@ -349,7 +364,12 @@ export default {
             message: 'Cập nhật phiếu giảm giá thành công!',
           });
         } else {
+<<<<<<< Updated upstream
           await axios.post(`${apiBaseUrl}/addPhieuGiamGia`, payload);
+=======
+          const response = await axios.post(`${apiBaseUrl}/addPhieuGiamGia`, payload);
+          const newVoucherId = response.data.id;
+>>>>>>> Stashed changes
           toastNotification.value.addToast({
             type: 'success',
             message: 'Thêm phiếu giảm giá thành công!',

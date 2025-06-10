@@ -46,8 +46,7 @@
               <label class="filter-label">Trạng thái</label>
               <select v-model="filterStatus" class="form-control date-input">
                 <option value="">Tất cả trạng thái</option>
-                <option value="Chưa diễn ra">Chưa diễn ra</option>
-                <option value="Đang diễn ra">Đang diễn ra</option>
+                <option value="Đang diễn ra">Đang diễn ra </option>
                 <option value="Không hoạt động">Không hoạt động</option>
               </select>
             </div>
@@ -112,21 +111,21 @@
           </div>
         </div>
 
-<!-- Action Buttons -->
-<div class="filter-actions mt-4 d-flex flex-wrap gap-2 justify-content-end">
-  <button class="btn btn-reset" @click="resetFilters">
-    <i class="bi bi-arrow-clockwise me-2"></i>
-    Đặt lại bộ lọc
-  </button>
-  <button class="btn btn-action" @click="exportExcel">
-    <i class="bi bi-file-earmark-excel me-2"></i>
-    Xuất Excel
-  </button>
-  <router-link to="/phieuGiamGia/form" class="btn btn-action">
-    <i class="bi bi-plus-circle me-2"></i>
-    Thêm Phiếu Giảm Giá
-  </router-link>
-</div>
+        <!-- Action Buttons -->
+        <div class="filter-actions mt-4 d-flex flex-wrap gap-2 justify-content-end">
+          <button class="btn btn-reset" @click="resetFilters">
+            <i class="bi bi-arrow-clockwise me-2"></i>
+            Đặt lại bộ lọc
+          </button>
+          <button class="btn btn-action" @click="exportExcel">
+            <i class="bi bi-file-earmark-excel me-2"></i>
+            Xuất Excel
+          </button>
+          <router-link to="/phieuGiamGia/form" class="btn btn-action">
+            <i class="bi bi-plus-circle me-2"></i>
+            Thêm Phiếu Giảm Giá
+          </router-link>
+        </div>
       </div>
     </FilterTableSection>
 
@@ -163,19 +162,21 @@
             :headers="headers"
             :data="filteredVouchers"
             :pageSizeOptions="[5, 10, 15, 20, 30, 40, 50]"
+            @update:currentPage="currentPage = $event"
+            @update:pageSize="pageSize = $event"
           >
-           <template #stt="{ item, index }">
-    {{ index + 1 }}
-  </template>
+            <template #stt="{ item, index }">
+              {{ index + 1 + (currentPage - 1) * pageSize }}
+            </template>
             <template #code="{ item }">
               <div class="code-cell">
                 <span class="code-text">{{ item.code }}</span>
-                <small class="code-date">{{ item.startDate }}</small>
+                <small class="code-date">{{ formatDate(item.startDate) }}</small>
               </div>
             </template>
             <template #value="{ item }">
               <div class="amount-cell">
-                <div class="total-amount">{{ formatPrice(item.value) }}</div>
+                <div class="total-amount">{{ formatValue(item) }}</div>
                 <div class="discount-info" v-if="item.minOrder > 0">
                   <small class="text-muted">Đơn tối thiểu: {{ formatPrice(item.minOrder) }}</small>
                 </div>
@@ -194,10 +195,10 @@
               </span>
             </template>
             <template #startDate="{ item }">
-              <span>{{ item.startDate }}</span>
+              <span>{{ formatDate(item.startDate) }}</span>
             </template>
             <template #expiryDate="{ item }">
-              <span>{{ item.expiryDate }}</span>
+              <span>{{ formatDate(item.expiryDate) }}</span>
             </template>
             <template #actions="{ item }">
               <div class="action-buttons-cell d-flex gap-2">
@@ -212,9 +213,6 @@
                 <button class="btn btn-sm btn-table" @click="editVoucher(item)" title="Chỉnh sửa">
                   <i class="bi bi-pencil-fill"></i>
                 </button>
-                <!-- <button class="btn btn-sm btn-table" @click="confirmDeleteVoucher(item)" title="Xóa">
-                  <i class="bi bi-trash-fill"></i>
-                </button> -->
               </div>
             </template>
           </DataTable>
@@ -239,15 +237,15 @@
                 </div>
                 <div class="detail-row">
                   <span class="detail-label">Ngày bắt đầu:</span>
-                  <span class="detail-value">{{ voucher.startDate }}</span>
+                  <span class="detail-value">{{ formatDate(voucher.startDate) }}</span>
                 </div>
                 <div class="detail-row">
                   <span class="detail-label">Ngày kết thúc:</span>
-                  <span class="detail-value">{{ voucher.expiryDate }}</span>
+                  <span class="detail-value">{{ formatDate(voucher.expiryDate) }}</span>
                 </div>
               </div>
               <div class="invoice-amounts">
-                <div class="total-amount">{{ formatPrice(voucher.value) }}</div>
+                <div class="total-amount">{{ formatValue(voucher) }}</div>
                 <div class="amount-details">
                   <small class="text-muted">Đơn tối thiểu: {{ formatPrice(voucher.minOrder) }}</small>
                 </div>
@@ -265,9 +263,6 @@
               <button class="btn btn-sm btn-table" @click="editVoucher(voucher)">
                 <i class="bi bi-pencil-fill me-1"></i> Sửa
               </button>
-              <!-- <button class="btn btn-sm btn-table" @click="confirmDeleteVoucher(voucher)">
-                <i class="bi bi-trash-fill me-1"></i> Xóa
-              </button> -->
             </div>
           </div>
         </div>
@@ -318,6 +313,7 @@
 import { ref, computed, watch } from 'vue';
 import { debounce } from 'lodash';
 import { useRouter } from 'vue-router';
+import axios from 'axios';
 import DataTable from '@/components/common/DataTable.vue';
 import NotificationModal from '@/components/common/NotificationModal.vue';
 import ToastNotification from '@/components/common/ToastNotification.vue';
@@ -335,30 +331,10 @@ export default {
   },
   setup() {
     const router = useRouter();
-    // Data
-    const vouchers = ref([
-      {
-        id: 1,
-        code: 'VOUCHER001',
-        value: 100000,
-        minOrder: 500000,
-        type: 'Tiền mặt',
-        status: 'Đang diễn ra',
-        startDate: '2025-06-01',
-        expiryDate: '2025-12-31',
-      },
-      {
-        id: 2,
-        code: 'VOUCHER002',
-        value: 20,
-        minOrder: 300000,
-        type: 'Phần trăm',
-        status: 'Chưa diễn ra',
-        startDate: '2025-06-05',
-        expiryDate: '2025-12-31',
-      },
-    ]);
+    const apiBaseUrl = 'http://localhost:8080/api';
 
+    // Data
+    const vouchers = ref([]);
     const searchQuery = ref('');
     const filterType = ref('');
     const filterStatus = ref('');
@@ -370,32 +346,26 @@ export default {
     const maxVoucherValue = 1000000;
     const viewMode = ref('table');
     const currentPage = ref(1);
-    const pageSize = 10;
+    const pageSize = ref(10);
+    const totalPages = ref(1);
 
     // Computed
     const filteredVouchers = computed(() => {
-      return vouchers.value.filter((voucher) => {
-        const matchesSearch =
-          voucher.code.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-          voucher.type.toLowerCase().includes(searchQuery.value.toLowerCase());
-        const matchesType = filterType.value ? voucher.type === filterType.value : true;
-        const matchesStatus = filterStatus.value ? voucher.status === filterStatus.value : true;
-        const matchesDate =
-          (!startDate.value || new Date(voucher.startDate) >= new Date(startDate.value)) &&
-          (!endDate.value || new Date(voucher.expiryDate) <= new Date(endDate.value));
-        const matchesValue = voucher.value >= rangeMin.value && voucher.value <= rangeMax.value;
-        return matchesSearch && matchesType && matchesStatus && matchesDate && matchesValue;
-      });
+      return vouchers.value.map(voucher => ({
+        id: voucher.id,
+        code: voucher.ma,
+        value: voucher.loaiPhieuGiamGia === 'Phần trăm' ? voucher.phanTramGiamGia : voucher.soTienGiamToiDa,
+        minOrder: voucher.hoaDonToiThieu || 0,
+        type: voucher.loaiPhieuGiamGia,
+        status: voucher.trangThai ? 'Đang diễn ra' : 'Không hoạt động',
+        startDate: new Date(voucher.ngayBatDau),
+        expiryDate: new Date(voucher.ngayKetThuc),
+      }));
     });
 
-    const totalValue = computed(() => {
-      return filteredVouchers.value.reduce((sum, voucher) => sum + voucher.value, 0);
-    });
-
-    const totalPages = computed(() => Math.ceil(filteredVouchers.value.length / pageSize));
     const paginatedVouchers = computed(() => {
-      const start = (currentPage.value - 1) * pageSize;
-      return filteredVouchers.value.slice(start, start + pageSize);
+      const start = (currentPage.value - 1) * pageSize.value;
+      return filteredVouchers.value.slice(start, start + pageSize.value);
     });
 
     const sliderRangeStyle = computed(() => {
@@ -408,7 +378,7 @@ export default {
     });
 
     const headers = [
-      { text: "STT", value: "stt" },
+      { text: 'STT', value: 'stt' },
       { text: 'Mã Phiếu', value: 'code' },
       { text: 'Giá Trị', value: 'value' },
       { text: 'Loại Phiếu', value: 'type' },
@@ -423,8 +393,71 @@ export default {
       return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);
     };
 
+    const formatValue = (voucher) => {
+      if (voucher.type === 'Phần trăm') {
+        return `${voucher.value}%`;
+      }
+      return formatPrice(voucher.value);
+    };
+
+    const formatDate = (date) => {
+      return new Intl.DateTimeFormat('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' }).format(new Date(date));
+    };
+
+    const fetchVouchers = async () => {
+      try {
+        const params = {
+          page: currentPage.value - 1,
+          size: pageSize.value,
+        };
+        if (searchQuery.value) {
+          params.keyword = searchQuery.value;
+          const response = await axios.get(`${apiBaseUrl}/search`, { params });
+          vouchers.value = response.data.content;
+          totalPages.value = response.data.totalPages;
+        } else {
+          const response = await axios.get(`${apiBaseUrl}/data`, { params });
+          vouchers.value = response.data.content;
+          totalPages.value = response.data.totalPages;
+        }
+      } catch (error) {
+        console.error('Error fetching vouchers:', error);
+        toastNotification.value.addToast({
+          type: 'error',
+          message: 'Lỗi khi tải danh sách phiếu giảm giá!',
+        });
+      }
+    };
+
+    const filterVouchers = async () => {
+      try {
+        const params = {
+          page: currentPage.value - 1,
+          size: pageSize.value,
+        };
+        if (filterType.value) params.loaiPhieuGiamGia = filterType.value;
+        if (filterStatus.value) params.trangThai = filterStatus.value;
+        if (startDate.value) params.startDate = startDate.value;
+        if (endDate.value) params.endDate = endDate.value;
+        if (rangeMin.value > 0) params.valueFilter = rangeMin.value;
+        if (rangeMax.value < maxVoucherValue) params.valueFilter = rangeMax.value;
+
+        const response = await axios.get(`${apiBaseUrl}/filter`, { params });
+        vouchers.value = response.data.content;
+        totalPages.value = response.data.totalPages;
+      } catch (error) {
+        console.error('Error filtering vouchers:', error);
+        toastNotification.value.addToast({
+          type: 'error',
+          message: 'Lỗi khi lọc phiếu giảm giá!',
+        });
+      }
+    };
+
     const debouncedSearch = debounce((value) => {
       searchQuery.value = value;
+      currentPage.value = 1;
+      fetchVouchers();
     }, 300);
 
     const updateRangeMin = () => {
@@ -448,50 +481,36 @@ export default {
       rangeMin.value = minVoucherValue;
       rangeMax.value = maxVoucherValue;
       currentPage.value = 1;
+      fetchVouchers();
     };
 
     const exportExcel = () => {
-      toastNotification.value.addToast({ // Changed from showToast to addToast
+      toastNotification.value.addToast({
         type: 'success',
         message: 'Xuất Excel thành công!',
       });
-    };
-
-    const viewVoucher = (voucher) => {
-      console.log('View voucher:', voucher);
     };
 
     const editVoucher = (voucher) => {
       router.push(`/phieuGiamGia/form/${voucher.id}`);
     };
 
-    const confirmDeleteVoucher = (voucher) => {
-      notificationType.value = 'confirm';
-      notificationMessage.value = `Bạn có chắc muốn xóa phiếu ${voucher.code}?`;
-      notificationOnConfirm.value = () => deleteVoucher(voucher);
-      notificationOnCancel.value = () => resetNotification();
-      isNotificationLoading.value = false;
-      notificationModal.value.openModal(); // Changed from show to openModal
-    };
-
-    const deleteVoucher = (voucher) => {
-      vouchers.value = vouchers.value.filter((v) => v.id !== voucher.id);
-      toastNotification.value.addToast({ // Changed from showToast to addToast
-        type: 'success',
-        message: 'Xóa phiếu thành công!',
-      });
-      resetNotification();
-    };
-
-    const toggleVoucherStatus = (voucher) => {
-      const newStatus = voucher.status === 'Đang diễn ra' ? 'Không hoạt động' : 'Đang diễn ra';
-      vouchers.value = vouchers.value.map((v) =>
-        v.id === voucher.id ? { ...v, status: newStatus } : v
-      );
-      toastNotification.value.addToast({ // Changed from showToast to addToast
-        type: 'info',
-        message: `Phiếu ${voucher.code} đã được ${newStatus === 'Đang diễn ra' ? 'kích hoạt' : 'tắt'}`,
-      });
+    const toggleVoucherStatus = async (voucher) => {
+      try {
+        const newStatus = voucher.status === 'Đang diễn ra' ? false : true;
+        const response = await axios.put(`${apiBaseUrl}/update-trang-thai/${voucher.id}`, { trangThai: newStatus });
+        await fetchVouchers();
+        toastNotification.value.addToast({
+          type: 'info',
+          message: `Phiếu ${voucher.code} đã được ${newStatus ? 'kích hoạt' : 'tắt'}`,
+        });
+      } catch (error) {
+        console.error('Error toggling voucher status:', error);
+        toastNotification.value.addToast({
+          type: 'error',
+          message: 'Lỗi khi cập nhật trạng thái phiếu!',
+        });
+      }
     };
 
     const notificationModal = ref(null);
@@ -508,25 +527,18 @@ export default {
       isNotificationLoading.value = false;
       notificationOnConfirm.value = () => {};
       notificationOnCancel.value = () => resetNotification();
-      // Removed hide() call as it's not needed; closeModal is handled internally
     };
 
     const getTypeBadgeClass = (type) => {
-      switch (type) {
-        case 'Tiền mặt':
-        case 'Phần trăm':
-          return 'badge-info';
-        default:
-          return 'badge-info';
-      }
+      return type === 'Phần trăm' || type === 'Tiền mặt' ? 'badge-info' : 'badge-info';
     };
 
     const getStatusBadgeClass = (status) => {
       switch (status) {
         case 'Đang diễn ra':
           return 'badge-completed';
-        case 'Chưa diễn ra':
-          return 'badge-waiting';
+        case 'Không hoạt động':
+          return 'badge-canceled';
         default:
           return 'badge-canceled';
       }
@@ -537,20 +549,20 @@ export default {
     };
 
     const getStatusIcon = (status) => {
-      switch (status) {
-        case 'Đang diễn ra':
-          return 'bi bi-check-circle';
-        case 'Chưa diễn ra':
-          return 'bi bi-hourglass-split';
-        default:
-          return 'bi bi-x-circle';
-      }
+      return status === 'Đang diễn ra' ? 'bi bi-check-circle' : 'bi bi-x-circle';
     };
 
     // Watchers
-    watch([searchQuery, filterType, filterStatus, startDate, endDate, rangeMin, rangeMax], () => {
-      currentPage.value = 1;
+    watch([filterType, filterStatus, startDate, endDate, rangeMin, rangeMax, currentPage, pageSize], () => {
+      if (searchQuery.value) {
+        fetchVouchers();
+      } else {
+        filterVouchers();
+      }
     });
+
+    // Initial fetch
+    fetchVouchers();
 
     return {
       vouchers,
@@ -565,21 +577,21 @@ export default {
       maxVoucherValue,
       viewMode,
       currentPage,
-      filteredVouchers,
-      totalValue,
+      pageSize,
       totalPages,
+      filteredVouchers,
       paginatedVouchers,
       sliderRangeStyle,
       headers,
       formatPrice,
+      formatValue,
+      formatDate,
       debouncedSearch,
       updateRangeMin,
       updateRangeMax,
       resetFilters,
       exportExcel,
-      viewVoucher,
       editVoucher,
-      confirmDeleteVoucher,
       toggleVoucherStatus,
       notificationModal,
       toastNotification,
