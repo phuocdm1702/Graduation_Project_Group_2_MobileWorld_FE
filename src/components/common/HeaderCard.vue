@@ -2,30 +2,21 @@
   <div class="header-card">
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
       <div class="flex flex-col gap-2">
-        <h1 class="header-title sm:text-2xl font-extrabold tracking-tight" :style="{ color: titleColor }">{{ title }}</h1>
+        <h1 class="header-title sm:text-2xl font-extrabold tracking-tight" :style="{ color: titleColor }">
+          {{ dynamicTitle }}
+        </h1>
         <nav class="breadcrumb" aria-label="Breadcrumb">
           <ol class="flex items-center space-x-2">
             <li v-for="(crumb, index) in breadcrumbs" :key="crumb.path" class="flex items-center">
-              <router-link
-                v-if="index < breadcrumbs.length - 1"
-                :to="crumb.path"
+              <router-link v-if="index < breadcrumbs.length - 1" :to="crumb.path"
                 class="text-sm font-medium hover:text-green-600"
-                :style="{ color: index === 0 ? '#15803d' : '#6b7280' }"
-              >
+                :style="{ color: index === 0 ? '#15803d' : '#6b7280' }">
                 {{ crumb.name }}
               </router-link>
-              <span
-                v-else
-                class="text-sm font-medium text-gray-500"
-                aria-current="page"
-              >
+              <span v-else class="text-sm font-medium text-gray-500" aria-current="page">
                 {{ crumb.name }}
               </span>
-              <span
-                v-if="index < breadcrumbs.length - 1"
-                class="mx-2 text-gray-400"
-                aria-hidden="true"
-              >
+              <span v-if="index < breadcrumbs.length - 1" class="mx-2 text-gray-400" aria-hidden="true">
                 /
               </span>
             </li>
@@ -41,15 +32,20 @@ import { useRoute } from 'vue-router';
 import { computed } from 'vue';
 
 const menuItems = [
-  { name: 'Trang chủ', path: '/trangChu', icon: 'HomeIcon' },
-  { name: 'Bán Hàng', path: '/banHang', icon: 'ShoppingCartIcon' },
-  { name: 'Quản Lý Hóa đơn', path: '/hoaDon', icon: 'DocumentTextIcon' },
+  { name: 'Trang chủ', path: '/trangChu'},
+  { name: 'Bán Hàng', path: '/banHang' },
+  { name: 'Quản Lý Hóa đơn', path: '/hoaDon'},
   {
-    name: 'Quản Lý Sản phẩm',
-    path: '/quanLySanPham',
-    icon: 'CubeIcon',
+    name: 'Trang chủ',
+    path: '/trangChu',
     children: [
-      { name: 'Sản phẩm', path: '/sanPham' },
+            {
+        name: 'Sản phẩm',
+        path: '/sanPham',
+        children: [
+          { name: 'Thêm Chi Tiết Sản phẩm', path: '/themChiTietSanPham' },
+        ],
+      },
       { name: 'Nhà sản xuất', path: '/nhaSanXuat' },
       { name: 'Cụm Camera', path: '/cumCamera' },
       { name: 'Hình Ảnh', path: '/hinhAnh' },
@@ -67,24 +63,36 @@ const menuItems = [
       { name: 'Pin', path: '/pin' },
       { name: 'Sim', path: '/sim' },
       { name: 'Thiết kế', path: '/thietKe' },
-    ],
-  },
-  {
-    name: 'Quản Lý Tài khoản',
-    path: '/quanLyTaiKhoan',
-    icon: 'UserIcon',
-    children: [
-      { name: 'Nhân viên', path: '/nhanVien' },
-      { name: 'Khách hàng', path: '/khachHang' },
-    ],
-  },
-  {
-    name: 'Quản Lý Giảm giá',
-    path: '/quanLyGiamGia',
-    icon: 'TagIcon',
-    children: [
-      { name: 'Phiếu giảm giá', path: '/phieuGiamGia' },
-      { name: 'Đợt giảm giá', path: '/dotGiamGia' },
+      {
+        name: 'Nhân viên',
+        path: '/nhanVien',
+        children: [
+          { name: 'Thêm nhân viên', path: '/nhanVien/form' },
+          { name: 'Sửa nhân viên', path: '/nhanVien/form/:id?' },
+        ],
+      },
+      {
+        name: 'Khách hàng',
+        path: '/khachHang',
+        children: [
+          { name: 'Thêm khách hàng', path: '/khachHang/form' },
+          { name: 'Sửa khách hàng', path: '/khachHang/form/:id?' },
+        ],
+      },
+      {
+        name: 'Phiếu giảm giá',
+        path: '/phieuGiamGia',
+        children: [
+          { name: 'Thêm phiếu giảm giá', path: '/phieuGiamGia/form' },
+          { name: 'Sửa phiếu giảm giá', path: '/phieuGiamGia/form/:id?' },
+        ],
+      },
+      { name: 'Đợt giảm giá', path: '/dotGiamGia',
+        children: [
+          { name: 'Thêm đợt giảm giá', path: '/dotGiamGia/form' },
+          { name: 'Sửa đợt giảm giá', path: '/dotGiamGia/form/:id?' },
+        ],
+       },
     ],
   },
   { name: 'Thống kê', path: '/thongKe', icon: 'ChartBarIcon' },
@@ -114,58 +122,51 @@ export default {
       default: 0.95,
     },
   },
-  setup() {
+  setup(props) {
     const route = useRoute();
 
     const breadcrumbs = computed(() => {
       const currentPath = route.path;
       const crumbs = [];
 
-      // Helper function to find a menu item by path
-      const findMenuItem = (items, path) => {
+      // Helper function to check if a path matches, including dynamic routes
+      const pathMatches = (menuPath, currentPath) => {
+        if (!menuPath.includes(':')) {
+          return menuPath === currentPath;
+        }
+        // Handle dynamic routes like /nhanVien/form/:id?
+        const regex = new RegExp(`^${menuPath.replace(/:id\?/, '[^/]*')}$`);
+        return regex.test(currentPath);
+      };
+
+      // Helper function to find a menu item by path, recursively
+      const findMenuItem = (items, path, parents = []) => {
         for (const item of items) {
-          if (item.path === path || path.startsWith(item.path)) {
-            return item;
+          if (pathMatches(item.path, path)) {
+            return { item, parents };
           }
           if (item.children) {
-            const childItem = findMenuItem(item.children, path);
-            if (childItem) return item;
+            const result = findMenuItem(item.children, path, [...parents, item]);
+            if (result.item) return result;
           }
         }
-        return null;
+        return { item: null, parents: [] };
       };
 
       // Helper function to build breadcrumb trail
       const buildBreadcrumbs = (path) => {
-        let currentItem = null;
-        let parentItem = null;
+        const { item, parents } = findMenuItem(menuItems, path);
 
-        // Find the deepest matching menu item
-        for (const item of menuItems) {
-          if (path === item.path || path.startsWith(item.path)) {
-            currentItem = item;
-            break;
-          }
-          if (item.children) {
-            for (const child of item.children) {
-              if (path === child.path || path.startsWith(child.path)) {
-                currentItem = child;
-                parentItem = item;
-                break;
-              }
-            }
-            if (currentItem) break;
-          }
-        }
+        // Add all parent items to breadcrumbs
+        parents.forEach((parent) => {
+          crumbs.push({ name: parent.name, path: parent.path });
+        });
 
-        // Build the breadcrumb trail
-        if (parentItem) {
-          crumbs.push({ name: parentItem.name, path: parentItem.path });
-        }
-        if (currentItem) {
-          crumbs.push({ name: currentItem.name, path: currentItem.path });
+        // Add current item or fallback
+        if (item) {
+          // For dynamic routes, use the menu item path without the specific id
+          crumbs.push({ name: item.name, path: item.path.replace('/:id?', '') });
         } else {
-          // Fallback for unmatched routes
           crumbs.push({ name: route.name || 'Trang hiện tại', path });
         }
       };
@@ -180,7 +181,13 @@ export default {
       return crumbs;
     });
 
-    return { breadcrumbs };
+    // Compute the dynamic title based on the last breadcrumb
+    const dynamicTitle = computed(() => {
+      const lastCrumb = breadcrumbs.value[breadcrumbs.value.length - 1];
+      return lastCrumb ? lastCrumb.name : props.title;
+    });
+
+    return { breadcrumbs, dynamicTitle };
   },
 };
 </script>
@@ -224,7 +231,7 @@ h1 {
 }
 
 .breadcrumb a:hover {
-  color: #16a34a; /* Matches hover color from Sidebar.vue */
+  color: #16a34a;
 }
 
 @keyframes slideIn {
@@ -232,6 +239,7 @@ h1 {
     opacity: 0;
     transform: translateY(20px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -242,6 +250,7 @@ h1 {
   .header-title {
     font-size: 1.75rem;
   }
+
   .breadcrumb {
     font-size: 0.875rem;
   }
@@ -251,9 +260,11 @@ h1 {
   .card-body {
     padding: 1rem;
   }
+
   .header-title {
     font-size: 1.5rem;
   }
+
   .breadcrumb {
     font-size: 0.75rem;
   }

@@ -1,12 +1,8 @@
 <template>
   <div class="container-fluid py-4 product-management">
     <!-- Header -->
-    <HeaderCard
-      title="Quản Lý Sản Phẩm"
-      badgeText="Hệ Thống POS"
-      badgeClass="gradient-custom-teal"
-      :backgroundOpacity="0.95"
-    />
+    <HeaderCard title="Quản Lý Sản Phẩm" badgeText="Hệ Thống POS" badgeClass="gradient-custom-teal"
+      :backgroundOpacity="0.95" />
 
     <!-- Filter Section -->
     <FilterTableSection title="Bộ Lọc Tìm Kiếm" icon="bi bi-funnel">
@@ -18,13 +14,8 @@
               <label class="filter-label">Tìm kiếm</label>
               <div class="search-input-wrapper">
                 <i class="bi bi-search search-icon"></i>
-                <input
-                  v-model.trim="keyword"
-                  @input="debouncedSearch"
-                  type="text"
-                  placeholder="Tìm kiếm theo tên sản phẩm..."
-                  class="form-control search-input"
-                />
+                <input v-model.trim="keyword" @input="debouncedSearch" type="text"
+                  placeholder="Tìm kiếm theo tên sản phẩm..." class="form-control search-input" />
               </div>
             </div>
           </div>
@@ -33,11 +24,7 @@
           <div class="col-lg-4 col-md-6">
             <div class="filter-group">
               <label class="filter-label">Hãng</label>
-              <select
-                v-model="filters.idNhaSanXuat"
-                @change="searchProducts"
-                class="form-control search-input"
-              >
+              <select v-model="filters.idNhaSanXuat" @change="searchProducts" class="form-control search-input">
                 <option value="">Tất cả</option>
                 <option v-for="option in nhaSanXuatOptions" :key="option.id" :value="option.id">
                   {{ option.nhaSanXuat }}
@@ -50,11 +37,7 @@
           <div class="col-lg-4 col-md-6">
             <div class="filter-group">
               <label class="filter-label">Hệ Điều Hành</label>
-              <select
-                v-model="filters.idHeDieuHanh"
-                @change="searchProducts"
-                class="form-control search-input"
-              >
+              <select v-model="filters.idHeDieuHanh" @change="searchProducts" class="form-control search-input">
                 <option value="">Tất cả</option>
                 <option v-for="option in heDieuHanhOptions" :key="option.id" :value="option.id">
                   {{ option.heDieuHanh }} {{ option.phienBan }}
@@ -67,11 +50,7 @@
           <div class="col-lg-4 col-md-6">
             <div class="filter-group">
               <label class="filter-label">Công nghệ màn hình</label>
-              <select
-                v-model="filters.idCongNgheManHinh"
-                @change="searchProducts"
-                class="form-control search-input"
-              >
+              <select v-model="filters.idCongNgheManHinh" @change="searchProducts" class="form-control search-input">
                 <option value="">Tất cả</option>
                 <option v-for="option in congNgheManHinhOptions" :key="option.id" :value="option.id">
                   {{ option.chuanManHinh }} {{ option.congNgheManHinh }}
@@ -84,11 +63,7 @@
           <div class="col-lg-4 col-md-6">
             <div class="filter-group">
               <label class="filter-label">Pin</label>
-              <select
-                v-model="filters.idPin"
-                @change="searchProducts"
-                class="form-control search-input"
-              >
+              <select v-model="filters.idPin" @change="searchProducts" class="form-control search-input">
                 <option value="">Tất cả</option>
                 <option v-for="option in pinOptions" :key="option.id" :value="option.id">
                   {{ option.loaiPin }} {{ option.dungLuongPin }}
@@ -101,32 +76,11 @@
           <div class="col-lg-4 col-md-6">
             <div class="filter-group">
               <label class="filter-label">Trạng thái tồn kho</label>
-              <div class="status-badge d-flex gap-3">
-                <button
-                  type="button"
-                  class="btn btn-outline-primary position-relative"
-                  @click="filters.stockStatus = ''; searchProducts()"
-                  :class="{ 'badge-primary': filters.stockStatus === '' }"
-                >
-                  Tất cả
-                </button>
-                <button
-                  type="button"
-                  class="btn btn-outline-primary position-relative"
-                  @click="filters.stockStatus = 'inStock'; searchProducts()"
-                  :class="{ 'badge-primary': filters.stockStatus === 'inStock' }"
-                >
-                  Còn hàng
-                </button>
-                <button
-                  type="button"
-                  class="btn btn-outline-primary position-relative"
-                  @click="filters.stockStatus = 'outOfStock'; searchProducts()"
-                  :class="{ 'badge-primary': filters.stockStatus === 'outOfStock' }"
-                >
-                  Hết hàng
-                </button>
-              </div>
+              <select v-model="filters.stockStatus" @change="searchProducts" class="form-control search-input">
+                <option value="">Tất cả</option>
+                <option value="inStock">Còn hàng</option>
+                <option value="outOfStock">Hết hàng</option>
+              </select>
             </div>
           </div>
         </div>
@@ -149,7 +103,7 @@
               <i class="bi bi-arrow-clockwise me-2"></i>
               Đặt lại bộ lọc
             </button>
-            <router-link to="/add-product" class="btn btn-action">
+            <router-link to="/themChiTietSanPham" class="btn btn-action">
               <i class="bi bi-plus-circle me-2"></i>
               Thêm chi tiết sản phẩm
             </router-link>
@@ -160,14 +114,30 @@
 
     <!-- Table View -->
     <FilterTableSection title="Danh Sách Sản Phẩm" icon="bi bi-table">
+      <!-- Table/Card View Toggle -->
+      <div class="table-header">
+        <div class="table-title-wrapper">
+          <span class="table-count">{{ filteredProducts.length }} sản phẩm</span>
+        </div>
+        <div class="table-controls">
+          <div class="view-toggle">
+            <button class="btn btn-sm"
+              :class="{ 'btn-primary': viewMode === 'table', 'btn-outline-secondary': viewMode !== 'table' }"
+              @click="viewMode = 'table'">
+              <i class="bi bi-table"></i>
+            </button>
+            <button class="btn btn-sm"
+              :class="{ 'btn-primary': viewMode === 'card', 'btn-outline-secondary': viewMode !== 'card' }"
+              @click="viewMode = 'card'">
+              <i class="bi bi-grid-3x3-gap"></i>
+            </button>
+          </div>
+        </div>
+      </div>
       <div class="table-body">
         <div v-if="viewMode === 'table'">
-          <DataTable
-            title=""
-            :headers="headers"
-            :data="paginatedProducts"
-            :pageSizeOptions="[5, 10, 15, 20, 30, 40, 50]"
-          >
+          <DataTable title="" :headers="headers" :data="paginatedProducts"
+            :pageSizeOptions="[5, 10, 15, 20, 30, 40, 50]">
             <template #stt="{ item, index }">
               {{ (currentPage - 1) * itemsPerPage + index + 1 }}
             </template>
@@ -211,7 +181,7 @@
                   <i class="bi bi-eye-fill"></i>
                 </button>
                 <button class="btn btn-sm btn-table" @click="editProduct(item)" title="Chỉnh sửa">
-                  <i class="bi bi-edit-fill"></i>
+                  <i class="bi bi-pencil-fill"></i>
                 </button>
                 <button class="btn btn-sm btn-table" @click="confirmDeleteProduct(item)" title="Xóa">
                   <i class="bi bi-trash-fill"></i>
@@ -226,7 +196,8 @@
           <div v-for="product in paginatedProducts" :key="product.id" class="product-card">
             <div class="product-card-header">
               <div class="product-code">{{ product.tenSanPham }}</div>
-              <span class="status-badge" :class="getStatusBadgeClass(product.imeiCount === 0 ? 'Hết hàng' : 'Còn hàng')">
+              <span class="status-badge"
+                :class="getStatusBadgeClass(product.imeiCount === 0 ? 'Hết hàng' : 'Còn hàng')">
                 {{ product.imeiCount === 0 ? 'Hết hàng' : 'Còn hàng' }}
               </span>
             </div>
@@ -301,15 +272,9 @@
     </FilterTableSection>
 
     <!-- Modals -->
-    <NotificationModal
-      ref="notificationModal"
-      :type="notificationType"
-      :message="notificationMessage"
-      :isLoading="isNotificationLoading"
-      :onConfirm="notificationOnConfirm"
-      :onCancel="notificationOnCancel"
-      @close="resetNotification"
-    />
+    <NotificationModal ref="notificationModal" :type="notificationType" :message="notificationMessage"
+      :isLoading="isNotificationLoading" :onConfirm="notificationOnConfirm" :onCancel="notificationOnCancel"
+      @close="resetNotification" />
     <ToastNotification ref="toastNotification" />
   </div>
 </template>
@@ -354,8 +319,8 @@ export default defineComponent({
     const notificationType = ref('confirm');
     const notificationMessage = ref('');
     const isNotificationLoading = ref(false);
-    const notificationOnConfirm = ref(() => {});
-    const notificationOnCancel = ref(() => {});
+    const notificationOnConfirm = ref(() => { });
+    const notificationOnCancel = ref(() => { });
 
     // State
     const keyword = ref('');
@@ -564,7 +529,7 @@ export default defineComponent({
       notificationType.value = 'confirm';
       notificationMessage.value = `Bạn có chắc chắn muốn xóa sản phẩm ${product.tenSanPham}?\nThao tác này không thể hoàn tác.`;
       notificationOnConfirm.value = () => deleteProduct(product);
-      notificationOnCancel.value = () => {};
+      notificationOnCancel.value = () => { };
       isNotificationLoading.value = false;
       notificationModal.value?.openModal();
     };
@@ -590,8 +555,8 @@ export default defineComponent({
       notificationType.value = 'confirm';
       notificationMessage.value = '';
       isNotificationLoading.value = false;
-      notificationOnConfirm.value = () => {};
-      notificationOnCancel.value = () => {};
+      notificationOnConfirm.value = () => { };
+      notificationOnCancel.value = () => { };
     };
 
     const getStatusBadgeClass = (status) => {
@@ -661,6 +626,7 @@ export default defineComponent({
     opacity: 0;
     transform: translateY(15px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -672,6 +638,7 @@ export default defineComponent({
     opacity: 0;
     transform: scale(0.97);
   }
+
   to {
     opacity: 1;
     transform: scale(1);
@@ -679,9 +646,12 @@ export default defineComponent({
 }
 
 @keyframes gentleGlow {
-  0%, 100% {
+
+  0%,
+  100% {
     box-shadow: 0 0 5px rgba(52, 211, 153, 0.3);
   }
+
   50% {
     box-shadow: 0 0 12px rgba(52, 211, 153, 0.5);
   }
@@ -733,20 +703,6 @@ export default defineComponent({
 }
 
 .search-input:focus {
-  border-color: #34d399;
-  box-shadow: 0 0 10px rgba(52, 211, 153, 0.2);
-}
-
-.form-control {
-  border: 2px solid rgba(52, 211, 153, 0.1);
-  border-radius: 8px;
-  padding: 0.5rem;
-  font-size: 0.9rem;
-  transition: all 0.2s ease;
-  background: #f8f9fa;
-}
-
-.form-control:focus {
   border-color: #34d399;
   box-shadow: 0 0 10px rgba(52, 211, 153, 0.2);
 }
@@ -879,20 +835,19 @@ export default defineComponent({
 }
 
 .status-badge {
-  padding: 0.5rem 1rem;
-  border-radius: 1rem;
-  font-weight: 500;
-  font-size: 0.9rem;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
+    padding: 0.25rem 0.75rem;
+    border-radius: 1rem;
+    width: 130px;
+    display: flex;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 500;
+    align-items: center;
 }
 
 .badge-completed {
-  background: #16a34a;
-  color: white;
+    background: #34d399;
+    color: white;
 }
 
 .badge-canceled {
@@ -906,14 +861,8 @@ export default defineComponent({
 }
 
 .code-text {
-  font-weight: 600;
-  color: #34d399;
-}
-
-.employee-name,
-.customer-name {
   font-weight: 500;
-  color: #1f3a44;
+  color: #34d399;
 }
 
 .amount-cell {
@@ -1019,12 +968,6 @@ export default defineComponent({
 .product-amounts {
   padding-top: 1rem;
   border-top: 1px solid rgba(52, 211, 153, 0.1);
-}
-
-.total-amount {
-  font-weight: 600;
-  color: #16a34a;
-  font-size: 1.1rem;
 }
 
 .product-card-actions {
