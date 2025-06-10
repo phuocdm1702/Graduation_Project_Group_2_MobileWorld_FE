@@ -196,9 +196,9 @@
         <div v-if="viewMode === 'table'">
           <DataTable title="" :headers="headers" :data="filteredInvoices"
             :pageSizeOptions="[5, 10, 15, 20, 30, 40, 50]">
-             <template #stt="{ item, index }">
-    {{ index + 1 }}
-  </template>
+            <template #stt="{ item, index }">
+              {{ index + 1 }}
+            </template>
             <template #code="{ item }">
               <div class="code-cell">
                 <span class="code-text">{{ item.code }}</span>
@@ -367,6 +367,7 @@ export default {
     opacity: 0;
     transform: translateY(15px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -378,6 +379,7 @@ export default {
     opacity: 0;
     transform: translateX(-15px);
   }
+
   to {
     opacity: 1;
     transform: translateX(0);
@@ -385,9 +387,12 @@ export default {
 }
 
 @keyframes gentleGlow {
-  0%, 100% {
+
+  0%,
+  100% {
     box-shadow: 0 0 5px rgba(52, 211, 153, 0.3);
   }
+
   50% {
     box-shadow: 0 0 12px rgba(52, 211, 153, 0.5);
   }
@@ -398,6 +403,7 @@ export default {
     opacity: 0;
     transform: scale(0.97);
   }
+
   to {
     opacity: 1;
     transform: scale(1);

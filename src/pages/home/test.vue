@@ -3,11 +3,11 @@
     <!-- Header Welcome Section -->
     <div class="row mb-4">
       <div class="col-12">
-        <div class="card p-4">
+        <div class="glass-card p-4">
           <div class="row align-items-center">
             <div class="col-md-8">
               <div class="d-flex align-items-center">
-                <div class="me-4">
+                <div class="position-relative me-4">
                   <div class="avatar-circle d-flex align-items-center justify-content-center">
                     <span class="text-white fw-bold fs-2">{{ userInitial }}</span>
                   </div>
@@ -41,7 +41,7 @@
     <!-- Stats Cards -->
     <div class="row g-4 mb-4">
       <div class="col-lg-3 col-md-6" v-for="(stat, index) in stats" :key="index">
-        <div class="card p-4 h-100" @click="handleStatClick(stat)">
+        <div class="stat-card glass-card p-4 h-100" @click="handleStatClick(stat)">
           <div class="d-flex justify-content-between align-items-start mb-3">
             <div class="stat-icon" :class="stat.iconClass">
               <i :class="stat.icon" class="fs-4"></i>
@@ -64,7 +64,7 @@
     <div class="row g-4">
       <!-- Activity Timeline -->
       <div class="col-lg-8">
-        <div class="card" style="height: 100%;">
+        <div class="glass-card" style="height: 100%; overflow: hidden;">
           <div class="card-header d-flex justify-content-between align-items-center">
             <h5 class="mb-0 fw-bold">
               Hoạt động gần đây
@@ -77,9 +77,10 @@
           <div class="card-body">
             <div class="activity-timeline">
               <div 
-                v-for="activity in recentActivities" 
+                v-for="(activity, index) in recentActivities" 
                 :key="activity.id"
                 class="timeline-item"
+                :style="{ animationDelay: `${index * 0.1}s` }"
               >
                 <div class="timeline-dot" :class="{ 'completed': activity.completed }"></div>
                 <div class="timeline-content">
@@ -105,7 +106,7 @@
       <!-- Sidebar -->
       <div class="col-lg-4">
         <!-- Quick Actions -->
-        <div class="card mb-4">
+        <div class="glass-card mb-4">
           <div class="card-header">
             <h5 class="mb-0 fw-bold">
               Truy cập nhanh
@@ -114,9 +115,10 @@
           <div class="card-body">
             <div class="d-grid gap-3">
               <button 
-                v-for="action in quickActions" 
+                v-for="(action, index) in quickActions" 
                 :key="action.name"
-                class="btn d-flex align-items-center p-3"
+                class="quick-action btn d-flex align-items-center p-3"
+                :style="{ animationDelay: `${index * 0.1}s` }"
                 @click="handleQuickAction(action)"
               >
                 <div class="action-icon me-3" :class="action.bgClass">
@@ -130,7 +132,7 @@
         </div>
 
         <!-- System Status -->
-        <div class="card">
+        <div class="glass-card">
           <div class="card-header">
             <h5 class="mb-0 fw-bold">
               Trạng thái hệ thống
@@ -139,9 +141,10 @@
           <div class="card-body">
             <div class="system-status">
               <div 
-                v-for="status in systemStatus" 
+                v-for="(status, index) in systemStatus" 
                 :key="status.name"
                 class="status-item d-flex justify-content-between align-items-center mb-3"
+                :style="{ animationDelay: `${index * 0.1}s` }"
               >
                 <div class="d-flex align-items-center">
                   <div class="status-icon me-3" :class="status.iconClass">
@@ -189,7 +192,7 @@ export default {
         change: '+12%',
         subtitle: 'Hôm nay',
         icon: 'bi bi-bag-check',
-        iconClass: 'bg-primary',
+        iconClass: 'bg-mint',
         changeClass: 'text-success',
         trendIcon: 'bi bi-trending-up'
       },
@@ -199,7 +202,7 @@ export default {
         change: '+18%',
         subtitle: 'Tháng này',
         icon: 'bi bi-currency-dollar',
-        iconClass: 'bg-primary',
+        iconClass: 'bg-mint',
         changeClass: 'text-success',
         trendIcon: 'bi bi-trending-up'
       },
@@ -209,7 +212,7 @@ export default {
         change: '+5%',
         subtitle: 'Tổng số',
         icon: 'bi bi-people',
-        iconClass: 'bg-primary',
+        iconClass: 'bg-mint',
         changeClass: 'text-success',
         trendIcon: 'bi bi-trending-up'
       },
@@ -219,7 +222,7 @@ export default {
         change: '-2%',
         subtitle: 'Trong kho',
         icon: 'bi bi-box-seam',
-        iconClass: 'bg-primary',
+        iconClass: 'bg-mint',
         changeClass: 'text-muted',
         trendIcon: 'bi bi-trending-down'
       }
@@ -232,8 +235,6 @@ export default {
         description: 'Khách hàng Nguyễn Văn A đã đặt hàng',
         time: '5 phút trước',
         completed: false,
-        statusClass: 'status-pending',
-        statusIcon: 'bi bi-hourglass-split'
       },
       {
         id: 2,
@@ -241,8 +242,6 @@ export default {
         description: 'Đơn hàng #12344 đã được thanh toán',
         time: '10 phút trước',
         completed: true,
-        statusClass: 'status-success',
-        statusIcon: 'bi bi-check-circle'
       },
       {
         id: 3,
@@ -250,8 +249,6 @@ export default {
         description: 'Đã thêm 5 sản phẩm vào kho',
         time: '1 giờ trước',
         completed: true,
-        statusClass: 'status-success',
-        statusIcon: 'bi bi-check-circle'
       },
       {
         id: 4,
@@ -259,26 +256,25 @@ export default {
         description: 'Trần Thị B đã đăng ký tài khoản',
         time: '2 giờ trước',
         completed: true,
-        statusClass: 'status-success',
-        statusIcon: 'bi bi-check-circle'
       }
+      
     ])
 
     const quickActions = ref([
       {
         name: 'Tạo đơn hàng',
         icon: 'bi bi-plus-circle',
-        bgClass: 'bg-primary'
+        bgClass: 'bg-mint'
       },
       {
         name: 'Quản lý sản phẩm',
         icon: 'bi bi-boxes',
-        bgClass: 'bg-primary'
+        bgClass: 'bg-mint'
       },
       {
         name: 'Thống kê',
         icon: 'bi bi-bar-chart',
-        bgClass: 'bg-primary'
+        bgClass: 'bg-mint'
       },
       {
         name: 'Cài đặt',
@@ -293,7 +289,7 @@ export default {
         status: 'Hoạt động',
         icon: 'bi bi-server',
         iconClass: 'text-primary',
-        dotClass: 'bg-success',
+        dotClass: 'bg-success pulse',
         textClass: 'text-success fw-medium'
       },
       {
@@ -301,7 +297,7 @@ export default {
         status: 'Bình thường',
         icon: 'bi bi-database',
         iconClass: 'text-info',
-        dotClass: 'bg-success',
+        dotClass: 'bg-success pulse',
         textClass: 'text-success fw-medium'
       },
       {
@@ -309,7 +305,7 @@ export default {
         status: 'Đang xử lý',
         icon: 'bi bi-cloud-upload',
         iconClass: 'text-warning',
-        dotClass: 'bg-warning',
+        dotClass: 'bg-warning pulse',
         textClass: 'text-warning fw-medium'
       }
     ])
@@ -358,16 +354,19 @@ export default {
   min-height: 100vh;
 }
 
-.card {
-  background: #fff;
-  border: 1px solid #e5e7eb;
+.glass-card {
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  border-radius: 20px;
+  box-shadow: 0 8px 32px rgba(21, 128, 61, 0.1);
 }
 
 .avatar-circle {
   width: 80px;
   height: 80px;
   border-radius: 50%;
-  background: #60a5fa;
+  background: linear-gradient(135deg, #60a5fa, #34d399);
 }
 
 .online-indicator {
@@ -378,18 +377,29 @@ export default {
 }
 
 .status-badge {
-  background: #60a5fa;
+  background: linear-gradient(135deg, #60a5fa, #34d399);
   color: white;
   padding: 12px 20px;
-  border-radius: 4px;
+  border-radius: 25px;
   display: inline-flex;
   align-items: center;
+}
+
+.stat-card {
+  transition: all 0.3s ease;
+  cursor: pointer;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.stat-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 15px 40px rgba(21, 128, 61, 0.2);
 }
 
 .stat-icon {
   width: 50px;
   height: 50px;
-  border-radius: 4px;
+  border-radius: 15px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -409,19 +419,19 @@ export default {
 }
 
 .bg-gray {
-  background: #6b7280;
+  background-color: #6b7280;
 }
 
 .text-primary {
-  color: #60a5fa;
+  color: #60a5fa !important;
 }
 
 .text-success {
-  color: #15803d;
+  color: #15803d !important;
 }
 
 .text-mint {
-  color: #34d399;
+  color: #34d399 !important;
 }
 
 .stat-value {
@@ -435,8 +445,9 @@ export default {
 }
 
 .card-header {
-  border-bottom: 1px solid #e5e7eb;
-  padding: 1.5rem;
+  background: rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 1.5rem 1.5rem 1rem;
 }
 
 .card-body {
@@ -455,14 +466,20 @@ export default {
   top: 0;
   bottom: 0;
   width: 2px;
-  background: #60a5fa;
+  background: linear-gradient(to bottom, #60a5fa, #15803d);
 }
 
 .timeline-item {
   position: relative;
   margin-bottom: 25px;
   padding: 15px;
-  border-radius: 4px;
+  border-radius: 12px;
+  transition: all 0.3s ease;
+  animation: fadeInLeft 0.6s ease-out;
+}
+
+.timeline-item:hover {
+  background: rgba(255, 255, 255, 0.1);
 }
 
 .timeline-dot {
@@ -474,10 +491,12 @@ export default {
   border-radius: 50%;
   background: #6b7280;
   border: 3px solid white;
+  box-shadow: 0 0 0 4px rgba(107, 114, 128, 0.2);
 }
 
 .timeline-dot.completed {
   background: #34d399;
+  box-shadow: 0 0 0 4px rgba(52, 211, 153, 0.2);
 }
 
 .timeline-title {
@@ -510,10 +529,24 @@ export default {
   color: white;
 }
 
+.quick-action {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #1f2937;
+  transition: all 0.3s ease;
+  animation: fadeInUp 0.6s ease-out;
+}
+
+.quick-action:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-2px);
+  color: #1f2937;
+}
+
 .action-icon {
   width: 40px;
   height: 40px;
-  border-radius: 4px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -522,14 +555,20 @@ export default {
 
 .status-item {
   padding: 10px;
-  border-radius: 4px;
+  border-radius: 10px;
+  transition: all 0.3s ease;
+  animation: fadeInUp 0.6s ease-out;
+}
+
+.status-item:hover {
+  background: rgba(255, 255, 255, 0.1);
 }
 
 .status-icon {
   width: 35px;
   height: 35px;
-  border-radius: 4px;
-  background: #f3f4f6;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.1);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -539,6 +578,41 @@ export default {
   width: 8px;
   height: 8px;
   border-radius: 50%;
+}
+
+.pulse {
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
 @media (max-width: 768px) {
