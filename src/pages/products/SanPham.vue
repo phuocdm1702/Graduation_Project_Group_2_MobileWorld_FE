@@ -1,199 +1,1122 @@
 <template>
-  <div>
-    <BreadcrumbWrapper :breadcrumb-items="breadcrumbItems" />
-    <div class="mt-2 mx-auto">
-      <ToastNotification ref="toast" />
+  <div class="container-fluid py-4 product-management">
+    <!-- Header -->
+    <HeaderCard
+      title="Quản Lý Sản Phẩm"
+      badgeText="Hệ Thống POS"
+      badgeClass="gradient-custom-teal"
+      :backgroundOpacity="0.95"
+    />
 
-      <!-- Form lọc -->
-      <div
-        class="bg-white shadow-lg rounded-lg p-5 mb-2 mt-2 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-3 gap-4"
-      >
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Tìm kiếm</label>
-          <input
-            v-model.trim="searchKeyword"
-            @input="debouncedSearch"
-            type="text"
-            placeholder="Tìm kiếm theo tên sản phẩm..."
-            class="input-field p-2 border border-gray-300"
-          />
-        </div>
+    <!-- Filter Section -->
+    <FilterTableSection title="Bộ Lọc Tìm Kiếm" icon="bi bi-funnel">
+      <div class="m-3">
+        <div class="row g-4 align-items-end">
+          <!-- Search Input -->
+          <div class="col-lg-4 col-md-6">
+            <div class="search-group">
+              <label class="filter-label">Tìm kiếm</label>
+              <div class="search-input-wrapper">
+                <i class="bi bi-search search-icon"></i>
+                <input
+                  v-model.trim="keyword"
+                  @input="debouncedSearch"
+                  type="text"
+                  placeholder="Tìm kiếm theo tên sản phẩm..."
+                  class="form-control search-input"
+                />
+              </div>
+            </div>
+          </div>
 
-        <!-- Filter for Manufacturer -->
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Hãng</label>
-          <v-select
-            v-model="searchFilters.idNhaSanXuat"
-            :options="nhaSanXuatOptions"
-            label="nhaSanXuat"
-            :reduce="option => option.id"
-            placeholder="Tất cả"
-            class="input-field"
-            @update:modelValue="searchProductDetails"
-            clearable
-          />
-        </div>
+          <!-- Filter for Manufacturer -->
+          <div class="col-lg-4 col-md-6">
+            <div class="filter-group">
+              <label class="filter-label">Hãng</label>
+              <select
+                v-model="filters.idNhaSanXuat"
+                @change="searchProducts"
+                class="form-control search-input"
+              >
+                <option value="">Tất cả</option>
+                <option v-for="option in nhaSanXuatOptions" :key="option.id" :value="option.id">
+                  {{ option.nhaSanXuat }}
+                </option>
+              </select>
+            </div>
+          </div>
 
-        <!-- Filter for OS -->
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Hệ Điều Hành</label>
-          <v-select
-            v-model="searchFilters.idHeDieuHanh"
-            :options="heDieuHanhOptions"
-            :get-option-label="option => `${option.heDieuHanh} ${option.phienBan}`"
-            :reduce="option => option.id" 
-            placeholder="Tất cả"
-            class="input-field"
-            @update:modelValue="searchProductDetails"
-            clearable
-          />
-        </div>
+          <!-- Filter for OS -->
+          <div class="col-lg-4 col-md-6">
+            <div class="filter-group">
+              <label class="filter-label">Hệ Điều Hành</label>
+              <select
+                v-model="filters.idHeDieuHanh"
+                @change="searchProducts"
+                class="form-control search-input"
+              >
+                <option value="">Tất cả</option>
+                <option v-for="option in heDieuHanhOptions" :key="option.id" :value="option.id">
+                  {{ option.heDieuHanh }} {{ option.phienBan }}
+                </option>
+              </select>
+            </div>
+          </div>
 
-        <!-- Filter for Screen Technology -->
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Công nghệ màn hình</label>
-          <v-select
-            v-model="searchFilters.idCongNgheManHinh"
-            :options="congNgheManHinhOptions"
-            :get-option-label="option => `${option.chuanManHinh} ${option.congNgheManHinh}`"
-            :reduce="option => option.id"
-            placeholder="Tất cả"
-            class="input-field"
-            @update:modelValue="searchProductDetails"
-            clearable
-          />
-        </div>
+          <!-- Filter for Screen Technology -->
+          <div class="col-lg-4 col-md-6">
+            <div class="filter-group">
+              <label class="filter-label">Công nghệ màn hình</label>
+              <select
+                v-model="filters.idCongNgheManHinh"
+                @change="searchProducts"
+                class="form-control search-input"
+              >
+                <option value="">Tất cả</option>
+                <option v-for="option in congNgheManHinhOptions" :key="option.id" :value="option.id">
+                  {{ option.chuanManHinh }} {{ option.congNgheManHinh }}
+                </option>
+              </select>
+            </div>
+          </div>
 
-        <!-- Filter for Battery -->
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Pin</label>
-          <v-select
-            v-model="searchFilters.idPin"
-            :options="pinOptions"
-            :get-option-label="option => `${option.loaiPin} ${option.dungLuongPin}`"
-            :reduce="option => option.id"
-            placeholder="Tất cả"
-            class="input-field"
-            @update:model-value="searchProductDetails"
-            clearable
-          />
-        </div>
+          <!-- Filter for Battery -->
+          <div class="col-lg-4 col-md-6">
+            <div class="filter-group">
+              <label class="filter-label">Pin</label>
+              <select
+                v-model="filters.idPin"
+                @change="searchProducts"
+                class="form-control search-input"
+              >
+                <option value="">Tất cả</option>
+                <option v-for="option in pinOptions" :key="option.id" :value="option.id">
+                  {{ option.loaiPin }} {{ option.dungLuongPin }}
+                </option>
+              </select>
+            </div>
+          </div>
 
-        <!-- Filter for Stock Status -->
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Trạng thái tồn kho</label>
-          <div class="flex items-center gap-4 mt-3">
-            <label class="flex items-center gap-1">
-              <input
-                type="radio"
-                v-model="searchFilters.stockStatus"
-                value=""
-                @change="searchProductDetails"
-                class="form-radio"
-              />
-              <span class="text-sm">Tất cả</span>
-            </label>
-            <label class="flex items-center gap-1">
-              <input
-                type="radio"
-                v-model="searchFilters.stockStatus"
-                value="inStock"
-                @change="searchProductDetails"
-                class="form-radio"
-              />
-              <span class="text-sm">Còn hàng</span>
-            </label>
-            <label class="flex items-center gap-1">
-              <input
-                type="radio"
-                v-model="searchFilters.stockStatus"
-                value="outOfStock"
-                @change="searchProductDetails"
-                class="form-radio"
-              />
-              <span class="text-sm">Hết hàng</span>
-            </label>
+          <!-- Filter for Stock Status -->
+          <div class="col-lg-4 col-md-6">
+            <div class="filter-group">
+              <label class="filter-label">Trạng thái tồn kho</label>
+              <div class="status-badge d-flex gap-3">
+                <button
+                  type="button"
+                  class="btn btn-outline-primary position-relative"
+                  @click="filters.stockStatus = ''; searchProducts()"
+                  :class="{ 'badge-primary': filters.stockStatus === '' }"
+                >
+                  Tất cả
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-outline-primary position-relative"
+                  @click="filters.stockStatus = 'inStock'; searchProducts()"
+                  :class="{ 'badge-primary': filters.stockStatus === 'inStock' }"
+                >
+                  Còn hàng
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-outline-primary position-relative"
+                  @click="filters.stockStatus = 'outOfStock'; searchProducts()"
+                  :class="{ 'badge-primary': filters.stockStatus === 'outOfStock' }"
+                >
+                  Hết hàng
+                </button>
+              </div>
+            </div>
           </div>
         </div>
 
-        <!-- Action buttons -->
-        <div class="flex justify-end w-full col-span-full gap-2">
-          <button
-            @click="resetSearch"
-            class="flex items-center gap-2 px-4 py-2 bg-[#f97316] text-white font-semibold rounded-lg shadow-md hover:bg-orange-600 transition"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke-width="1.5"
-              stroke="currentColor"
-              class="w-5 h-5 mr-1"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.992"
-              />
-            </svg>
-            Đặt lại
-          </button>
-          <button
-            @click="navigateToAddPage"
-            class="flex items-center gap-2 px-4 py-2 bg-[#f97316] text-white font-semibold rounded-lg shadow-md hover:bg-orange-600 transition"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke-width="1.5"
-              stroke="currentColor"
-              class="w-5 h-5 mr-1"
-            >
-              <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-            </svg>
-            Thêm chi tiết sản phẩm
-          </button>
+        <!-- Action Buttons -->
+        <div class="filter-actions">
+          <div class="row g-3">
+            <div class="col-lg-12">
+              <div class="filter-stats d-flex">
+                <div class="stat-item me-4">
+                  <span class="stat-label">Tổng số sản phẩm:</span>
+                  <span class="stat-value">{{ filteredProducts.length }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="action-buttons">
+            <button class="btn btn-reset" @click="resetFilters">
+              <i class="bi bi-arrow-clockwise me-2"></i>
+              Đặt lại bộ lọc
+            </button>
+            <router-link to="/add-product" class="btn btn-action">
+              <i class="bi bi-plus-circle me-2"></i>
+              Thêm chi tiết sản phẩm
+            </router-link>
+          </div>
         </div>
       </div>
+    </FilterTableSection>
 
-      <!-- Thông báo khi không có dữ liệu -->
-      <div v-if="productDetails.length === 0" class="text-center text-gray-500 py-4">
-        Không tìm thấy sản phẩm nào.
+    <!-- Table View -->
+    <FilterTableSection title="Danh Sách Sản Phẩm" icon="bi bi-table">
+      <div class="table-body">
+        <div v-if="viewMode === 'table'">
+          <DataTable
+            title=""
+            :headers="headers"
+            :data="paginatedProducts"
+            :pageSizeOptions="[5, 10, 15, 20, 30, 40, 50]"
+          >
+            <template #stt="{ item, index }">
+              {{ (currentPage - 1) * itemsPerPage + index + 1 }}
+            </template>
+            <template #tenSanPham="{ item }">
+              <div class="code-text">{{ item.tenSanPham }}</div>
+            </template>
+            <template #nhaSanXuat="{ item }">
+              <div class="employee-name">{{ item.nhaSanXuat }}</div>
+            </template>
+            <template #heDieuHanh="{ item }">
+              <div class="customer-name">{{ item.heDieuHanh }} {{ item.phienBan }}</div>
+            </template>
+            <template #congNgheManHinh="{ item }">
+              <div class="customer-name">{{ item.congNgheManHinh }}</div>
+            </template>
+            <template #tenCpu="{ item }">
+              <div class="customer-name">{{ item.tenCpu }}</div>
+            </template>
+            <template #dungLuongPin="{ item }">
+              <div class="customer-name">{{ item.dungLuongPin }}</div>
+            </template>
+            <template #imeiCount="{ item }">
+              <div class="amount-cell">{{ item.imeiCount || '0' }}</div>
+            </template>
+            <template #priceRange="{ item }">
+              <div class="amount-cell">
+                <div class="total-amount">
+                  {{ formatPrice(item.minPrice) }} - {{ formatPrice(item.maxPrice) }}
+                </div>
+              </div>
+            </template>
+            <template #stockStatus="{ item }">
+              <span class="status-badge" :class="getStatusBadgeClass(item.imeiCount === 0 ? 'Hết hàng' : 'Còn hàng')">
+                <i :class="getStatusIcon(item.imeiCount === 0 ? 'Hết hàng' : 'Còn hàng')" class="me-1"></i>
+                {{ item.imeiCount === 0 ? 'Hết hàng' : 'Còn hàng' }}
+              </span>
+            </template>
+            <template #actions="{ item }">
+              <div class="action-buttons-cell">
+                <button class="btn btn-sm btn-table" @click="viewProduct(item)" title="Xem chi tiết">
+                  <i class="bi bi-eye-fill"></i>
+                </button>
+                <button class="btn btn-sm btn-table" @click="editProduct(item)" title="Chỉnh sửa">
+                  <i class="bi bi-edit-fill"></i>
+                </button>
+                <button class="btn btn-sm btn-table" @click="confirmDeleteProduct(item)" title="Xóa">
+                  <i class="bi bi-trash-fill"></i>
+                </button>
+              </div>
+            </template>
+          </DataTable>
+        </div>
+
+        <!-- Card View -->
+        <div v-else class="card-grid">
+          <div v-for="product in paginatedProducts" :key="product.id" class="product-card">
+            <div class="product-card-header">
+              <div class="product-code">{{ product.tenSanPham }}</div>
+              <span class="status-badge" :class="getStatusBadgeClass(product.imeiCount === 0 ? 'Hết hàng' : 'Còn hàng')">
+                {{ product.imeiCount === 0 ? 'Hết hàng' : 'Còn hàng' }}
+              </span>
+            </div>
+
+            <div class="product-card-body">
+              <div class="product-info">
+                <div class="product-name">{{ product.nhaSanXuat }}</div>
+                <div class="product-detail">{{ product.heDieuHanh }} {{ product.phienBan }}</div>
+              </div>
+
+              <div class="product-details">
+                <div class="detail-row">
+                  <span class="detail-label">Màn hình:</span>
+                  <span class="detail-value">{{ product.congNgheManHinh }}</span>
+                </div>
+                <div class="detail-row">
+                  <span class="detail-label">CPU:</span>
+                  <span class="detail-value">{{ product.tenCpu }}</span>
+                </div>
+                <div class="detail-row">
+                  <span class="detail-label">Pin:</span>
+                  <span class="detail-value">{{ product.dungLuongPin }}</span>
+                </div>
+                <div class="detail-row">
+                  <span class="detail-label">Số lượng:</span>
+                  <span class="detail-value">{{ product.imeiCount || '0' }}</span>
+                </div>
+              </div>
+
+              <div class="product-amounts">
+                <div class="total-amount">
+                  {{ formatPrice(product.minPrice) }} - {{ formatPrice(product.maxPrice) }}
+                </div>
+              </div>
+            </div>
+
+            <div class="product-card-actions">
+              <button class="btn btn-sm btn-table" @click="viewProduct(product)">
+                <i class="bi bi-eye me-1"></i> Xem
+              </button>
+              <button class="btn btn-sm btn-table" @click="editProduct(product)">
+                <i class="bi bi-edit-fill"></i> Sửa
+              </button>
+              <button class="btn btn-sm btn-table" @click="confirmDeleteProduct(product)">
+                <i class="bi bi-trash-fill"></i> Xóa
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Pagination for Card View -->
+        <div v-if="viewMode === 'card'" class="card-pagination">
+          <nav aria-label="Page navigation">
+            <ul class="pagination justify-content-center">
+              <li class="page-item" :class="{ disabled: currentPage === 1 }">
+                <button class="page-link" @click="currentPage--" :disabled="currentPage === 1">
+                  <i class="bi bi-chevron-left"></i>
+                </button>
+              </li>
+              <li v-for="page in totalPages" :key="page" class="page-item" :class="{ active: currentPage === page }">
+                <button class="page-link" @click="currentPage = page">{{ page }}</button>
+              </li>
+              <li class="page-item" :class="{ disabled: currentPage === totalPages }">
+                <button class="page-link" @click="currentPage++" :disabled="currentPage === totalPages">
+                  <i class="bi bi-chevron-right"></i>
+                </button>
+              </li>
+            </ul>
+          </nav>
+        </div>
       </div>
+    </FilterTableSection>
 
-      <!-- Bảng danh sách sản phẩm -->
-      <DynamicTable
-        v-else
-        class="dynamic-table"
-        :data="productDetails"
-        :columns="columns"
-        :get-nested-value="getNestedValue"
-      />
-
-      <!-- Phân trang -->
-      <footer
-        v-if="productDetails.length > 0"
-        class="bg-white shadow-lg rounded-lg p-4 flex justify-center items-center mt-2"
-      >
-        <Pagination :current-page="currentPage" :total-pages="totalPages" @page-changed="goToPage" />
-      </footer>
-
-      <!-- Modal xác nhận -->
-      <ConfirmModal
-        :show="showConfirmModal"
-        :message="confirmMessage"
-        @confirm="executeConfirmedAction"
-        @cancel="closeConfirmModal"
-      />
-    </div>
+    <!-- Modals -->
+    <NotificationModal
+      ref="notificationModal"
+      :type="notificationType"
+      :message="notificationMessage"
+      :isLoading="isNotificationLoading"
+      :onConfirm="notificationOnConfirm"
+      :onCancel="notificationOnCancel"
+      @close="resetNotification"
+    />
+    <ToastNotification ref="toastNotification" />
   </div>
 </template>
 
 <script>
+import { defineComponent, ref, computed } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
+import DataTable from '@/components/common/DataTable.vue';
+import NotificationModal from '@/components/common/NotificationModal.vue';
+import ToastNotification from '@/components/common/ToastNotification.vue';
+import HeaderCard from '@/components/common/HeaderCard.vue';
+import FilterTableSection from '@/components/common/FilterTableSection.vue';
 
+// Debounce utility from HoaDon.js
+const debounce = (func, delay) => {
+  let timeoutId;
+  return (...args) => {
+    clearTimeout(timeoutId);
+    timeoutId = setTimeout(() => func(...args), delay);
+  };
+};
+
+export default defineComponent({
+  name: 'ProductManagement', // Đổi tên để tránh xung đột với 'SanPham'
+  components: {
+    DataTable,
+    NotificationModal,
+    ToastNotification,
+    HeaderCard,
+    FilterTableSection,
+  },
+  setup() {
+    const router = useRouter();
+    const route = useRoute();
+    const toastNotification = ref(null);
+    const notificationModal = ref(null);
+    const viewMode = ref('table');
+    const currentPage = ref(1);
+    const itemsPerPage = ref(5);
+
+    // Notification state
+    const notificationType = ref('confirm');
+    const notificationMessage = ref('');
+    const isNotificationLoading = ref(false);
+    const notificationOnConfirm = ref(() => {});
+    const notificationOnCancel = ref(() => {});
+
+    // State
+    const keyword = ref('');
+    const filters = ref({
+      idNhaSanXuat: '',
+      idHeDieuHanh: '',
+      idCongNgheManHinh: '',
+      idPin: '',
+      stockStatus: '',
+    });
+
+    // Sample data
+    const products = ref([
+      {
+        id: 1,
+        tenSanPham: 'iPhone 14 Pro',
+        nhaSanXuat: 'Apple',
+        idNhaSanXuat: 1,
+        heDieuHanh: 'iOS',
+        phienBan: '16',
+        idHeDieuHanh: 1,
+        congNgheManHinh: 'OLED',
+        idCongNgheManHinh: 1,
+        tenCpu: 'A16 Bionic',
+        dungLuongPin: '3200 mAh',
+        idPin: 1,
+        imeiCount: 50,
+        minPrice: 25000000,
+        maxPrice: 30000000,
+      },
+      {
+        id: 2,
+        tenSanPham: 'Galaxy S23 Ultra',
+        nhaSanXuat: 'Samsung',
+        idNhaSanXuat: 2,
+        heDieuHanh: 'Android',
+        phienBan: '13',
+        idHeDieuHanh: 2,
+        congNgheManHinh: 'AMOLED',
+        idCongNgheManHinh: 2,
+        tenCpu: 'Snapdragon 8 Gen 2',
+        dungLuongPin: '5000 mAh',
+        idPin: 2,
+        imeiCount: 0,
+        minPrice: 20000000,
+        maxPrice: 25000000,
+      },
+      {
+        id: 3,
+        tenSanPham: 'Pixel 7 Pro',
+        nhaSanXuat: 'Google',
+        idNhaSanXuat: 3,
+        heDieuHanh: 'Android',
+        phienBan: '13',
+        idHeDieuHanh: 2,
+        congNgheManHinh: 'AMOLED',
+        idCongNgheManHinh: 2,
+        tenCpu: 'Tensor G2',
+        dungLuongPin: '5000 mAh',
+        idPin: 2,
+        imeiCount: 20,
+        minPrice: 18000000,
+        maxPrice: 22000000,
+      },
+    ]);
+
+    // Filter options
+    const nhaSanXuatOptions = ref([
+      { id: 1, nhaSanXuat: 'Apple' },
+      { id: 2, nhaSanXuat: 'Samsung' },
+      { id: 3, nhaSanXuat: 'Google' },
+    ]);
+
+    const heDieuHanhOptions = ref([
+      { id: 1, heDieuHanh: 'iOS', phienBan: '16' },
+      { id: 2, heDieuHanh: 'Android', phienBan: '13' },
+    ]);
+
+    const congNgheManHinhOptions = ref([
+      { id: 1, chuanManHinh: 'OLED', congNgheManHinh: 'OLED' },
+      { id: 2, chuanManHinh: 'AMOLED', congNgheManHinh: 'AMOLED' },
+    ]);
+
+    const pinOptions = ref([
+      { id: 1, loaiPin: 'Li-Ion', dungLuongPin: '3200 mAh' },
+      { id: 2, loaiPin: 'Li-Po', dungLuongPin: '5000 mAh' },
+    ]);
+
+    // Headers for DataTable
+    const headers = ref([
+      { text: 'STT', value: 'stt' },
+      { text: 'Tên Sản Phẩm', value: 'tenSanPham' },
+      { text: 'Hãng', value: 'nhaSanXuat' },
+      { text: 'Hệ Điều Hành', value: 'heDieuHanh' },
+      { text: 'Màn hình', value: 'congNgheManHinh' },
+      { text: 'CPU', value: 'tenCpu' },
+      { text: 'Pin', value: 'dungLuongPin' },
+      { text: 'Số lượng', value: 'imeiCount' },
+      { text: 'Khoảng giá', value: 'priceRange' },
+      { text: 'Trạng Thái', value: 'stockStatus' },
+      { text: 'Thao tác', value: 'actions' },
+    ]);
+
+    // Computed properties
+    const filteredProducts = computed(() => {
+      let filtered = products.value;
+
+      if (keyword.value) {
+        const query = keyword.value.toLowerCase();
+        filtered = filtered.filter((item) =>
+          item.tenSanPham.toLowerCase().includes(query)
+        );
+      }
+
+      if (filters.value.idNhaSanXuat) {
+        filtered = filtered.filter(
+          (item) => item.idNhaSanXuat === Number(filters.value.idNhaSanXuat)
+        );
+      }
+
+      if (filters.value.idHeDieuHanh) {
+        filtered = filtered.filter(
+          (item) => item.idHeDieuHanh === Number(filters.value.idHeDieuHanh)
+        );
+      }
+
+      if (filters.value.idCongNgheManHinh) {
+        filtered = filtered.filter(
+          (item) => item.idCongNgheManHinh === Number(filters.value.idCongNgheManHinh)
+        );
+      }
+
+      if (filters.value.idPin) {
+        filtered = filtered.filter(
+          (item) => item.idPin === Number(filters.value.idPin)
+        );
+      }
+
+      if (filters.value.stockStatus) {
+        filtered = filtered.filter(
+          (item) =>
+            (filters.value.stockStatus === 'inStock' && item.imeiCount > 0) ||
+            (filters.value.stockStatus === 'outOfStock' && item.imeiCount === 0)
+        );
+      }
+
+      return filtered;
+    });
+
+    const totalPages = computed(() => {
+      return Math.ceil(filteredProducts.value.length / itemsPerPage.value);
+    });
+
+    const paginatedProducts = computed(() => {
+      const start = (currentPage.value - 1) * itemsPerPage.value;
+      const end = start + itemsPerPage.value;
+      return filteredProducts.value.slice(start, end);
+    });
+
+    // Methods
+    const formatPrice = (price) => {
+      if (price === null || price === undefined) return '0 ₫';
+      return new Intl.NumberFormat('vi-VN', {
+        style: 'currency',
+        currency: 'VND',
+      }).format(price);
+    };
+
+    const debouncedSearch = debounce(() => {
+      currentPage.value = 1;
+      searchProducts();
+    }, 300);
+
+    const searchProducts = () => {
+      // Trigger filtering (already handled by computed property)
+      currentPage.value = 1;
+    };
+
+    const resetFilters = () => {
+      keyword.value = '';
+      filters.value = {
+        idNhaSanXuat: '',
+        idHeDieuHanh: '',
+        idCongNgheManHinh: '',
+        idPin: '',
+        stockStatus: '',
+      };
+      currentPage.value = 1;
+
+      toastNotification.value?.addToast({
+        type: 'info',
+        message: 'Đã đặt lại tất cả bộ lọc',
+        duration: 2000,
+      });
+    };
+
+    const viewProduct = (item) => {
+      router.push(`/san-pham/${item.id}`);
+    };
+
+    const editProduct = (item) => {
+      router.push(`/san-pham/${item.id}/edit`);
+    };
+
+    const confirmDeleteProduct = (product) => {
+      notificationType.value = 'confirm';
+      notificationMessage.value = `Bạn có chắc chắn muốn xóa sản phẩm ${product.tenSanPham}?\nThao tác này không thể hoàn tác.`;
+      notificationOnConfirm.value = () => deleteProduct(product);
+      notificationOnCancel.value = () => {};
+      isNotificationLoading.value = false;
+      notificationModal.value?.openModal();
+    };
+
+    const deleteProduct = (product) => {
+      isNotificationLoading.value = true;
+
+      setTimeout(() => {
+        products.value = products.value.filter((p) => p.id !== product.id);
+        isNotificationLoading.value = false;
+
+        toastNotification.value?.addToast({
+          type: 'success',
+          message: `Đã xóa sản phẩm ${product.tenSanPham} thành công`,
+          duration: 3000,
+        });
+
+        resetNotification();
+      }, 1000);
+    };
+
+    const resetNotification = () => {
+      notificationType.value = 'confirm';
+      notificationMessage.value = '';
+      isNotificationLoading.value = false;
+      notificationOnConfirm.value = () => {};
+      notificationOnCancel.value = () => {};
+    };
+
+    const getStatusBadgeClass = (status) => {
+      switch (status) {
+        case 'Còn hàng':
+          return 'badge-completed';
+        case 'Hết hàng':
+          return 'badge-canceled';
+        default:
+          return 'badge-primary';
+      }
+    };
+
+    const getStatusIcon = (status) => {
+      switch (status) {
+        case 'Còn hàng':
+          return 'bi bi-check-circle';
+        case 'Hết hàng':
+          return 'bi bi-x-circle';
+        default:
+          return 'bi bi-circle';
+      }
+    };
+
+    return {
+      toastNotification,
+      notificationModal,
+      keyword,
+      filters,
+      products,
+      nhaSanXuatOptions,
+      heDieuHanhOptions,
+      congNgheManHinhOptions,
+      pinOptions,
+      headers,
+      viewMode,
+      currentPage,
+      itemsPerPage,
+      filteredProducts,
+      totalPages,
+      paginatedProducts,
+      formatPrice,
+      debouncedSearch,
+      searchProducts,
+      resetFilters,
+      viewProduct,
+      editProduct,
+      confirmDeleteProduct,
+      deleteProduct,
+      resetNotification,
+      getStatusBadgeClass,
+      getStatusIcon,
+      notificationType,
+      notificationMessage,
+      isNotificationLoading,
+      notificationOnConfirm,
+      notificationOnCancel,
+    };
+  },
+});
 </script>
 
 <style scoped>
+/* Animations */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(15px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
 
+@keyframes zoomIn {
+  from {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes gentleGlow {
+  0%, 100% {
+    box-shadow: 0 0 5px rgba(52, 211, 153, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 12px rgba(52, 211, 153, 0.5);
+  }
+}
+
+/* Gradient Definitions */
+.gradient-custom-teal {
+  background: #34d399;
+}
+
+/* Base Styles */
+.product-management {
+  min-height: 100vh;
+}
+
+/* Filter Label and Inputs */
+.filter-label {
+  display: block;
+  font-weight: 600;
+  color: #1f3a44;
+  margin-bottom: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.search-group {
+  position: relative;
+}
+
+.search-input-wrapper {
+  position: relative;
+}
+
+.search-icon {
+  position: absolute;
+  left: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #6c757d;
+  z-index: 2;
+}
+
+.search-input {
+  padding-left: 2.5rem;
+  border: 2px solid rgba(52, 211, 153, 0.1);
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  font-size: 0.9rem;
+  background: #f8f9fa;
+}
+
+.search-input:focus {
+  border-color: #34d399;
+  box-shadow: 0 0 10px rgba(52, 211, 153, 0.2);
+}
+
+.form-control {
+  border: 2px solid rgba(52, 211, 153, 0.1);
+  border-radius: 8px;
+  padding: 0.5rem;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+  background: #f8f9fa;
+}
+
+.form-control:focus {
+  border-color: #34d399;
+  box-shadow: 0 0 10px rgba(52, 211, 153, 0.2);
+}
+
+.filter-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 1.5rem;
+}
+
+.filter-stats {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.stat-label {
+  font-size: 0.875rem;
+  color: #1f3a44;
+  font-weight: 500;
+}
+
+.stat-value {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1f3a44;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.btn-reset,
+.btn-action {
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+  border-radius: 8px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btn-reset {
+  background: #6c757d;
+  color: white;
+  border: none;
+}
+
+.btn-reset:hover {
+  background: #5c636a;
+  color: white;
+  box-shadow: 0 0 15px rgba(108, 117, 125, 0.3);
+}
+
+.btn-action {
+  background: #34d399;
+  color: white;
+  border: none;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+}
+
+.btn-action:hover {
+  background: #16a34a;
+  color: white;
+  box-shadow: 0 0 15px rgba(52, 211, 153, 0.3);
+}
+
+.table-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.25rem 1.5rem;
+  background: #f8f9fa;
+  border-bottom: 1px solid rgba(52, 211, 153, 0.1);
+}
+
+.table-title-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.table-count {
+  font-size: 0.875rem;
+  color: #6c757d;
+  font-weight: 500;
+}
+
+.table-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.view-toggle {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.view-toggle .btn {
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.view-toggle .btn-primary {
+  background: linear-gradient(135deg, #34d399, #16a34a);
+  border: none;
+}
+
+.view-toggle .btn-primary:hover {
+  background: linear-gradient(135deg, #16a34a, #15803d);
+}
+
+.view-toggle .btn-outline-secondary {
+  border: 1px solid rgba(52, 211, 153, 0.2);
+  color: #1f3a44;
+}
+
+.view-toggle .btn-outline-secondary:hover {
+  background: rgba(52, 211, 153, 0.1);
+  color: #16a34a;
+}
+
+.status-badge {
+  padding: 0.5rem 1rem;
+  border-radius: 1rem;
+  font-weight: 500;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.badge-completed {
+  background: #16a34a;
+  color: white;
+}
+
+.badge-canceled {
+  background: #dc3545;
+  color: white;
+}
+
+.badge-primary {
+  background: linear-gradient(135deg, #34d399, #16a34a);
+  color: white;
+}
+
+.code-text {
+  font-weight: 600;
+  color: #34d399;
+}
+
+.employee-name,
+.customer-name {
+  font-weight: 500;
+  color: #1f3a44;
+}
+
+.amount-cell {
+  display: flex;
+  justify-content: center;
+  flex-direction: column;
+}
+
+.total-amount {
+  font-weight: 600;
+  color: #16a34a !important;
+}
+
+.action-buttons-cell {
+  display: flex;
+  justify-content: center;
+}
+
+.btn-table {
+  color: #1f3a44;
+  border: none;
+}
+
+.btn-table:hover {
+  color: #16a34a;
+  text-shadow: 0 0 15px rgba(52, 211, 153, 0.3);
+}
+
+.card-grid {
+  padding: 1.5rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.5rem;
+}
+
+.product-card {
+  background: #f8f9fa;
+  backdrop-filter: blur(15px);
+  border: 1px solid rgba(52, 211, 153, 0.1);
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  animation: zoomIn 0.3s ease-out;
+}
+
+.product-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 6px 12px rgba(52, 211, 153, 0.2);
+}
+
+.product-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  background: #f8f9fa;
+  border-bottom: 1px solid rgba(52, 211, 153, 0.1);
+}
+
+.product-code {
+  font-weight: 600;
+  color: #34d399;
+}
+
+.product-card-body {
+  padding: 1rem;
+}
+
+.product-info {
+  margin-bottom: 1rem;
+}
+
+.product-name {
+  font-weight: 600;
+  color: #1f3a44;
+}
+
+.product-detail {
+  font-size: 0.875rem;
+  color: #6c757d;
+}
+
+.product-details {
+  margin-bottom: 1rem;
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.detail-label {
+  font-weight: 500;
+  color: #6c757d;
+}
+
+.detail-value {
+  font-weight: 500;
+  color: #1f3a44;
+}
+
+.product-amounts {
+  padding-top: 1rem;
+  border-top: 1px solid rgba(52, 211, 153, 0.1);
+}
+
+.total-amount {
+  font-weight: 600;
+  color: #16a34a;
+  font-size: 1.1rem;
+}
+
+.product-card-actions {
+  padding: 1rem;
+  border-top: 1px solid rgba(52, 211, 153, 0.1);
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+}
+
+.card-pagination {
+  padding: 1.5rem;
+}
+
+.pagination {
+  margin: 0;
+  justify-content: center;
+}
+
+.page-item .page-link {
+  border-radius: 8px;
+  margin: 0 0.25rem;
+  color: #1f3a44;
+  border: 1px solid rgba(52, 211, 153, 0.2);
+  transition: all 0.2s ease;
+}
+
+.page-item.active .page-link {
+  background: linear-gradient(135deg, #34d399, #16a34a);
+  border-color: #34d399;
+  color: white;
+}
+
+.page-item:not(.disabled) .page-link:hover {
+  background: linear-gradient(135deg, #16a34a, #15803d);
+  border-color: #16a34a;
+  color: white;
+}
+
+.page-item.disabled .page-link {
+  background: #f8f9fa;
+  border-color: rgba(52, 211, 153, 0.2);
+  color: #6c757d;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .filter-actions {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .action-buttons {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .action-buttons .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .filter-stats {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .status-badge {
+    width: 100%;
+    text-align: center;
+    margin-bottom: 0.5rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .card-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .status-badge {
+    font-size: 0.8rem;
+    padding: 0.4rem 0.8rem;
+  }
+}
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
 </style>

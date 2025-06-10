@@ -45,11 +45,11 @@ const menuItems = [
   { name: 'Bán Hàng', path: '/banHang', icon: 'ShoppingCartIcon' },
   { name: 'Hóa đơn', path: '/hoaDon', icon: 'DocumentTextIcon' },
   {
-    name: 'Sản phẩm',
-    path: '/products/san-pham',
+    name: 'Quản Lý Sản phẩm',
+    path: '/quanLySanPham',
     icon: 'CubeIcon',
     children: [
-      { name: 'Sản phẩm', path: '/products/san-pham/list' },
+      { name: 'Sản phẩm', path: '/sanPham' },
       { name: 'Nhà sản xuất', path: '/products/nha-san-xuat' },
       { name: 'Cụm Camera', path: '/products/cum-camera' },
       { name: 'Hình Ảnh', path: '/products/hinh' },

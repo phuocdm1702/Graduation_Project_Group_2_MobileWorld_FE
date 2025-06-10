@@ -196,52 +196,52 @@
         <div v-if="viewMode === 'table'">
           <DataTable title="" :headers="headers" :data="filteredInvoices"
             :pageSizeOptions="[5, 10, 15, 20, 30, 40, 50]">
-            <template #stt="{ item, index }">
+            <template #index="{ index }">
               {{ index + 1 }}
             </template>
-            <template #code="{ item }">
+            <template #ma="{ item }">
               <div class="code-cell">
-                <span class="code-text">{{ item.code }}</span>
-                <small class="code-date">{{ item.createdAt }}</small>
+                <span class="code-text">{{ item.ma }}</span>
+                <small class="code-date">{{ item.ngayTao }}</small>
               </div>
             </template>
 
-            <template #employee="{ item }">
+            <template #maNhanVien="{ item }">
               <div class="employee-cell">
                 <div class="employee-avatar">
                   <i class="bi bi-person-circle"></i>
                 </div>
-                <span class="employee-name">{{ item.employee }}</span>
+                <span class="employee-name">{{ item.maNhanVien }}</span>
               </div>
             </template>
 
-            <template #customer="{ item }">
+            <template #tenKhachHang="{ item }">
               <div class="customer-cell">
-                <div class="customer-name">{{ item.customer }}</div>
-                <div class="customer-phone">{{ item.phone }}</div>
+                <div class="customer-name">{{ item.tenKhachHang }}</div>
+                <div class="customer-phone">{{ item.soDienThoaiKhachHang }}</div>
               </div>
             </template>
 
-            <template #total="{ item }">
+            <template #tongTienSauGiam="{ item }">
               <div class="amount-cell">
-                <div class="total-amount">{{ formatPrice(item.total) }}</div>
+                <div class="total-amount">{{ formatPrice(item.tongTienSauGiam) }}</div>
                 <div class="discount-info" v-if="item.discount > 0">
                   <small class="text-muted">Giảm: {{ formatPrice(item.discount) }}</small>
                 </div>
               </div>
             </template>
 
-            <template #type="{ item }">
-              <span class="type-badge" :class="getTypeBadgeClass(item.type)">
-                <i :class="getTypeIcon(item.type)" class="me-1"></i>
+            <template #loaiDon="{ item }">
+              <span class="type-badge" :class="getTypeBadgeClass(item.loaiDon)">
+                <i :class="getTypeIcon(item.loaiDon)" class="me-1"></i>
                 {{ item.type }}
               </span>
             </template>
 
-            <template #status="{ item }">
-              <span class="status-badge" :class="getStatusBadgeClass(item.status)">
-                <i :class="getStatusIcon(item.status)" class="me-1"></i>
-                {{ item.status }}
+            <template #trangThaiFormatted="{ item }">
+              <span class="status-badge" :class="getStatusBadgeClass(item.trangThaiFormatted)">
+                <i :class="getStatusIcon(item.trangThaiFormatted)" class="me-1"></i>
+                {{ item.trangThaiFormatted }}
               </span>
             </template>
 
@@ -265,40 +265,40 @@
         <div v-else class="card-grid">
           <div v-for="invoice in paginatedInvoices" :key="invoice.id" class="invoice-card">
             <div class="invoice-card-header">
-              <div class="invoice-code">{{ invoice.code }}</div>
-              <span class="status-badge" :class="getStatusBadgeClass(invoice.status)">
-                {{ invoice.status }}
+              <div class="invoice-code">{{ invoice.ma }}</div>
+              <span class="status-badge" :class="getStatusBadgeClass(invoice.trangThaiFormatted)">
+                {{ invoice.trangThaiFormatted }}
               </span>
             </div>
 
             <div class="invoice-card-body">
               <div class="customer-info">
-                <div class="customer-name">{{ invoice.customer }}</div>
-                <div class="customer-phone">{{ invoice.phone }}</div>
+                <div class="customer-name">{{ invoice.tenKhachHang }}</div>
+                <div class="customer-phone">{{ invoice.soDienThoaiKhachHang }}</div>
               </div>
 
               <div class="invoice-details">
                 <div class="detail-row">
                   <span class="detail-label">Nhân viên:</span>
-                  <span class="detail-value">{{ invoice.employee }}</span>
+                  <span class="detail-value">{{ invoice.maNhanVien }}</span>
                 </div>
                 <div class="detail-row">
                   <span class="detail-label">Loại đơn:</span>
-                  <span class="type-badge" :class="getTypeBadgeClass(invoice.type)">
-                    {{ invoice.type }}
+                  <span class="type-badge" :class="getTypeBadgeClass(invoice.loaiDon)">
+                    {{ invoice.loaiDon }}
                   </span>
                 </div>
                 <div class="detail-row">
                   <span class="detail-label">Ngày tạo:</span>
-                  <span class="detail-value">{{ invoice.createdAt }}</span>
+                  <span class="detail-value">{{ invoice.ngayTao }}</span>
                 </div>
               </div>
 
               <div class="invoice-amounts">
-                <div class="total-amount">{{ formatPrice(invoice.total) }}</div>
+                <div class="total-amount">{{ formatPrice(invoice.tongTienSauGiam) }}</div>
                 <div class="amount-details">
                   <small class="text-muted">Giảm: {{ formatPrice(invoice.discount) }}</small>
-                  <small class="text-muted">Phí: {{ formatPrice(invoice.fee) }}</small>
+                  <small class="text-muted">Phí: {{ formatPrice(invoice.phiVanChuyen) }}</small>
                 </div>
               </div>
             </div>
