@@ -20,6 +20,7 @@
                 class="form-control date-input"
                 placeholder="Nhập mã phiếu"
                 required
+                :disabled="isEditMode"
               />
             </div>
             <div class="mb-3">
@@ -122,6 +123,7 @@
                   class="form-control search-input"
                   placeholder="Tìm theo mã hoặc tên..."
                   @input="debouncedSearchCustomer"
+                  :disabled="!formData.isActive"
                 />
               </div>
             </div>
@@ -187,6 +189,7 @@
 import { ref, computed, onMounted } from 'vue';
 import { debounce } from 'lodash';
 import { useRouter, useRoute } from 'vue-router';
+import axios from 'axios';
 import HeaderCard from '@/components/common/HeaderCard.vue';
 import FilterTableSection from '@/components/common/FilterTableSection.vue';
 import ToastNotification from '@/components/common/ToastNotification.vue';
@@ -201,6 +204,7 @@ export default {
   setup() {
     const router = useRouter();
     const route = useRoute();
+    const apiBaseUrl = 'http://localhost:8080/api'; // Thay bằng URL backend thực tế
 
     // Form Data
     const formData = ref({
@@ -217,18 +221,7 @@ export default {
     });
 
     const searchCustomer = ref('');
-    const customers = ref([
-      { id: 1, code: 'KH0001', name: 'Trần Đức Anh', gender: 'Nam', birthDate: '12/01/1998' },
-      { id: 2, code: 'KH0002', name: 'Trịnh Thị Anh', gender: 'Nữ', birthDate: '17/01/1996' },
-      { id: 3, code: 'KH0003', name: 'Nguyễn Hoàng Phất', gender: 'Nam', birthDate: '06/02/2000' },
-      { id: 4, code: 'KH0004', name: 'Nguyễn Minh Anh', gender: 'Nữ', birthDate: '19/12/2001' },
-      { id: 5, code: 'KH0005', name: 'Nguyễn Hồng Long', gender: 'Nam', birthDate: '20/10/1994' },
-      { id: 6, code: 'KH0006', name: 'Bùi Trúc Anh', gender: 'Nữ', birthDate: '20/11/2004' },
-      { id: 7, code: 'KH0007', name: 'Ngô Kiên Trung', gender: 'Nam', birthDate: '20/10/1991' },
-      { id: 8, code: 'KH0008', name: 'Phan Đức Phúc', gender: 'Nam', birthDate: '10/10/2002' },
-      { id: 9, code: 'KH0009', name: 'Đinh Minh Phụng', gender: 'Nam', birthDate: '17/12/2006' },
-    ]);
-
+    const customers = ref([]);
     const selectedCustomers = ref([]);
     const toastNotification = ref(null);
 
@@ -247,36 +240,59 @@ export default {
     });
 
     // Methods
-    const loadVoucherData = () => {
+    const fetchCustomers = async () => {
+      try {
+        const response = await axios.get(`${apiBaseUrl}/data-kh`);
+        customers.value = response.data || [];
+      } catch (error) {
+        console.error('Error fetching customers:', error);
+        customers.value = [];
+        toastNotification.value.addToast({
+          type: 'error',
+          message: 'Lỗi khi tải danh sách khách hàng!',
+        });
+      }
+    };
+
+    const loadVoucherData = async () => {
       if (isEditMode.value) {
-        // Simulate fetching voucher data by ID
-        // Note: The original code references an undefined 'vouchers' array.
-        // For demonstration, we'll use a placeholder or skip loading if not defined.
-        // In a real app, fetch from an API or store.
         const voucherId = parseInt(route.params.id);
-        // Placeholder: Replace with actual data fetching logic
-        const voucher = { // Mock data for testing
-          id: voucherId,
-          code: `VOUCHER00${voucherId}`,
-          name: `Voucher ${voucherId}`,
-          type: 'Tiền mặt',
-          value: 100000,
-          quantity: 50,
-          startDate: '2025-06-01',
-          endDate: '2025-12-31',
-          note: 'Test voucher',
-          isActive: true,
-          customers: [1, 2], // Example customer IDs
-        };
-        if (voucher) {
-          formData.value = { ...voucher };
-          selectedCustomers.value = voucher.customers || [];
-        } else {
+        try {
+          const response = await axios.get(`${apiBaseUrl}/phieu-giam-gia/${voucherId}`);
+          const voucher = response.data;
+          formData.value = {
+            id: voucher.id,
+            code: voucher.ma,
+            name: voucher.tenPhieuGiamGia,
+            type: voucher.loaiPhieuGiamGia,
+            value: voucher.loaiPhieuGiamGia === 'Phần trăm' ? voucher.phanTramGiamGia : voucher.soTienGiamToiDa,
+            quantity: voucher.soLuongDung,
+            startDate: new Date(voucher.ngayBatDau).toISOString().split('T')[0],
+            endDate: new Date(voucher.ngayKetThuc).toISOString().split('T')[0],
+            note: voucher.moTa || '',
+            isActive: voucher.riengTu,
+          };
+
+          // Sử dụng selectedCustomers từ phản hồi
+          if (voucher.selectedCustomers && Array.isArray(voucher.selectedCustomers)) {
+            selectedCustomers.value = voucher.selectedCustomers.map(customer => customer.id);
+          } else {
+            selectedCustomers.value = [];
+            toastNotification.value.addToast({
+              type: 'warning',
+              message: 'Không tìm thấy danh sách khách hàng, tiếp tục với danh sách rỗng.',
+            });
+          }
+        } catch (error) {
+          console.error('Error loading voucher data:', error);
           toastNotification.value.addToast({
             type: 'error',
             message: 'Không tìm thấy phiếu giảm giá!',
           });
         }
+      } else {
+        // Tạo mã ngẫu nhiên cho phiếu mới
+        formData.value.code = `PGG_${Math.random().toString(36).substr(2, 8).toUpperCase()}`;
       }
     };
 
@@ -295,52 +311,58 @@ export default {
 
     const removeCustomer = (id) => {
       selectedCustomers.value = selectedCustomers.value.filter((cid) => cid !== id);
-      toastNotification.value.addToast({ // Changed from showToast to addToast
+      toastNotification.value.addToast({
         type: 'success',
         message: 'Đã xóa khách hàng!',
       });
     };
 
-    const submitForm = () => {
+    const submitForm = async () => {
       if (!formData.value.code || !formData.value.name || !formData.value.type || formData.value.value == null || formData.value.quantity == null || !formData.value.startDate || !formData.value.endDate) {
-        toastNotification.value.addToast({ // Changed from showToast to addToast
+        toastNotification.value.addToast({
           type: 'error',
           message: 'Vui lòng điền đầy đủ thông tin!',
         });
         return;
       }
 
-      if (isEditMode.value) {
-        // Update logic (e.g., API call to update voucher)
-        console.log('Updated voucher:', { ...formData.value, customers: selectedCustomers.value });
-        toastNotification.value.addToast({ // Changed from showToast to addToast
-          type: 'success',
-          message: 'Cập nhật phiếu giảm giá thành công!',
-        });
-      } else {
-        // Create logic (e.g., API call to create voucher)
-        console.log('Created voucher:', { ...formData.value, customers: selectedCustomers.value });
-        toastNotification.value.addToast({ // Changed from showToast to addToast
-          type: 'success',
-          message: 'Thêm phiếu giảm giá thành công!',
+      const payload = {
+        ma: formData.value.code,
+        tenPhieuGiamGia: formData.value.name,
+        loaiPhieuGiamGia: formData.value.type,
+        phanTramGiamGia: formData.value.type === 'Phần trăm' ? formData.value.value : 0,
+        soTienGiamToiDa: formData.value.type === 'Tiền mặt' ? formData.value.value : 0,
+        soLuongDung: formData.value.quantity,
+        ngayBatDau: formData.value.startDate,
+        ngayKetThuc: formData.value.endDate,
+        moTa: formData.value.note,
+        trangThai: formData.value.isActive,
+        riengTu: formData.value.isActive,
+        customerIds: formData.value.isActive ? selectedCustomers.value : [],
+      };
+
+      try {
+        if (isEditMode.value) {
+          await axios.put(`${apiBaseUrl}/update-phieu-giam-gia/${formData.value.id}`, payload);
+          toastNotification.value.addToast({
+            type: 'success',
+            message: 'Cập nhật phiếu giảm giá thành công!',
+          });
+        } else {
+          await axios.post(`${apiBaseUrl}/addPhieuGiamGia`, payload);
+          toastNotification.value.addToast({
+            type: 'success',
+            message: 'Thêm phiếu giảm giá thành công!',
+          });
+        }
+        goBack();
+      } catch (error) {
+        console.error('Error submitting form:', error);
+        toastNotification.value.addToast({
+          type: 'error',
+          message: 'Lỗi khi lưu phiếu giảm giá!',
         });
       }
-
-      // Reset form and navigate back
-      formData.value = {
-        id: null,
-        code: '',
-        name: '',
-        type: '',
-        value: 0,
-        quantity: 0,
-        startDate: '',
-        endDate: '',
-        note: '',
-        isActive: false,
-      };
-      selectedCustomers.value = [];
-      goBack();
     };
 
     const goBack = () => {
@@ -348,7 +370,8 @@ export default {
     };
 
     // Lifecycle
-    onMounted(() => {
+    onMounted(async () => {
+      await fetchCustomers();
       loadVoucherData();
     });
 
@@ -372,6 +395,7 @@ export default {
 </script>
 
 <style scoped>
+/* Giữ nguyên các style đã có */
 .gradient-custom-teal {
   background: linear-gradient(135deg, #34d399, #10b981);
 }
