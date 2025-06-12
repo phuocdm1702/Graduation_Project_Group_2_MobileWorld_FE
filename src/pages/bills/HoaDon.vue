@@ -196,10 +196,17 @@
         <div v-if="viewMode === 'table'">
           <DataTable title="" :headers="headers" :data="filteredInvoices"
             :pageSizeOptions="[5, 10, 15, 20, 30, 40, 50]">
+<<<<<<< HEAD
             <template #index="{ index }">
               {{ index + 1 }}
             </template>
             <template #ma="{ item }">
+=======
+             <template #index="{ index }">
+    {{ index + 1 }}
+  </template>
+            <template #code="{ item }">
+>>>>>>> 82d887e (commit api hoa don)
               <div class="code-cell">
                 <span class="code-text">{{ item.ma }}</span>
                 <small class="code-date">{{ item.ngayTao }}</small>
@@ -211,7 +218,11 @@
                 <div class="employee-avatar">
                   <i class="bi bi-person-circle"></i>
                 </div>
+<<<<<<< HEAD
                 <span class="employee-name">{{ item.maNhanVien }}</span>
+=======
+                <span class="employee-name">{{ item.idNhanVien.ma }}</span>
+>>>>>>> 82d887e (commit api hoa don)
               </div>
             </template>
 
@@ -231,7 +242,11 @@
               </div>
             </template>
 
+<<<<<<< HEAD
             <template #loaiDon="{ item }">
+=======
+            <template #type="{ item }">
+>>>>>>> 82d887e (commit api hoa don)
               <span class="type-badge" :class="getTypeBadgeClass(item.loaiDon)">
                 <i :class="getTypeIcon(item.loaiDon)" class="me-1"></i>
                 {{ item.type }}
@@ -280,7 +295,11 @@
               <div class="invoice-details">
                 <div class="detail-row">
                   <span class="detail-label">Nhân viên:</span>
+<<<<<<< HEAD
                   <span class="detail-value">{{ invoice.maNhanVien }}</span>
+=======
+                  <span class="detail-value">{{ invoice.idNhanVien.ma }}</span>
+>>>>>>> 82d887e (commit api hoa don)
                 </div>
                 <div class="detail-row">
                   <span class="detail-label">Loại đơn:</span>

@@ -44,12 +44,21 @@ export const useHoaDonStore = defineStore('hoaDon', {
                 this.invoices = content.map(item => ({
                     id: item.id,
                     ma: item.ma,
+<<<<<<< HEAD
                     maNhanVien: item.maNhanVien, // Ánh xạ nhân viên
                     tenKhachHang: item.tenKhachHang,
                     soDienThoaiKhachHang: item.soDienThoaiKhachHang,
                     tongTienSauGiam: item.tongTienSauGiam,
                     phiVanChuyen: item.phiVanChuyen,
                     ngayTao: this.formatDate(item.ngayTao), // Format ngayTao
+=======
+                    idNhanVien: { ma: item.maNhanVien }, // Ánh xạ nhân viên
+                    tenKhachHang: item.tenKhachHang,
+                    soDienThoaiKhachHang: item.soDienThoaiKhachHang,
+                    tongTienSauGiam: typeof item.tongTienSauGiam === 'number' ? item.tongTienSauGiam : parseFloat(item.tongTienSauGiam) || 0,
+                    phiVanChuyen: typeof item.phiVanChuyen === 'number' ? item.phiVanChuyen : parseFloat(item.phiVanChuyen) || 0,
+                    ngayTao: item.ngayTao,
+>>>>>>> 82d887e (commit api hoa don)
                     loaiDon: item.loaiDon,
                     trangThaiFormatted: this.mapStatus(item.trangThai),
                 }));
@@ -62,6 +71,7 @@ export const useHoaDonStore = defineStore('hoaDon', {
             }
         },
 
+<<<<<<< HEAD
         // Function to format date as "HH:mm:ss DD-MM-YYYY"
         formatDate(dateString) {
             const date = new Date(dateString);
@@ -72,6 +82,8 @@ export const useHoaDonStore = defineStore('hoaDon', {
             return `${time} ${day}-${month}-${year}`;
         },
 
+=======
+>>>>>>> 82d887e (commit api hoa don)
         updateFilters(filters) {
             this.filters = { ...this.filters, ...filters };
             this.fetchInvoices({ page: 0 }); // Reset về trang đầu
