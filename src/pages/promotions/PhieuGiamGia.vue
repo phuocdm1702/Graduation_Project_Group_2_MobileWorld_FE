@@ -7,7 +7,7 @@
       :backgroundOpacity="0.95"
     />
 
-    <!-- Filter Section -->
+    <!-- Filter Section   -->
     <FilterTableSection title="Bộ Lọc Tìm Kiếm" icon="bi bi-funnel">
       <div class="m-3">
         <div class="row g-3 align-items-end flex-wrap">
