@@ -234,7 +234,7 @@
             <template #loaiDon="{ item }">
               <span class="type-badge" :class="getTypeBadgeClass(item.loaiDon)">
                 <i :class="getTypeIcon(item.loaiDon)" class="me-1"></i>
-                {{ item.type }}
+                {{ item.loaiDon }}
               </span>
             </template>
 
