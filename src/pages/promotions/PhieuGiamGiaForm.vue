@@ -250,7 +250,7 @@ import {
   addVoucher,
   getVoucherDetail,
   updateVoucher,
-} from "./usePGG";
+} from "../../store/modules/promotions/phieuGiamGia";
 
 export default {
   name: "PhieuGiamGiaForm",
@@ -271,7 +271,7 @@ export default {
       phanTramGiamGia: 0,
       soTienGiamToiDa: 0,
       hoaDonToiThieu: 0,
-      soLuongDung: -1,
+      soLuongDung: 0,
       ngayBatDau: "",
       ngayKetThuc: "",
       moTa: "",
