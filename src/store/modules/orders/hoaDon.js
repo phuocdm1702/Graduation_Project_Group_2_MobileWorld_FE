@@ -1,9 +1,11 @@
+// File: hoaDon.js
 import { defineStore } from 'pinia';
-import { apiService } from '@/services/api'; // Đường dẫn tới api.js
+import { apiService } from '@/services/api';
 
 export const useHoaDonStore = defineStore('hoaDon', {
     state: () => ({
         invoices: [],
+        invoiceDetail: null, // Thêm state để lưu chi tiết hóa đơn
         isLoading: false,
         error: null,
         page: 0,
@@ -38,27 +40,17 @@ export const useHoaDonStore = defineStore('hoaDon', {
                 };
 
                 const response = await apiService.get('/api/hoa-don/home', { params });
-                console.log('API Response:', response.data); // Kiểm tra dữ liệu
                 const { content, totalElements } = response.data;
 
                 this.invoices = content.map(item => ({
                     id: item.id,
                     ma: item.ma,
-<<<<<<< HEAD
-                    maNhanVien: item.maNhanVien, // Ánh xạ nhân viên
+                    maNhanVien: item.maNhanVien,
                     tenKhachHang: item.tenKhachHang,
                     soDienThoaiKhachHang: item.soDienThoaiKhachHang,
                     tongTienSauGiam: item.tongTienSauGiam,
                     phiVanChuyen: item.phiVanChuyen,
-                    ngayTao: this.formatDate(item.ngayTao), // Format ngayTao
-=======
-                    idNhanVien: { ma: item.maNhanVien }, // Ánh xạ nhân viên
-                    tenKhachHang: item.tenKhachHang,
-                    soDienThoaiKhachHang: item.soDienThoaiKhachHang,
-                    tongTienSauGiam: typeof item.tongTienSauGiam === 'number' ? item.tongTienSauGiam : parseFloat(item.tongTienSauGiam) || 0,
-                    phiVanChuyen: typeof item.phiVanChuyen === 'number' ? item.phiVanChuyen : parseFloat(item.phiVanChuyen) || 0,
-                    ngayTao: item.ngayTao,
->>>>>>> 82d887e (commit api hoa don)
+                    ngayTao: this.formatDate(item.ngayTao),
                     loaiDon: item.loaiDon,
                     trangThaiFormatted: this.mapStatus(item.trangThai),
                 }));
@@ -71,22 +63,72 @@ export const useHoaDonStore = defineStore('hoaDon', {
             }
         },
 
-<<<<<<< HEAD
-        // Function to format date as "HH:mm:ss DD-MM-YYYY"
+        // Thêm action để lấy chi tiết hóa đơn
+        async fetchInvoiceDetail(id) {
+            this.isLoading = true;
+            this.error = null;
+
+            try {
+                const response = await apiService.get(`/api/hoa-don/${id}/detail`);
+                this.invoiceDetail = {
+                    ma: response.data.maHoaDon,
+                    loaiDon: response.data.loaiDon,
+                    trangThai: this.mapStatus(response.data.trangThai),
+                    idPhieuGiamGia: { ma: response.data.maGiamGia || 'Không có' },
+                    ngayTao: this.formatDate(response.data.ngayTao),
+                    idKhachHang: {
+                        ten: response.data.tenKhachHang,
+                        email: response.data.email || 'N/A', // Nếu backend không trả về email, có thể thêm vào sau
+                    },
+                    soDienThoaiKhachHang: response.data.soDienThoaiKhachHang,
+                    diaChiKhachHang: response.data.diaChiKhachHang,
+                    tongTienSauGiam: response.data.tongTienSauGiam,
+                    phiVanChuyen: response.data.phiVanChuyen,
+                    maNhanVien: response.data.maNhanVien,
+                    tenNhanVien: response.data.tenNhanVien,
+                    products: response.data.sanPhamChiTietInfos.map(product => ({
+                        id: product.maSanPham,
+                        name: product.tenSanPham,
+                        imei: product.imel,
+                        price: product.giaBan,
+                        quantity: 1, // Backend không trả về quantity, giả sử mặc định là 1
+                        image: '/assets/placeholder-product.png', // Thêm placeholder
+                    })),
+                    payments: response.data.thanhToanInfos.map(payment => ({
+                        id: payment.maHinhThucThanhToan,
+                        code: payment.maHinhThucThanhToan,
+                        method: payment.kieuThanhToan,
+                        amount: payment.tienChuyenKhoan || payment.tienMat,
+                        note: 'N/A',
+                        confirmedBy: response.data.maNhanVien,
+                        status: 'completed',
+                        timestamp: this.formatDate(response.data.ngayTao), // Giả sử dùng ngayTao
+                    })),
+                    history: response.data.lichSuHoaDonInfos.map(history => ({
+                        id: history.ma,
+                        code: history.ma,
+                        invoice: response.data.maHoaDon,
+                        employee: response.data.maNhanVien,
+                        action: history.hanhDong,
+                        timestamp: this.formatDate(history.thoiGian),
+                        status: 'completed',
+                    })),
+                };
+            } catch (error) {
+                this.error = error.message || 'Không thể tải chi tiết hóa đơn';
+                console.error('Lỗi khi gọi API chi tiết:', error);
+            } finally {
+                this.isLoading = false;
+            }
+        },
+
         formatDate(dateString) {
             const date = new Date(dateString);
             const time = date.toLocaleTimeString('en-GB', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
             const day = String(date.getDate()).padStart(2, '0');
-            const month = String(date.getMonth() + 1).padStart(2, '0'); // Months are 0-based
+            const month = String(date.getMonth() + 1).padStart(2, '0');
             const year = date.getFullYear();
             return `${time} ${day}-${month}-${year}`;
-        },
-
-=======
->>>>>>> 82d887e (commit api hoa don)
-        updateFilters(filters) {
-            this.filters = { ...this.filters, ...filters };
-            this.fetchInvoices({ page: 0 }); // Reset về trang đầu
         },
 
         mapStatus(statusNumber) {
@@ -103,6 +145,7 @@ export const useHoaDonStore = defineStore('hoaDon', {
 
     getters: {
         getInvoices: (state) => state.invoices,
+        getInvoiceDetail: (state) => state.invoiceDetail,
         getIsLoading: (state) => state.isLoading,
         getError: (state) => state.error,
         getTotalElements: (state) => state.totalElements,
