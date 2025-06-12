@@ -90,7 +90,7 @@
                     :min="minVoucherValue"
                     :max="maxVoucherValue"
                     class="range-slider"
-                    style="z-index: 2;"
+                    style="z-index: 2"
                     @input="updateRangeMax"
                   />
                   <input
@@ -99,7 +99,7 @@
                     :min="minVoucherValue"
                     :max="maxVoucherValue"
                     class="range-slider"
-                    style="z-index: 1;"
+                    style="z-index: 1"
                     @input="updateRangeMin"
                   />
                 </div>
@@ -112,21 +112,23 @@
           </div>
         </div>
 
-<!-- Action Buttons -->
-<div class="filter-actions mt-4 d-flex flex-wrap gap-2 justify-content-end">
-  <button class="btn btn-reset" @click="resetFilters">
-    <i class="bi bi-arrow-clockwise me-2"></i>
-    Đặt lại bộ lọc
-  </button>
-  <button class="btn btn-action" @click="exportExcel">
-    <i class="bi bi-file-earmark-excel me-2"></i>
-    Xuất Excel
-  </button>
-  <router-link to="/phieuGiamGia/form" class="btn btn-action">
-    <i class="bi bi-plus-circle me-2"></i>
-    Thêm Phiếu Giảm Giá
-  </router-link>
-</div>
+        <!-- Action Buttons -->
+        <div
+          class="filter-actions mt-4 d-flex flex-wrap gap-2 justify-content-end"
+        >
+          <button class="btn btn-reset" @click="resetFilters">
+            <i class="bi bi-arrow-clockwise me-2"></i>
+            Đặt lại bộ lọc
+          </button>
+          <button class="btn btn-action" @click="exportExcel">
+            <i class="bi bi-file-earmark-excel me-2"></i>
+            Xuất Excel
+          </button>
+          <router-link to="/phieuGiamGia/form" class="btn btn-action">
+            <i class="bi bi-plus-circle me-2"></i>
+            Thêm Phiếu Giảm Giá
+          </router-link>
+        </div>
       </div>
     </FilterTableSection>
 
@@ -134,20 +136,28 @@
     <FilterTableSection title="Danh Sách Phiếu Giảm Giá" icon="bi bi-table">
       <div class="table-header">
         <div class="table-title-wrapper">
-          <span class="table-count">{{ filteredVouchers.length }} phiếu giảm giá</span>
+          <span class="table-count"
+            >{{ filteredVouchers.length }} phiếu giảm giá</span
+          >
         </div>
         <div class="table-controls">
           <div class="view-toggle">
             <button
               class="btn btn-sm"
-              :class="{ 'btn-primary': viewMode === 'table', 'btn-outline-secondary': viewMode !== 'table' }"
+              :class="{
+                'btn-primary': viewMode === 'table',
+                'btn-outline-secondary': viewMode !== 'table',
+              }"
               @click="viewMode = 'table'"
             >
               <i class="bi bi-table"></i>
             </button>
             <button
               class="btn btn-sm"
-              :class="{ 'btn-primary': viewMode === 'card', 'btn-outline-secondary': viewMode !== 'card' }"
+              :class="{
+                'btn-primary': viewMode === 'card',
+                'btn-outline-secondary': viewMode !== 'card',
+              }"
               @click="viewMode = 'card'"
             >
               <i class="bi bi-grid-3x3-gap"></i>
@@ -164,9 +174,9 @@
             :data="filteredVouchers"
             :pageSizeOptions="[5, 10, 15, 20, 30, 40, 50]"
           >
-           <template #stt="{ item, index }">
-    {{ index + 1 }}
-  </template>
+            <template #stt="{ item, index }">
+              {{ index + 1 }}
+            </template>
             <template #code="{ item }">
               <div class="code-cell">
                 <span class="code-text">{{ item.code }}</span>
@@ -177,7 +187,9 @@
               <div class="amount-cell">
                 <div class="total-amount">{{ formatPrice(item.value) }}</div>
                 <div class="discount-info" v-if="item.minOrder > 0">
-                  <small class="text-muted">Đơn tối thiểu: {{ formatPrice(item.minOrder) }}</small>
+                  <small class="text-muted"
+                    >Đơn tối thiểu: {{ formatPrice(item.minOrder) }}</small
+                  >
                 </div>
               </div>
             </template>
@@ -188,7 +200,10 @@
               </span>
             </template>
             <template #status="{ item }">
-              <span class="status-badge" :class="getStatusBadgeClass(item.status)">
+              <span
+                class="status-badge"
+                :class="getStatusBadgeClass(item.status)"
+              >
                 <i :class="getStatusIcon(item.status)" class="me-1"></i>
                 {{ item.status }}
               </span>
@@ -209,7 +224,11 @@
                   />
                   <span class="slider round"></span>
                 </label>
-                <button class="btn btn-sm btn-table" @click="editVoucher(item)" title="Chỉnh sửa">
+                <button
+                  class="btn btn-sm btn-table"
+                  @click="editVoucher(item)"
+                  title="Chỉnh sửa"
+                >
                   <i class="bi bi-pencil-fill"></i>
                 </button>
                 <!-- <button class="btn btn-sm btn-table" @click="confirmDeleteVoucher(item)" title="Xóa">
@@ -222,10 +241,17 @@
 
         <!-- Card View -->
         <div v-else class="card-grid">
-          <div v-for="voucher in paginatedVouchers" :key="voucher.id" class="invoice-card">
+          <div
+            v-for="voucher in paginatedVouchers"
+            :key="voucher.id"
+            class="invoice-card"
+          >
             <div class="invoice-card-header">
               <div class="invoice-code">{{ voucher.code }}</div>
-              <span class="status-badge" :class="getStatusBadgeClass(voucher.status)">
+              <span
+                class="status-badge"
+                :class="getStatusBadgeClass(voucher.status)"
+              >
                 {{ voucher.status }}
               </span>
             </div>
@@ -233,7 +259,10 @@
               <div class="invoice-details">
                 <div class="detail-row">
                   <span class="detail-label">Loại phiếu:</span>
-                  <span class="type-badge" :class="getTypeBadgeClass(voucher.type)">
+                  <span
+                    class="type-badge"
+                    :class="getTypeBadgeClass(voucher.type)"
+                  >
                     {{ voucher.type }}
                   </span>
                 </div>
@@ -249,7 +278,9 @@
               <div class="invoice-amounts">
                 <div class="total-amount">{{ formatPrice(voucher.value) }}</div>
                 <div class="amount-details">
-                  <small class="text-muted">Đơn tối thiểu: {{ formatPrice(voucher.minOrder) }}</small>
+                  <small class="text-muted"
+                    >Đơn tối thiểu: {{ formatPrice(voucher.minOrder) }}</small
+                  >
                 </div>
               </div>
             </div>
@@ -262,7 +293,10 @@
                 />
                 <span class="slider round"></span>
               </label>
-              <button class="btn btn-sm btn-table" @click="editVoucher(voucher)">
+              <button
+                class="btn btn-sm btn-table"
+                @click="editVoucher(voucher)"
+              >
                 <i class="bi bi-pencil-fill me-1"></i> Sửa
               </button>
               <!-- <button class="btn btn-sm btn-table" @click="confirmDeleteVoucher(voucher)">
@@ -277,7 +311,11 @@
           <nav aria-label="Page navigation">
             <ul class="pagination pagination-sm mb-0 justify-content-center">
               <li class="page-item" :class="{ disabled: currentPage === 1 }">
-                <button class="page-link" @click="currentPage--" :disabled="currentPage === 1">
+                <button
+                  class="page-link"
+                  @click="currentPage--"
+                  :disabled="currentPage === 1"
+                >
                   <i class="bi bi-chevron-left"></i>
                 </button>
               </li>
@@ -287,10 +325,19 @@
                 class="page-item"
                 :class="{ active: currentPage === page }"
               >
-                <button class="page-link" @click="currentPage = page">{{ page }}</button>
+                <button class="page-link" @click="currentPage = page">
+                  {{ page }}
+                </button>
               </li>
-              <li class="page-item" :class="{ disabled: currentPage === totalPages }">
-                <button class="page-link" @click="currentPage++" :disabled="currentPage === totalPages">
+              <li
+                class="page-item"
+                :class="{ disabled: currentPage === totalPages }"
+              >
+                <button
+                  class="page-link"
+                  @click="currentPage++"
+                  :disabled="currentPage === totalPages"
+                >
                   <i class="bi bi-chevron-right"></i>
                 </button>
               </li>
@@ -315,17 +362,23 @@
 </template>
 
 <script>
-import { ref, computed, watch } from 'vue';
-import { debounce } from 'lodash';
-import { useRouter } from 'vue-router';
-import DataTable from '@/components/common/DataTable.vue';
-import NotificationModal from '@/components/common/NotificationModal.vue';
-import ToastNotification from '@/components/common/ToastNotification.vue';
-import HeaderCard from '@/components/common/HeaderCard.vue';
-import FilterTableSection from '@/components/common/FilterTableSection.vue';
+import { ref, computed, watch } from "vue";
+import { debounce } from "lodash";
+import { useRouter } from "vue-router";
+import DataTable from "@/components/common/DataTable.vue";
+import NotificationModal from "@/components/common/NotificationModal.vue";
+import ToastNotification from "@/components/common/ToastNotification.vue";
+import HeaderCard from "@/components/common/HeaderCard.vue";
+import FilterTableSection from "@/components/common/FilterTableSection.vue";
+import {
+  fetchVouchers,
+  searchVouchers,
+  filterVouchers,
+  updateVoucherStatus,
+} from "./usePGG";
 
 export default {
-  name: 'VoucherManagement',
+  name: "VoucherManagement",
   components: {
     HeaderCard,
     FilterTableSection,
@@ -335,72 +388,57 @@ export default {
   },
   setup() {
     const router = useRouter();
-    // Data
-    const vouchers = ref([
-      {
-        id: 1,
-        code: 'VOUCHER001',
-        value: 100000,
-        minOrder: 500000,
-        type: 'Tiền mặt',
-        status: 'Đang diễn ra',
-        startDate: '2025-06-01',
-        expiryDate: '2025-12-31',
-      },
-      {
-        id: 2,
-        code: 'VOUCHER002',
-        value: 20,
-        minOrder: 300000,
-        type: 'Phần trăm',
-        status: 'Chưa diễn ra',
-        startDate: '2025-06-05',
-        expiryDate: '2025-12-31',
-      },
-    ]);
 
-    const searchQuery = ref('');
-    const filterType = ref('');
-    const filterStatus = ref('');
-    const startDate = ref('');
-    const endDate = ref('');
+    // Data
+    const vouchers = ref([]);
+    const searchQuery = ref("");
+    const filterType = ref("");
+    const filterStatus = ref("");
+    const startDate = ref("");
+    const endDate = ref("");
     const rangeMin = ref(0);
     const rangeMax = ref(1000000);
     const minVoucherValue = 0;
     const maxVoucherValue = 1000000;
-    const viewMode = ref('table');
+    const viewMode = ref("table");
     const currentPage = ref(1);
-    const pageSize = 10;
+    const pageSize = ref(10);
+    const totalItems = ref(0);
 
     // Computed
     const filteredVouchers = computed(() => {
-      return vouchers.value.filter((voucher) => {
-        const matchesSearch =
-          voucher.code.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-          voucher.type.toLowerCase().includes(searchQuery.value.toLowerCase());
-        const matchesType = filterType.value ? voucher.type === filterType.value : true;
-        const matchesStatus = filterStatus.value ? voucher.status === filterStatus.value : true;
-        const matchesDate =
-          (!startDate.value || new Date(voucher.startDate) >= new Date(startDate.value)) &&
-          (!endDate.value || new Date(voucher.expiryDate) <= new Date(endDate.value));
-        const matchesValue = voucher.value >= rangeMin.value && voucher.value <= rangeMax.value;
-        return matchesSearch && matchesType && matchesStatus && matchesDate && matchesValue;
-      });
+      return vouchers.value.map((voucher) => ({
+        id: voucher.id,
+        code: voucher.ma,
+        value:
+          voucher.loaiPhieuGiamGia === "Phần trăm"
+            ? voucher.phanTramGiamGia
+            : voucher.soTienGiamToiDa,
+        minOrder: voucher.hoaDonToiThieu,
+        type: voucher.loaiPhieuGiamGia,
+        status: getStatus(voucher),
+        startDate: formatDate(voucher.ngayBatDau),
+        expiryDate: formatDate(voucher.ngayKetThuc),
+      }));
     });
 
-    const totalValue = computed(() => {
-      return filteredVouchers.value.reduce((sum, voucher) => sum + voucher.value, 0);
-    });
-
-    const totalPages = computed(() => Math.ceil(filteredVouchers.value.length / pageSize));
+    const totalPages = computed(() =>
+      Math.ceil(totalItems.value / pageSize.value)
+    );
     const paginatedVouchers = computed(() => {
-      const start = (currentPage.value - 1) * pageSize;
-      return filteredVouchers.value.slice(start, start + pageSize);
+      const start = (currentPage.value - 1) * pageSize.value;
+      return filteredVouchers.value.slice(start, start + pageSize.value);
     });
 
     const sliderRangeStyle = computed(() => {
-      const percent1 = ((rangeMin.value - minVoucherValue) / (maxVoucherValue - minVoucherValue)) * 100;
-      const percent2 = ((rangeMax.value - minVoucherValue) / (maxVoucherValue - minVoucherValue)) * 100;
+      const percent1 =
+        ((rangeMin.value - minVoucherValue) /
+          (maxVoucherValue - minVoucherValue)) *
+        100;
+      const percent2 =
+        ((rangeMax.value - minVoucherValue) /
+          (maxVoucherValue - minVoucherValue)) *
+        100;
       return {
         left: `${percent1}%`,
         width: `${percent2 - percent1}%`,
@@ -409,23 +447,140 @@ export default {
 
     const headers = [
       { text: "STT", value: "stt" },
-      { text: 'Mã Phiếu', value: 'code' },
-      { text: 'Giá Trị', value: 'value' },
-      { text: 'Loại Phiếu', value: 'type' },
-      { text: 'Trạng Thái', value: 'status' },
-      { text: 'Ngày Bắt Đầu', value: 'startDate' },
-      { text: 'Ngày Kết Thúc', value: 'expiryDate' },
-      { text: 'Hành Động', value: 'actions' },
+      { text: "Mã Phiếu", value: "code" },
+      { text: "Giá Trị", value: "value" },
+      { text: "Loại Phiếu", value: "type" },
+      { text: "Trạng Thái", value: "status" },
+      { text: "Ngày Bắt Đầu", value: "startDate" },
+      { text: "Ngày Kết Thúc", value: "expiryDate" },
+      { text: "Hành Động", value: "actions" },
     ];
 
     // Methods
     const formatPrice = (value) => {
-      return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);
+      return new Intl.NumberFormat("vi-VN", {
+        style: "currency",
+        currency: "VND",
+      }).format(value);
     };
 
-    const debouncedSearch = debounce((value) => {
+    const formatDate = (date) => {
+      if (!date) return "";
+      return new Date(date).toLocaleDateString("vi-VN");
+    };
+
+    const getStatus = (voucher) => {
+      const now = new Date();
+      if (!voucher.trangThai || voucher.deleted) return "Không hoạt động";
+      if (new Date(voucher.ngayBatDau) > now) return "Chưa diễn ra";
+      if (new Date(voucher.ngayKetThuc) < now) return "Không hoạt động";
+      return "Đang diễn ra";
+    };
+
+    const loadVouchers = async () => {
+      try {
+        const response = await fetchVouchers(
+          currentPage.value - 1,
+          pageSize.value
+        );
+        vouchers.value = response.data.content;
+        totalItems.value = response.data.totalElements;
+      } catch (error) {
+        toastNotification.value.addToast({
+          type: "error",
+          message: "Lỗi khi tải danh sách phiếu giảm giá!",
+        });
+      }
+    };
+
+    const debouncedSearch = debounce(async (value) => {
       searchQuery.value = value;
+      if (value.trim()) {
+        try {
+          const response = await searchVouchers(
+            value,
+            currentPage.value - 1,
+            pageSize.value
+          );
+          vouchers.value = response.data.content;
+          totalItems.value = response.data.totalElements;
+        } catch (error) {
+          toastNotification.value.addToast({
+            type: "error",
+            message: "Lỗi khi tìm kiếm phiếu giảm giá!",
+          });
+        }
+      } else {
+        loadVouchers();
+      }
     }, 300);
+
+    const applyFilters = async () => {
+      const filters = {
+        loaiPhieuGiamGia: filterType.value,
+        trangThai: filterStatus.value,
+        startDate: startDate.value,
+        endDate: endDate.value,
+        minOrder: rangeMin.value,
+        valueFilter: rangeMax.value,
+      };
+      try {
+        const response = await filterVouchers(
+          filters,
+          currentPage.value - 1,
+          pageSize.value
+        );
+        vouchers.value = response.data.content;
+        totalItems.value = response.data.totalElements;
+      } catch (error) {
+        toastNotification.value.addToast({
+          type: "error",
+          message: "Lỗi khi lọc phiếu giảm giá!",
+        });
+      }
+    };
+
+    const resetFilters = () => {
+      searchQuery.value = "";
+      filterType.value = "";
+      filterStatus.value = "";
+      startDate.value = "";
+      endDate.value = "";
+      rangeMin.value = minVoucherValue;
+      rangeMax.value = maxVoucherValue;
+      currentPage.value = 1;
+      loadVouchers();
+    };
+
+    const exportExcel = () => {
+      toastNotification.value.addToast({
+        type: "success",
+        message: "Xuất Excel thành công!",
+      });
+    };
+
+    const editVoucher = (voucher) => {
+      router.push(`/phieuGiamGia/form/${voucher.id}`);
+    };
+
+    const toggleVoucherStatus = async (voucher) => {
+      const newStatus = voucher.status === "Đang diễn ra" ? false : true;
+      try {
+        await updateVoucherStatus(voucher.id, newStatus);
+        toastNotification.value.addToast({
+          type: "info",
+          message: `Phiếu ${voucher.code} đã được ${
+            newStatus ? "kích hoạt" : "tắt"
+          }`,
+        });
+        loadVouchers();
+      } catch (error) {
+        toastNotification.value.addToast({
+          type: "error",
+          message: "Lỗi khi cập nhật trạng thái!",
+        });
+      }
+    };
 
     const updateRangeMin = () => {
       if (rangeMin.value > rangeMax.value) {
@@ -439,118 +594,79 @@ export default {
       }
     };
 
-    const resetFilters = () => {
-      searchQuery.value = '';
-      filterType.value = '';
-      filterStatus.value = '';
-      startDate.value = '';
-      endDate.value = '';
-      rangeMin.value = minVoucherValue;
-      rangeMax.value = maxVoucherValue;
-      currentPage.value = 1;
-    };
-
-    const exportExcel = () => {
-      toastNotification.value.addToast({ // Changed from showToast to addToast
-        type: 'success',
-        message: 'Xuất Excel thành công!',
-      });
-    };
-
-    const viewVoucher = (voucher) => {
-      console.log('View voucher:', voucher);
-    };
-
-    const editVoucher = (voucher) => {
-      router.push(`/phieuGiamGia/form/${voucher.id}`);
-    };
-
-    const confirmDeleteVoucher = (voucher) => {
-      notificationType.value = 'confirm';
-      notificationMessage.value = `Bạn có chắc muốn xóa phiếu ${voucher.code}?`;
-      notificationOnConfirm.value = () => deleteVoucher(voucher);
-      notificationOnCancel.value = () => resetNotification();
-      isNotificationLoading.value = false;
-      notificationModal.value.openModal(); // Changed from show to openModal
-    };
-
-    const deleteVoucher = (voucher) => {
-      vouchers.value = vouchers.value.filter((v) => v.id !== voucher.id);
-      toastNotification.value.addToast({ // Changed from showToast to addToast
-        type: 'success',
-        message: 'Xóa phiếu thành công!',
-      });
-      resetNotification();
-    };
-
-    const toggleVoucherStatus = (voucher) => {
-      const newStatus = voucher.status === 'Đang diễn ra' ? 'Không hoạt động' : 'Đang diễn ra';
-      vouchers.value = vouchers.value.map((v) =>
-        v.id === voucher.id ? { ...v, status: newStatus } : v
-      );
-      toastNotification.value.addToast({ // Changed from showToast to addToast
-        type: 'info',
-        message: `Phiếu ${voucher.code} đã được ${newStatus === 'Đang diễn ra' ? 'kích hoạt' : 'tắt'}`,
-      });
-    };
-
     const notificationModal = ref(null);
     const toastNotification = ref(null);
-    const notificationType = ref('');
-    const notificationMessage = ref('');
+    const notificationType = ref("");
+    const notificationMessage = ref("");
     const isNotificationLoading = ref(false);
     const notificationOnConfirm = ref(() => {});
     const notificationOnCancel = ref(() => resetNotification());
 
     const resetNotification = () => {
-      notificationType.value = '';
-      notificationMessage.value = '';
+      notificationType.value = "";
+      notificationMessage.value = "";
       isNotificationLoading.value = false;
       notificationOnConfirm.value = () => {};
       notificationOnCancel.value = () => resetNotification();
-      // Removed hide() call as it's not needed; closeModal is handled internally
     };
 
     const getTypeBadgeClass = (type) => {
-      switch (type) {
-        case 'Tiền mặt':
-        case 'Phần trăm':
-          return 'badge-info';
-        default:
-          return 'badge-info';
-      }
+      return "badge-info";
     };
 
     const getStatusBadgeClass = (status) => {
       switch (status) {
-        case 'Đang diễn ra':
-          return 'badge-completed';
-        case 'Chưa diễn ra':
-          return 'badge-waiting';
+        case "Đang diễn ra":
+          return "badge-completed";
+        case "Chưa diễn ra":
+          return "badge-waiting";
         default:
-          return 'badge-canceled';
+          return "badge-canceled";
       }
     };
 
     const getTypeIcon = (type) => {
-      return type === 'Phần trăm' ? 'bi bi-percent' : 'bi bi-currency-dollar';
+      return type === "Phần trăm" ? "bi bi-percent" : "bi bi-currency-dollar";
     };
 
     const getStatusIcon = (status) => {
       switch (status) {
-        case 'Đang diễn ra':
-          return 'bi bi-check-circle';
-        case 'Chưa diễn ra':
-          return 'bi bi-hourglass-split';
+        case "Đang diễn ra":
+          return "bi bi-check-circle";
+        case "Chưa diễn ra":
+          return "bi bi-hourglass-split";
         default:
-          return 'bi bi-x-circle';
+          return "bi bi-x-circle";
       }
     };
 
     // Watchers
-    watch([searchQuery, filterType, filterStatus, startDate, endDate, rangeMin, rangeMax], () => {
-      currentPage.value = 1;
+    watch(
+      [
+        searchQuery,
+        filterType,
+        filterStatus,
+        startDate,
+        endDate,
+        rangeMin,
+        rangeMax,
+      ],
+      () => {
+        currentPage.value = 1;
+        applyFilters();
+      }
+    );
+
+    watch(currentPage, () => {
+      if (searchQuery.value.trim()) {
+        debouncedSearch(searchQuery.value);
+      } else {
+        applyFilters();
+      }
     });
+
+    // Initial load
+    loadVouchers();
 
     return {
       vouchers,
@@ -565,8 +681,8 @@ export default {
       maxVoucherValue,
       viewMode,
       currentPage,
+      pageSize,
       filteredVouchers,
-      totalValue,
       totalPages,
       paginatedVouchers,
       sliderRangeStyle,
@@ -577,9 +693,7 @@ export default {
       updateRangeMax,
       resetFilters,
       exportExcel,
-      viewVoucher,
       editVoucher,
-      confirmDeleteVoucher,
       toggleVoucherStatus,
       notificationModal,
       toastNotification,
@@ -622,7 +736,8 @@ export default {
 }
 
 @keyframes gentleGlow {
-  0%, 100% {
+  0%,
+  100% {
     box-shadow: 0 0 5px rgba(52, 211, 153, 0.3);
   }
   50% {
