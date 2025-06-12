@@ -615,6 +615,7 @@ export const invoiceManagementLogic = {
       {
         value: 'index',
         text: '#',
+<<<<<<< HEAD
         formatter: (_, __, index) => {
           const startIndex = (currentPage.value - 1) * itemsPerPage.value;
           return startIndex + index + 1; // Tính STT dựa trên vị trí toàn cục
@@ -628,11 +629,24 @@ export const invoiceManagementLogic = {
       },
       { value: 'tenKhachHang', text: 'Khách hàng' },
       // { value: 'soDienThoaiKhachHang', text: 'SDT' },
+=======
+        formatter: (_, __, index) => (currentPage.value - 1) * itemsPerPage.value + index + 1,
+      },
+      { value: 'ma', text: 'Mã' },
+      {
+        value: 'idNhanVien.ma',
+        text: 'Nhân viên',
+        formatter: (value, item) => item?.idNhanVien?.ma || 'N/A',
+      },
+      { value: 'tenKhachHang', text: 'Khách hàng' },
+      { value: 'soDienThoaiKhachHang', text: 'SDT' },
+>>>>>>> 82d887e (commit api hoa don)
       {
         value: 'tongTienSauGiam',
         text: 'Tổng giá trị',
         formatter: (value) => (value ? `${value.toLocaleString()} VND` : '0 VND'),
       },
+<<<<<<< HEAD
       // {
       //   value: 'idPhieuGiamGia.phanTramGiamGia',
       //   text: 'Tiền giảm',
@@ -642,6 +656,17 @@ export const invoiceManagementLogic = {
       //     return `(${phanTramGiamGia}%) ~ ${giamGia.toLocaleString()}đ`;
       //   },
       // },
+=======
+      {
+        value: 'idPhieuGiamGia.phanTramGiamGia',
+        text: 'Tiền giảm',
+        formatter: (phanTramGiamGia, item) => {
+          if (!phanTramGiamGia || !item?.tongTien) return '0 VND';
+          const giamGia = Math.round((item.tongTien * phanTramGiamGia) / 100 / 1000) * 1000;
+          return `(${phanTramGiamGia}%) ~ ${giamGia.toLocaleString()}đ`;
+        },
+      },
+>>>>>>> 82d887e (commit api hoa don)
       {
         value: 'phiVanChuyen',
         text: 'Phí',
