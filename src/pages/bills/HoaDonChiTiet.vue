@@ -1,24 +1,18 @@
 <template>
   <div class="container-fluid py-4 invoice-detail-management animate__animated animate__fadeIn">
     <!-- Header -->
-    <HeaderCard
-      title="Hóa Đơn Chi Tiết"
-      badgeText="Hệ Thống POS"
-      badgeClass="gradient-custom-teal"
-      :backgroundOpacity="0.95"
-      class="page-header"
-    />
+    <HeaderCard title="Hóa Đơn Chi Tiết" badgeText="Hệ Thống POS" badgeClass="gradient-custom-teal"
+      :backgroundOpacity="0.95" class="page-header" />
 
     <!-- Status Timeline -->
     <FilterTableSection title="Trạng Thái Hóa Đơn" icon="bi bi-clock-history">
       <div class="mx-4 my-5">
         <div class="timeline-container">
-          <div
-            v-for="(status, index) in timelineStatuses"
-            :key="index"
-            class="timeline-step"
-            :class="{ 'completed': status.completed, 'current': status.current }"
-          >
+          <div v-for="(status, index) in timelineStatuses" :key="index" class="timeline-step" :class="{
+            'completed': status.completed,
+            'current': status.current,
+            'canceled': status.title === 'Đã hủy'
+          }">
             <div class="step-circle">
               <i :class="status.icon"></i>
             </div>
@@ -39,21 +33,14 @@
           <div class="section-body m-3">
             <div class="info-card glass-card">
               <div class="card-body">
-                <div
-                  class="info-row"
-                  v-for="(info, index) in orderInfo"
-                  :key="index"
-                >
+                <div class="info-row" v-for="(info, index) in orderInfo" :key="index">
                   <span class="info-label">{{ info.label }}</span>
-                  <span
-                    class="info-value"
-                    :class="{
-                      'code-text': info.key === 'ma',
-                      'type-badge': info.key === 'loaiDon',
-                      'status-badge': info.key === 'trangThai',
-                      [getBadgeClass(info.key, info.value)]: info.key === 'loaiDon' || info.key === 'trangThai',
-                    }"
-                  >
+                  <span class="info-value" :class="{
+                    'code-text': info.key === 'ma',
+                    'type-badge': info.key === 'loaiDon',
+                    'status-badge': info.key === 'trangThai',
+                    [getBadgeClass(info.key, info.value)]: info.key === 'loaiDon' || info.key === 'trangThai',
+                  }">
                     <i v-if="info.icon" :class="info.icon" class="me-1"></i>
                     {{ info.value }}
                   </span>
@@ -70,11 +57,7 @@
           <div class="section-body m-3">
             <div class="info-card glass-card">
               <div class="card-body">
-                <div
-                  class="info-row"
-                  v-for="(info, index) in customerInfo"
-                  :key="index"
-                >
+                <div class="info-row" v-for="(info, index) in customerInfo" :key="index">
                   <span class="info-label">{{ info.label }}</span>
                   <span class="info-value">
                     {{ info.value || 'Không có' }}
@@ -99,19 +82,11 @@
           </button>
         </div>
         <div class="products-list">
-          <div
-            v-for="product in products"
-            :key="product.id"
-            class="product-card animate__animated animate__zoomIn"
-            style="--animate-delay: 0.4s;"
-          >
+          <div v-for="product in products" :key="product.id" class="product-card animate__animated animate__zoomIn"
+            style="--animate-delay: 0.4s;">
             <div class="product-card-content">
               <div class="product-image">
-                <img
-                  :src="product.image || '/assets/placeholder-product.png'"
-                  alt="Product Image"
-                  class="product-img"
-                />
+                <img :src="product.img || '/assets/placeholder-product.png'" alt="Product Image" class="product-img" />
               </div>
               <div class="product-details">
                 <h6 class="product-name">{{ product.name }}</h6>
@@ -126,18 +101,10 @@
               </div>
             </div>
             <div class="product-card-actions">
-              <button
-                class="btn btn-sm btn-view"
-                @click="showIMEIModal(product)"
-                title="Xem IMEI"
-              >
+              <button class="btn btn-sm btn-view" @click="showIMEIModal(product)" title="Xem IMEI">
                 Xem IMEI
               </button>
-              <button
-                class="btn btn-sm btn-delete"
-                @click="removeProduct(product)"
-                title="Xóa sản phẩm"
-              >
+              <button class="btn btn-sm btn-delete" @click="removeProduct(product)" title="Xóa sản phẩm">
                 Xóa
               </button>
             </div>
@@ -153,12 +120,8 @@
         <FilterTableSection title="Lịch Sử Thanh Toán" icon="bi bi-cash-stack" class="filter-table-section">
           <div class="section-body m-3">
             <div class="history-timeline">
-              <div
-                v-for="payment in payments"
-                :key="payment.id"
-                class="history-item"
-                :class="{ 'completed': payment.status === 'completed' }"
-              >
+              <div v-for="payment in payments" :key="payment.id" class="history-item"
+                :class="{ 'completed': payment.status === 'completed' }">
                 <div class="history-dot"></div>
                 <div class="history-content">
                   <div class="history-title">
@@ -179,12 +142,8 @@
         <FilterTableSection title="Lịch Sử Hóa Đơn" icon="bi bi-clock-history" class="filter-table-section">
           <div class="section-body m-3">
             <div class="history-timeline">
-              <div
-                v-for="item in history"
-                :key="item.id"
-                class="history-item"
-                :class="{ 'completed': item.status === 'completed' }"
-              >
+              <div v-for="item in history" :key="item.id" class="history-item"
+                :class="{ 'completed': item.status === 'completed' }">
                 <div class="history-dot"></div>
                 <div class="history-content">
                   <div class="history-title">
@@ -289,10 +248,8 @@
     </div>
 
     <!-- Action Buttons -->
-    <div
-      class="action-buttons m-3 animate__animated animate__fadeInUp d-flex gap-2 justify-content-end"
-      style="--animate-delay: 0.6s;"
-    >
+    <div class="action-buttons m-3 animate__animated animate__fadeInUp d-flex gap-2 justify-content-end"
+      style="--animate-delay: 0.6s;">
       <router-link to="/hoaDon" class="btn btn-reset">
         <i class="bi bi-arrow-left me-2"></i> Quay lại
       </router-link>
@@ -305,11 +262,7 @@
     </div>
 
     <!-- IMEI Modal -->
-    <div
-      v-if="isIMEIModalVisible"
-      class="modal-backdrop-blur"
-      @click.self="closeIMEIModal"
-    >
+    <div v-if="isIMEIModalVisible" class="modal-backdrop-blur" @click.self="closeIMEIModal">
       <div class="modal-container glass-modal animate__animated animate__zoomIn">
         <div class="modal-header">
           <h5 class="modal-title">
@@ -322,33 +275,21 @@
         <div class="modal-body imei-container">
           <div class="imei-input mb-3">
             <div class="input-group">
-              <input
-                v-model="newIMEI"
-                type="text"
-                class="form-control"
-                placeholder="Tìm kiếm hoặc thêm imel"
-                @keyup.enter="addIMEI"
-              />
+              <input v-model="newIMEI" type="text" class="form-control" placeholder="Tìm kiếm hoặc thêm imel"
+                @keyup.enter="addIMEI" />
               <button class="btn btn-action" @click="addIMEI">
                 <i class="bi bi-plus-circle me-1"></i>
               </button>
             </div>
           </div>
           <div v-if="selectedProduct?.imei" class="imei-list">
-            <div
-              v-for="imei in selectedProduct.imei.split(', ')"
-              :key="imei"
-              class="imei-item animate__animated animate__fadeIn"
-            >
+            <div v-for="imei in selectedProduct.imei.split(', ')" :key="imei"
+              class="imei-item animate__animated animate__fadeIn">
               <div class="imei-content">
                 <i class="bi bi-qr-code me-3"></i>
                 <span class="imei-code">{{ imei }}</span>
               </div>
-              <button
-                class="btn btn-sm btn-delete"
-                @click="deleteIMEI(imei)"
-                title="Xóa IMEI"
-              >
+              <button class="btn btn-sm btn-delete" @click="deleteIMEI(imei)" title="Xóa IMEI">
                 <i class="bi bi-x-lg"></i>
               </button>
             </div>
@@ -370,11 +311,7 @@
     </div>
 
     <!-- Update Modal -->
-    <div
-      v-if="isUpdateModalVisible"
-      class="modal-backdrop-blur"
-      @click.self="closeUpdateModal"
-    >
+    <div v-if="isUpdateModalVisible" class="modal-backdrop-blur" @click.self="closeUpdateModal">
       <div class="modal-container glass-modal animate__animated animate__zoomIn">
         <div class="modal-header">
           <h5 class="modal-title">
@@ -387,20 +324,12 @@
         <div class="modal-body">
           <ul class="nav nav-tabs mb-3">
             <li class="nav-item">
-              <button
-                class="nav-link"
-                :class="{ active: activeTab === 'order' }"
-                @click="activeTab = 'order'"
-              >
+              <button class="nav-link" :class="{ active: activeTab === 'order' }" @click="activeTab = 'order'">
                 Thông Tin Đơn Hàng
               </button>
             </li>
             <li class="nav-item">
-              <button
-                class="nav-link"
-                :class="{ active: activeTab === 'customer' }"
-                @click="activeTab = 'customer'"
-              >
+              <button class="nav-link" :class="{ active: activeTab === 'customer' }" @click="activeTab = 'customer'">
                 Thông Tin Khách Hàng
               </button>
             </li>
@@ -408,12 +337,7 @@
           <div v-if="activeTab === 'order'" class="tab-content">
             <div class="form-group mb-3">
               <label class="form-label">Mã đơn hàng</label>
-              <input
-                v-model="invoice.ma"
-                type="text"
-                class="form-control"
-                placeholder="Nhập mã đơn hàng"
-              />
+              <input v-model="invoice.ma" type="text" class="form-control" placeholder="Nhập mã đơn hàng" />
             </div>
             <div class="form-group mb-3">
               <label class="form-label">Loại đơn</label>
@@ -436,39 +360,21 @@
           <div v-if="activeTab === 'customer'" class="tab-content">
             <div class="form-group mb-3">
               <label class="form-label">Tên khách hàng</label>
-              <input
-                v-model="invoice.idKhachHang.ten"
-                type="text"
-                class="form-control"
-                placeholder="Nhập tên khách hàng"
-              />
+              <input v-model="invoice.idKhachHang.ten" type="text" class="form-control"
+                placeholder="Nhập tên khách hàng" />
             </div>
             <div class="form-group mb-3">
               <label class="form-label">Số điện thoại</label>
-              <input
-                v-model="invoice.soDienThoaiKhachHang"
-                type="text"
-                class="form-control"
-                placeholder="Nhập số điện thoại"
-              />
+              <input v-model="invoice.soDienThoaiKhachHang" type="text" class="form-control"
+                placeholder="Nhập số điện thoại" />
             </div>
             <div class="form-group mb-3">
               <label class="form-label">Địa chỉ</label>
-              <input
-                v-model="invoice.diaChiKhachHang"
-                type="text"
-                class="form-control"
-                placeholder="Nhập địa chỉ"
-              />
+              <input v-model="invoice.diaChiKhachHang" type="text" class="form-control" placeholder="Nhập địa chỉ" />
             </div>
             <div class="form-group mb-3">
               <label class="form-label">Email</label>
-              <input
-                v-model="invoice.idKhachHang.email"
-                type="email"
-                class="form-control"
-                placeholder="Nhập email"
-              />
+              <input v-model="invoice.idKhachHang.email" type="email" class="form-control" placeholder="Nhập email" />
             </div>
           </div>
         </div>
@@ -484,11 +390,7 @@
     </div>
 
     <!-- Divination Modal -->
-    <div
-      v-if="isDivinationModalVisible"
-      class="modal-backdrop-blur"
-      @click.self="closeDivinationModal"
-    >
+    <div v-if="isDivinationModalVisible" class="modal-backdrop-blur" @click.self="closeDivinationModal">
       <div class="modal-container glass-modal animate__animated animate__zoomIn">
         <div class="modal-header">
           <h5 class="modal-title">
@@ -513,15 +415,9 @@
     </div>
 
     <!-- Notifications -->
-    <NotificationModal
-      ref="notificationModal"
-      :type="notificationType"
-      :message="notificationMessage"
-      :isLoading="isNotificationLoading"
-      :onConfirm="notificationOnConfirm"
-      :onCancel="notificationOnCancel"
-      @close="resetNotification"
-    />
+    <NotificationModal ref="notificationModal" :type="notificationType" :message="notificationMessage"
+      :isLoading="isNotificationLoading" :onConfirm="notificationOnConfirm" :onCancel="notificationOnCancel"
+      @close="resetNotification" />
     <ToastNotification ref="toastNotification" />
   </div>
 </template>
@@ -531,7 +427,6 @@ import HoaDonChiTiet from './js/HoaDonChiTiet';
 
 export default HoaDonChiTiet;
 </script>
-
 <style scoped>
 /* Animations */
 @keyframes fadeInUp {
@@ -539,6 +434,7 @@ export default HoaDonChiTiet;
     opacity: 0;
     transform: translateY(15px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -550,6 +446,7 @@ export default HoaDonChiTiet;
     opacity: 0;
     transform: scale(0.97);
   }
+
   to {
     opacity: 1;
     transform: scale(1);
@@ -557,11 +454,31 @@ export default HoaDonChiTiet;
 }
 
 @keyframes gentleGlow {
-  0%, 100% {
+
+  0%,
+  100% {
     box-shadow: 0 0 5px rgba(52, 211, 153, 0.3);
   }
+
   50% {
     box-shadow: 0 0 12px rgba(52, 211, 153, 0.5);
+  }
+}
+
+@keyframes subtlePulse {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.7);
+  }
+
+  70% {
+    transform: scale(1.05);
+    box-shadow: 0 0 0 10px rgba(220, 53, 69, 0);
+  }
+
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(220, 53, 69, 0);
   }
 }
 
@@ -620,22 +537,40 @@ export default HoaDonChiTiet;
 }
 
 .timeline-step.completed .step-circle {
-  background: linear-gradient(135deg, #34d399, #16a34a);
-  color: #ffffff;
+  background: linear-gradient(135deg, #34d399, #16a34a) !important;
+  color: #ffffff !important;
   animation: subtlePulse 2s infinite;
 }
 
 .timeline-step.current .step-circle {
-  background: linear-gradient(135deg, #34d399, #16a34a);
-  color: #ffffff;
+  background: linear-gradient(135deg, #34d399, #16a34a) !important;
+  color: #ffffff !important;
   transform: scale(1.1);
 }
 
+/* Thêm vào cuối phần Timeline Styles */
+.timeline-step.canceled .step-circle {
+  background: #dc3545 !important;
+  /* Màu đỏ cho trạng thái Đã hủy */
+  color: #ffffff !important;
+  /* Màu trắng cho icon */
+  transform: scale(1.1);
+  /* Phóng to nhẹ như current */
+  animation: subtlePulse 2s infinite;
+  /* Hiệu ứng nhấp nháy */
+}
+
+.timeline-step.canceled .step-circle i {
+  color: #ffffff !important;
+  /* Đảm bảo icon trắng trên nền đỏ */
+}
+
 .timeline-step .step-circle {
-  background: #6c757d;
-  color: #e9ecef;
+  background: #6c757d !important;
+  color: #e9ecef !important;
   border: 2px solid #e5e7eb;
 }
+
 
 .step-content {
   padding: 0 0.5rem;
@@ -656,6 +591,9 @@ export default HoaDonChiTiet;
 
 /* Glass Effects */
 .glass-card {
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(52, 211, 153, 0.1);
+  border-radius: 12px;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   flex: 1;
   display: flex;
@@ -910,7 +848,7 @@ export default HoaDonChiTiet;
 }
 
 .summary-header {
-  display: group flex;
+  display: flex;
   align-items: center;
   gap: 1rem;
   padding-bottom: 1rem;
@@ -1356,10 +1294,10 @@ export default HoaDonChiTiet;
 
 /* Responsive Design */
 @media (max-width: 992px) {
+
   .flex-child.flex-history,
   .flex-child.flex-summary {
     flex: 1 1 100%;
-    min-width: unset;
   }
 
   .col-lg-6 {
