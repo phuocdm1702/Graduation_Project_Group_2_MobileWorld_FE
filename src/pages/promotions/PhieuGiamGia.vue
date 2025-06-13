@@ -185,7 +185,9 @@
             </template>
             <template #value="{ item }">
               <div class="amount-cell">
-                <div class="total-amount">{{ formatPrice(item.value) }}</div>
+                <div class="total-amount">
+                  {{ item.type === 'Phần trăm' ? `${item.value}%` : formatPrice(item.value) }}
+                </div>
                 <div class="discount-info" v-if="item.minOrder > 0">
                   <small class="text-muted"
                     >Đơn tối thiểu: {{ formatPrice(item.minOrder) }}</small
@@ -375,7 +377,7 @@ import {
   searchVouchers,
   filterVouchers,
   updateVoucherStatus,
-} from "./usePGG";
+} from "../../store/modules/promotions/phieuGiamGia";
 
 export default {
   name: "VoucherManagement",
@@ -1059,7 +1061,7 @@ export default {
 .status-badge {
   padding: 0.25rem 0.75rem;
   border-radius: 1rem;
-  width: 130px;
+  width: 140px;
   display: flex;
   justify-content: center;
   font-size: 0.75rem;
