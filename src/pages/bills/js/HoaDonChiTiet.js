@@ -342,10 +342,11 @@ export default {
       notificationModal.value.openModal();
     };
 
-    const printInvoice = () => {
-      toastNotification.value.addToast({
-        type: 'success',
-        message: 'Hóa đơn đang được in...',
+    const printInvoice = async () => {
+      const result = await hoaDonStore.printInvoice(invoiceId.value);
+      toastNotification.value?.addToast({
+        type: result.success ? 'success' : 'error',
+        message: result.message,
         duration: 3000,
       });
     };

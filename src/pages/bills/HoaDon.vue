@@ -250,7 +250,7 @@
                 <button class="btn btn-sm btn-table" @click="viewInvoice(item)" title="Xem chi tiết">
                   <i class="bi bi-eye-fill"></i>
                 </button>
-                <button class="btn btn-sm btn-table" @click="editInvoice(item)" title="Xuất Hóa Đơn">
+                <button class="btn btn-sm btn-table" @click="printInvoice(item)" title="Xuất Hóa Đơn">
                   <i class="bi bi-printer-fill"></i>
                 </button>
                 <button class="btn btn-sm btn-table" @click="confirmDeleteInvoice(item)" title="Tải QR">
@@ -307,7 +307,7 @@
               <button class="btn btn-sm btn-table" @click="viewInvoice(invoice)">
                 <i class="bi bi-eye me-1"></i> Xem
               </button>
-              <button class="btn btn-sm btn-table" @click="editInvoice(invoice)">
+              <button class="btn btn-sm btn-table" @click="printInvoice(invoice)">
                 <i class="bi bi-printer-fill"></i> Xuất HD
               </button>
               <button class="btn btn-sm btn-table" @click="confirmDeleteInvoice(invoice)">
