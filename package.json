@@ -15,14 +15,11 @@
     "bootstrap": "^5.3.6",
     "bootstrap-icons": "^1.13.1",
     "chart.js": "^4.4.9",
-    "jsqr": "^1.4.0",
     "lodash": "^4.17.21",
     "pinia": "^3.0.2",
-    "qrcode": "^1.5.4",
     "qrcode.vue": "^3.6.0",
     "vue": "^3.5.13",
-    "vue-router": "^4.5.1",
-    "vuex": "^4.0.2"
+    "vue-router": "^4.5.1"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^5.2.3",
