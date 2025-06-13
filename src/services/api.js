@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 export const apiService = axios.create({
-    baseURL: 'http://localhost:8080/api', // Kiểm tra port
+    baseURL: 'http://localhost:8080', // Kiểm tra port
     headers: {
         'Content-Type': 'application/json',
     },
