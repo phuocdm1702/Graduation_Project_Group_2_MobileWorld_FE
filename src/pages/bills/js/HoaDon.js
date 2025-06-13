@@ -6,8 +6,10 @@ import NotificationModal from '@/components/common/NotificationModal.vue';
 import ToastNotification from '@/components/common/ToastNotification.vue';
 import HeaderCard from '@/components/common/HeaderCard.vue';
 import FilterTableSection from '@/components/common/FilterTableSection.vue';
+import jsQR from 'jsqr';
+import QRCode from 'qrcode';
 
-// Hàm debounce để trì hoãn tìm kiếm
+// Hàm debounce
 const debounce = (func, delay) => {
   let timeoutId;
   return (...args) => {
@@ -29,15 +31,26 @@ export const invoiceManagementLogic = {
     const router = useRouter();
     const hoaDonStore = useHoaDonStore();
 
+    // State cho QR scanner
+    const qrError = ref('');
+    const qrMessage = ref('');
+    const videoElement = ref(null);
+    const canvasElement = ref(null);
+    const stream = ref(null);
+    const highlightedInvoiceId = ref(null); // Hóa đơn vừa quét
+    let scanning = false;
+    let lastScanTime = ref(0); // Thời gian lần quét cuối
+    const scanInterval = ref(null); // Interval để kiểm soát tần suất quét
+
     // State
     const keyword = ref('');
-    const rangeMin = ref(null); // Giá trị ban đầu là null để tránh lọc sai
-    const rangeMax = ref(null); // Giá trị ban đầu là null để tránh lọc sai
+    const rangeMin = ref(null);
+    const rangeMax = ref(null);
     const startDate = ref('');
     const endDate = ref('');
     const viewMode = ref('table');
     const currentPage = ref(1);
-    const itemsPerPage = ref(99999999); // Lấy toàn bộ dữ liệu ban đầu
+    const itemsPerPage = ref(99999999);
     const activeTab = ref('all');
 
     // Notification state
@@ -56,7 +69,7 @@ export const invoiceManagementLogic = {
         text: '#',
         formatter: (_, __, index) => {
           const startIndex = (currentPage.value - 1) * itemsPerPage.value;
-          return startIndex + index + 1; // Tính STT dựa trên vị trí toàn cục
+          return startIndex + index + 1;
         },
       },
       { value: 'ma', text: 'Mã' },
@@ -66,21 +79,11 @@ export const invoiceManagementLogic = {
         formatter: (value, item) => item?.maNhanVien || 'N/A',
       },
       { value: 'tenKhachHang', text: 'Khách hàng' },
-      // { value: 'soDienThoaiKhachHang', text: 'SDT' },
       {
         value: 'tongTienSauGiam',
         text: 'Tổng giá trị',
         formatter: (value) => (value ? `${value.toLocaleString()} VND` : '0 VND'),
       },
-      // {
-      //   value: 'idPhieuGiamGia.phanTramGiamGia',
-      //   text: 'Tiền giảm',
-      //   formatter: (phanTramGiamGia, item) => {
-      //     if (!phanTramGiamGia || !item?.tongTien) return '0 VND';
-      //     const giamGia = Math.round((item.tongTien * phanTramGiamGia) / 100 / 1000) * 1000;
-      //     return `(${phanTramGiamGia}%) ~ ${giamGia.toLocaleString()}đ`;
-      //   },
-      // },
       {
         value: 'phiVanChuyen',
         text: 'Phí',
@@ -104,13 +107,12 @@ export const invoiceManagementLogic = {
       },
     ]);
 
-    // Lấy dữ liệu từ Pinia store
+    // Computed properties
     const invoices = computed(() => hoaDonStore.getInvoices);
     const isLoading = computed(() => hoaDonStore.getIsLoading);
     const error = computed(() => hoaDonStore.getError);
     const totalElements = computed(() => hoaDonStore.getTotalElements);
 
-    // Computed properties cho khoảng giá
     const minInvoiceTotal = computed(() => {
       return invoices.value.length
         ? Math.min(...invoices.value.map((inv) => inv.tongTienSauGiam || 0))
@@ -126,7 +128,7 @@ export const invoiceManagementLogic = {
     const sliderRangeStyle = computed(() => {
       const min = minInvoiceTotal.value;
       const max = maxInvoiceTotal.value;
-      const range = max - min || 1; // Tránh chia cho 0
+      const range = max - min || 1;
       const left = ((rangeMin.value - min) / range) * 100;
       const width = ((rangeMax.value - rangeMin.value) / range) * 100;
       return {
@@ -135,33 +137,15 @@ export const invoiceManagementLogic = {
       };
     });
 
-    // Khởi tạo giá trị khi component được mount
-    onMounted(() => {
-      hoaDonStore.fetchInvoices({ page: 0, size: itemsPerPage.value });
-    });
-
-    // Cập nhật rangeMin và rangeMax khi dữ liệu invoices thay đổi
-    watch(invoices, (newInvoices) => {
-      if (newInvoices.length > 0) {
-        const min = Math.min(...newInvoices.map((inv) => inv.tongTienSauGiam || 0));
-        const max = Math.max(...newInvoices.map((inv) => inv.tongTienSauGiam || 0));
-        if (rangeMin.value === null || rangeMin.value < min) rangeMin.value = min;
-        if (rangeMax.value === null || rangeMax.value > max) rangeMax.value = max;
-      }
-    }, { immediate: true });
-
-    // Computed properties cho lọc và phân trang
     const filteredInvoices = computed(() => {
       let filtered = invoices.value;
 
-      // Lọc theo tab (loại đơn)
       if (activeTab.value === 'in-store') {
         filtered = filtered.filter((inv) => inv.loaiDon?.toLowerCase() === 'trực tiếp');
       } else if (activeTab.value === 'online') {
         filtered = filtered.filter((inv) => inv.loaiDon?.toLowerCase() === 'online');
       }
 
-      // Lọc theo từ khóa
       if (keyword.value) {
         const query = keyword.value.toLowerCase();
         filtered = filtered.filter(
@@ -173,7 +157,6 @@ export const invoiceManagementLogic = {
         );
       }
 
-      // Lọc theo khoảng giá
       if (rangeMin.value !== null) {
         filtered = filtered.filter((inv) => (inv.tongTienSauGiam || 0) >= rangeMin.value);
       }
@@ -181,24 +164,23 @@ export const invoiceManagementLogic = {
         filtered = filtered.filter((inv) => (inv.tongTienSauGiam || 0) <= rangeMax.value);
       }
 
-      // Lọc theo ngày
       if (startDate.value) {
         filtered = filtered.filter((inv) => {
-          const invDate = new Date(inv.ngayTao).toLocaleDateString('vi-VN', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric',
-          }).split('/').reverse().join('-');
+          const invDate = new Date(inv.ngayTao)
+            .toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' })
+            .split('/')
+            .reverse()
+            .join('-');
           return new Date(invDate) >= new Date(startDate.value);
         });
       }
       if (endDate.value) {
         filtered = filtered.filter((inv) => {
-          const invDate = new Date(inv.ngayTao).toLocaleDateString('vi-VN', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric',
-          }).split('/').reverse().join('-');
+          const invDate = new Date(inv.ngayTao)
+            .toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' })
+            .split('/')
+            .reverse()
+            .join('-');
           return new Date(invDate) <= new Date(endDate.value);
         });
       }
@@ -231,10 +213,7 @@ export const invoiceManagementLogic = {
     // Methods
     const formatPrice = (price) => {
       if (price === null || price === undefined) return '0 ₫';
-      return new Intl.NumberFormat('vi-VN', {
-        style: 'currency',
-        currency: 'VND',
-      }).format(price);
+      return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
     };
 
     const debouncedSearch = debounce((query) => {
@@ -251,6 +230,7 @@ export const invoiceManagementLogic = {
       endDate.value = '';
       activeTab.value = 'all';
       currentPage.value = 1;
+      highlightedInvoiceId.value = null;
 
       hoaDonStore.updateFilters({
         keyword: '',
@@ -296,19 +276,172 @@ export const invoiceManagementLogic = {
       });
     };
 
-    const scanQR = () => {
-      toastNotification.value?.addToast({
-        type: 'warning',
-        message: 'Chức năng quét QR đang được phát triển',
-        duration: 3000,
-      });
+    const scanQR = async () => {
+      try {
+        qrError.value = '';
+        qrMessage.value = 'Đang khởi động camera...';
+        scanning = true;
+
+        const modalElement = document.getElementById('qrScannerModal');
+        modalElement.classList.add('show');
+        modalElement.style.display = 'block';
+        document.body.classList.add('modal-open');
+        const backdrop = document.createElement('div');
+        backdrop.className = 'modal-backdrop fade show';
+        document.body.appendChild(backdrop);
+
+        videoElement.value = document.getElementById('qr-video');
+        canvasElement.value = document.getElementById('qr-canvas');
+
+        stream.value = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: 'environment' },
+        });
+
+        videoElement.value.srcObject = stream.value;
+
+        await new Promise((resolve) => {
+          videoElement.value.onloadedmetadata = () => {
+            videoElement.value.play();
+            qrMessage.value = 'Đặt mã QR trước camera để quét';
+            resolve();
+          };
+        });
+
+        // Bắt đầu quét với interval kiểm soát
+        startSmartScanning();
+      } catch (err) {
+        qrError.value = 'Không thể truy cập camera. Vui lòng kiểm tra quyền truy cập.';
+        qrMessage.value = '';
+        stopCamera();
+        toastNotification.value?.addToast({
+          type: 'error',
+          message: 'Lỗi khi truy cập camera: ' + err.message,
+          duration: 3000,
+        });
+      }
+    };
+
+    const startSmartScanning = () => {
+      if (!scanning || !videoElement.value || !canvasElement.value) return;
+
+      scanInterval.value = setInterval(() => {
+        if (Date.now() - lastScanTime.value > 500) { // Chỉ quét lại sau 500ms nếu không có mã QR
+          scanQRCode();
+        }
+      }, 100); // Kiểm tra mỗi 100ms
+    };
+
+    const scanQRCode = () => {
+      if (!scanning || !videoElement.value || !canvasElement.value) return;
+
+      if (videoElement.value.videoWidth === 0 || videoElement.value.videoHeight === 0) {
+        requestAnimationFrame(scanQRCode);
+        return;
+      }
+
+      const context = canvasElement.value.getContext('2d');
+      canvasElement.value.width = videoElement.value.videoWidth;
+      canvasElement.value.height = videoElement.value.videoHeight;
+
+      context.drawImage(videoElement.value, 0, 0, canvasElement.value.width, canvasElement.value.height);
+      const imageData = context.getImageData(0, 0, canvasElement.value.width, canvasElement.value.height);
+
+      const code = jsQR(imageData.data, imageData.width, imageData.height);
+
+      if (code) {
+        lastScanTime.value = Date.now(); // Cập nhật thời gian quét cuối
+        handleQRCode(code.data);
+      } else {
+        qrMessage.value = 'Đang tìm mã QR...';
+        requestAnimationFrame(scanQRCode); // Tiếp tục quét nếu chưa tìm thấy
+      }
+    };
+
+    const handleQRCode = async (qrData) => {
+      scanning = false;
+      stopCamera();
+
+      try {
+        const invoiceMa = qrData.trim(); // Giả định mã QR chứa ma
+        let invoice = invoices.value.find((inv) => inv.ma === invoiceMa);
+
+        if (invoice) {
+          keyword.value = invoice.ma;
+          currentPage.value = 1;
+          activeTab.value = invoice.loaiDon.toLowerCase() === 'trực tiếp' ? 'in-store' : 'online';
+          highlightedInvoiceId.value = invoice.id;
+
+          toastNotification.value?.addToast({
+            type: 'success',
+            message: `Đã tìm thấy hóa đơn ${invoice.ma}`,
+            duration: 3000,
+          });
+
+          setTimeout(() => {
+            highlightedInvoiceId.value = null;
+          }, 5000);
+        } else {
+          const result = await hoaDonStore.fetchInvoiceById(invoiceMa);
+          if (result.success) {
+            invoice = result.data;
+            keyword.value = invoice.ma;
+            currentPage.value = 1;
+            activeTab.value = invoice.loaiDon.toLowerCase() === 'trực tiếp' ? 'in-store' : 'online';
+            highlightedInvoiceId.value = invoice.id;
+
+            toastNotification.value?.addToast({
+              type: 'success',
+              message: `Đã tải hóa đơn ${invoice.ma}`,
+              duration: 3000,
+            });
+
+            setTimeout(() => {
+              highlightedInvoiceId.value = null;
+            }, 5000);
+          } else {
+            throw new Error(result.message);
+          }
+        }
+      } catch (err) {
+        toastNotification.value?.addToast({
+          type: 'error',
+          message: `Không tìm thấy hóa đơn hoặc lỗi: ${err.message}`,
+          duration: 3000,
+        });
+      }
+    };
+
+    const stopCamera = () => {
+      scanning = false;
+      if (stream.value) {
+        stream.value.getTracks().forEach((track) => track.stop());
+        stream.value = null;
+      }
+      if (scanInterval.value) {
+        clearInterval(scanInterval.value);
+        scanInterval.value = null;
+      }
+      qrError.value = '';
+      qrMessage.value = '';
+
+      const modalElement = document.getElementById('qrScannerModal');
+      if (modalElement) {
+        modalElement.classList.remove('show');
+        modalElement.style.display = 'none';
+        document.body.classList.remove('modal-open');
+        const backdrop = document.querySelector('.modal-backdrop');
+        if (backdrop) backdrop.remove();
+      }
+    };
+
+    const getRowClass = (item) => {
+      return item.id === highlightedInvoiceId.value ? 'highlighted-row' : '';
     };
 
     const viewInvoice = (invoice) => {
       router.push(`/hoaDon/${invoice.id}/detail`);
     };
 
-    // Cập nhật hàm printInvoice
     const printInvoice = async (invoice) => {
       const result = await hoaDonStore.printInvoice(invoice.id);
       toastNotification.value?.addToast({
@@ -318,12 +451,26 @@ export const invoiceManagementLogic = {
       });
     };
 
-    const downloadQrCode = (invoice) => {
-      toastNotification.value?.addToast({
-        type: 'info',
-        message: `Đang tải QR code cho hóa đơn ${invoice.ma}`,
-        duration: 3000,
-      });
+    const downloadQrCode = async (invoice) => {
+      try {
+        const qrData = invoice.ma; // Sử dụng ma thay vì id
+        const qrUrl = await QRCode.toDataURL(qrData);
+        const link = document.createElement('a');
+        link.href = qrUrl;
+        link.download = `QR_HoaDon_${invoice.ma}.png`;
+        link.click();
+        toastNotification.value?.addToast({
+          type: 'success',
+          message: `Đã tải QR code cho hóa đơn ${invoice.ma}`,
+          duration: 3000,
+        });
+      } catch (err) {
+        toastNotification.value?.addToast({
+          type: 'error',
+          message: `Lỗi khi tạo QR code: ${err.message}`,
+          duration: 3000,
+        });
+      }
     };
 
     const confirmDeleteInvoice = (invoice) => {
@@ -361,9 +508,11 @@ export const invoiceManagementLogic = {
     const setActiveTab = (tab) => {
       activeTab.value = tab;
       currentPage.value = 1;
+      highlightedInvoiceId.value = null;
       toastNotification.value?.addToast({
         type: 'info',
-        message: `Đã chuyển sang tab ${tab === 'all' ? 'Tất cả hóa đơn' : tab === 'in-store' ? 'Hóa đơn tại quầy' : 'Hóa đơn online'}`,
+        message: `Đã chuyển sang tab ${tab === 'all' ? 'Tất cả hóa đơn' : tab === 'in-store' ? 'Hóa đơn tại quầy' : 'Hóa đơn online'
+          }`,
         duration: 2000,
       });
     };
@@ -374,6 +523,7 @@ export const invoiceManagementLogic = {
       if (statusInvoices.length > 0) {
         const firstType = (statusInvoices[0].loaiDon || '').toLowerCase();
         activeTab.value = firstType === 'trực tiếp' ? 'in-store' : firstType === 'online' ? 'online' : 'all';
+        highlightedInvoiceId.value = null;
         toastNotification.value?.addToast({
           type: 'info',
           message: `Đã lọc theo trạng thái ${status}`,
@@ -430,6 +580,20 @@ export const invoiceManagementLogic = {
       }
     };
 
+    // Khởi tạo
+    onMounted(() => {
+      hoaDonStore.fetchInvoices({ page: 0, size: itemsPerPage.value });
+    });
+
+    watch(invoices, (newInvoices) => {
+      if (newInvoices.length > 0) {
+        const min = Math.min(...newInvoices.map((inv) => inv.tongTienSauGiam || 0));
+        const max = Math.max(...newInvoices.map((inv) => inv.tongTienSauGiam || 0));
+        if (rangeMin.value === null || rangeMin.value < min) rangeMin.value = min;
+        if (rangeMax.value === null || rangeMax.value > max) rangeMax.value = max;
+      }
+    }, { immediate: true });
+
     return {
       keyword,
       rangeMin,
@@ -460,6 +624,7 @@ export const invoiceManagementLogic = {
       updateRangeMax,
       exportExcel,
       scanQR,
+      stopCamera,
       viewInvoice,
       printInvoice,
       downloadQrCode,
@@ -472,6 +637,7 @@ export const invoiceManagementLogic = {
       getStatusIcon,
       getTypeBadgeClass,
       getTypeIcon,
+      getRowClass,
       notificationType,
       notificationMessage,
       isNotificationLoading,
@@ -479,6 +645,9 @@ export const invoiceManagementLogic = {
       notificationOnCancel,
       notificationModal,
       toastNotification,
+      qrError,
+      qrMessage,
+      highlightedInvoiceId,
     };
   },
 };

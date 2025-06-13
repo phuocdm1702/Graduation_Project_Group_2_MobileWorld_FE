@@ -1,22 +1,23 @@
 <template>
   <div class="container-fluid py-4 invoice-management">
-    <HeaderCard title="Quản Lý Hóa Đơn" badgeText="Hệ Thống POS" badgeClass="gradient-custom-teal"
+    <HeaderCard title="Quản lý Hóa đơn" badgeText="Hệ thống POS" badgeClass="gradient-custom-teal"
       :backgroundOpacity="0.95" />
 
     <!-- Filter Section -->
-    <FilterTableSection title="Bộ Lọc Tìm Kiếm" icon="bi bi-funnel">
+    <FilterTableSection title="Bộ lọc Tìm kiếm" icon="bi bi-funnel">
       <div class="m-3">
-        <!-- Single Row for All Filters -->
+        <!-- Single Row -->
         <div class="row g-4 align-items-end">
           <!-- Search Input -->
           <div class="col-lg-4 col-md-6">
-            <div class="search-group">
-              <label class="filter-label">Tìm kiếm</label>
-              <div class="search-input-wrapper">
-                <i class="bi bi-search search-icon"></i>
-                <input type="text" class="form-control search-input" placeholder="Mã hóa đơn, khách hàng, SĐT..."
-                  :value="keyword" @input="debouncedSearch($event.target.value)" />
-              </div>
+            <div class="filter-label">Tìm kiếm
+              <label class="search-group">
+                <div class="search-input-wrapper">
+                  <i class="bi bi-search search-icon"></i>
+                  <input type="text" class="form-control search-input" placeholder="Mã hóa đơn, khách hàng, SĐT..."
+                    :value="keyword" @input="debouncedSearch($event.target.value)" />
+                </div>
+              </label>
             </div>
           </div>
 
@@ -88,12 +89,40 @@
             </button>
             <router-link to="/create-hoa-don" class="btn btn-action">
               <i class="bi bi-plus-circle me-2"></i>
-              Tạo Hóa Đơn
+              Tạo Hóa đơn
             </router-link>
           </div>
         </div>
       </div>
     </FilterTableSection>
+
+    <!-- QR Scanner Modal -->
+    <div class="modal fade" id="qrScannerModal" tabindex="-1" aria-labelledby="qrScannerModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered modal-qr">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="qrScannerModalLabel">Quét Mã QR Hóa đơn</h5>
+            <button type="button" class="btn-close" @click="stopCamera"></button>
+          </div>
+          <div class="modal-body">
+            <div class="qr-scanner-container">
+              <div class="qr-overlay">
+                <video id="qr-video" width="100%" height="auto" autoplay playsinline></video>
+                <canvas id="qr-canvas" style="display: none;"></canvas>
+                <div class="qr-scanner-border"></div>
+              </div>
+              <div class="qr-feedback">
+                <p v-if="qrError" class="text-danger qr-feedback-error">{{ qrError }}</p>
+                <p v-if="qrMessage && !qrError" class="text-info qr-feedback-message">{{ qrMessage }}</p>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" @click="stopCamera">Đóng</button>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <!-- Tab Navigation -->
     <div class="tab-section mb-4">
@@ -120,7 +149,7 @@
     </div>
 
     <!-- Status Filter Section -->
-    <FilterTableSection title="Bộ Lọc Trạng Thái Hóa Đơn" icon="bi bi-funnel">
+    <FilterTableSection title="Bộ lọc Trạng thái Hóa đơn" icon="bi bi-funnel">
       <div class="status-badge d-flex gap-3 m-3" style="width: max-content;">
         <button type="button" class="btn btn-outline-primary position-relative"
           @click="setActiveTabByStatus('Chờ xác nhận')">
@@ -170,7 +199,7 @@
     </FilterTableSection>
 
     <!-- Table Section -->
-    <FilterTableSection title="Danh Sách Hóa Đơn" icon="bi bi-table">
+    <FilterTableSection title="Danh sách Hóa đơn" icon="bi bi-table">
       <div class="table-header">
         <div class="table-title-wrapper">
           <span class="table-count">{{ filteredInvoices.length }} hóa đơn</span>
@@ -194,8 +223,8 @@
       <div class="table-body">
         <!-- Table View -->
         <div v-if="viewMode === 'table'">
-          <DataTable title="" :headers="headers" :data="filteredInvoices"
-            :pageSizeOptions="[5, 10, 15, 20, 30, 40, 50]">
+          <DataTable title="" :headers="headers" :data="filteredInvoices" :pageSizeOptions="[5, 10, 15, 20, 30, 40, 50]"
+            :rowClass="getRowClass">
             <template #index="{ index }">
               {{ index + 1 }}
             </template>
@@ -205,7 +234,6 @@
                 <small class="code-date">{{ item.ngayTao }}</small>
               </div>
             </template>
-
             <template #maNhanVien="{ item }">
               <div class="employee-cell">
                 <div class="employee-avatar">
@@ -214,14 +242,12 @@
                 <span class="employee-name">{{ item.maNhanVien }}</span>
               </div>
             </template>
-
             <template #tenKhachHang="{ item }">
               <div class="customer-cell">
                 <div class="customer-name">{{ item.tenKhachHang }}</div>
                 <div class="customer-phone">{{ item.soDienThoaiKhachHang }}</div>
               </div>
             </template>
-
             <template #tongTienSauGiam="{ item }">
               <div class="amount-cell">
                 <div class="total-amount">{{ formatPrice(item.tongTienSauGiam) }}</div>
@@ -230,30 +256,27 @@
                 </div>
               </div>
             </template>
-
             <template #loaiDon="{ item }">
               <span class="type-badge" :class="getTypeBadgeClass(item.loaiDon)">
                 <i :class="getTypeIcon(item.loaiDon)" class="me-1"></i>
                 {{ item.loaiDon }}
               </span>
             </template>
-
             <template #trangThaiFormatted="{ item }">
               <span class="status-badge" :class="getStatusBadgeClass(item.trangThaiFormatted)">
                 <i :class="getStatusIcon(item.trangThaiFormatted)" class="me-1"></i>
                 {{ item.trangThaiFormatted }}
               </span>
             </template>
-
             <template #actions="{ item }">
               <div class="action-buttons-cell">
                 <button class="btn btn-sm btn-table" @click="viewInvoice(item)" title="Xem chi tiết">
                   <i class="bi bi-eye-fill"></i>
                 </button>
-                <button class="btn btn-sm btn-table" @click="printInvoice(item)" title="Xuất Hóa Đơn">
+                <button class="btn btn-sm btn-table" @click="printInvoice(item)" title="Xuất Hóa đơn">
                   <i class="bi bi-printer-fill"></i>
                 </button>
-                <button class="btn btn-sm btn-table" @click="confirmDeleteInvoice(item)" title="Tải QR">
+                <button class="btn btn-sm btn-table" @click="downloadQrCode(item)" title="Tải QR">
                   <i class="bi bi-qr-code"></i>
                 </button>
               </div>
@@ -270,13 +293,11 @@
                 {{ invoice.trangThaiFormatted }}
               </span>
             </div>
-
             <div class="invoice-card-body">
               <div class="customer-info">
                 <div class="customer-name">{{ invoice.tenKhachHang }}</div>
                 <div class="customer-phone">{{ invoice.soDienThoaiKhachHang }}</div>
               </div>
-
               <div class="invoice-details">
                 <div class="detail-row">
                   <span class="detail-label">Nhân viên:</span>
@@ -293,7 +314,6 @@
                   <span class="detail-value">{{ invoice.ngayTao }}</span>
                 </div>
               </div>
-
               <div class="invoice-amounts">
                 <div class="total-amount">{{ formatPrice(invoice.tongTienSauGiam) }}</div>
                 <div class="amount-details">
@@ -302,7 +322,6 @@
                 </div>
               </div>
             </div>
-
             <div class="invoice-card-actions">
               <button class="btn btn-sm btn-table" @click="viewInvoice(invoice)">
                 <i class="bi bi-eye me-1"></i> Xem
@@ -310,8 +329,8 @@
               <button class="btn btn-sm btn-table" @click="printInvoice(invoice)">
                 <i class="bi bi-printer-fill"></i> Xuất HD
               </button>
-              <button class="btn btn-sm btn-table" @click="confirmDeleteInvoice(invoice)">
-                <i class="bi bi-qr-code"></i> Quét HD
+              <button class="btn btn-sm btn-table" @click="downloadQrCode(invoice)">
+                <i class="bi bi-qr-code"></i> Tải QR
               </button>
             </div>
           </div>
@@ -356,7 +375,7 @@ export default {
   components: invoiceManagementLogic.components,
   setup() {
     return invoiceManagementLogic.setup();
-  }
+  },
 };
 </script>
 
@@ -410,9 +429,25 @@ export default {
   }
 }
 
+@keyframes highlightFade {
+  from {
+    background-color: rgba(52, 211, 153, 0.4);
+  }
+
+  to {
+    background-color: rgba(52, 211, 153, 0.2);
+  }
+}
+
 /* Gradient Definitions */
 .gradient-custom-teal {
   background: #34d399;
+}
+
+/* Highlighted Row */
+.highlighted-row {
+  background-color: rgba(52, 211, 153, 0.2);
+  animation: highlightFade 2s ease-out;
 }
 
 /* Base Styles */
@@ -529,7 +564,7 @@ export default {
   color: #16a34a !important;
 }
 
-/* Existing styles retained */
+/* Existing styles */
 .page-header {
   animation: fadeInUp 0.4s ease-out 0.1s both;
 }
@@ -1133,5 +1168,167 @@ export default {
 
 .animate__zoomIn {
   animation-name: zoomIn;
+}
+
+/* Modal QR Scanner */
+.modal-qr {
+  max-width: 500px;
+}
+
+.modal-content {
+  border-radius: 12px;
+  border: 1px solid rgba(52, 211, 153, 0.2);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.modal-header {
+  background: linear-gradient(135deg, #34d399, #16a34a);
+  color: white;
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
+  padding: 1rem;
+}
+
+.modal-title {
+  font-weight: 600;
+  font-size: 1.25rem;
+}
+
+.btn-close {
+  color: white;
+  opacity: 0.8;
+  transition: opacity 0.2s ease;
+}
+
+.btn-close:hover {
+  opacity: 1;
+}
+
+.modal-body {
+  padding: 1.5rem;
+}
+
+.qr-scanner-container {
+  position: relative;
+  width: 100%;
+  max-height: 400px;
+  overflow: hidden;
+  border-radius: 8px;
+  background: #f8f9fa;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.qr-overlay {
+  position: relative;
+  width: 100%;
+  max-width: 400px;
+  aspect-ratio: 1;
+  overflow: hidden;
+  border-radius: 8px;
+}
+
+#qr-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+.qr-scanner-border {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  right: 10px;
+  bottom: 10px;
+  border: 2px solid #34d399;
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgba(52, 211, 153, 0.3);
+  pointer-events: none;
+  animation: gentleGlow 1.5s infinite;
+}
+
+.qr-feedback {
+  margin-top: 1rem;
+  text-align: center;
+  min-height: 1.5rem;
+}
+
+.qr-feedback-error {
+  font-weight: 500;
+  animation: fadeIn 0.3s ease-out;
+}
+
+.qr-feedback-message {
+  font-weight: 500;
+  color: #34d399;
+  animation: fadeIn 0.3s ease-out;
+}
+
+.modal-footer {
+  padding: 1rem;
+  border-top: 1px solid rgba(52, 211, 153, 0.1);
+  justify-content: center;
+}
+
+.btn-secondary {
+  background: #6c757d;
+  color: white;
+  border: none;
+  padding: 0.5rem 1.5rem;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.btn-secondary:hover {
+  background: #5c636a;
+  color: white;
+  box-shadow: 0 0 10px rgba(108, 117, 125, 0.3);
+}
+
+/* Animation */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes gentleGlow {
+
+  0%,
+  100% {
+    box-shadow: 0 0 5px rgba(52, 211, 153, 0.3);
+  }
+
+  50% {
+    box-shadow: 0 0 12px rgba(52, 211, 153, 0.5);
+  }
+}
+
+/* Responsive */
+@media (max-width: 576px) {
+  .modal-qr {
+    max-width: 90%;
+  }
+
+  .modal-body {
+    padding: 1rem;
+  }
+
+  .qr-overlay {
+    max-width: 100%;
+    aspect-ratio: 1;
+  }
+
+  .modal-footer .btn-secondary {
+    width: 100%;
+  }
 }
 </style>

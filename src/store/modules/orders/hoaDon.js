@@ -5,7 +5,7 @@ import { apiService } from '@/services/api';
 export const useHoaDonStore = defineStore('hoaDon', {
     state: () => ({
         invoices: [],
-        invoiceDetail: null, // Thêm state để lưu chi tiết hóa đơn
+        invoiceDetail: null,
         isLoading: false,
         error: null,
         page: 0,
@@ -22,6 +22,7 @@ export const useHoaDonStore = defineStore('hoaDon', {
     }),
 
     actions: {
+        // GET API view HoaDon
         async fetchInvoices({ page = this.page, size = this.size } = {}) {
             this.isLoading = true;
             this.page = page;
@@ -63,7 +64,7 @@ export const useHoaDonStore = defineStore('hoaDon', {
             }
         },
 
-        // Thêm action để lấy chi tiết hóa đơn
+        // GET API Detail
         async fetchInvoiceDetail(id) {
             this.isLoading = true;
             this.error = null;
@@ -78,7 +79,7 @@ export const useHoaDonStore = defineStore('hoaDon', {
                     ngayTao: this.formatDate(response.data.ngayTao),
                     idKhachHang: {
                         ten: response.data.tenKhachHang,
-                        email: response.data.email || 'N/A', // Nếu backend không trả về email, có thể thêm vào sau
+                        email: response.data.email || 'N/A',
                     },
                     soDienThoaiKhachHang: response.data.soDienThoaiKhachHang,
                     diaChiKhachHang: response.data.diaChiKhachHang,
@@ -91,8 +92,8 @@ export const useHoaDonStore = defineStore('hoaDon', {
                         name: product.tenSanPham,
                         imei: product.imel,
                         price: product.giaBan,
-                        quantity: 1, // Backend không trả về quantity, giả sử mặc định là 1
-                        image: '/assets/placeholder-product.png', // Thêm placeholder
+                        quantity: 1,
+                        image: '/assets/placeholder-product.png',
                     })),
                     payments: response.data.thanhToanInfos.map(payment => ({
                         id: payment.maHinhThucThanhToan,
@@ -102,7 +103,7 @@ export const useHoaDonStore = defineStore('hoaDon', {
                         note: 'N/A',
                         confirmedBy: response.data.maNhanVien,
                         status: 'completed',
-                        timestamp: this.formatDate(response.data.ngayTao), // Giả sử dùng ngayTao
+                        timestamp: this.formatDate(response.data.ngayTao),
                     })),
                     history: response.data.lichSuHoaDonInfos.map(history => ({
                         id: history.ma,
@@ -122,26 +123,51 @@ export const useHoaDonStore = defineStore('hoaDon', {
             }
         },
 
+        // GET API by ID
+        async fetchInvoiceById(ma) {
+            this.isLoading = true;
+            this.error = null;
+            try {
+                const response = await apiService.get(`/api/hoa-don/QR-by-ma/${ma}`);
+                const invoice = {
+                    id: response.data.id,
+                    ma: response.data.ma,
+                    maNhanVien: response.data.maNhanVien,
+                    tenKhachHang: response.data.tenKhachHang,
+                    soDienThoaiKhachHang: response.data.soDienThoaiKhachHang,
+                    tongTienSauGiam: response.data.tongTienSauGiam,
+                    phiVanChuyen: response.data.phiVanChuyen,
+                    ngayTao: this.formatDate(response.data.ngayTao),
+                    loaiDon: response.data.loaiDon,
+                    trangThaiFormatted: this.mapStatus(response.data.trangThai),
+                };
+                this.invoices = [invoice, ...this.invoices.filter((inv) => inv.ma !== ma)];
+                this.totalElements = this.invoices.length;
+                return { success: true, data: invoice };
+            } catch (error) {
+                this.error = error.message || 'Không thể tải hóa đơn';
+                return { success: false, message: this.error };
+            } finally {
+                this.isLoading = false;
+            }
+        },
+
+        // GET API down HoaDon
         async printInvoice(id) {
             this.isLoading = true;
             this.error = null;
 
             try {
                 const response = await apiService.get(`/api/hoa-don/${id}/pdf`, {
-                    responseType: 'blob', // Để nhận file PDF dưới dạng blob
+                    responseType: 'blob',
                 });
 
-                // Tạo URL tạm thời cho file PDF
                 const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
-
-                // Tạo link tải tự động
                 const link = document.createElement('a');
                 link.href = url;
-                link.setAttribute('download', `hoa_don_${id}.pdf`); // Tên file tải về
+                link.setAttribute('download', `hoa_don_${id}.pdf`);
                 document.body.appendChild(link);
                 link.click();
-
-                // Dọn dẹp
                 document.body.removeChild(link);
                 window.URL.revokeObjectURL(url);
 
