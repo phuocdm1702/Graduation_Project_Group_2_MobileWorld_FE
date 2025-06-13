@@ -308,10 +308,12 @@ export const invoiceManagementLogic = {
       router.push(`/hoaDon/${invoice.id}/detail`);
     };
 
-    const printInvoice = (invoice) => {
+    // Cập nhật hàm printInvoice
+    const printInvoice = async (invoice) => {
+      const result = await hoaDonStore.printInvoice(invoice.id);
       toastNotification.value?.addToast({
-        type: 'info',
-        message: `Đang in hóa đơn ${invoice.ma}`,
+        type: result.success ? 'success' : 'error',
+        message: result.message,
         duration: 3000,
       });
     };

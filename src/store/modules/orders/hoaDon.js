@@ -122,6 +122,39 @@ export const useHoaDonStore = defineStore('hoaDon', {
             }
         },
 
+        async printInvoice(id) {
+            this.isLoading = true;
+            this.error = null;
+
+            try {
+                const response = await apiService.get(`/api/hoa-don/${id}/pdf`, {
+                    responseType: 'blob', // Để nhận file PDF dưới dạng blob
+                });
+
+                // Tạo URL tạm thời cho file PDF
+                const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
+
+                // Tạo link tải tự động
+                const link = document.createElement('a');
+                link.href = url;
+                link.setAttribute('download', `hoa_don_${id}.pdf`); // Tên file tải về
+                document.body.appendChild(link);
+                link.click();
+
+                // Dọn dẹp
+                document.body.removeChild(link);
+                window.URL.revokeObjectURL(url);
+
+                return { success: true, message: `Đã tải hóa đơn ${id} thành công` };
+            } catch (error) {
+                this.error = error.message || 'Không thể tải file PDF hóa đơn';
+                console.error('Lỗi khi gọi API in hóa đơn:', error);
+                return { success: false, message: this.error };
+            } finally {
+                this.isLoading = false;
+            }
+        },
+
         formatDate(dateString) {
             const date = new Date(dateString);
             const time = date.toLocaleTimeString('en-GB', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
