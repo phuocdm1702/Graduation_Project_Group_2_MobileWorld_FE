@@ -7,7 +7,8 @@ const AuthLayout = () => import('@/layouts/AuthLayout.vue');
 
 // Lazy-load pages
 const TrangChu = () => import('@/pages/home/TrangChu.vue');
-const ProductList = () => import('@/pages/products/SanPham.vue');
+const SanPham = () => import('@/pages/products/SanPham.vue');
+const ThemChiTietSanPham = () => import('@/pages/products/ThemChiTietSanPham.vue');
 const HoaDon = () => import('@/pages/bills/HoaDon.vue');
 const HoaDonChiTiet = () => import('@/pages/bills/HoaDonChiTiet.vue');
 const PhieuGiamGia = () => import('@/pages/promotions/PhieuGiamGia.vue');
@@ -30,10 +31,11 @@ const routes = [
     meta: { requiresAuth: true },
     children: [
       { path: '/trangChu', component: TrangChu },
-      { path: '/products/san-pham/list', component: ProductList },
+      { path: '/sanPham', component: SanPham },
+      { path: '/themChiTietSanPham', component: ThemChiTietSanPham },
       { path: '/banHang', component: banHang },
       { path: '/hoaDon', component: HoaDon },
-      { path: '/hoaDon/:id', component: HoaDonChiTiet },
+      { path: '/hoaDon/:id/detail', component: HoaDonChiTiet },
       { path: '/phieuGiamGia', component: PhieuGiamGia },
       { path: '/phieuGiamGia/form/:id?', component: PhieuGiamGiaForm },
       { path: '/dotGiamGia', component: DotGiamGia },
