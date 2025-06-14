@@ -1,10 +1,23 @@
-import { defineComponent, ref, computed } from 'vue';
+import { defineComponent, ref, computed, onMounted, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import DataTable from '@/components/common/DataTable.vue';
 import NotificationModal from '@/components/common/NotificationModal.vue';
 import ToastNotification from '@/components/common/ToastNotification.vue';
 import HeaderCard from '@/components/common/HeaderCard.vue';
 import FilterTableSection from '@/components/common/FilterTableSection.vue';
+
+// Import API services
+import {
+  fetchProducts,
+  searchProducts,
+  searchProductsWithFilters,
+  deleteProduct,
+  getProductDetail,
+  fetchNhaSanXuat,
+  fetchHeDieuHanh,
+  fetchCongNgheManHinh,
+  fetchPin
+} from '@/store/modules/products/sanPham'; 
 
 // Debounce utility
 const debounce = (func, delay) => {
@@ -30,7 +43,9 @@ export default {
     const notificationModal = ref(null);
     const viewMode = ref('table');
     const currentPage = ref(1);
-    const itemsPerPage = ref(5);
+    const itemsPerPage = ref(99999999);
+    const isLoading = ref(false);
+    const totalElements = ref(0);
 
     // Notification state
     const notificationType = ref('confirm');
@@ -49,82 +64,12 @@ export default {
       stockStatus: '',
     });
 
-    // Sample data
-    const products = ref([
-      {
-        id: 1,
-        tenSanPham: 'iPhone 14 Pro',
-        nhaSanXuat: 'Apple',
-        idNhaSanXuat: 1,
-        heDieuHanh: 'iOS',
-        phienBan: '16',
-        idHeDieuHanh: 1,
-        congNgheManHinh: 'OLED',
-        idCongNgheManHinh: 1,
-        tenCpu: 'A16 Bionic',
-        dungLuongPin: '3200 mAh',
-        idPin: 1,
-        imeiCount: 50,
-        minPrice: 25000000,
-        maxPrice: 30000000,
-      },
-      {
-        id: 2,
-        tenSanPham: 'Galaxy S23 Ultra',
-        nhaSanXuat: 'Samsung',
-        idNhaSanXuat: 2,
-        heDieuHanh: 'Android',
-        phienBan: '13',
-        idHeDieuHanh: 2,
-        congNgheManHinh: 'AMOLED',
-        idCongNgheManHinh: 2,
-        tenCpu: 'Snapdragon 8 Gen 2',
-        dungLuongPin: '5000 mAh',
-        idPin: 2,
-        imeiCount: 0,
-        minPrice: 20000000,
-        maxPrice: 25000000,
-      },
-      {
-        id: 3,
-        tenSanPham: 'Pixel 7 Pro',
-        nhaSanXuat: 'Google',
-        idNhaSanXuat: 3,
-        heDieuHanh: 'Android',
-        phienBan: '13',
-        idHeDieuHanh: 2,
-        congNgheManHinh: 'AMOLED',
-        idCongNgheManHinh: 2,
-        tenCpu: 'Tensor G2',
-        dungLuongPin: '5000 mAh',
-        idPin: 2,
-        imeiCount: 20,
-        minPrice: 18000000,
-        maxPrice: 22000000,
-      },
-    ]);
-
-    // Filter options
-    const nhaSanXuatOptions = ref([
-      { id: 1, nhaSanXuat: 'Apple' },
-      { id: 2, nhaSanXuat: 'Samsung' },
-      { id: 3, nhaSanXuat: 'Google' },
-    ]);
-
-    const heDieuHanhOptions = ref([
-      { id: 1, heDieuHanh: 'iOS', phienBan: '16' },
-      { id: 2, heDieuHanh: 'Android', phienBan: '13' },
-    ]);
-
-    const congNgheManHinhOptions = ref([
-      { id: 1, chuanManHinh: 'OLED', congNgheManHinh: 'OLED' },
-      { id: 2, chuanManHinh: 'AMOLED', congNgheManHinh: 'AMOLED' },
-    ]);
-
-    const pinOptions = ref([
-      { id: 1, loaiPin: 'Li-Ion', dungLuongPin: '3200 mAh' },
-      { id: 2, loaiPin: 'Li-Po', dungLuongPin: '5000 mAh' },
-    ]);
+    // Data from API
+    const products = ref([]);
+    const nhaSanXuatOptions = ref([]);
+    const heDieuHanhOptions = ref([]);
+    const congNgheManHinhOptions = ref([]);
+    const pinOptions = ref([]);
 
     // Headers for DataTable
     const headers = ref([
@@ -141,60 +86,136 @@ export default {
       { text: 'Thao tác', value: 'actions' },
     ]);
 
+    // API Methods
+    const loadProducts = async () => {
+      try {
+        isLoading.value = true;
+        
+        // Build search parameters
+        const searchParams = {};
+        
+        if (keyword.value) {
+          searchParams.keyword = keyword.value;
+        }
+        if (filters.value.idNhaSanXuat) {
+          searchParams.idNhaSanXuat = filters.value.idNhaSanXuat;
+        }
+        if (filters.value.idHeDieuHanh) {
+          searchParams.idHeDieuHanh = filters.value.idHeDieuHanh;
+        }
+        if (filters.value.idCongNgheManHinh) {
+          searchParams.idCongNgheManHinh = filters.value.idCongNgheManHinh;
+        }
+        if (filters.value.idPin) {
+          searchParams.idPin = filters.value.idPin;
+        }
+        if (filters.value.stockStatus) {
+          const inStock = filters.value.stockStatus === 'inStock';
+          searchParams.inStock = inStock;
+        }
+
+        const page = currentPage.value - 1; // Spring uses 0-based pagination
+        const size = itemsPerPage.value;
+
+        let response;
+
+        // Determine which API method to use
+        const hasFilters = keyword.value || Object.values(filters.value).some(v => v);
+        
+        if (hasFilters) {
+          response = await searchProductsWithFilters(searchParams, page, size);
+        } else {
+          response = await fetchProducts(page, size);
+        }
+        
+        if (response.data) {
+          products.value = response.data.content || [];
+          totalElements.value = response.data.totalElements || 0;
+        }
+      } catch (error) {
+        console.error('Error fetching products:', error);
+        toastNotification.value?.addToast({
+          type: 'error',
+          message: 'Lỗi khi tải danh sách sản phẩm: ' + (error.response?.data?.message || error.message),
+          duration: 5000,
+        });
+        products.value = [];
+        totalElements.value = 0;
+      } finally {
+        isLoading.value = false;
+      }
+    };
+
+    const loadFilterOptions = async () => {
+      try {
+        // Fetch filter options using the new API services
+        const [nhaSanXuatRes, heDieuHanhRes, congNgheManHinhRes, pinRes] = await Promise.allSettled([
+          fetchNhaSanXuat(),
+          fetchHeDieuHanh(),
+          fetchCongNgheManHinh(),
+          fetchPin()
+        ]);
+
+        if (nhaSanXuatRes.status === 'fulfilled') {
+          nhaSanXuatOptions.value = nhaSanXuatRes.value.data || [];
+        }
+        if (heDieuHanhRes.status === 'fulfilled') {
+          heDieuHanhOptions.value = heDieuHanhRes.value.data || [];
+        }
+        if (congNgheManHinhRes.status === 'fulfilled') {
+          congNgheManHinhOptions.value = congNgheManHinhRes.value.data || [];
+        }
+        if (pinRes.status === 'fulfilled') {
+          pinOptions.value = pinRes.value.data || [];
+        }
+      } catch (error) {
+        console.error('Error fetching filter options:', error);
+        toastNotification.value?.addToast({
+          type: 'error',
+          message: 'Lỗi khi tải danh sách bộ lọc: ' + (error.response?.data?.message || error.message),
+          duration: 3000,
+        });
+        
+        // Set fallback options if API fails
+        nhaSanXuatOptions.value = [
+          { id: 1, nhaSanXuat: 'Apple' },
+          { id: 2, nhaSanXuat: 'Samsung' },
+          { id: 3, nhaSanXuat: 'Google' },
+        ];
+        heDieuHanhOptions.value = [
+          { id: 1, heDieuHanh: 'iOS', phienBan: '16' },
+          { id: 2, heDieuHanh: 'Android', phienBan: '13' },
+        ];
+        congNgheManHinhOptions.value = [
+          { id: 1, chuanManHinh: 'OLED', congNgheManHinh: 'OLED' },
+          { id: 2, chuanManHinh: 'AMOLED', congNgheManHinh: 'AMOLED' },
+        ];
+        pinOptions.value = [
+          { id: 1, loaiPin: 'Li-Ion', dungLuongPin: '3200 mAh' },
+          { id: 2, loaiPin: 'Li-Po', dungLuongPin: '5000 mAh' },
+        ];
+      }
+    };
+
     // Computed properties
     const filteredProducts = computed(() => {
-      let filtered = products.value;
-
-      if (keyword.value) {
-        const query = keyword.value.toLowerCase();
-        filtered = filtered.filter((item) =>
-          item.tenSanPham.toLowerCase().includes(query)
-        );
-      }
-
-      if (filters.value.idNhaSanXuat) {
-        filtered = filtered.filter(
-          (item) => item.idNhaSanXuat === Number(filters.value.idNhaSanXuat)
-        );
-      }
-
-      if (filters.value.idHeDieuHanh) {
-        filtered = filtered.filter(
-          (item) => item.idHeDieuHanh === Number(filters.value.idHeDieuHanh)
-        );
-      }
-
-      if (filters.value.idCongNgheManHinh) {
-        filtered = filtered.filter(
-          (item) => item.idCongNgheManHinh === Number(filters.value.idCongNgheManHinh)
-        );
-      }
-
-      if (filters.value.idPin) {
-        filtered = filtered.filter(
-          (item) => item.idPin === Number(filters.value.idPin)
-        );
-      }
-
-      if (filters.value.stockStatus) {
-        filtered = filtered.filter(
-          (item) =>
-            (filters.value.stockStatus === 'inStock' && item.imeiCount > 0) ||
-            (filters.value.stockStatus === 'outOfStock' && item.imeiCount === 0)
-        );
-      }
-
-      return filtered;
+      // Since filtering is now handled by API, just return products
+      return products.value || [];
     });
 
     const totalPages = computed(() => {
-      return Math.ceil(filteredProducts.value.length / itemsPerPage.value);
+      return Math.ceil(totalElements.value / itemsPerPage.value);
     });
 
     const paginatedProducts = computed(() => {
-      const start = (currentPage.value - 1) * itemsPerPage.value;
-      const end = start + itemsPerPage.value;
-      return filteredProducts.value.slice(start, end);
+      return (products.value || []).map((product, index) => ({
+        ...product,
+        stt: (currentPage.value - 1) * itemsPerPage.value + index + 1,
+        stockStatus: product.imeiCount > 0 ? 'Còn hàng' : 'Hết hàng',
+        priceRange: product.minPrice && product.maxPrice 
+          ? `${formatPrice(product.minPrice)} - ${formatPrice(product.maxPrice)}`
+          : 'Chưa có giá'
+      }));
     });
 
     // Methods
@@ -208,12 +229,12 @@ export default {
 
     const debouncedSearch = debounce(() => {
       currentPage.value = 1;
-      searchProducts();
-    }, 300);
+      loadProducts();
+    }, 500);
 
-    const searchProducts = () => {
-      // Trigger filtering (already handled by computed property)
+    const searchProductsHandler = () => {
       currentPage.value = 1;
+      loadProducts();
     };
 
     const resetFilters = () => {
@@ -226,6 +247,7 @@ export default {
         stockStatus: '',
       };
       currentPage.value = 1;
+      loadProducts();
 
       toastNotification.value?.addToast({
         type: 'info',
@@ -245,27 +267,36 @@ export default {
     const confirmDeleteProduct = (product) => {
       notificationType.value = 'confirm';
       notificationMessage.value = `Bạn có chắc chắn muốn xóa sản phẩm ${product.tenSanPham}?\nThao tác này không thể hoàn tác.`;
-      notificationOnConfirm.value = () => deleteProduct(product);
+      notificationOnConfirm.value = () => handleDeleteProduct(product);
       notificationOnCancel.value = () => {};
       isNotificationLoading.value = false;
       notificationModal.value?.openModal();
     };
 
-    const deleteProduct = (product) => {
-      isNotificationLoading.value = true;
-
-      setTimeout(() => {
-        products.value = products.value.filter((p) => p.id !== product.id);
-        isNotificationLoading.value = false;
-
+    const handleDeleteProduct = async (product) => {
+      try {
+        isNotificationLoading.value = true;
+        
+        await deleteProduct(product.id);
+        
         toastNotification.value?.addToast({
           type: 'success',
           message: `Đã xóa sản phẩm ${product.tenSanPham} thành công`,
           duration: 3000,
         });
 
+        // Refresh the product list
+        await loadProducts();
+        
         resetNotification();
-      }, 1000);
+      } catch (error) {
+        toastNotification.value?.addToast({
+          type: 'error',
+          message: `Lỗi khi xóa sản phẩm: ${error.response?.data?.message || error.message}`,
+          duration: 5000,
+        });
+        isNotificationLoading.value = false;
+      }
     };
 
     const resetNotification = () => {
@@ -298,6 +329,33 @@ export default {
       }
     };
 
+    const handlePageChange = (page) => {
+      currentPage.value = page;
+      loadProducts();
+    };
+
+    const handleItemsPerPageChange = (size) => {
+      itemsPerPage.value = size;
+      currentPage.value = 1;
+      loadProducts();
+    };
+
+    // Watchers
+    watch(keyword, debouncedSearch);
+    
+    watch(filters, () => {
+      currentPage.value = 1;
+      loadProducts();
+    }, { deep: true });
+
+    // Lifecycle
+    onMounted(async () => {
+      await Promise.all([
+        loadFilterOptions(),
+        loadProducts()
+      ]);
+    });
+
     return {
       toastNotification,
       notificationModal,
@@ -312,20 +370,24 @@ export default {
       viewMode,
       currentPage,
       itemsPerPage,
+      isLoading,
+      totalElements,
       filteredProducts,
       totalPages,
       paginatedProducts,
       formatPrice,
       debouncedSearch,
-      searchProducts,
+      searchProductsHandler,
       resetFilters,
       viewProduct,
       editProduct,
       confirmDeleteProduct,
-      deleteProduct,
+      handleDeleteProduct,
       resetNotification,
       getStatusBadgeClass,
       getStatusIcon,
+      handlePageChange,
+      handleItemsPerPageChange,
       notificationType,
       notificationMessage,
       isNotificationLoading,
