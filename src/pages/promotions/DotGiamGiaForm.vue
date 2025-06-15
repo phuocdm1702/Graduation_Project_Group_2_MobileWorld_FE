@@ -25,22 +25,36 @@
             <FilterTableSection :title="isEditMode ? 'Cập Nhật Đợt Giảm Giá' : 'Thông Tin Đợt Giảm Giá'" icon="pi pi-plus-circle" class="h-full">
               <form @submit.prevent="showConfirmModal" class="p-3 space-y-4">
                 <div class="mb-3">
+                  <label class="filter-label">Mã đợt giảm giá</label>
+                  <input
+                      v-model="dotGiamGia.ma"
+                      type="text"
+                      class="form-control input"
+                      placeholder="Nhập mã đợt giảm giá"
+                      :disabled="!isEditMode"
+                      @blur="checkDuplicateMa"
+                  />
+                  <p v-if="errors.ma" class="text-red-500 text-sm mt-1">{{ errors.ma }}</p>
+                </div>
+                <div class="mb-3">
                   <label class="filter-label">Tên đợt giảm giá</label>
                   <input
                       v-model="dotGiamGia.tenDotGiamGia"
                       type="text"
                       class="form-control input"
                       placeholder="Nhập tên đợt giảm giá"
-                      required
+
                   />
+                  <p v-if="errors.tenDotGiamGia" class="text-red-500 text-sm mt-1">{{ errors.tenDotGiamGia }}</p>
                 </div>
                 <div class="mb-3">
                   <label class="filter-label">Loại giảm giá</label>
-                  <select v-model="dotGiamGia.loaiGiamGiaApDung" class="form-control input" required>
+                  <select v-model="dotGiamGia.loaiGiamGiaApDung" class="form-control input" >
                     <option value="" disabled>Chọn loại giảm giá</option>
                     <option value="Phần trăm">Phần trăm</option>
                     <option value="Tiền mặt">Tiền mặt</option>
                   </select>
+                  <p v-if="errors.loaiGiamGiaApDung" class="text-red-500 text-sm mt-1">{{ errors.loaiGiamGiaApDung }}</p>
                 </div>
                 <div class="mb-3">
                   <label class="filter-label">Giá trị giảm giá</label>
@@ -53,6 +67,7 @@
                       :min="0"
                       :disabled="isTienMat"
                   />
+                  <p v-if="errors.giaTriGiamGia" class="text-red-500 text-sm mt-1">{{ errors.giaTriGiamGia }}</p>
                 </div>
                 <div class="mb-3">
                   <label class="filter-label">Số tiền giảm tối đa</label>
@@ -61,8 +76,9 @@
                       type="text"
                       class="form-control input"
                       placeholder="Nhập số tiền tối đa"
-                      required
+
                   />
+                  <p v-if="errors.soTienGiamToiDa" class="text-red-500 text-sm mt-1">{{ errors.soTienGiamToiDa }}</p>
                 </div>
                 <div class="mb-3">
                   <label class="filter-label">Ngày bắt đầu</label>
@@ -70,8 +86,9 @@
                       v-model="dotGiamGia.ngayBatDau"
                       type="date"
                       class="form-control input"
-                      required
+
                   />
+                  <p v-if="errors.ngayBatDau" class="text-red-500 text-sm mt-1">{{ errors.ngayBatDau }}</p>
                 </div>
                 <div class="mb-3">
                   <label class="filter-label">Ngày kết thúc</label>
@@ -79,8 +96,9 @@
                       v-model="dotGiamGia.ngayKetThuc"
                       type="date"
                       class="form-control input"
-                      required
+
                   />
+                  <p v-if="errors.ngayKetThuc" class="text-red-500 text-sm mt-1">{{ errors.ngayKetThuc }}</p>
                 </div>
                 <div class="d-flex gap-2">
                   <button type="submit" class="btn btn-action flex-fill">
@@ -272,8 +290,9 @@
 </template>
 
 <script setup>
+import axios from 'axios';
 import { useDotGiamGia } from '@/store/modules/promotions/DotGiamGiaForm.js';
-import { computed, ref } from 'vue';
+import { computed, ref, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import DataTable from '@/components/common/DataTable.vue';
 import ToastNotification from '@/components/common/ToastNotification.vue';
@@ -283,9 +302,13 @@ import NotificationModal from '@/components/common/NotificationModal.vue';
 
 const router = useRouter();
 const route = useRoute();
+const toastNotification = ref(null);
+const notificationModal = ref(null);
+const errors = ref({});
+const originalMa = ref('');
 
 const {
-  toast,
+  toast, // Giữ toast để sử dụng
   currentPageDSP,
   changePageDSP,
   pageSizeDSP,
@@ -321,13 +344,10 @@ const {
   fetchCTSPData,
   selectAllCTSP,
   deselectAllCTSP,
-} = useDotGiamGia();
-
-const toastNotification = ref(null);
-const notificationModal = ref(null);
+  // Xóa toastNotification khỏi danh sách này
+} = useDotGiamGia(toastNotification); // Truyền toastNotification vào đây
 
 const isEditMode = computed(() => edit.value);
-
 const isTienMat = computed(() => dotGiamGia.value.loaiGiamGiaApDung === 'Tiền mặt');
 
 const formattedSoTienGiamToiDa = computed({
@@ -369,12 +389,109 @@ const detailHeaders = computed(() => [
   { text: 'Đơn giá sau giảm', value: 'giaSauKhiGiam' },
 ]);
 
-const showConfirmModal = () => {
-  notificationModal.value.openModal();
+const checkDuplicateMa = async () => {
+  if (!isEditMode.value) {
+    delete errors.value.ma; // Xóa lỗi mã nếu ở chế độ thêm mới
+    return;
+  }
+
+  if (!dotGiamGia.value.ma) {
+    errors.value.ma = 'Vui lòng nhập mã đợt giảm giá';
+    return;
+  }
+
+  if (isEditMode.value && dotGiamGia.value.ma === originalMa.value) {
+    delete errors.value.ma; // Xóa lỗi nếu mã không thay đổi
+    return;
+  }
+
+  try {
+    const response = await axios.get('/api/dotGiamGia/ViewAddDotGiamGia/exists/ma', {
+      params: {
+        ma: dotGiamGia.value.ma,
+        excludeId: isEditMode.value ? dotGiamGia.value.id : null,
+      },
+    });
+    if (response.data) {
+      errors.value.ma = 'Mã đợt giảm giá đã tồn tại';
+    } else {
+      delete errors.value.ma; // Xóa lỗi nếu mã không trùng
+    }
+  } catch (error) {
+    console.error('Lỗi khi kiểm tra mã:', error);
+    toastNotification.value?.addToast({ type: 'error', message: 'Lỗi khi kiểm tra mã', duration: 3000 });
+    errors.value.ma = 'Lỗi khi kiểm tra mã';
+  }
 };
 
-const confirmAddData = () => {
-  addData();
+const validateForm = async () => {
+  errors.value = {};
+  const today = new Date().toISOString().split('T')[0];
+  console.log('Validating form with data:', {
+    dotGiamGia: dotGiamGia.value,
+    idDSPs: idDSPs.value
+  });
+
+  // Chỉ validate trường mã trong chế độ chỉnh sửa
+  if (isEditMode.value) {
+    if (!dotGiamGia.value.ma) {
+      errors.value.ma = 'Vui lòng nhập mã đợt giảm giá';
+    } else if (dotGiamGia.value.ma !== originalMa.value) {
+      await checkDuplicateMa();
+    }
+  }
+
+  if (!dotGiamGia.value.tenDotGiamGia) {
+    errors.value.tenDotGiamGia = 'Vui lòng nhập tên đợt giảm giá';
+  }
+
+  if (!dotGiamGia.value.loaiGiamGiaApDung) {
+    errors.value.loaiGiamGiaApDung = 'Vui lòng chọn loại giảm giá';
+  }
+
+  if (dotGiamGia.value.loaiGiamGiaApDung !== 'Tiền mặt' && dotGiamGia.value.giaTriGiamGia <= 0) {
+    errors.value.giaTriGiamGia = 'Vui lòng nhập giá trị giảm giá lớn hơn 0';
+  }
+
+  if (!dotGiamGia.value.soTienGiamToiDa || dotGiamGia.value.soTienGiamToiDa <= 0) {
+    errors.value.soTienGiamToiDa = 'Số tiền giảm tối đa phải lớn hơn 0';
+  }
+
+  if (!dotGiamGia.value.ngayBatDau) {
+    errors.value.ngayBatDau = 'Vui lòng chọn ngày bắt đầu';
+  } else if (dotGiamGia.value.ngayBatDau < today && !isEditMode.value) {
+    errors.value.ngayBatDau = 'Ngày bắt đầu không được nhỏ hơn ngày hiện tại';
+  }
+
+  if (!dotGiamGia.value.ngayKetThuc || dotGiamGia.value.ngayKetThuc < dotGiamGia.value.ngayBatDau) {
+    errors.value.ngayKetThuc = 'Vui lòng chọn ngày kết thúc hợp lệ';
+  }
+
+  if (idDSPs.value.length === 0) {
+    console.log('No DSP selected, showing toast');
+    toastNotification.value?.addToast({
+      type: 'error',
+      message: 'Vui lòng chọn ít nhất một dòng sản phẩm',
+      duration: 3000,
+    });
+    return false;
+  }
+
+  console.log('Validation errors:', errors.value);
+  return Object.keys(errors.value).length === 0;
+};
+
+const showConfirmModal = async () => {
+  console.log('showConfirmModal called'); // Kiểm tra xem hàm có được gọi không
+  const isValid = await validateForm();
+  console.log('isValid:', isValid, 'errors:', errors.value); // Kiểm tra kết quả validate
+  if (isValid) {
+    console.log('Opening notification modal', notificationModal.value); // Kiểm tra notificationModal
+    notificationModal.value?.openModal();
+  }
+};
+const confirmAddData = async () => {
+  await addData();
 };
 
 const handleCheckboxChangeCTSP = (id, isChecked) => {
@@ -385,6 +502,12 @@ const handleCheckboxChangeCTSP = (id, isChecked) => {
     return item;
   });
 };
+
+onMounted(() => {
+  if (isEditMode.value) {
+    originalMa.value = dotGiamGia.value.ma;
+  }
+});
 </script>
 
 <style scoped>

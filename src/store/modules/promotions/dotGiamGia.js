@@ -1,7 +1,6 @@
 import axios from "axios";
-import { onMounted, ref, watch } from "vue";
+import { onMounted, ref, computed, watch } from "vue";
 import { useRouter } from "vue-router";
-
 
 export function useDiscountManagement() {
     const toast = ref(null);
@@ -17,8 +16,16 @@ export function useDiscountManagement() {
     const startDate = ref("");
     const endDate = ref("");
     const minOrder = ref(null);
-    const saleValue = ref("");
+    const saleValue = ref(null);
     const deleted = ref("");
+
+    // Range slider values
+    const maxGiaTriGiamGia = ref(100);
+    const maxSoTienGiamToiDa = ref(1000000);
+    const saleValueMin = ref(0);
+    const saleValueMax = ref(100);
+    const minOrderMin = ref(0);
+    const minOrderMax = ref(1000000);
 
     // Confirm Modal
     const showConfirmModal = ref(false);
@@ -54,6 +61,24 @@ export function useDiscountManagement() {
     const changePage = (page) => {
         currentPage.value = page;
         fetchData();
+    };
+
+    const fetchMaxValues = async () => {
+        try {
+            const [giaTriResponse, soTienResponse] = await Promise.all([
+                axios.get("/api/dotGiamGia/maxGiaTriGiamGia"),
+                axios.get("/api/dotGiamGia/maxSoTienGiamToiDa")
+            ]);
+            maxGiaTriGiamGia.value = giaTriResponse.data;
+            maxSoTienGiamToiDa.value = soTienResponse.data ;
+            saleValueMax.value = maxGiaTriGiamGia.value;
+            minOrderMax.value = maxSoTienGiamToiDa.value;
+        } catch (error) {
+            console.error("Lỗi khi lấy giá trị tối đa:", error);
+            if (toast.value) {
+                toast.value.addToast({ type: "error", message: "Không thể tải giá trị tối đa!", duration: 3000 });
+            }
+        }
     };
 
     const fetchData = async () => {
@@ -112,130 +137,130 @@ export function useDiscountManagement() {
         try {
             const newStatus = sale.trangThaiFormatted.includes("Đang diễn ra") ? true : false;
             await axios.put(`/api/dotGiamGia/${sale.id}/status`, {
-trangThai: newStatus,
-});
-if (toast.value) {
-    toast.value.addToast({ type: "success", message: `Đợt giảm giá ${sale.ma} đã được ${newStatus ? "tắt" : "kích hoạt"}!`, duration: 3000 });
-}
-await fetchData();
-} catch (error) {
-    console.error("Lỗi khi thay đổi trạng thái:", error);
-    if (toast.value) {
-        toast.value.addToast({ type: "error", message: "Không thể thay đổi trạng thái!", duration: 3000 });
-    }
-}
-};
-
-const deleteDotGiamGia = async (id) => {
-    try {
-        await axios.delete(`/api/dotGiamGia/${id}`);
-        if (toast.value) {
-            toast.value.addToast({ type: "success", message: "Xóa thành công!", duration: 3000 });
+                trangThai: newStatus,
+            });
+            if (toast.value) {
+                toast.value.addToast({ type: "success", message: `Đợt giảm giá ${sale.ma} đã được ${newStatus ? "tắt" : "kích hoạt"}!`, duration: 3000 });
+            }
+            await fetchData();
+        } catch (error) {
+            console.error("Lỗi khi thay đổi trạng thái:", error);
+            if (toast.value) {
+                toast.value.addToast({ type: "error", message: "Không thể thay đổi trạng thái!", duration: 3000 });
+            }
         }
-        await fetchData();
-    } catch (error) {
-        console.error("Lỗi khi xóa đợt giảm giá:", error);
-        if (toast.value) {
-            toast.value.addToast({ type: "error", message: "Lỗi khi xóa đợt giảm giá!", duration: 3000 });
+    };
+
+    const deleteDotGiamGia = async (id) => {
+        try {
+            await axios.delete(`/api/dotGiamGia/${id}`);
+            if (toast.value) {
+                toast.value.addToast({ type: "success", message: "Xóa thành công!", duration: 3000 });
+            }
+            await fetchData();
+        } catch (error) {
+            console.error("Lỗi khi xóa đợt giảm giá:", error);
+            if (toast.value) {
+                toast.value.addToast({ type: "error", message: "Lỗi khi xóa đợt giảm giá!", duration: 3000 });
+            }
         }
-    }
-};
+    };
 
-const viewUpdate = async (discount) => {
-    try {
-        let discountData = discount;
-        if (typeof discount === "number" || typeof discount === "string") {
-            discountData = dataTable.value.find((item) => item.id === discount);
+    const viewUpdate = async (discount) => {
+        try {
+            let discountData = discount;
+            if (typeof discount === "number" || typeof discount === "string") {
+                discountData = dataTable.value.find((item) => item.id === discount);
+            }
+
+            if (!discountData) {
+                throw new Error("Không tìm thấy dữ liệu");
+            }
+
+            const response = await axios.get(`/api/dotGiamGia/viewUpdate`, {
+                params: { id: discountData.id },
+            });
+
+            router.push({
+                path: "/dotGiamGia/form",
+                query: {
+                    id: discountData.id,
+                    ma: discountData.ma || "",
+                    tenDotGiamGia: discountData.tenDotGiamGia || "",
+                    loaiGiamGiaApDung: discountData.loaiGiamGiaApDung || "",
+                    giaTriGiamGia: discountData.giaTriGiamGia || "",
+                    soTienGiamToiDa: discountData.soTienGiamToiDa || "",
+                    ngayBatDau: discountData.ngayBatDau || "",
+                    ngayKetThuc: discountData.ngayKetThuc || "",
+                    trangThai: discountData.trangThai !== undefined ? discountData.trangThai : "",
+                    dongSanPham: JSON.stringify(response.data),
+                },
+            });
+        } catch (error) {
+            console.error("Lỗi khi xem cập nhật:", error);
+            if (toast.value) {
+                toast.value.addToast({ type: "error", message: "Không thể tải dữ liệu cập nhật!", duration: 3000 });
+            }
         }
+    };
 
-        if (!discountData) {
-            throw new Error("Không tìm thấy dữ liệu");
+    const exportExcel = async () => {
+        try {
+            const response = await axios.get("/api/dotGiamGia/exportExcel", {
+                responseType: "blob",
+            });
+            const blob = response.data;
+            saveAs(blob, "dotGiamGia.xlsx");
+            if (toast.value) {
+                toast.value.addToast({ type: "success", message: "Xuất Excel thành công!", duration: 3000 });
+            }
+        } catch (error) {
+            console.error("Lỗi khi xuất Excel:", error);
+            if (toast.value) {
+                toast.value.addToast({ type: "error", message: "Không thể xuất file Excel!", duration: 3000 });
+            }
         }
+    };
 
-        const response = await axios.get(`/api/dotGiamGia/viewUpdate`, {
-            params: { id: discountData.id },
-        });
-
-        router.push({
-            path: "/dotGiamGia/form",
-            query: {
-                id: discountData.id,
-                ma: discountData.ma || "",
-                tenDotGiamGia: discountData.tenDotGiamGia || "",
-                loaiGiamGiaApDung: discountData.loaiGiamGiaApDung || "",
-                giaTriGiamGia: discountData.giaTriGiamGia || "",
-                soTienGiamToiDa: discountData.soTienGiamToiDa || "",
-                ngayBatDau: discountData.ngayBatDau || "",
-                ngayKetThuc: discountData.ngayKetThuc || "",
-                trangThai: discountData.trangThai !== undefined ? discountData.trangThai : "",
-                dongSanPham: JSON.stringify(response.data),
+    const columns = ref([
+        {
+            key: "index",
+            label: "#",
+            formatter: (value, item, index) => {
+                return currentPage.value * pageSize.value + (index + 1);
             },
-        });
-    } catch (error) {
-        console.error("Lỗi khi xem cập nhật:", error);
-        if (toast.value) {
-            toast.value.addToast({ type: "error", message: "Không thể tải dữ liệu cập nhật!", duration: 3000 });
-        }
-    }
-};
-
-const exportExcel = async () => {
-    try {
-        const response = await axios.get("/api/dotGiamGia/exportExcel", {
-            responseType: "blob",
-        });
-        const blob = response.data;
-        saveAs(blob, "dotGiamGia.xlsx");
-        if (toast.value) {
-            toast.value.addToast({ type: "success", message: "Xuất Excel thành công!", duration: 3000 });
-        }
-    } catch (error) {
-        console.error("Lỗi khi xuất Excel:", error);
-        if (toast.value) {
-            toast.value.addToast({ type: "error", message: "Không thể xuất file Excel!", duration: 3000 });
-        }
-    }
-};
-
-const columns = ref([
-    {
-        key: "index",
-        label: "#",
-        formatter: (value, item, index) => {
-            return currentPage.value * pageSize.value + (index + 1);
         },
-    },
-    { key: "ma", label: "Mã" },
-    { key: "tenDotGiamGia", label: "Tên đợt giảm giá" },
-    {
-        key: "giaTriGiamGia",
-        label: "Giá trị",
-        formatter: (value) => value + "%",
-    },
-    {
-        key: "soTienGiamToiDa",
-        label: "Số tiền giảm tối đa",
-        formatter: (value) => value ? new Intl.NumberFormat('vi-VN').format(value) : 'N/A',
-    },
-    {
-        key: "ngayBatDau",
-        label: "Ngày bắt đầu",
-        formatter: (value) => new Date(value).toLocaleDateString("vi-VN"),
-    },
-    {
-        key: "ngayKetThuc",
-        label: "Ngày kết thúc",
-        formatter: (value) => new Date(value).toLocaleDateString("vi-VN"),
-    },
-    {
-        key: "trangThaiFormatted",
-        label: "Trạng thái",
-        formatter: (value) => value,
-    },
-    {
-        key: "actions",
-        label: "Hành động",
-        formatter: (value, item) => `
+        { key: "ma", label: "Mã" },
+        { key: "tenDotGiamGia", label: "Tên đợt giảm giá" },
+        {
+            key: "giaTriGiamGia",
+            label: "Giá trị",
+            formatter: (value) => value + "%",
+        },
+        {
+            key: "soTienGiamToiDa",
+            label: "Số tiền giảm tối đa",
+            formatter: (value) => value ? new Intl.NumberFormat('vi-VN').format(value) : 'N/A',
+        },
+        {
+            key: "ngayBatDau",
+            label: "Ngày bắt đầu",
+            formatter: (value) => new Date(value).toLocaleDateString("vi-VN"),
+        },
+        {
+            key: "ngayKetThuc",
+            label: "Ngày kết thúc",
+            formatter: (value) => new Date(value).toLocaleDateString("vi-VN"),
+        },
+        {
+            key: "trangThaiFormatted",
+            label: "Trạng thái",
+            formatter: (value) => value,
+        },
+        {
+            key: "actions",
+            label: "Hành động",
+            formatter: (value, item) => `
                 <button class="bg-red-500 text-white px-3 py-1 rounded-md hover:bg-red-600 transition" data-id="${item.id}" onclick="document.dispatchEvent(new CustomEvent('deleteDotGiamGia', { detail: ${item.id} }))">
                     <i class="fa-solid fa-trash"></i>
                 </button>
@@ -243,68 +268,75 @@ const columns = ref([
                     <i class="fa-solid fa-edit"></i>
                 </button>
             `,
-    },
-]);
+        },
+    ]);
 
-const getNestedValue = (obj, key) => (key === "index" ? null : obj[key]);
+    const getNestedValue = (obj, key) => (key === "index" ? null : obj[key]);
 
-const handleCustomEvents = () => {
-    document.addEventListener("deleteDotGiamGia", (event) => {
-        deleteDotGiamGia(event.detail);
+    const handleCustomEvents = () => {
+        document.addEventListener("deleteDotGiamGia", (event) => {
+            deleteDotGiamGia(event.detail);
+        });
+        document.addEventListener("viewUpdate", (event) => {
+            viewUpdate(event.detail);
+        });
+    };
+
+    onMounted(() => {
+        fetchData();
+        fetchMaxValues();
+        handleCustomEvents();
     });
-    document.addEventListener("viewUpdate", (event) => {
-        viewUpdate(event.detail);
+
+    watch([
+        searchQuery,
+        filterType,
+        filterStatus,
+        startDate,
+        endDate,
+        saleValue,
+        minOrder,
+        deleted,
+    ], () => {
+        currentPage.value = 0;
+        fetchData();
     });
-};
 
-onMounted(() => {
-    fetchData();
-    handleCustomEvents();
-});
-
-watch([
-    searchQuery,
-    filterType,
-    filterStatus,
-    startDate,
-    endDate,
-    minOrder,
-    saleValue,
-    deleted,
-], () => {
-    currentPage.value = 0;
-    fetchData();
-});
-
-return {
-    router,
-    toast,
-    currentPage,
-    pageSize,
-    totalPages,
-    searchQuery,
-    filterType,
-    filterStatus,
-    startDate,
-    endDate,
-    minOrder,
-    saleValue,
-    deleted,
-    isModalOpen,
-    openModal,
-    dataTable,
-    dotGiamGia,
-    changePage,
-    fetchData,
-    deleteDotGiamGia,
-    viewUpdate,
-    toggleSaleStatus,
-    columns,
-    getNestedValue,
-    exportExcel,
-    showConfirmModal,
-    confirmMessage,
-    executeConfirmedAction,
-    closeConfirmModal,
-};
+    return {
+        router,
+        toast,
+        currentPage,
+        pageSize,
+        totalPages,
+        searchQuery,
+        filterType,
+        filterStatus,
+        startDate,
+        endDate,
+        minOrder,
+        saleValue,
+        deleted,
+        isModalOpen,
+        openModal,
+        dataTable,
+        dotGiamGia,
+        changePage,
+        fetchData,
+        deleteDotGiamGia,
+        viewUpdate,
+        toggleSaleStatus,
+        columns,
+        getNestedValue,
+        exportExcel,
+        showConfirmModal,
+        confirmMessage,
+        executeConfirmedAction,
+        closeConfirmModal,
+        maxGiaTriGiamGia,
+        maxSoTienGiamToiDa,
+        saleValueMin,
+        saleValueMax,
+        minOrderMin,
+        minOrderMax,
+    };
 }
