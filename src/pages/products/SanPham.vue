@@ -53,7 +53,7 @@
               <select v-model="filters.idCongNgheManHinh" @change="searchProducts" class="form-control search-input">
                 <option value="">Tất cả</option>
                 <option v-for="option in congNgheManHinhOptions" :key="option.id" :value="option.id">
-                  {{ option.chuanManHinh }} {{ option.congNgheManHinh }}
+                  {{ option.chuanManHinh }} {{ option.congNgheManHinh }} {{ option.doPhanGiai }} {{ option.tanSoQuet }} {{ option.doSangToiDa }}
                 </option>
               </select>
             </div>
