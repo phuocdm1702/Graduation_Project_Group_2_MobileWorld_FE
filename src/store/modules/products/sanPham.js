@@ -73,47 +73,22 @@ export const updateProductStatus = (id, trangThai) => {
 
 // Lấy danh sách nhà sản xuất
 export const fetchNhaSanXuat = () => {
-  return apiService.get('/nha-san-xuat');
+  return apiService.get('/api/nha-san-xuat/all');
 };
 
 // Lấy danh sách hệ điều hành
 export const fetchHeDieuHanh = () => {
-  return apiService.get('/he-dieu-hanh');
+  return apiService.get('/api/he-dieu-hanh/all');
 };
 
 // Lấy danh sách công nghệ màn hình
 export const fetchCongNgheManHinh = () => {
-  return apiService.get('/cong-nghe-man-hinh');
+  return apiService.get('/api/cong-nghe-man-hinh/all');
 };
 
 // Lấy danh sách pin
 export const fetchPin = () => {
-  return apiService.get('/pin');
-};
-
-// Lấy danh sách CPU
-export const fetchCpu = () => {
-  return apiService.get('/cpu');
-};
-
-// Lấy danh sách RAM
-export const fetchRam = () => {
-  return apiService.get('/ram');
-};
-
-// Lấy danh sách bộ nhớ
-export const fetchBoNho = () => {
-  return apiService.get('/bo-nho');
-};
-
-// Lấy danh sách màu sắc
-export const fetchMauSac = () => {
-  return apiService.get('/mau-sac');
-};
-
-// Lấy danh sách camera
-export const fetchCamera = () => {
-  return apiService.get('/camera');
+  return apiService.get('/api/pin/all');
 };
 
 // Lấy sản phẩm theo danh mục

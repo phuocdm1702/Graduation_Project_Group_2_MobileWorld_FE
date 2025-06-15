@@ -75,7 +75,7 @@ export default {
     const headers = ref([
       { text: 'STT', value: 'stt' },
       { text: 'Tên Sản Phẩm', value: 'tenSanPham' },
-      { text: 'Hãng', value: 'nhaSanXuat' },
+      { text: 'Hãng', value: 'tenNhaSanXuat' },
       { text: 'Hệ Điều Hành', value: 'heDieuHanh' },
       { text: 'Màn hình', value: 'congNgheManHinh' },
       { text: 'CPU', value: 'tenCpu' },
