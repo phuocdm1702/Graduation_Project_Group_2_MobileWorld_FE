@@ -96,12 +96,9 @@ export function useDiscountManagement() {
                 trangThai: filterStatus.value === "0" ? false : filterStatus.value === "1" ? true : null,
                 deleted: filterStatus.value === "deleted" ? true : null,
             };
-            console.log("Params sent:", JSON.stringify(params, null, 2));
             const res = await axios.get("/api/dotGiamGia/search", {
                 params,
             });
-            console.log("API Response:", JSON.stringify(res.data, null, 2));
-
             const processedData =
                 res.data.content && res.data.content.length > 0
                     ? res.data.content.map((item) => {
