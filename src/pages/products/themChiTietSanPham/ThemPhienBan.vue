@@ -16,16 +16,13 @@
                   {{
                     currentVariant.selectedRams.length > 0
                       ? currentVariant.selectedRams
-                          .map((id) => ramOptions.find((r) => r.id === id)?.dungLuong)
+                          .map((id) => ramOptions.find((r) => r.id === id)?.dungLuongRam)
                           .filter(Boolean)
                           .join(', ') || 'Không có RAM hợp lệ'
                       : 'Chọn RAM'
                   }}
                 </button>
-                <div
-                  v-if="dropdownOpen.ram"
-                  class="dropdown-menu show"
-                >
+                <div v-if="dropdownOpen.ram" class="dropdown-menu show">
                   <label
                     v-for="ram in ramOptions"
                     :key="ram.id"
@@ -37,13 +34,10 @@
                       v-model="currentVariant.selectedRams"
                       class="me-2"
                     />
-                    {{ ram.dungLuong }}
+                    {{ ram.dungLuongRam }}
                   </label>
                 </div>
-                <button
-                  @click="openAddModal('ram')"
-                  class="btn btn-action"
-                >
+                <button @click="openAddModal('ram')" class="btn btn-action">
                   <i class="bi bi-plus-circle"></i>
                 </button>
               </div>
@@ -62,16 +56,13 @@
                   {{
                     currentVariant.selectedBoNhoTrongs.length > 0
                       ? currentVariant.selectedBoNhoTrongs
-                          .map((id) => boNhoTrongOptions.find((b) => b.id === id)?.dungLuong)
+                          .map((id) => boNhoTrongOptions.find((b) => b.id === id)?.dungLuongBoNhoTrong)
                           .filter(Boolean)
                           .join(', ') || 'Không có ROM hợp lệ'
                       : 'Chọn Bộ Nhớ Trong'
                   }}
                 </button>
-                <div
-                  v-if="dropdownOpen.boNhoTrong"
-                  class="dropdown-menu show"
-                >
+                <div v-if="dropdownOpen.boNhoTrong" class="dropdown-menu show">
                   <label
                     v-for="boNho in boNhoTrongOptions"
                     :key="boNho.id"
@@ -83,13 +74,10 @@
                       v-model="currentVariant.selectedBoNhoTrongs"
                       class="me-2"
                     />
-                    {{ boNho.dungLuong }}
+                    {{ boNho.dungLuongBoNhoTrong }}
                   </label>
                 </div>
-                <button
-                  @click="openAddModal('boNhoTrong')"
-                  class="btn btn-action"
-                >
+                <button @click="openAddModal('boNhoTrong')" class="btn btn-action">
                   <i class="bi bi-plus-circle"></i>
                 </button>
               </div>
@@ -108,16 +96,13 @@
                   {{
                     currentVariant.selectedMauSacs.length > 0
                       ? currentVariant.selectedMauSacs
-                          .map((id) => mauSacOptions.find((m) => m.id === id)?.tenMau)
+                          .map((id) => mauSacOptions.find((m) => m.id === id)?.mauSac)
                           .filter(Boolean)
                           .join(', ') || 'Không có màu hợp lệ'
                       : 'Chọn Màu Sắc'
                   }}
                 </button>
-                <button
-                  @click="openAddModal('mauSac')"
-                  class="btn btn-action"
-                >
+                <button @click="openAddModal('mauSac')" class="btn btn-action">
                   <i class="bi bi-plus-circle"></i>
                 </button>
               </div>
@@ -126,7 +111,7 @@
         </div>
 
         <!-- Danh sách biến thể -->
-        <div v-if="productVariants.length > 0" class="mt-4">
+        <div v-if="!isLoading && productVariants.length > 0" class="mt-4">
           <div v-for="(group, groupIndex) in groupVariantsByRamAndRom" :key="groupIndex" class="mb-4">
             <div class="d-flex justify-content-between align-items-center mb-2">
               <span class="table-count">Phiên bản {{ group.ram }}/{{ group.rom }}</span>
@@ -186,9 +171,9 @@
                       <div class="d-flex align-items-center">
                         <span
                           class="color-swatch me-2"
-                          :style="{ backgroundColor: getColorFromName(mauSacOptions.find(mau => mau.id === variant.idMauSac)?.tenMau) || '#000' }"
+                          :style="{ backgroundColor: getColorFromName(mauSacOptions.find(mau => mau.id === variant.idMauSac)?.mauSac) || '#000' }"
                         ></span>
-                        {{ mauSacOptions.find(mau => mau.id === variant.idMauSac)?.tenMau || 'N/A' }}
+                        {{ mauSacOptions.find(mau => mau.id === variant.idMauSac)?.mauSac || 'N/A' }}
                       </div>
                     </td>
                     <td>
@@ -223,6 +208,9 @@
             </div>
           </div>
         </div>
+        <div v-else-if="isLoading" class="mt-4">
+          <p>Đang tải dữ liệu...</p>
+        </div>
       </div>
     </FilterTableSection>
 
@@ -254,9 +242,9 @@
                   />
                   <span
                     class="color-swatch me-2"
-                    :style="{ backgroundColor: getColorFromName(mau.tenMau) || '#FFFFFF' }"
+                    :style="{ backgroundColor: getColorFromName(mau.mauSac) || '#FFFFFF' }"
                   ></span>
-                  <span>{{ mau.tenMau }}</span>
+                  <span>{{ mau.mauSac }}</span>
                 </label>
               </div>
             </div>
@@ -374,7 +362,7 @@
               <div class="col-12">
                 <label class="filter-label">Dung Lượng RAM</label>
                 <input
-                  v-model="entityData.dungLuong"
+                  v-model="entityData.dungLuongRam"
                   type="text"
                   class="form-control search-input"
                   placeholder="Nhập dung lượng RAM (ví dụ: 8GB)"
@@ -385,7 +373,7 @@
               <div class="col-12">
                 <label class="filter-label">Dung Lượng Bộ Nhớ Trong</label>
                 <input
-                  v-model="entityData.dungLuong"
+                  v-model="entityData.dungLuongBoNhoTrong"
                   type="text"
                   class="form-control search-input"
                   placeholder="Nhập dung lượng bộ nhớ trong (ví dụ: 128GB)"
@@ -396,7 +384,7 @@
               <div class="col-12">
                 <label class="filter-label">Tên Màu Sắc</label>
                 <input
-                  v-model="entityData.tenMau"
+                  v-model="entityData.mauSac"
                   type="text"
                   class="form-control search-input"
                   placeholder="Nhập tên màu sắc (ví dụ: Đen)"
@@ -430,24 +418,7 @@
 import { defineComponent, ref, computed } from 'vue';
 import FilterTableSection from '@/components/common/FilterTableSection.vue';
 import ToastNotification from '@/components/common/ToastNotification.vue';
-
-const mockData = {
-  '/ram': [
-    { id: 'ram1', dungLuong: '8GB' },
-    { id: 'ram2', dungLuong: '12GB' },
-    { id: 'ram3', dungLuong: '16GB' },
-  ],
-  '/bo-nho-trong': [
-    { id: 'bnt1', dungLuong: '128GB' },
-    { id: 'bnt2', dungLuong: '256GB' },
-    { id: 'bnt3', dungLuong: '512GB' },
-  ],
-  '/mau-sac': [
-    { id: 'ms1', tenMau: 'Đen Phantôm' },
-    { id: 'ms2', tenMau: 'Trắng Ngọc Trai' },
-    { id: 'ms3', tenMau: 'Xanh Thiên Hà' },
-  ],
-};
+import { getRam, addRam, getBoNhoTrong, addBoNhoTrong, getMauSac, addMauSac } from '@/store/modules/products/chiTietSanPham';
 
 export default defineComponent({
   name: 'ProductVariants',
@@ -464,6 +435,7 @@ export default defineComponent({
   emits: ['variants-updated'],
   setup(props, { emit }) {
     const toastNotification = ref(null);
+    const isLoading = ref(true);
     const productVariants = ref([]);
     const currentVariant = ref({
       selectedRams: [],
@@ -474,9 +446,9 @@ export default defineComponent({
     const allSelected = ref({});
     const groupCommonValues = ref({});
     const variantImeis = ref({});
-    const ramOptions = ref(mockData['/ram']);
-    const boNhoTrongOptions = ref(mockData['/bo-nho-trong']);
-    const mauSacOptions = ref(mockData['/mau-sac']);
+    const ramOptions = ref([]);
+    const boNhoTrongOptions = ref([]);
+    const mauSacOptions = ref([]);
     const dropdownOpen = ref({
       ram: false,
       boNhoTrong: false,
@@ -494,8 +466,15 @@ export default defineComponent({
       const grouped = {};
 
       productVariants.value.forEach((variant, index) => {
-        const ram = ramOptions.value.find((r) => r.id === variant.idRam)?.dungLuong || 'Unknown';
-        const rom = boNhoTrongOptions.value.find((b) => b.id === variant.idBoNhoTrong)?.dungLuong || 'Unknown';
+        const ramOption = ramOptions.value.find((r) => r.id === variant.idRam);
+        const romOption = boNhoTrongOptions.value.find((b) => b.id === variant.idBoNhoTrong);
+        const ram = ramOption ? ramOption.dungLuongRam : 'Unknown';
+        const rom = romOption ? romOption.dungLuongBoNhoTrong : 'Unknown';
+
+        if (!ramOption || !romOption) {
+          console.warn('Không tìm thấy RAM hoặc ROM cho variant:', variant);
+        }
+
         const groupKey = `${ram}/${rom}`;
 
         if (!grouped[groupKey]) {
@@ -529,6 +508,34 @@ export default defineComponent({
       };
       return labels[currentAttribute.value] || currentAttribute.value;
     });
+
+    // Fetch data from APIs
+    const fetchData = async () => {
+      try {
+        const [ramRes, boNhoTrongRes, mauSacRes] = await Promise.all([
+          getRam(),
+          getBoNhoTrong(),
+          getMauSac(),
+        ]);
+        console.log('RAM:', ramRes.data);
+        console.log('Bộ Nhớ Trong:', boNhoTrongRes.data);
+        console.log('Màu Sắc:', mauSacRes.data);
+        ramOptions.value = ramRes.data;
+        boNhoTrongOptions.value = boNhoTrongRes.data;
+        mauSacOptions.value = mauSacRes.data;
+        isLoading.value = false;
+      } catch (error) {
+        console.error('Lỗi tải dữ liệu:', error);
+        toastNotification.value?.addToast({
+          type: 'error',
+          message: 'Lỗi khi tải dữ liệu: ' + error.message,
+          duration: 3000,
+        });
+        isLoading.value = false;
+      }
+    };
+
+    fetchData();
 
     const toggleDropdown = (type) => {
       dropdownOpen.value[type] = !dropdownOpen.value[type];
@@ -583,7 +590,7 @@ export default defineComponent({
           });
         });
       });
-
+      console.log('New Variants:', newVariants);
       productVariants.value = [...productVariants.value, ...newVariants];
       return true;
     };
@@ -670,25 +677,37 @@ export default defineComponent({
       entityData.value = {};
     };
 
-    const handleAddAttribute = () => {
-      const newId = `new_${Date.now()}`;
-      switch (currentAttribute.value) {
-        case 'ram':
-          ramOptions.value.push({ id: newId, dungLuong: entityData.value.dungLuong });
-          break;
-        case 'boNhoTrong':
-          boNhoTrongOptions.value.push({ id: newId, dungLuong: entityData.value.dungLuong });
-          break;
-        case 'mauSac':
-          mauSacOptions.value.push({ id: newId, tenMau: entityData.value.tenMau });
-          break;
+    const handleAddAttribute = async () => {
+      try {
+        const newId = `new_${Date.now()}`;
+        const data = { id: newId, ...entityData.value };
+        switch (currentAttribute.value) {
+          case 'ram':
+            await addRam(data);
+            ramOptions.value.push(data);
+            break;
+          case 'boNhoTrong':
+            await addBoNhoTrong(data);
+            boNhoTrongOptions.value.push(data);
+            break;
+          case 'mauSac':
+            await addMauSac(data);
+            mauSacOptions.value.push(data);
+            break;
+        }
+        toastNotification.value?.addToast({
+          type: 'success',
+          message: `Thêm ${currentAttributeLabel.value} thành công!`,
+          duration: 3000,
+        });
+        closeFormModal();
+      } catch (error) {
+        toastNotification.value?.addToast({
+          type: 'error',
+          message: `Lỗi khi thêm ${currentAttributeLabel.value}: ${error.message}`,
+          duration: 3000,
+        });
       }
-      toastNotification.value?.addToast({
-        type: 'success',
-        message: `Thêm ${currentAttributeLabel.value} thành công!`,
-        duration: 3000,
-      });
-      closeFormModal();
     };
 
     const openColorModal = () => {
@@ -771,6 +790,7 @@ export default defineComponent({
 
     return {
       toastNotification,
+      isLoading,
       productVariants,
       currentVariant,
       ramOptions,
@@ -935,7 +955,6 @@ export default defineComponent({
 .action-buttons-cell {
   display: flex;
   justify-content: center;
-  gap: 0.5rem;
 }
 
 .btn-table {
