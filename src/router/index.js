@@ -35,7 +35,7 @@ const routes = [
       { path: '/themChiTietSanPham', component: ThemChiTietSanPham },
       { path: '/banHang', component: banHang },
       { path: '/hoaDon', component: HoaDon },
-      { path: '/hoaDon/:id', component: HoaDonChiTiet },
+      { path: '/hoaDon/:id/detail', component: HoaDonChiTiet },
       { path: '/phieuGiamGia', component: PhieuGiamGia },
       { path: '/phieuGiamGia/form/:id?', component: PhieuGiamGiaForm },
       { path: '/dotGiamGia', component: DotGiamGia },
