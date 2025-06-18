@@ -75,8 +75,8 @@ export default {
     const notificationType = ref("confirm");
     const notificationMessage = ref("");
     const isNotificationLoading = ref(false);
-    const notificationOnConfirm = ref(() => {});
-    const notificationOnCancel = ref(() => {});
+    const notificationOnConfirm = ref(() => { });
+    const notificationOnCancel = ref(() => { });
     const notificationModal = ref(null);
     const toastNotification = ref(null);
     const activeTab = ref("private");
@@ -107,14 +107,15 @@ export default {
     ]);
 
     const productHeaders = ref([
-      { text: "STT", value: "stt" },
-      { text: "Mã sản phẩm", value: "code" },
-      { text: "Tên sản phẩm", value: "name" },
-      { text: "Màu", value: "color" },
-      { text: "RAM", value: "ram" },
-      { text: "Bộ nhớ", value: "storage" },
-      { text: "Giá", value: "price" },
-      { text: "Hành động", value: "actions" },
+      { value: 'stt', formatter: (_, __, index) => index + 1, text: '#' },
+      { value: 'tenSanPham', text: 'Tên sản phẩm' },
+      { value: 'maSanPham', text: 'Mã' },
+      { value: 'mauSac', text: 'Màu', formatter: (value) => value || 'N/A' },
+      { value: 'dungLuongRam', text: 'Ram', formatter: (value) => value || 'N/A' },
+      { value: 'dungLuongBoNhoTrong', text: 'Bộ nhớ trong', formatter: (value) => value || 'N/A' },
+      { value: 'soLuong', text: 'Số lượng', formatter: (value) => value || 0 },
+      { value: 'giaBan', text: 'Giá', formatter: (value) => `${value.toLocaleString()} đ` },
+      { value: 'actions', text: 'Thao tác', cellSlot: 'productActionsSlot' },
     ]);
 
     // Computed
@@ -195,9 +196,8 @@ export default {
 
       if (totalPrice.value >= bestDiscount.minOrder) {
         return {
-          message: `Bạn có thể áp dụng mã ${
-            bestDiscount.code
-          } để được giảm ${formatPrice(bestDiscount.value)}.`,
+          message: `Bạn có thể áp dụng mã ${bestDiscount.code
+            } để được giảm ${formatPrice(bestDiscount.value)}.`,
           additionalAmount: 0,
           bestDiscount,
         };
@@ -205,9 +205,8 @@ export default {
 
       const additionalAmount = bestDiscount.minOrder - totalPrice.value;
       return {
-        message: `Mua thêm ${formatPrice(additionalAmount)} để sử dụng mã ${
-          bestDiscount.code
-        } và được giảm ${formatPrice(bestDiscount.value)}.`,
+        message: `Mua thêm ${formatPrice(additionalAmount)} để sử dụng mã ${bestDiscount.code
+          } và được giảm ${formatPrice(bestDiscount.value)}.`,
         additionalAmount,
         bestDiscount,
       };
@@ -231,7 +230,7 @@ export default {
       toastNotification.value.addToast({ type, message, isLoading, duration });
     };
 
-    const showConfirm = (message, onConfirm, onCancel = () => {}) => {
+    const showConfirm = (message, onConfirm, onCancel = () => { }) => {
       notificationType.value = "confirm";
       notificationMessage.value = message;
       notificationOnConfirm.value = onConfirm;
@@ -244,8 +243,8 @@ export default {
       notificationType.value = "confirm";
       notificationMessage.value = "";
       isNotificationLoading.value = false;
-      notificationOnConfirm.value = () => {};
-      notificationOnCancel.value = () => {};
+      notificationOnConfirm.value = () => { };
+      notificationOnCancel.value = () => { };
     };
 
     // API Calls
@@ -265,19 +264,21 @@ export default {
 
     const fetchProducts = async () => {
       try {
-        // Giả định có endpoint /api/san-pham
-        const response = await apiService.get("/api/san-pham");
-        products.value = response.data.map((sp) => ({
+        const response = await apiService.get("/api/san-pham?page=0&size=999999999");
+        products.value = response.data.content.map((sp) => ({
           id: sp.id,
-          maSanPham: sp.maSanPham,
+          sanPhamId: sp.idSanPham,
           tenSanPham: sp.tenSanPham,
-          mauSac: sp.mauSac,
-          ram: sp.ram,
-          boNhoTrong: sp.boNhoTrong,
-          giaBan: sp.giaBan,
+          maSanPham: sp.ma,
+          mauSac: sp.mauSac || 'N/A',
+          dungLuongRam: sp.dungLuongRam || 'N/A',
+          dungLuongBoNhoTrong: sp.dungLuongBoNhoTrong || 'N/A',
+          soLuong: sp.soLuong || 0,
+          giaBan: sp.giaBan || 0,
         }));
       } catch (error) {
-        showToast("error", "Lỗi khi tải danh sách sản phẩm");
+        const message = error.response?.data?.message || "Lỗi khi tải danh sách sản phẩm";
+        showToast("error", message);
       }
     };
 
@@ -415,7 +416,7 @@ export default {
       showConfirm(
         `Bạn có chắc chắn muốn hủy hóa đơn ${invoice.ma}?`,
         () => cancelInvoice(invoice),
-        () => {}
+        () => { }
       );
     };
 
@@ -449,7 +450,7 @@ export default {
       try {
         // Giả định có endpoint /api/imei?productId
         const response = await apiService.get(
-          `/api/imei?productId=${product.id}`
+          `/api/san-pham/${product.sanPhamId}/imeis`
         );
         availableIMEIs.value = response.data.map((imei) => ({
           id: imei.id,
@@ -500,14 +501,15 @@ export default {
           chiTietGioHangDTO
         );
         cartItems.value = response.data.chiTietGioHangDTOS.map((item) => ({
-          id: item.chiTietSanPhamId,
-          name: item.tenSanPham,
-          color: item.mauSac,
-          ram: item.ram,
-          storage: item.boNhoTrong,
-          imei: item.maImel,
-          price: Number(item.giaBan),
-          quantity: item.soLuong,
+          id: sp.id,
+          sanPhamId: sp.idSanPham,
+          tenSanPham: sp.tenSanPham,
+          maSanPham: sp.ma,
+          mauSac: sp.mauSac || 'N/A',
+          dungLuongRam: sp.dungLuongRam || 'N/A',
+          dungLuongBoNhoTrong: sp.dungLuongBoNhoTrong || 'N/A',
+          soLuong: sp.soLuong || 0,
+          giaBan: sp.giaBan || 0,
         }));
         const invoice = pendingInvoices.value.find(
           (inv) => inv.id === activeInvoiceId.value
@@ -556,14 +558,15 @@ export default {
           chiTietGioHangDTO
         );
         cartItems.value = response.data.chiTietGioHangDTOS.map((item) => ({
-          id: item.chiTietSanPhamId,
-          name: item.tenSanPham,
-          color: item.mauSac,
-          ram: item.ram,
-          storage: item.boNhoTrong,
-          imei: item.maImel,
-          price: Number(item.giaBan),
-          quantity: item.soLuong,
+          id: sp.id,
+          sanPhamId: sp.idSanPham,
+          tenSanPham: sp.tenSanPham,
+          maSanPham: sp.ma,
+          mauSac: sp.mauSac || 'N/A',
+          dungLuongRam: sp.dungLuongRam || 'N/A',
+          dungLuongBoNhoTrong: sp.dungLuongBoNhoTrong || 'N/A',
+          soLuong: sp.soLuong || 0,
+          giaBan: sp.giaBan || 0,
         }));
         const invoice = pendingInvoices.value.find(
           (inv) => inv.id === activeInvoiceId.value
@@ -835,28 +838,30 @@ export default {
     };
 
     const handleScroll = async () => {
-      if (isLoadingMore.value) return;
+      if (isLoadingMore.value || currentPage.value + 1 >= totalPages.value) return;
       isLoadingMore.value = true;
+      currentPage.value += 1;
       showToast("success", "Đang tải thêm sản phẩm...", true, 0);
       try {
-        // Giả định có endpoint phân trang
-        const response = await apiService.get(
-          `/api/san-pham?page=${Math.ceil(products.value.length / 10) + 1}`
-        );
+        const response = await apiService.get(`/api/san-pham?page=0&size=10`);
         products.value.push(
-          ...response.data.map((sp) => ({
+          ...response.data.content.map((sp) => ({
             id: sp.id,
-            maSanPham: sp.maSanPham,
+            sanPhamId: sp.idSanPham,
             tenSanPham: sp.tenSanPham,
-            mauSac: sp.mauSac,
-            ram: sp.ram,
-            boNhoTrong: sp.boNhoTrong,
-            giaBan: sp.giaBan,
+            maSanPham: sp.ma,
+            mauSac: sp.mauSac || 'N/A',
+            dungLuongRam: sp.dungLuongRam || 'N/A',
+            dungLuongBoNhoTrong: sp.dungLuongBoNhoTrong || 'N/A',
+            soLuong: sp.soLuong || 0,
+            giaBan: sp.giaBan || 0,
           }))
         );
+        totalPages.value = response.data.totalPages;
         showToast("success", "Đã tải thêm sản phẩm");
       } catch (error) {
-        showToast("error", "Lỗi khi tải thêm sản phẩm");
+        const message = error.response?.data?.message || "Lỗi khi tải thêm sản phẩm";
+        showToast("error", message);
       } finally {
         isLoadingMore.value = false;
       }
