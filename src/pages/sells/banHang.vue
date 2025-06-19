@@ -475,7 +475,7 @@
                             <i class="bi bi-person text-teal"></i>
                           </span>
                           <input
-                            v-model="receiver.name"
+                            v-model="customer.name"
                             type="text"
                             class="form-control shadow-none border-start-0"
                             placeholder="Nhập tên người nhận"
@@ -501,7 +501,7 @@
                             <i class="bi bi-telephone text-teal"></i>
                           </span>
                           <input
-                            v-model="receiver.phone"
+                            v-model="customer.phone"
                             type="tel"
                             class="form-control shadow-none border-start-0"
                             placeholder="Nhập số điện thoại"
@@ -527,7 +527,7 @@
                             <i class="bi bi-geo-alt text-teal"></i>
                           </span>
                           <select
-                            v-model="receiver.city"
+                            v-model="customer.city"
                             class="form-select shadow-none border-start-0"
                             :disabled="!isReceiverEditable"
                             @change="handleReceiverProvinceChange"
@@ -560,27 +560,19 @@
                           <span class="input-group-text bg-light border-end-0">
                             <i class="bi bi-geo text-teal"></i>
                           </span>
-                          <select
-                            v-model="receiver.district"
-                            class="form-select shadow-none border-start-0"
-                            :disabled="!isReceiverEditable || !receiver.city"
-                            @change="handleReceiverDistrictChange"
+                          <input
+                            v-model="customer.district"
+                            type="text"
+                            class="form-control shadow-none border-start-0"
+                            placeholder="Quận/Huyện"
                             style="
                               border-radius: 0 8px 8px 0;
                               transition: all 0.3s ease;
                             "
-                          >
-                            <option value="" disabled>Chọn quận/huyện</option>
-                            <option
-                              v-for="district in districts"
-                              :key="district.code"
-                              :value="district.name"
-                            >
-                              {{ district.name }}
-                            </option>
-                          </select>
+                          />
                         </div>
                       </div>
+
                       <div class="col-md-6">
                         <label
                           class="form-label fw-medium text-dark mb-2"
@@ -592,26 +584,16 @@
                           <span class="input-group-text bg-light border-end-0">
                             <i class="bi bi-geo-fill text-teal"></i>
                           </span>
-                          <select
-                            v-model="receiver.ward"
-                            class="form-select shadow-none border-start-0"
-                            :disabled="
-                              !isReceiverEditable || !receiver.district
-                            "
+                          <input
+                            v-model="customer.ward"
+                            type="text"
+                            class="form-control shadow-none border-start-0"
+                            placeholder="Phường/Xã"
                             style="
                               border-radius: 0 8px 8px 0;
                               transition: all 0.3s ease;
                             "
-                          >
-                            <option value="" disabled>Chọn phường/xã</option>
-                            <option
-                              v-for="ward in wards"
-                              :key="ward.code"
-                              :value="ward.name"
-                            >
-                              {{ ward.name }}
-                            </option>
-                          </select>
+                          />
                         </div>
                       </div>
                       <div class="col-12">
@@ -626,7 +608,7 @@
                             <i class="bi bi-house-door text-teal"></i>
                           </span>
                           <input
-                            v-model="receiver.address"
+                            v-model="customer.address"
                             type="text"
                             class="form-control shadow-none border-start-0"
                             placeholder="Nhập địa chỉ cụ thể (số nhà, tên đường,...)"
@@ -828,7 +810,16 @@
 
                 <!-- Pay Button -->
                 <button
+<<<<<<< Updated upstream
                   class="btn w-100 py-3 pay-btn gradient-custom-teal text-white mt-auto"
+=======
+                  class="btn w-100 py-3 pay-btn gradient-custom-green text-white"
+                  :disabled="
+                    !activeInvoiceId ||
+                    cartItems.length === 0 ||
+                    isCreatingOrder
+                  "
+>>>>>>> Stashed changes
                   @click="ThanhToan"
                   :disabled="
                     !activeInvoiceId ||
@@ -1322,6 +1313,7 @@
                     <div
                       class="card-body d-flex flex-column justify-content-between p-3"
                     >
+<<<<<<< Updated upstream
                       <div
                         class="d-flex justify-content-between align-items-start"
                       >
@@ -1349,6 +1341,18 @@
                         <span class="badge bg-success text-white px-2 py-1"
                           >Công khai</span
                         >
+=======
+                      <div>
+                        <h6 class="fw-bold text-dark mb-1">{{ code.code }}</h6>
+                        <p class="text-muted mb-0">
+                          Giảm: {{ formatPrice(code.value) }} (Đơn tối thiểu:
+                          {{ formatPrice(code.minOrder) }})
+                        </p>
+                        <p class="text-muted mb-0">
+                          Hết hạn:
+                          {{ code.expiry }}
+                        </p>
+>>>>>>> Stashed changes
                       </div>
                       <button
                         class="btn btn-sm gradient-custom-teal text-white btn-apply w-100 mt-3"
