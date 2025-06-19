@@ -54,31 +54,75 @@
             </div>
           </div>
 
-          <!-- Sale Value Filter -->
+          <!-- Sale Value Range Slider -->
           <div class="col-lg-4 col-md-6">
             <div class="filter-group">
-              <label class="filter-label">Giá trị giảm (%)</label>
-              <input
-                  v-model="saleValue"
-                  type="number"
-                  class="form-control date-input"
-                  placeholder="Nhập giá trị giảm (VD: 5.00)"
-                  step="0.01"
-              />
+              <div class="price-range-container">
+                <label class="filter-label">Giá trị giảm (%)</label>
+                <div class="dual-range-slider">
+                  <div class="slider-track">
+                    <div class="slider-range" :style="saleValueSliderStyle"></div>
+                  </div>
+                  <input
+                      type="range"
+                      v-model.number="saleValueMin"
+                      :min="0"
+                      :max="maxGiaTriGiamGia"
+                      class="range-slider"
+                      style="z-index: 2"
+                      @input="updateSaleValueMax"
+                  />
+                  <input
+                      type="range"
+                      v-model.number="saleValueMax"
+                      :min="0"
+                      :max="maxGiaTriGiamGia"
+                      class="range-slider"
+                      style="z-index: 1"
+                      @input="updateSaleValueMin"
+                  />
+                </div>
+                <div class="range-labels d-flex justify-content-between">
+                  <span>{{ saleValueMin }}%</span>
+                  <span>{{ saleValueMax }}%</span>
+                </div>
+              </div>
             </div>
           </div>
 
-          <!-- Min Order Filter -->
+          <!-- Min Order Range Slider -->
           <div class="col-lg-4 col-md-6">
             <div class="filter-group">
-              <label class="filter-label">Số tiền giảm tối đa (VND)</label>
-              <input
-                  v-model="formattedMinOrder"
-                  type="text"
-                  class="form-control date-input"
-                  placeholder="Nhập số tiền (VD: 1.000.000)"
-                  @input="formatMinOrder"
-              />
+              <div class="price-range-container">
+                <label class="filter-label">Số tiền giảm tối đa (VND)</label>
+                <div class="dual-range-slider">
+                  <div class="slider-track">
+                    <div class="slider-range" :style="minOrderSliderStyle"></div>
+                  </div>
+                  <input
+                      type="range"
+                      v-model.number="minOrderMin"
+                      :min="0"
+                      :max="maxSoTienGiamToiDa"
+                      class="range-slider"
+                      style="z-index: 2"
+                      @input="updateMinOrderMax"
+                  />
+                  <input
+                      type="range"
+                      v-model.number="minOrderMax"
+                      :min="0"
+                      :max="maxSoTienGiamToiDa"
+                      class="range-slider"
+                      style="z-index: 1"
+                      @input="updateMinOrderMin"
+                  />
+                </div>
+                <div class="range-labels d-flex justify-content-between">
+                  <span>{{ formatPrice(minOrderMin) }}</span>
+                  <span>{{ formatPrice(minOrderMax) }}</span>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -108,6 +152,9 @@
       >
         <template #stt="{ index }">
           {{ ((Number(currentPage.value) || 0) * (Number(pageSize.value) || 10)) + index + 1 }}
+        </template>
+        <template #ma="{ item }">
+          {{ item.ma }}
         </template>
         <template #tenDot="{ item }">
           {{ item.tenDotGiamGia }}
@@ -195,6 +242,12 @@ const {
   toast,
   deleteDotGiamGia,
   viewUpdate,
+  maxGiaTriGiamGia,
+  maxSoTienGiamToiDa,
+  saleValueMin,
+  saleValueMax,
+  minOrderMin,
+  minOrderMax,
 } = useDiscountManagement();
 
 const notificationModal = ref(null);
@@ -203,6 +256,7 @@ const isLoading = ref(false);
 
 const headers = ref([
   { text: 'STT', value: 'stt' },
+  { text: 'Mã đợt', value: 'ma' },
   { text: 'Tên đợt', value: 'tenDot' },
   { text: 'Giá Trị', value: 'giaTriGiamGia' },
   { text: 'Loại Phiếu', value: 'loaiGiamGiaApDung' },
@@ -212,18 +266,55 @@ const headers = ref([
   { text: 'Hành Động', value: 'actions' },
 ]);
 
-// Format minOrder input
-const formattedMinOrder = ref('');
-const formatMinOrder = (event) => {
-  let value = event.target.value.replace(/[^0-9]/g, '');
-  minOrder.value = value ? parseInt(value) : null;
-  formattedMinOrder.value = value ? new Intl.NumberFormat('vi-VN').format(value) : '';
+const saleValueSliderStyle = computed(() => {
+  const min = 0;
+  const max = maxGiaTriGiamGia.value;
+  const left = (saleValueMin.value / max) * 100;
+  const width = ((saleValueMax.value - saleValueMin.value) / max) * 100;
+  return {
+    left: `${left}%`,
+    width: `${width}%`
+  };
+});
+
+const minOrderSliderStyle = computed(() => {
+  const min = 0;
+  const max = maxSoTienGiamToiDa.value;
+  const left = (minOrderMin.value / max) * 100;
+  const width = ((minOrderMax.value - minOrderMin.value) / max) * 100;
+  return {
+    left: `${left}%`,
+    width: `${width}%`
+  };
+});
+
+const updateSaleValueMin = () => {
+  if (saleValueMin.value > saleValueMax.value) {
+    saleValueMin.value = saleValueMax.value;
+  }
+  saleValue.value = saleValueMax.value; // Update single value for filtering
 };
 
-// Initialize formattedMinOrder if minOrder has a value
-watch(minOrder, (newValue) => {
-  formattedMinOrder.value = newValue ? new Intl.NumberFormat('vi-VN').format(newValue) : '';
-}, { immediate: true });
+const updateSaleValueMax = () => {
+  if (saleValueMax.value < saleValueMin.value) {
+    saleValueMax.value = saleValueMin.value;
+  }
+  saleValue.value = saleValueMax.value; // Update single value for filtering
+};
+
+const updateMinOrderMin = () => {
+  if (minOrderMin.value > minOrderMax.value) {
+    minOrderMin.value = minOrderMax.value;
+  }
+  minOrder.value = minOrderMax.value; // Update single value for filtering
+};
+
+const updateMinOrderMax = () => {
+  if (minOrderMax.value < minOrderMin.value) {
+    minOrderMax.value = minOrderMin.value;
+  }
+  minOrder.value = minOrderMax.value; // Update single value for filtering
+};
 
 const formatPrice = (value) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);
 
@@ -238,9 +329,12 @@ const resetFilters = () => {
   filterStatus.value = '';
   startDate.value = '';
   endDate.value = '';
-  saleValue.value = '';
+  saleValue.value = null;
+  saleValueMin.value = 0;
+  saleValueMax.value = maxGiaTriGiamGia.value;
   minOrder.value = null;
-  formattedMinOrder.value = '';
+  minOrderMin.value = 0;
+  minOrderMax.value = maxSoTienGiamToiDa.value;
   deleted.value = '';
   currentPage.value = 0;
   fetchData();
@@ -441,5 +535,74 @@ watch([searchQuery, filterType, filterStatus, startDate, endDate, saleValue, min
 .badge-inactive {
   background: #dc3545;
   color: white;
+}
+
+/* Range Slider Styles */
+.price-range-container {
+  margin-top: 0.5rem;
+}
+
+.dual-range-slider {
+  position: relative;
+  width: 100%;
+  height: 10px;
+  margin: 20px 0;
+}
+
+.slider-track {
+  position: absolute;
+  width: 100%;
+  height: 4px;
+  background: #e0e0e0;
+  border-radius: 2px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.slider-range {
+  position: absolute;
+  height: 4px;
+  background: #34d399;
+  border-radius: 2px;
+}
+
+.range-slider {
+  position: absolute;
+  width: 100%;
+  height: 10px;
+  background: transparent;
+  -webkit-appearance: none;
+  appearance: none;
+  pointer-events: none;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.range-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  background: #34d399;
+  border-radius: 50%;
+  cursor: pointer;
+  pointer-events: auto;
+  box-shadow: 0 0 4px rgba(0, 0, 0, 0.2);
+}
+
+.range-slider::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  background: #34d399;
+  border-radius: 50%;
+  cursor: pointer;
+  pointer-events: auto;
+  box-shadow: 0 0 4px rgba(0, 0, 0, 0.2);
+}
+
+.range-labels {
+  margin-top: 0.5rem;
+  font-size: 0.875rem;
+  color: #1f3a44;
 }
 </style>

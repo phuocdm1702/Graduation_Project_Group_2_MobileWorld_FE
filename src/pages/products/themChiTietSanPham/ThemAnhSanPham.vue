@@ -62,7 +62,7 @@
 
     <!-- Notification Modal -->
     <NotificationModal
-      ref="notificationModal"
+      :isVisible="isModalVisible"
       :type="notificationType"
       :message="notificationMessage"
       :isLoading="isNotificationLoading"
@@ -93,6 +93,7 @@ import { defineComponent, ref, computed } from 'vue';
 import FilterTableSection from '@/components/common/FilterTableSection.vue';
 import NotificationModal from '@/components/common/NotificationModal.vue';
 import ToastNotification from '@/components/common/ToastNotification.vue';
+import { getMauSac, addChiTietSanPham } from '@/store/modules/products/chiTietSanPham';
 
 export default defineComponent({
   name: 'ProductImages',
@@ -114,30 +115,43 @@ export default defineComponent({
       type: Object,
       required: true,
     },
-    mauSacOptions: {
-      type: Array,
-      required: true,
-    },
   },
   setup(props, { emit }) {
     const toastNotification = ref(null);
-    const notificationModal = ref(null);
     const colorImages = ref({});
     const isSubmitting = ref(false);
+    const isModalVisible = ref(false); // New ref to control modal visibility
     const notificationType = ref('');
     const notificationMessage = ref('');
     const isNotificationLoading = ref(false);
     const notificationOnConfirm = ref(null);
     const notificationOnCancel = ref(null);
     const showImageSection = ref(true);
+    const mauSacOptions = ref([]);
 
     const uniqueColors = computed(() => {
       const colorIds = [...new Set(props.productVariants.map((variant) => variant.idMauSac))];
       return colorIds.map((colorId) => ({
         colorId,
-        colorName: props.mauSacOptions.find((mau) => mau.id === colorId)?.tenMau || 'N/A',
+        colorName: mauSacOptions.value.find((mau) => mau.id === colorId)?.mauSac || 'N/A',
       }));
     });
+
+    // Fetch màu sắc từ API
+    const fetchMauSac = async () => {
+      try {
+        const response = await getMauSac();
+        mauSacOptions.value = response.data;
+      } catch (error) {
+        toastNotification.value?.addToast({
+          type: 'error',
+          message: 'Lỗi khi tải danh sách màu sắc: ' + error.message,
+          duration: 3000,
+        });
+      }
+    };
+
+    fetchMauSac();
 
     const handleColorImageUpload = (event, colorId) => {
       const file = event.target.files[0];
@@ -150,7 +164,7 @@ export default defineComponent({
           };
           toastNotification.value?.addToast({
             type: 'success',
-            message: `Tải ảnh cho màu ${props.mauSacOptions.find((mau) => mau.id === colorId)?.tenMau} thành công!`,
+            message: `Tải ảnh cho màu ${mauSacOptions.value.find((mau) => mau.id === colorId)?.mauSac} thành công!`,
             duration: 3000,
           });
         };
@@ -166,26 +180,68 @@ export default defineComponent({
     };
 
     const validateForm = () => {
-      if (!props.productData.tenSanPham) {
-        return { valid: false, message: 'Vui lòng nhập tên sản phẩm!' };
-      }
-      if (props.productVariants.length === 0) {
-        return { valid: false, message: 'Vui lòng thêm ít nhất một phiên bản sản phẩm!' };
-      }
-      for (const variant of props.productVariants) {
-        if (!variant.donGia || isNaN(parseFloat(variant.donGia))) {
-          return { valid: false, message: 'Vui lòng nhập đơn giá hợp lệ cho tất cả phiên bản!' };
-        }
-      }
-      const missingImages = uniqueColors.value.filter((color) => !colorImages.value[color.colorId]);
-      if (missingImages.length > 0) {
-        return {
-          valid: false,
-          message: `Vui lòng tải ảnh cho màu: ${missingImages.map((c) => c.colorName).join(', ')}!`,
-        };
-      }
-      return { valid: true };
+  if (!props.productData.tenSanPham) {
+    return { valid: false, message: 'Vui lòng nhập tên sản phẩm!' };
+  }
+  if (!props.productData.idNhaSanXuat) {
+    return { valid: false, message: 'Vui lòng chọn nhà sản xuất!' };
+  }
+  if (!props.productData.idPin) {
+    return { valid: false, message: 'Vui lòng chọn pin!' };
+  }
+  if (!props.productData.congNgheManHinh) {
+    return { valid: false, message: 'Vui lòng chọn công nghệ màn hình!' };
+  }
+  if (!props.productData.idCpu) {
+    return { valid: false, message: 'Vui lòng chọn CPU!' };
+  }
+  if (!props.productData.idGpu) {
+    return { valid: false, message: 'Vui lòng chọn GPU!' };
+  }
+  if (!props.productData.idCumCamera) {
+    return { valid: false, message: 'Vui lòng chọn cụm camera!' };
+  }
+  if (!props.productData.idHeDieuHanh) {
+    return { valid: false, message: 'Vui lòng chọn hệ điều hành!' };
+  }
+  if (!props.productData.idThietKe) {
+    return { valid: false, message: 'Vui lòng chọn thiết kế!' };
+  }
+  if (!props.productData.idSim) {
+    return { valid: false, message: 'Vui lòng chọn SIM!' };
+  }
+  if (!props.productData.hoTroCongNgheSac) {
+    return { valid: false, message: 'Vui lòng chọn công nghệ sạc!' };
+  }
+  if (!props.productData.idCongNgheMang) {
+    return { valid: false, message: 'Vui lòng chọn công nghệ mạng!' };
+  }
+  if (props.productVariants.length === 0) {
+    return { valid: false, message: 'Vui lòng thêm ít nhất một phiên bản sản phẩm!' };
+  }
+  for (const variant of props.productVariants) {
+    if (!variant.idMauSac) {
+      return { valid: false, message: 'Vui lòng chọn màu sắc cho phiên bản!' };
+    }
+    if (!variant.idRam) {
+      return { valid: false, message: 'Vui lòng chọn RAM cho phiên bản!' };
+    }
+    if (!variant.idBoNhoTrong) {
+      return { valid: false, message: 'Vui lòng chọn bộ nhớ trong cho phiên bản!' };
+    }
+    if (!variant.donGia || isNaN(parseFloat(variant.donGia))) {
+      return { valid: false, message: 'Vui lòng nhập đơn giá hợp lệ cho tất cả phiên bản!' };
+    }
+  }
+  const missingImages = uniqueColors.value.filter((color) => !colorImages.value[color.colorId]);
+  if (missingImages.length > 0) {
+    return {
+      valid: false,
+      message: `Vui lòng tải ảnh cho màu: ${missingImages.map((c) => c.colorName).join(', ')}!`,
     };
+  }
+  return { valid: true };
+};
 
     const handleSubmit = () => {
       const validation = validateForm();
@@ -203,70 +259,100 @@ export default defineComponent({
       notificationOnConfirm.value = submitProduct;
       notificationOnCancel.value = resetNotification;
       isNotificationLoading.value = false;
-      notificationModal.value?.show();
+      isModalVisible.value = true; // Show modal
     };
 
     const submitProduct = async () => {
-      isSubmitting.value = true;
-      isNotificationLoading.value = true;
-      notificationMessage.value = 'Đang thêm sản phẩm...';
+  isSubmitting.value = true;
+  isNotificationLoading.value = true;
+  notificationMessage.value = 'Đang thêm sản phẩm...';
 
-      try {
-        // Simulate API call
-        await new Promise((resolve) => setTimeout(resolve, 2000));
-
-        const productPayload = {
-          productData: { ...props.productData },
-          variants: props.productVariants.map((variant, index) => ({
-            ...variant,
-            imeis: props.variantImeis[index] || [],
-          })),
-          images: Object.entries(colorImages.value).map(([colorId, imageData]) => ({
-            colorId,
-            file: imageData.file,
-          })),
-        };
-
-        console.log('Submitting product:', productPayload);
-
-        notificationType.value = 'success';
-        notificationMessage.value = 'Thêm sản phẩm thành công!';
-        notificationOnConfirm.value = () => {
-          resetForm();
-          notificationModal.value?.hide();
-        };
-        notificationOnCancel.value = null;
-        isNotificationLoading.value = false;
-
-        emit('product-submitted', productPayload);
-      } catch (error) {
-        notificationType.value = 'error';
-        notificationMessage.value = 'Có lỗi xảy ra khi thêm sản phẩm!';
-        notificationOnConfirm.value = resetNotification;
-        notificationOnCancel.value = null;
-        isNotificationLoading.value = false;
-      } finally {
-        isSubmitting.value = false;
-      }
+  try {
+    // Tạo productPayload khớp với ChiTietSanPhamRequest
+    const productPayload = {
+      tenSanPham: props.productData.tenSanPham,
+      idNhaSanXuat: props.productData.idNhaSanXuat,
+      idPin: props.productData.idPin,
+      congNgheManHinh: props.productData.congNgheManHinh,
+      idHoTroBoNhoNgoai: props.productData.idHoTroBoNhoNgoai,
+      idCpu: props.productData.idCpu,
+      idGpu: props.productData.idGpu,
+      idCumCamera: props.productData.idCumCamera,
+      idHeDieuHanh: props.productData.idHeDieuHanh,
+      idChiSoKhangBuiVaNuoc: props.productData.idChiSoKhangBuiVaNuoc,
+      idThietKe: props.productData.idThietKe,
+      idSim: props.productData.idSim,
+      hoTroCongNgheSac: props.productData.hoTroCongNgheSac,
+      idCongNgheMang: props.productData.idCongNgheMang,
+      giaBan: props.productData.giaBan ? parseFloat(props.productData.giaBan) : null,
+      ghiChu: props.productData.ghiChu,
+      variants: props.productVariants.map((variant, index) => ({
+        idMauSac: variant.idMauSac,
+        idRam: variant.idRam,
+        idBoNhoTrong: variant.idBoNhoTrong,
+        donGia: parseFloat(variant.donGia),
+        imageIndex: index, // Gán imageIndex theo thứ tự
+        imeiList: props.variantImeis[index] || []
+      }))
     };
+
+    // Tạo images từ colorImages
+    const images = Object.values(colorImages.value).map((imageData, index) => ({
+      file: imageData.file,
+      imageIndex: index // Thêm imageIndex nếu cần
+    }));
+
+    // Log để debug
+    console.log('Gửi API addChiTietSanPham với payload:', JSON.stringify(productPayload, null, 2));
+    console.log('Images gửi đi:', images.map(img => ({ fileName: img.file?.name, imageIndex: img.imageIndex })));
+
+    const response = await addChiTietSanPham(productPayload, images);
+    console.log('Phản hồi từ API:', response.data);
+
+    notificationType.value = 'success';
+    notificationMessage.value = 'Thêm sản phẩm thành công!';
+    notificationOnConfirm.value = () => {
+      resetForm();
+      isModalVisible.value = false;
+    };
+    notificationOnCancel.value = null;
+    isNotificationLoading.value = false;
+
+    emit('product-submitted', productPayload);
+  } catch (error) {
+    console.error('Lỗi khi gọi API addChiTietSanPham:', error);
+    console.error('Chi tiết lỗi:', error.response?.data || error.message);
+
+    notificationType.value = 'error';
+    notificationMessage.value = 'Có lỗi xảy ra khi thêm sản phẩm: ' + (error.response?.data?.message || error.message);
+    notificationOnConfirm.value = resetNotification;
+    notificationOnCancel.value = null;
+    isNotificationLoading.value = false;
+  } finally {
+    isSubmitting.value = false;
+  }
+};
 
     const resetForm = () => {
-      notificationType.value = 'confirm';
-      notificationMessage.value = 'Bạn có chắc chắn muốn làm mới biểu mẫu? Tất cả dữ liệu sẽ bị xóa.';
-      notificationOnConfirm.value = () => {
-        emit('reset-form');
-        colorImages.value = {};
-        notificationModal.value?.hide();
-        toastNotification.value?.addToast({
-          type: 'success',
-          message: 'Đã làm mới biểu mẫu!',
-          duration: 3000,
-        });
-      };
-      notificationOnCancel.value = resetNotification;
-      isNotificationLoading.value = false;
-      notificationModal.value?.show();
-    };
+  console.log('Bắt đầu resetForm');
+  notificationType.value = 'confirm';
+  notificationMessage.value = 'Bạn có chắc chắn muốn làm mới biểu mẫu? Tất cả dữ liệu sẽ bị xóa.';
+  notificationOnConfirm.value = () => {
+    console.log('Xác nhận làm mới form');
+    emit('reset-form');
+    colorImages.value = {};
+    isModalVisible.value = false;
+    toastNotification.value?.addToast({
+      type: 'success',
+      message: 'Đã làm mới biểu mẫu!',
+      duration: 3000,
+    });
+    console.log('Đã phát sự kiện reset-form');
+  };
+  notificationOnCancel.value = resetNotification;
+  isNotificationLoading.value = false;
+  isModalVisible.value = true;
+};
 
     const resetNotification = () => {
       notificationType.value = '';
@@ -274,16 +360,16 @@ export default defineComponent({
       notificationOnConfirm.value = null;
       notificationOnCancel.value = null;
       isNotificationLoading.value = false;
-      notificationModal.value?.hide();
+      isModalVisible.value = false; // Hide modal
     };
 
     return {
       toastNotification,
-      notificationModal,
       colorImages,
       uniqueColors,
       isSubmitting,
       showImageSection,
+      isModalVisible, // Return new ref
       notificationType,
       notificationMessage,
       isNotificationLoading,
@@ -293,6 +379,7 @@ export default defineComponent({
       handleSubmit,
       resetForm,
       resetNotification,
+      mauSacOptions,
     };
   },
 });
