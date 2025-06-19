@@ -1071,7 +1071,7 @@ export default {
             null,
           giamGia: discount.value,
           phiVanChuyen: isDelivery.value ? 0 : null,
-          loaiDon: isDelivery.value ? "online" : "direct",
+          loaiDon: isDelivery.value ? "online" : "trực tiếp",
         };
 
         await apiService.post(
