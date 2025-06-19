@@ -4,20 +4,19 @@
       :backgroundOpacity="0.95" />
 
     <!-- Filter Section -->
-    <FilterTableSection title="Bộ lọc Tìm kiếm" icon="bi bi-funnel">
+    <FilterTableSection title="Bộ Lọc Tìm Kiếm" icon="bi bi-funnel">
       <div class="m-3">
-        <!-- Single Row -->
+        <!-- Single Row for All Filters -->
         <div class="row g-4 align-items-end">
           <!-- Search Input -->
           <div class="col-lg-4 col-md-6">
-            <div class="filter-label">Tìm kiếm
-              <label class="search-group">
-                <div class="search-input-wrapper">
-                  <i class="bi bi-search search-icon"></i>
-                  <input type="text" class="form-control search-input" placeholder="Mã hóa đơn, khách hàng, SĐT..."
-                    :value="keyword" @input="debouncedSearch($event.target.value)" />
-                </div>
-              </label>
+            <div class="search-group">
+              <label class="filter-label">Tìm kiếm</label>
+              <div class="search-input-wrapper">
+                <i class="bi bi-search search-icon"></i>
+                <input type="text" class="form-control search-input" placeholder="Mã hóa đơn, khách hàng, SĐT..."
+                  :value="keyword" @input="debouncedSearch($event.target.value)" />
+              </div>
             </div>
           </div>
 
@@ -89,7 +88,7 @@
             </button>
             <router-link to="/create-hoa-don" class="btn btn-action">
               <i class="bi bi-plus-circle me-2"></i>
-              Tạo Hóa đơn
+              Tạo Hóa Đơn
             </router-link>
           </div>
         </div>
@@ -610,6 +609,7 @@ export default {
 }
 
 .search-input {
+  /* width: 200%; */
   padding-left: 2.5rem;
   border: 2px solid rgba(52, 211, 153, 0.1);
   border-radius: 8px;

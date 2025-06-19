@@ -11,7 +11,9 @@
       <!-- Form Phiếu Giảm Giá -->
       <div class="col-lg-6">
         <FilterTableSection
-          :title="isEditMode ? 'Cập Nhật Phiếu Giảm Giá' : 'Thêm Phiếu Giảm Giá'"
+          :title="
+            isEditMode ? 'Cập Nhật Phiếu Giảm Giá' : 'Thêm Phiếu Giảm Giá'
+          "
           icon="bi bi-plus-circle"
         >
           <form @submit.prevent="submitForm" class="p-3">
@@ -177,7 +179,9 @@
                 :key="customer.id"
                 class="customer-item d-flex justify-content-between align-items-center p-2 mb-2"
                 :class="{ selected: selectedCustomers.includes(customer.id) }"
-                @click="formData.riengTu && toggleCustomerSelection(customer.id)"
+                @click="
+                  formData.riengTu && toggleCustomerSelection(customer.id)
+                "
               >
                 <span>{{ customer.ma }} - {{ customer.ten }}</span>
                 <span>{{ customer.gioiTinh == 1 ? "Nam" : "Nữ" }}</span>
@@ -204,7 +208,10 @@
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="customer in selectedCustomersData" :key="customer.id">
+                <tr
+                  v-for="customer in selectedCustomersData"
+                  :key="customer.id"
+                >
                   <td>{{ customer.ma }}</td>
                   <td>{{ customer.ten }}</td>
                   <td>{{ customer.gioiTinh == 1 ? "Nam" : "Nữ" }}</td>
@@ -331,7 +338,8 @@ export default {
 
     // Generate random code for ma field
     const generateRandomCode = () => {
-      const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+      const characters =
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
       let randomCode = "PGG_";
       for (let i = 0; i < 8; i++) {
         const randomIndex = Math.floor(Math.random() * characters.length);
@@ -396,8 +404,12 @@ export default {
             soTienGiamToiDa: voucher.soTienGiamToiDa || 0,
             hoaDonToiThieu: voucher.hoaDonToiThieu,
             soLuongDung: voucher.soLuongDung,
-            ngayBatDau: new Date(voucher.ngayBatDau).toISOString().split("T")[0],
-            ngayKetThuc: new Date(voucher.ngayKetThuc).toISOString().split("T")[0],
+            ngayBatDau: new Date(voucher.ngayBatDau)
+              .toISOString()
+              .split("T")[0],
+            ngayKetThuc: new Date(voucher.ngayKetThuc)
+              .toISOString()
+              .split("T")[0],
             moTa: voucher.moTa,
             riengTu: voucher.riengTu === 1,
             customerIds: voucher.customerIds || [],

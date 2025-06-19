@@ -9,23 +9,32 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@fortawesome/fontawesome-free": "^6.7.2",
     "@heroicons/vue": "^2.2.0",
     "axios": "^1.10.0",
     "axios-mock-adapter": "^2.1.0",
     "bootstrap": "^5.3.6",
     "bootstrap-icons": "^1.13.1",
     "chart.js": "^4.4.9",
+<<<<<<< HEAD
     "file-saver": "^2.0.5",
     "html5-qrcode": "^2.3.8",
+=======
+    "chartjs-plugin-datalabels": "^2.2.0",
+>>>>>>> 375c4eb910002433ac04212186651195356e7153
     "jsqr": "^1.4.0",
     "lodash": "^4.17.21",
     "pinia": "^3.0.2",
     "qrcode": "^1.5.4",
     "qrcode.vue": "^3.6.0",
     "vue": "^3.5.13",
+<<<<<<< HEAD
     "vue-router": "^4.5.1",
     "vuex": "^4.0.2",
     "xlsx": "^0.18.5"
+=======
+    "vue-router": "^4.5.1"
+>>>>>>> 375c4eb910002433ac04212186651195356e7153
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^5.2.3",

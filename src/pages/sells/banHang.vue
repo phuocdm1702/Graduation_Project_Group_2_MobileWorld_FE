@@ -476,7 +476,11 @@
                             <i class="bi bi-person text-teal"></i>
                           </span>
                           <input
+<<<<<<< HEAD
                             v-model="customer.name"
+=======
+                            v-model="receiver.name"
+>>>>>>> 375c4eb910002433ac04212186651195356e7153
                             type="text"
                             class="form-control shadow-none border-start-0"
                             placeholder="Nhập tên người nhận"
@@ -500,7 +504,11 @@
                             <i class="bi bi-telephone text-teal"></i>
                           </span>
                           <input
+<<<<<<< HEAD
                             v-model="customer.phone"
+=======
+                            v-model="receiver.phone"
+>>>>>>> 375c4eb910002433ac04212186651195356e7153
                             type="tel"
                             class="form-control shadow-none border-start-0"
                             placeholder="Nhập số điện thoại"
@@ -524,7 +532,11 @@
                             <i class="bi bi-geo-alt text-teal"></i>
                           </span>
                           <select
+<<<<<<< HEAD
                             v-model="customer.city"
+=======
+                            v-model="receiver.city"
+>>>>>>> 375c4eb910002433ac04212186651195356e7153
                             class="form-select shadow-none border-start-0"
                             :disabled="!isReceiverEditable"
                             @change="handleReceiverProvinceChange"
@@ -557,17 +569,38 @@
                           <span class="input-group-text bg-light border-end-0">
                             <i class="bi bi-geo text-teal"></i>
                           </span>
+<<<<<<< HEAD
                           <input
                             v-model="customer.district"
                             type="text"
                             class="form-control shadow-none border-start-0"
                             placeholder="Quận/Huyện"
                         
+=======
+                          <select
+                            v-model="receiver.district"
+                            class="form-select shadow-none border-start-0"
+                            :disabled="!isReceiverEditable || !receiver.city"
+                            @change="handleReceiverDistrictChange"
+>>>>>>> 375c4eb910002433ac04212186651195356e7153
                             style="
                               border-radius: 0 8px 8px 0;
                               transition: all 0.3s ease;
                             "
+<<<<<<< HEAD
                           />
+=======
+                          >
+                            <option value="" disabled>Chọn quận/huyện</option>
+                            <option
+                              v-for="district in districts"
+                              :key="district.code"
+                              :value="district.name"
+                            >
+                              {{ district.name }}
+                            </option>
+                          </select>
+>>>>>>> 375c4eb910002433ac04212186651195356e7153
                         </div>
                       </div>
 
@@ -582,16 +615,38 @@
                           <span class="input-group-text bg-light border-end-0">
                             <i class="bi bi-geo-fill text-teal"></i>
                           </span>
+<<<<<<< HEAD
                           <input
                             v-model="customer.ward"
                             type="text"
                             class="form-control shadow-none border-start-0"
                             placeholder="Phường/Xã"
+=======
+                          <select
+                            v-model="receiver.ward"
+                            class="form-select shadow-none border-start-0"
+                            :disabled="
+                              !isReceiverEditable || !receiver.district
+                            "
+>>>>>>> 375c4eb910002433ac04212186651195356e7153
                             style="
                               border-radius: 0 8px 8px 0;
                               transition: all 0.3s ease;
                             "
+<<<<<<< HEAD
                           />
+=======
+                          >
+                            <option value="" disabled>Chọn phường/xã</option>
+                            <option
+                              v-for="ward in wards"
+                              :key="ward.code"
+                              :value="ward.name"
+                            >
+                              {{ ward.name }}
+                            </option>
+                          </select>
+>>>>>>> 375c4eb910002433ac04212186651195356e7153
                         </div>
                       </div>
                       <div class="col-12">
@@ -606,7 +661,11 @@
                             <i class="bi bi-house-door text-teal"></i>
                           </span>
                           <input
+<<<<<<< HEAD
                             v-model="customer.address"
+=======
+                            v-model="receiver.address"
+>>>>>>> 375c4eb910002433ac04212186651195356e7153
                             type="text"
                             class="form-control shadow-none border-start-0"
                             placeholder="Nhập địa chỉ cụ thể (số nhà, tên đường,...)"
@@ -805,11 +864,15 @@
                 <!-- Pay Button -->
                 <button
                   class="btn w-100 py-3 pay-btn gradient-custom-green text-white"
+<<<<<<< HEAD
                   :disabled="
                     !activeInvoiceId ||
                     cartItems.length === 0 ||
                     isCreatingOrder
                   "
+=======
+                  :disabled="!activeInvoiceId || cartItems.length === 0 || isCreatingOrder"
+>>>>>>> 375c4eb910002433ac04212186651195356e7153
                   @click="ThanhToan"
                 >
                   <i class="bi bi-credit-card me-2"></i>
@@ -1225,7 +1288,13 @@
                         </p>
                         <p class="text-muted mb-0">
                           Hết hạn:
+<<<<<<< HEAD
                           {{ code.expiry }}
+=======
+                          {{
+                            new Date(code.expiry).toLocaleDateString("vi-VN")
+                          }}
+>>>>>>> 375c4eb910002433ac04212186651195356e7153
                         </p>
                       </div>
                       <button

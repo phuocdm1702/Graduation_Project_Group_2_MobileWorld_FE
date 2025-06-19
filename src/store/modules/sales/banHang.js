@@ -6,7 +6,10 @@ import NotificationModal from "@/components/common/NotificationModal.vue";
 import ToastNotification from "@/components/common/ToastNotification.vue";
 import FilterTableSection from "@/components/common/FilterTableSection.vue";
 import QrcodeVue from "qrcode.vue";
+<<<<<<< HEAD
 import axios from "axios";
+=======
+>>>>>>> 375c4eb910002433ac04212186651195356e7153
 
 // Debounce utility function
 const debounce = (func, delay) => {
@@ -650,6 +653,7 @@ export default {
     };
 
     const searchCustomers = async () => {
+<<<<<<< HEAD
   if (!searchCustomer.value) {
     selectedCustomer.value = null;
     customer.value = { id: null, name: "", phone: "", city: "", district: "", ward: "", address: "" };
@@ -735,6 +739,89 @@ export default {
     showToast("error", "Đã xảy ra lỗi khi tìm kiếm khách hàng");
   }
 };
+=======
+      if (!searchCustomer.value) {
+        selectedCustomer.value = null;
+        customer.value = { id: null, name: "", phone: "" };
+        privateDiscountCodes.value = [];
+        setTimeout(() => {
+          showToast("warning", "Vui lòng nhập thông tin tìm kiếm");
+        }, 3000);
+        return;
+      }
+
+      try {
+        const result = await Search(searchCustomer.value);
+
+        if (result.success && result.data && result.data.length > 0) {
+          const customerData = result.data[0];
+          const customerId =
+            customerData.id ||
+            customerData.idKhachHang ||
+            (customerData.idKhachHang && customerData.idKhachHang.id) ||
+            null;
+
+          selectedCustomer.value = customerData;
+          customer.value = {
+            id: customerId,
+            name: customerData.ten || customerData.idKhachHang?.ten || "",
+            phone:
+              customerData.idTaiKhoan?.soDienThoai ||
+              customerData.idKhachHang?.idTaiKhoan?.soDienThoai ||
+              "",
+          };
+
+          if (customerId) {
+            const pggResult = await getPhieuGiamGiaByKhachHang(customerId);
+            if (pggResult.success && Array.isArray(pggResult.data)) {
+              privateDiscountCodes.value = pggResult.data
+                .filter(
+                  (item) =>
+                    item.idPhieuGiamGia?.riengTu === true &&
+                    isValidDiscount(item.idPhieuGiamGia?.ngayKetThuc)
+                )
+                .map((item, index) => ({
+                  id: item.id || index + 1,
+                  code: item.ma || "Unknown",
+                  value: item.idPhieuGiamGia?.soTienGiamToiDa || 0,
+                  expiry: formatDate(item.idPhieuGiamGia?.ngayKetThuc),
+                  rawExpiry: item.idPhieuGiamGia?.ngayKetThuc,
+                }));
+
+              showToast(
+                "success",
+                `Tìm thấy khách hàng: ${customer.value.name} với ${privateDiscountCodes.value.length} mã giảm giá cá nhân`
+              );
+            } else {
+              privateDiscountCodes.value = [];
+              showToast(
+                "warning",
+                `Tìm thấy khách hàng: ${customer.value.name}, nhưng không có mã giảm giá cá nhân`
+              );
+            }
+          } else {
+            privateDiscountCodes.value = [];
+            showToast(
+              "warning",
+              `Tìm thấy khách hàng: ${customer.value.name}, nhưng không có ID để lấy mã giảm giá`
+            );
+          }
+        } else {
+          selectedCustomer.value = null;
+          customer.value = { id: null, name: "", phone: "" };
+          privateDiscountCodes.value = [];
+          setTimeout(() => {
+            showToast("warning", "Không tìm thấy khách hàng");
+          }, 3000);
+        }
+      } catch (error) {
+        selectedCustomer.value = null;
+        customer.value = { id: null, name: "", phone: "" };
+        privateDiscountCodes.value = [];
+        showToast("error", "Đã xảy ra lỗi khi tìm kiếm khách hàng");
+      }
+    };
+>>>>>>> 375c4eb910002433ac04212186651195356e7153
 
     const addBanHang = async (customerData) => {
       try {
@@ -826,6 +913,7 @@ export default {
     };
 
     const fetchLocations = async () => {
+<<<<<<< HEAD
   try {
     const response = await axios.get("https://provinces.open-api.vn/api/p/");
     provinces.value = response.data.map((t) => ({
@@ -878,6 +966,46 @@ export default {
     showToast("error", "Lỗi khi tải danh sách phường/xã");
   }
 };
+=======
+      try {
+        const response = await apiService.get("/api/dia-chi/tinh");
+        provinces.value = response.data.map((t) => ({
+          code: t.ma,
+          name: t.ten,
+        }));
+      } catch (error) {
+        showToast("error", "Lỗi khi tải danh sách tỉnh/thành");
+      }
+    };
+
+    const fetchDistricts = async (provinceName) => {
+      try {
+        const response = await apiService.get(
+          `/api/dia-chi/quan?province=${provinceName}`
+        );
+        districts.value = response.data.map((q) => ({
+          code: q.ma,
+          name: q.ten,
+        }));
+      } catch (error) {
+        showToast("error", "Lỗi khi tải danh sách quận/huyện");
+      }
+    };
+
+    const fetchWards = async (districtName) => {
+      try {
+        const response = await apiService.get(
+          `/api/dia-chi/phuong?district=${districtName}`
+        );
+        wards.value = response.data.map((p) => ({
+          code: p.ma,
+          name: p.ten,
+        }));
+      } catch (error) {
+        showToast("error", "Lỗi khi tải danh sách phường/xã");
+      }
+    };
+>>>>>>> 375c4eb910002433ac04212186651195356e7153
 
     const openCustomerModal = () => {
       newCustomer.value = {
@@ -892,6 +1020,7 @@ export default {
     };
 
     const handleProvinceChange = () => {
+<<<<<<< HEAD
   fetchDistricts(newCustomer.value.city);
   newCustomer.value.district = "";
   newCustomer.value.ward = "";
@@ -918,6 +1047,30 @@ const handleReceiverDistrictChange = () => {
   receiver.value.ward = "";
   wards.value = [];
 };
+=======
+      fetchDistricts(newCustomer.value.city);
+      newCustomer.value.district = "";
+      newCustomer.value.ward = "";
+      wards.value = [];
+    };
+
+    const handleDistrictChange = () => {
+      fetchWards(newCustomer.value.district);
+      newCustomer.value.ward = "";
+    };
+
+    const handleReceiverProvinceChange = () => {
+      fetchDistricts(receiver.value.city);
+      receiver.value.district = "";
+      receiver.value.ward = "";
+      wards.value = [];
+    };
+
+    const handleReceiverDistrictChange = () => {
+      fetchWards(receiver.value.district);
+      receiver.value.ward = "";
+    };
+>>>>>>> 375c4eb910002433ac04212186651195356e7153
 
     const toggleDelivery = () => {
       if (isDelivery.value && selectedCustomer.value) {
@@ -1166,12 +1319,22 @@ const handleReceiverDistrictChange = () => {
       } catch (error) {
         showToast("error", "Lỗi khi tải danh sách mã giảm giá công khai");
       }
+<<<<<<< HEAD
       fetchPendingInvoices();
   fetchProducts();
   fetchDiscountCodes();
   fetchLocations(); // Đã gọi để tải danh sách tỉnh/thành phố
       
     });
+=======
+    });
+
+    fetchPendingInvoices();
+    fetchProducts();
+    fetchDiscountCodes();
+    fetchLocations();
+
+>>>>>>> 375c4eb910002433ac04212186651195356e7153
     return {
       // State
       isCreatingInvoice,
