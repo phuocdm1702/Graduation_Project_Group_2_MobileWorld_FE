@@ -7,9 +7,15 @@
       :backgroundOpacity="0.95"
     />
 
-    <div class="bg-white rounded-lg shadow-sm animate__animated animate__fadeInUp" style="padding: 1rem;">
+    <div
+      class="bg-white rounded-lg shadow-sm animate__animated animate__fadeInUp"
+      style="padding: 1rem"
+    >
       <!-- QR Scanning Section -->
-      <div v-if="isScanning" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div
+        v-if="isScanning"
+        class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+      >
         <div class="bg-white p-6 rounded-lg shadow-md">
           <div id="qr-reader" class="w-72 h-72 mx-auto"></div>
           <button class="mt-4 btn btn-danger w-100" @click="isScanning = false">
@@ -22,10 +28,7 @@
       <div class="flex justify-center mb-6 animate__animated animate__zoomIn">
         <div class="employee-image-container relative">
           <div class="image-upload-wrapper">
-            <div
-              class="image-preview"
-              @click="triggerFileInput"
-            >
+            <div class="image-preview" @click="triggerFileInput">
               <img
                 v-if="customerImage"
                 :src="customerImage"
@@ -38,12 +41,12 @@
                 <span class="upload-subtext">JPG, PNG tối đa 5MB</span>
               </div>
             </div>
-            
+
             <!-- Upload overlay -->
             <div class="upload-overlay" @click="triggerFileInput">
               <i class="bi bi-camera-fill"></i>
             </div>
-            
+
             <!-- Remove button -->
             <button
               v-if="customerImage"
@@ -54,13 +57,13 @@
               <i class="bi bi-x-lg"></i>
             </button>
           </div>
-          
-          <input 
+
+          <input
             ref="fileInput"
-            type="file" 
-            class="d-none" 
-            accept="image/*" 
-            @change="handleImageUpload" 
+            type="file"
+            class="d-none"
+            accept="image/*"
+            @change="handleImageUpload"
           />
         </div>
       </div>
@@ -68,20 +71,16 @@
       <!-- Form Fields -->
       <div class="row g-4">
         <div class="col-md-6">
-          <label class="filter-label">
-            Tên khách hàng
-          </label>
+          <label class="filter-label"> Tên khách hàng </label>
           <input
             type="text"
             class="form-control search-input"
             placeholder="Nhập tên khách hàng"
-            v-model="customer.ten"
+            v-model="customer.tenKH"
           />
         </div>
         <div class="col-md-6">
-          <label class="filter-label">
-            Số điện thoại
-          </label>
+          <label class="filter-label"> Số điện thoại </label>
           <input
             type="text"
             class="form-control search-input"
@@ -90,9 +89,7 @@
           />
         </div>
         <div class="col-md-6">
-          <label class="filter-label">
-            Email
-          </label>
+          <label class="filter-label"> Email </label>
           <input
             type="email"
             class="form-control search-input"
@@ -101,9 +98,7 @@
           />
         </div>
         <div class="col-md-6">
-          <label class="filter-label">
-            Ngày sinh
-          </label>
+          <label class="filter-label"> Ngày sinh </label>
           <input
             type="date"
             class="form-control date-input"
@@ -111,9 +106,7 @@
           />
         </div>
         <div class="col-md-6">
-          <label class="filter-label">
-            Giới tính
-          </label>
+          <label class="filter-label"> Giới tính </label>
           <div class="gender-options">
             <div class="form-check custom-radio">
               <input
@@ -121,12 +114,10 @@
                 type="radio"
                 name="gioiTinh"
                 id="nam"
-                value="Nam"
+                value="False"
                 v-model="customer.gioiTinh"
               />
-              <label class="form-check-label" for="nam">
-                Nam
-              </label>
+              <label class="form-check-label" for="nam"> Nam </label>
             </div>
             <div class="form-check custom-radio">
               <input
@@ -134,12 +125,10 @@
                 type="radio"
                 name="gioiTinh"
                 id="nu"
-                value="Nữ"
+                value="True"
                 v-model="customer.gioiTinh"
               />
-              <label class="form-check-label" for="nu">
-                Nữ
-              </label>
+              <label class="form-check-label" for="nu"> Nữ </label>
             </div>
           </div>
         </div>
@@ -153,10 +142,7 @@
             <h2 class="title-text">Quản lý địa chỉ</h2>
             <span class="address-count">{{ addresses.length }} địa chỉ</span>
           </div>
-          <button
-            class="btn btn-add-address"
-            @click="showAddAddress = true"
-          >
+          <button class="btn btn-add-address" @click="showAddAddress = true">
             Thêm địa chỉ
           </button>
         </div>
@@ -169,9 +155,7 @@
           class="add-address-form animate__animated animate__slideInDown"
         >
           <div class="form-header">
-            <h3 class="form-title">
-              Thêm địa chỉ mới
-            </h3>
+            <h3 class="form-title">Thêm địa chỉ mới</h3>
             <button class="btn-close-form" @click="cancelAddAddress">
               <i class="bi bi-x-lg"></i>
             </button>
@@ -180,56 +164,68 @@
           <div class="form-body">
             <div class="row g-3">
               <div class="col-12">
-                <label class="form-label">
-                  Địa chỉ cụ thể
-                </label>
+                <label class="form-label"> Địa chỉ cụ thể </label>
                 <input
                   type="text"
                   class="form-control modern-input"
                   placeholder="Nhập số nhà, tên đường..."
-                  v-model="newAddress.diaChi"
+                  v-model="newAddress.diaChiCuThe"
                 />
               </div>
-              
+
               <div class="col-md-4">
-                <label class="form-label">
-                  Tỉnh/Thành phố
-                </label>
+                <label class="form-label"> Tỉnh/Thành phố </label>
                 <select
                   class="form-select modern-select"
-                  v-model="newAddress.tinhThanh"
+                  v-model="newAddress.thanhPho"
+                  @change="fetchDistricts"
                 >
                   <option value="" disabled>Chọn tỉnh/thành phố</option>
-                  <option v-for="tinh in tinhThanhList" :key="tinh" :value="tinh">{{ tinh }}</option>
+                  <option
+                    v-for="province in provinces"
+                    :key="province.code"
+                    :value="province.name"
+                  >
+                    {{ province.name }}
+                  </option>
                 </select>
               </div>
-              
+
               <div class="col-md-4">
-                <label class="form-label">
-                  Quận/Huyện
-                </label>
+                <label class="form-label"> Quận/Huyện </label>
                 <select
                   class="form-select modern-select"
-                  v-model="newAddress.quanHuyen"
+                  v-model="newAddress.quan"
+                  @change="fetchWards"
                 >
                   <option value="" disabled>Chọn quận/huyện</option>
-                  <option v-for="quan in quanHuyenList" :key="quan" :value="quan">{{ quan }}</option>
+                  <option
+                    v-for="district in districts"
+                    :key="district.code"
+                    :value="district.name"
+                  >
+                    {{ district.name }}
+                  </option>
                 </select>
               </div>
-              
+
               <div class="col-md-4">
-                <label class="form-label">
-                  Xã/Phường
-                </label>
+                <label class="form-label"> Xã/Phường </label>
                 <select
                   class="form-select modern-select"
-                  v-model="newAddress.xaPhuong"
+                  v-model="newAddress.phuong"
                 >
                   <option value="" disabled>Chọn xã/phường</option>
-                  <option v-for="xa in xaPhuongList" :key="xa" :value="xa">{{ xa }}</option>
+                  <option
+                    v-for="ward in wards"
+                    :key="ward.code"
+                    :value="ward.name"
+                  >
+                    {{ ward.name }}
+                  </option>
                 </select>
               </div>
-              
+
               <div class="col-12">
                 <div class="form-check-wrapper">
                   <input
@@ -317,10 +313,10 @@
                     <input
                       type="text"
                       class="form-control modern-input"
-                      v-model="address.diaChi"
+                      v-model="address.diaChiCuThe"
                     />
                   </div>
-                  
+
                   <div class="col-md-4">
                     <label class="form-label">
                       <i class="bi bi-building me-2"></i>
@@ -328,13 +324,19 @@
                     </label>
                     <select
                       class="form-select modern-select"
-                      v-model="address.tinhThanh"
+                      v-model="address.thanhPho"
                     >
                       <option value="" disabled>Chọn tỉnh/thành phố</option>
-                      <option v-for="tinh in tinhThanhList" :key="tinh" :value="tinh">{{ tinh }}</option>
+                      <option
+                        v-for="province in provinces"
+                        :key="province.code"
+                        :value="province.name"
+                      >
+                        {{ province.name }}
+                      </option>
                     </select>
                   </div>
-                  
+
                   <div class="col-md-4">
                     <label class="form-label">
                       <i class="bi bi-signpost me-2"></i>
@@ -342,13 +344,19 @@
                     </label>
                     <select
                       class="form-select modern-select"
-                      v-model="address.quanHuyen"
+                      v-model="address.quan"
                     >
                       <option value="" disabled>Chọn quận/huyện</option>
-                      <option v-for="quan in quanHuyenList" :key="quan" :value="quan">{{ quan }}</option>
+                      <option
+                        v-for="district in districts"
+                        :key="district.code"
+                        :value="district.name"
+                      >
+                        {{ district.name }}
+                      </option>
                     </select>
                   </div>
-                  
+
                   <div class="col-md-4">
                     <label class="form-label">
                       <i class="bi bi-geo me-2"></i>
@@ -356,10 +364,17 @@
                     </label>
                     <select
                       class="form-select modern-select"
-                      v-model="address.xaPhuong"
+                      v-model="address.phuong"
                     >
                       <option value="" disabled>Chọn xã/phường</option>
-                      <option v-for="xa in xaPhuongList" :key="xa" :value="xa">{{ xa }}</option>
+                      <option value="" disabled>Chọn xã/phường</option>
+                      <option
+                        v-for="ward in wards"
+                        :key="ward.code"
+                        :value="ward.name"
+                      >
+                        {{ ward.name }}
+                      </option>
                     </select>
                   </div>
                 </div>
@@ -387,11 +402,9 @@
 
       <!-- Action Buttons -->
       <div class="action-buttons mt-5">
-        <button type="button" class="btn btn-reset" @click="goBack">
-          Hủy
-        </button>
+        <button type="button" class="btn btn-reset" @click="goBack">Hủy</button>
         <button class="btn btn-action" @click="submitCustomer">
-          {{ isEditMode ? 'Cập Nhật' : 'Thêm' }}
+          {{ isEditMode ? "Cập Nhật" : "Thêm" }}
         </button>
       </div>
     </div>
@@ -410,11 +423,22 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
-import { useRouter, useRoute } from 'vue-router';
+import { ref, computed, onMounted } from "vue";
+import { useRouter, useRoute } from "vue-router";
 import NotificationModal from "@/components/common/NotificationModal.vue";
 import ToastNotification from "@/components/common/ToastNotification.vue";
 import HeaderCard from "@/components/common/HeaderCard.vue";
+import {
+  addKhanhHang,
+  getKhachHangDetail,
+  UpdateKhachHang,
+  UpdateKhachHangDiaChi,
+  GetKhachHangDiaChiList,
+  DeleteKhachHangDiaChi,
+  SetMacDinhDiaChi,
+} from "../../store/modules/customers/khachHang";
+
+import axios from "axios";
 
 const router = useRouter();
 const route = useRoute();
@@ -428,56 +452,154 @@ const isEditMode = computed(() => !!route.params.id);
 
 const customer = ref({
   id: null,
-  ten: '',
-  soDienThoai: '',
-  email: '',
-  ngaySinh: '',
-  gioiTinh: '',
+  tenKH: "",
+  soDienThoai: "",
+  email: "",
+  ngaySinh: "",
+  gioiTinh: "",
 });
 
 const showAddAddress = ref(false);
 const newAddress = ref({
-  diaChi: '',
-  tinhThanh: '',
-  quanHuyen: '',
-  xaPhuong: '',
+  diaChiCuThe: "",
+  thanhPho: "",
+  quan: "",
+  phuong: "",
   isDefault: false,
 });
 const addresses = ref([]);
-const notificationType = ref('');
-const notificationMessage = ref('');
+const notificationType = ref("");
+const notificationMessage = ref("");
 const isNotificationLoading = ref(false);
 const notificationOnConfirm = ref(null);
 const notificationOnCancel = ref(null);
 
 // Mock location data
-const tinhThanhList = ref(['Hà Nội', 'TP.HCM', 'Đà Nẵng']);
-const quanHuyenList = ref(['Ba Đình', 'Hoàn Kiếm', 'Cầu Giấy']);
-const xaPhuongList = ref(['Phúc Xá', 'Hàng Mã', 'Yên Hòa']);
+const provinces = ref([]);
+const districts = ref([]);
+const wards = ref([]);
+const selectedProvinceCode = ref("");
+const selectedDistrictCode = ref("");
 
-const loadCustomerData = () => {
+//thanh pho
+const fetchProvinces = async () => {
+  try {
+    const response = await axios.get("https://provinces.open-api.vn/api/p/");
+    provinces.value = response.data;
+  } catch (error) {
+    console.error("Lỗi khi tải danh sách tỉnh/thành phố:", error);
+    toastNotification.value.addToast({
+      type: "error",
+      message: "Không thể tải danh sách tỉnh/thành phố!",
+    });
+  }
+};
+
+//quan
+const fetchDistricts = async () => {
+  districts.value = [];
+  wards.value = [];
+  newAddress.value.quan = "";
+  newAddress.value.phuong = "";
+
+  // Tìm mã tỉnh theo tên
+  const selectedProvince = provinces.value.find(
+    (p) => p.name === newAddress.value.thanhPho
+  );
+  if (selectedProvince) {
+    selectedProvinceCode.value = selectedProvince.code;
+    try {
+      const response = await axios.get(
+        `https://provinces.open-api.vn/api/p/${selectedProvince.code}?depth=2`
+      );
+      districts.value = response.data.districts;
+    } catch (error) {
+      console.error("Lỗi khi tải danh sách quận/huyện:", error);
+      toastNotification.value.addToast({
+        type: "error",
+        message: "Không thể tải danh sách quận/huyện!",
+      });
+    }
+  }
+};
+
+//xa
+const fetchWards = async () => {
+  wards.value = [];
+  newAddress.value.phuong = "";
+
+  // Tìm mã quận theo tên
+  const selectedDistrict = districts.value.find(
+    (d) => d.name === newAddress.value.quan
+  );
+  if (selectedDistrict) {
+    selectedDistrictCode.value = selectedDistrict.code;
+    try {
+      const response = await axios.get(
+        `https://provinces.open-api.vn/api/d/${selectedDistrict.code}?depth=2`
+      );
+      wards.value = response.data.wards;
+    } catch (error) {
+      console.error("Lỗi khi tải danh sách xã/phường:", error);
+      toastNotification.value.addToast({
+        type: "error",
+        message: "Không thể tải danh sách xã/phường!",
+      });
+    }
+  }
+};
+
+const loadCustomerData = async () => {
   if (isEditMode.value) {
     const customerId = parseInt(route.params.id);
-    const customerData = {
-      id: customerId,
-      ten: `Khách hàng ${customerId}`,
-      soDienThoai: '0123456789',
-      email: `khach${customerId}@example.com`,
-      ngaySinh: '1990-01-01',
-      gioiTinh: 'Nam',
-    };
-    if (customerData) {
-      customer.value = { ...customerData };
-      customerImage.value = `/path/to/customer/${customerId}.jpg`;
-      addresses.value = [
-        { diaChi: 'Số 123, Đường ABC', tinhThanh: 'Hà Nội', quanHuyen: 'Ba Đình', xaPhuong: 'Phúc Xá', isDefault: true },
-        { diaChi: 'Số 456, Đường XYZ', tinhThanh: 'TP.HCM', quanHuyen: 'Quận 1', xaPhuong: 'Phường Bến Nghé', isDefault: false },
-      ];
-    } else {
+    try {
+      const response = await getKhachHangDetail(customerId);
+      if (response.success && response.data) {
+        const customerData = response.data;
+        const ngaySinh = customerData.ngaySinh
+          ? new Date(customerData.ngaySinh).toISOString().split("T")[0]
+          : "";
+        customer.value = {
+          id: customerData.id || null,
+          tenKH: customerData.ten || "",
+          soDienThoai: customerData.idTaiKhoan?.soDienThoai || "",
+          email: customerData.idTaiKhoan?.email || "",
+          ngaySinh: ngaySinh,
+          gioiTinh: customerData.gioiTinh ? "True" : "False",
+        };
+        customerImage.value = customerData.anhKhachHang || null;
+
+        // Lấy danh sách địa chỉ
+        const addressResponse = await GetKhachHangDiaChiList(customerId);
+        if (addressResponse.success && addressResponse.data) {
+          addresses.value = addressResponse.data.filter((addr) => addr.deleted === true).map((addr) => ({
+            id: addr.id,
+            diaChiCuThe: addr.diaChiCuThe || "",
+            thanhPho: addr.thanhPho || "",
+            quan: addr.quan || "",
+            phuong: addr.phuong || "",
+            isDefault: addr.macDinh || false,
+          }));
+          if (addresses.value.length > 0) {
+            newAddress.value.thanhPho = addresses.value[0].thanhPho;
+            await fetchDistricts();
+            newAddress.value.quan = addresses.value[0].quan;
+            await fetchWards();
+          }
+        }
+      } else {
+        toastNotification.value.addToast({
+          type: "error",
+          message: response.message || "Không tìm thấy khách hàng!",
+        });
+        router.push("/khachHang");
+      }
+    } catch (error) {
       toastNotification.value.addToast({
-        type: 'error',
-        message: 'Không tìm thấy khách hàng!',
+        type: "error",
+        message: "Lỗi khi tải dữ liệu khách hàng!",
       });
+      router.push("/khachHang");
     }
   }
 };
@@ -491,15 +613,15 @@ const handleImageUpload = (event) => {
   if (file) {
     if (file.size > 5 * 1024 * 1024) {
       toastNotification.value.addToast({
-        type: 'error',
-        message: 'Kích thước file không được vượt quá 5MB',
+        type: "error",
+        message: "Kích thước file không được vượt quá 5MB",
       });
       return;
     }
-    if (!file.type.startsWith('image/')) {
+    if (!file.type.startsWith("image/")) {
       toastNotification.value.addToast({
-        type: 'error',
-        message: 'Vui lòng chọn file hình ảnh',
+        type: "error",
+        message: "Vui lòng chọn file hình ảnh",
       });
       return;
     }
@@ -510,34 +632,98 @@ const handleImageUpload = (event) => {
 const removeImage = () => {
   customerImage.value = null;
   if (fileInput.value) {
-    fileInput.value.value = '';
+    fileInput.value.value = "";
   }
 };
-
-const addAddress = () => {
-  if (!newAddress.value.diaChi.trim()) {
+const addAddress = async () => {
+  if (!newAddress.value.diaChiCuThe.trim()) {
     toastNotification.value.addToast({
-      type: 'error',
-      message: 'Vui lòng nhập địa chỉ cụ thể!',
+      type: "error",
+      message: "Vui lòng nhập địa chỉ cụ thể!",
     });
     return;
   }
-  
-  if (newAddress.value.isDefault) {
-    addresses.value.forEach(addr => (addr.isDefault = false));
+  if (!newAddress.value.thanhPho) {
+    toastNotification.value.addToast({
+      type: "error",
+      message: "Vui lòng chọn tỉnh/thành phố!",
+    });
+    return;
   }
-  addresses.value.push({ ...newAddress.value });
-  newAddress.value = { diaChi: '', tinhThanh: '', quanHuyen: '', xaPhuong: '', isDefault: false };
-  showAddAddress.value = false;
-  
-  toastNotification.value.addToast({
-    type: 'success',
-    message: 'Thêm địa chỉ thành công!',
-  });
+  if (!newAddress.value.quan) {
+    toastNotification.value.addToast({
+      type: "error",
+      message: "Vui lòng chọn quận/huyện!",
+    });
+    return;
+  }
+  if (!newAddress.value.phuong) {
+    toastNotification.value.addToast({
+      type: "error",
+      message: "Vui lòng chọn xã/phường!",
+    });
+    return;
+  }
+
+  // Chuẩn bị dữ liệu địa chỉ để gửi API
+  const diaChiData = {
+    diaChiCuThe: newAddress.value.diaChiCuThe,
+    thanhPho: newAddress.value.thanhPho,
+    quan: newAddress.value.quan,
+    phuong: newAddress.value.phuong,
+    macDinh: newAddress.value.isDefault,
+  };
+
+  try {
+    // Nếu ở chế độ chỉnh sửa, gửi yêu cầu cập nhật địa chỉ
+    if (isEditMode.value) {
+      const response = await UpdateKhachHangDiaChi(
+        customer.value.id,
+        diaChiData
+      );
+      if (!response.success) {
+        throw new Error(response.message || "Lỗi khi lưu địa chỉ!");
+      }
+    }
+
+    // Nếu đặt làm địa chỉ mặc định, bỏ chọn các địa chỉ khác
+    if (newAddress.value.isDefault) {
+      addresses.value.forEach((addr) => (addr.isDefault = false));
+    }
+
+    // Thêm địa chỉ vào mảng addresses.value
+    addresses.value.push({ ...newAddress.value });
+
+    // Reset form
+    newAddress.value = {
+      diaChiCuThe: "",
+      thanhPho: "",
+      quan: "",
+      phuong: "",
+      isDefault: false,
+    };
+    showAddAddress.value = false;
+
+    toastNotification.value.addToast({
+      type: "success",
+      message: "Thêm địa chỉ thành công!",
+    });
+  } catch (error) {
+    toastNotification.value.addToast({
+      type: "error",
+      message: error.message || "Lỗi khi lưu địa chỉ!",
+    });
+  }
 };
 
 const cancelAddAddress = () => {
-  newAddress.value = { diaChi: '', tinhThanh: '', quanHuyen: '', xaPhuong: '', isDefault: false };
+  newAddress.value = {
+    diaChiCuThe: "",
+    thanhPho: "",
+    quan: "",
+    phuong: "",
+    isDefault: false,
+  };
   showAddAddress.value = false;
 };
 
@@ -548,128 +734,245 @@ const editAddress = (index) => {
 };
 
 const confirmDeleteAddress = (index) => {
-  notificationMessage.value = 'Bạn có chắc chắn muốn xóa địa chỉ này không?';
-  notificationType.value = 'confirm';
+  notificationMessage.value = "Bạn có chắc chắn muốn xóa địa chỉ này không?";
+  notificationType.value = "confirm";
   notificationOnConfirm.value = () => deleteAddress(index);
   notificationOnCancel.value = resetNotification;
   notificationModal.value.openModal();
 };
 
-const deleteAddress = (index) => {
-  addresses.value.splice(index, 1);
-  resetNotification();
-  toastNotification.value.addToast({
-    type: 'success',
-    message: 'Xóa địa chỉ thành công!',
-  });
+const deleteAddress = async (index) => {
+  const address = addresses.value[index];
+  try {
+    if (isEditMode.value && address.id) {
+      const response = await DeleteKhachHangDiaChi(address.id);
+      if (!response.success) {
+        throw new Error(response.message || "Lỗi khi xóa địa chỉ!");
+      }
+    }
+    addresses.value.splice(index, 1);
+    resetNotification();
+    toastNotification.value.addToast({
+      type: "success",
+      message: "Xóa địa chỉ thành công!",
+    });
+  } catch (error) {
+    resetNotification();
+    toastNotification.value.addToast({
+      type: "error",
+      message: error.message || "Không thể xóa địa chỉ!",
+    });
+  }
 };
 
-const setDefaultAddress = (index) => {
-  if (addresses.value[index].isDefault) {
-    addresses.value.forEach((addr, i) => {
-      addr.isDefault = i === index;
+const setDefaultAddress = async (address, index) => {
+  try {
+    const response = await SetMacDinhDiaChi(address.id, true);
+    if (!response.success) {
+      throw new Error(response.message || "Lỗi khi đặt địa chỉ mặc định!");
+    }
+    // Cập nhật macDinh cho tất cả địa chỉ của khách hàng
+    addresses.value = addresses.value.map((addr) => ({
+      ...addr,
+      macDinh: addr.idKhachHang === address.idKhachHang ? addr.id === address.id : addr.macDinh,
+    }));
+    // Cập nhật idDiaChiKhachHang trong customers cho khách hàng tương ứng
+    customers.value = customers.value.map((customer) => {
+      if (customer.id === address.idKhachHang) {
+        return {
+          ...customer,
+          idDiaChiKhachHang: {
+            id: address.id,
+            diaChiCuThe: address.diaChiCuThe,
+            thanhPho: address.thanhPho,
+            quan: address.quan,
+            phuong: address.phuong,
+            deleted: address.deleted,
+            macDinh: true,
+          },
+        };
+      }
+      return customer;
     });
     toastNotification.value.addToast({
-      type: 'success',
-      message: 'Đã đặt làm địa chỉ mặc định!',
+      type: "success",
+      message: "Đã đặt làm địa chỉ mặc định!",
+    });
+  } catch (error) {
+    toastNotification.value.addToast({
+      type: "error",
+      message: error.message || "Không thể đặt địa chỉ mặc định!",
     });
   }
 };
 
 const submitCustomer = () => {
-  if (!customer.value.ten || !customer.value.ten.trim()) {
+  if (!customer.value.tenKH || !customer.value.tenKH.trim()) {
     toastNotification.value.addToast({
-      type: 'error',
-      message: 'Vui lòng nhập tên khách hàng!',
+      type: "error",
+      message: "Vui lòng nhập tên khách hàng!",
     });
     return;
   }
   if (!customer.value.soDienThoai || !customer.value.soDienThoai.trim()) {
     toastNotification.value.addToast({
-      type: 'error',
-      message: 'Vui lòng nhập số điện thoại!',
+      type: "error",
+      message: "Vui lòng nhập số điện thoại!",
     });
     return;
   }
   if (!customer.value.email || !customer.value.email.trim()) {
     toastNotification.value.addToast({
-      type: 'error',
-      message: 'Vui lòng nhập email!',
+      type: "error",
+      message: "Vui lòng nhập email!",
     });
     return;
   }
 
   notificationMessage.value = isEditMode.value
-    ? 'Bạn có chắc chắn muốn cập nhật khách hàng này không?'
-    : 'Bạn có chắc chắn muốn thêm khách hàng này không?';
-  notificationType.value = 'confirm';
+    ? "Bạn có chắc chắn muốn cập nhật khách hàng này không?"
+    : "Bạn có chắc chắn muốn thêm khách hàng này không?";
+  notificationType.value = "confirm";
   notificationOnConfirm.value = () => saveCustomer();
   notificationOnCancel.value = resetNotification;
   notificationModal.value.openModal();
 };
 
-const saveCustomer = () => {
-  resetNotification();
-  toastNotification.value.addToast({
-    type: 'success',
-    message: isEditMode.value ? 'Cập nhật khách hàng thành công!' : 'Thêm khách hàng thành công!',
-  });
-  setTimeout(() => {
-    resetForm();
-    goBack();
-  }, 1500);
+const saveCustomer = async () => {
+  isNotificationLoading.value = true;
+  try {
+    const defaultAddress =
+      addresses.value.find((addr) => addr.isDefault) ||
+      addresses.value[0] ||
+      {};
+    const customerData = {
+      tenKH: customer.value.tenKH,
+      soDienThoai: customer.value.soDienThoai,
+      email: customer.value.email,
+      ngaySinh: customer.value.ngaySinh || null,
+      gioiTinh: customer.value.gioiTinh === "True" ? 1 : 0,
+      userName: customer.value.email,
+      diaChiCuThe: defaultAddress.diaChiCuThe || "",
+      thanhPho: defaultAddress.thanhPho || "",
+      quan: defaultAddress.quan || "",
+      phuong: defaultAddress.phuong || "",
+      macDinh: defaultAddress.isDefault || false,
+    };
+
+    if (customer.value.imageFile) {
+      customerData.anhKhachHang = await convertToBase64(
+        customer.value.imageFile
+      );
+    } else if (customerImage.value === null) {
+      customerData.anhKhachHang = null;
+    }
+
+    let response;
+    if (isEditMode.value) {
+      response = await UpdateKhachHang(customer.value.id, customerData);
+    } else {
+      response = await addKhanhHang(customerData);
+    }
+
+    if (response.success) {
+      toastNotification.value.addToast({
+        type: "success",
+        message: isEditMode.value
+          ? "Cập nhật khách hàng thành công!"
+          : "Thêm khách hàng thành công!",
+      });
+      setTimeout(() => {
+        resetForm();
+        goBack();
+      }, 1500);
+    } else {
+      throw new Error(response.message || "Lỗi khi lưu khách hàng!");
+    }
+  } catch (error) {
+    toastNotification.value.addToast({
+      type: "error",
+      message: error.message || "Lỗi khi lưu khách hàng!",
+    });
+  } finally {
+    isNotificationLoading.value = false;
+    resetNotification();
+  }
 };
 
 const resetForm = () => {
   customer.value = {
     id: null,
-    ten: '',
-    soDienThoai: '',
-    email: '',
-    ngaySinh: '',
-    gioiTinh: '',
+    tenKH: "",
+    soDienThoai: "",
+    email: "",
+    ngaySinh: "",
+    gioiTinh: "",
   };
   customerImage.value = null;
   addresses.value = [];
-  if (fileInput.value) fileInput.value.value = '';
+  if (fileInput.value) fileInput.value.value = "";
 };
 
 const goBack = () => {
-  router.push('/khachHang');
+  router.push("/khachHang");
 };
 
 const resetNotification = () => {
-  notificationMessage.value = '';
-  notificationType.value = '';
+  notificationMessage.value = "";
+  notificationType.value = "";
   notificationOnConfirm.value = null;
   notificationOnCancel.value = null;
 };
 
 // Lifecycle
-onMounted(() => {
+onMounted(async () => {
+  await fetchProvinces();
   loadCustomerData();
 });
 </script>
 
 <style scoped>
 @keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(15px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(15px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes zoomIn {
-  from { opacity: 0; transform: scale(0.97); }
-  to { opacity: 1; transform: scale(1); }
+  from {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 @keyframes slideInDown {
-  from { opacity: 0; transform: translateY(-30px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes pulse {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.05); }
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
 }
 
 .gradient-custom-teal {
@@ -1331,7 +1634,8 @@ onMounted(() => {
 }
 
 .shadow-md {
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+    0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
 
 .w-72 {
@@ -1362,35 +1666,35 @@ onMounted(() => {
     gap: 16px;
     align-items: stretch;
   }
-  
+
   .form-actions {
     flex-direction: column;
   }
-  
+
   .action-buttons {
     flex-direction: column;
   }
-  
+
   .address-card {
     margin-bottom: 16px;
   }
-  
+
   .card-header {
     flex-direction: column;
     gap: 12px;
     align-items: stretch;
   }
-  
+
   .address-info {
     flex-direction: column;
     gap: 8px;
     align-items: flex-start;
   }
-  
+
   .card-actions {
     justify-content: center;
   }
-  
+
   .gender-options {
     flex-direction: column;
     gap: 12px;
@@ -1464,7 +1768,7 @@ onMounted(() => {
   .form-actions {
     display: none;
   }
-  
+
   .address-card {
     break-inside: avoid;
     box-shadow: none;
