@@ -60,7 +60,7 @@
                 >
                   <option value="">Chọn Hệ Điều Hành</option>
                   <option v-for="option in heDieuHanhOptions" :key="option.id" :value="option.id">
-                    {{ option.tenHeDieuHanh }}
+                    {{ option.heDieuHanh }} {{ option.phienBan }}
                   </option>
                 </select>
                 <button
@@ -77,13 +77,13 @@
               <label class="filter-label">Công Nghệ Màn Hình</label>
               <div class="input-group">
                 <select
-                  v-model="productData.congNgheManHinh"
+                  v-model="productData.idCongNgheManHinh"
                   class="form-control search-input"
                   :disabled="isProductSelected"
                 >
                   <option value="">Chọn Công Nghệ Màn Hình</option>
                   <option v-for="option in congNgheManHinhOptions" :key="option.id" :value="option.id">
-                    {{ option.tenCongNghe }}
+                    {{ option.congNgheManHinh }} {{ option.chuanManHinh }} {{ option.kichThuoc }} {{ option.doPhanGiai }} {{ option.tanSoQuet }}
                   </option>
                 </select>
                 <button
@@ -106,7 +106,7 @@
                 >
                   <option value="">Chọn Nhà Sản Xuất</option>
                   <option v-for="option in nhaSanXuatOptions" :key="option.id" :value="option.id">
-                    {{ option.tenNhaSanXuat }}
+                    {{ option.nhaSanXuat }}
                   </option>
                 </select>
                 <button
@@ -131,7 +131,7 @@
                 >
                   <option value="">Chọn Cụm Camera</option>
                   <option v-for="option in cumCameraOptions" :key="option.id" :value="option.id">
-                    {{ option.thongSo }}
+                    {{ option.thongSoCameraSau }} {{ option.thongSoCameraTruoc }}
                   </option>
                 </select>
                 <button
@@ -154,7 +154,7 @@
                 >
                   <option value="">Chọn Sim</option>
                   <option v-for="option in simOptions" :key="option.id" :value="option.id">
-                    {{ option.loaiSim }}
+                    {{ option.soLuongSimHoTro }} {{ option.cacLoaiSimHoTro }}
                   </option>
                 </select>
                 <button
@@ -177,7 +177,7 @@
                 >
                   <option value="">Chọn Thiết Kế</option>
                   <option v-for="option in thietKeOptions" :key="option.id" :value="option.id">
-                    {{ option.loaiThietKe }}
+                    {{ option.chatLieuKhung }} {{ option.chatLieuMatLung }}
                   </option>
                 </select>
                 <button
@@ -202,7 +202,7 @@
                 >
                   <option value="">Chọn Pin</option>
                   <option v-for="option in pinOptions" :key="option.id" :value="option.id">
-                    {{ option.dungLuong }}
+                    {{ option.loaiPin }} {{ option.dungLuongPin }}
                   </option>
                 </select>
                 <button
@@ -273,7 +273,7 @@
                 >
                   <option value="">Chọn Công Nghệ Mạng</option>
                   <option v-for="option in congNgheMangOptions" :key="option.id" :value="option.id">
-                    {{ option.tenCongNghe }}
+                    {{ option.tenCongNgheMang }}
                   </option>
                 </select>
                 <button
@@ -290,13 +290,13 @@
               <label class="filter-label">Hỗ Trợ Công Nghệ Sạc</label>
               <div class="input-group">
                 <select
-                  v-model="productData.hoTroCongNgheSac"
+                  v-model="productData.idHoTroCongNgheSac"
                   class="form-control search-input"
                   :disabled="isProductSelected"
                 >
                   <option value="">Chọn Hỗ Trợ Công Nghệ Sạc</option>
                   <option v-for="option in hoTroCongNgheSacOptions" :key="option.id" :value="option.id">
-                    {{ option.tenCongNghe }}
+                    {{ option.congSac }} {{ option.congNgheHoTro }}
                   </option>
                 </select>
                 <button
@@ -319,7 +319,7 @@
                 >
                   <option value="">Chọn Chỉ Số Kháng Bụi Nước</option>
                   <option v-for="option in chiSoKhangBuiVaNuocOptions" :key="option.id" :value="option.id">
-                    {{ option.chiSo }}
+                    {{ option.tenChiSo }}
                   </option>
                 </select>
                 <button
@@ -352,10 +352,19 @@
               <div class="col-12">
                 <label class="filter-label">Tên Hệ Điều Hành</label>
                 <input
-                  v-model="entityData.tenHeDieuHanh"
+                  v-model="entityData.heDieuHanh"
                   type="text"
                   class="form-control search-input"
                   placeholder="Nhập tên hệ điều hành"
+                />
+              </div>
+              <div class="col-12">
+                <label class="filter-label">Phiên Bản</label>
+                <input
+                  v-model="entityData.phienBan"
+                  type="text"
+                  class="form-control search-input"
+                  placeholder="Nhập phiên bản"
                 />
               </div>
             </div>
@@ -363,10 +372,37 @@
               <div class="col-12">
                 <label class="filter-label">Công Nghệ Màn Hình</label>
                 <input
-                  v-model="entityData.tenCongNghe"
+                  v-model="entityData.congNgheManHinh"
                   type="text"
                   class="form-control search-input"
                   placeholder="Nhập công nghệ màn hình"
+                />
+              </div>
+              <div class="col-12">
+                <label class="filter-label">Kích Thước</label>
+                <input
+                  v-model="entityData.kichThuoc"
+                  type="text"
+                  class="form-control search-input"
+                  placeholder="Nhập kích thước màn hình"
+                />
+              </div>
+              <div class="col-12">
+                <label class="filter-label">Độ Phân Giải</label>
+                <input
+                  v-model="entityData.doPhanGiai"
+                  type="text"
+                  class="form-control search-input"
+                  placeholder="Nhập độ phân giải"
+                />
+              </div>
+              <div class="col-12">
+                <label class="filter-label">Tần Số Quét</label>
+                <input
+                  v-model="entityData.tanSoQuet"
+                  type="text"
+                  class="form-control search-input"
+                  placeholder="Nhập tần số quét"
                 />
               </div>
             </div>
@@ -374,7 +410,7 @@
               <div class="col-12">
                 <label class="filter-label">Tên Nhà Sản Xuất</label>
                 <input
-                  v-model="entityData.tenNhaSanXuat"
+                  v-model="entityData.nhaSanXuat"
                   type="text"
                   class="form-control search-input"
                   placeholder="Nhập tên nhà sản xuất"
@@ -383,12 +419,21 @@
             </div>
             <div v-if="currentAttribute === 'cumCamera'" class="row g-3">
               <div class="col-12">
-                <label class="filter-label">Thông Số Camera</label>
+                <label class="filter-label">Thông Số Camera Sau</label>
                 <input
-                  v-model="entityData.thongSo"
+                  v-model="entityData.thongSoCameraSau"
                   type="text"
                   class="form-control search-input"
-                  placeholder="Nhập thông số camera"
+                  placeholder="Nhập thông số camera sau"
+                />
+              </div>
+              <div class="col-12">
+                <label class="filter-label">Thông Số Camera Trước</label>
+                <input
+                  v-model="entityData.thongSoCameraTruoc"
+                  type="text"
+                  class="form-control search-input"
+                  placeholder="Nhập thông số camera trước"
                 />
               </div>
             </div>
@@ -396,29 +441,56 @@
               <div class="col-12">
                 <label class="filter-label">Loại Sim</label>
                 <input
-                  v-model="entityData.loaiSim"
+                  v-model="entityData.cacLoaiSimHoTro"
                   type="text"
                   class="form-control search-input"
                   placeholder="Nhập loại sim"
                 />
               </div>
+              <div class="col-12">
+                <label class="filter-label">Số Lượng Sim</label>
+                <input
+                  v-model="entityData.soLuongSimHoTro"
+                  type="text"
+                  class="form-control search-input"
+                  placeholder="Nhập số lượng sim hỗ trợ"
+                />
+              </div>
             </div>
             <div v-if="currentAttribute === 'thietKe'" class="row g-3">
               <div class="col-12">
-                <label class="filter-label">Loại Thiết Kế</label>
+                <label class="filter-label">Chất Liệu Khung</label>
                 <input
-                  v-model="entityData.loaiThietKe"
+                  v-model="entityData.chatLieuKhung"
                   type="text"
                   class="form-control search-input"
-                  placeholder="Nhập loại thiết kế"
+                  placeholder="Nhập chất liệu khung"
+                />
+              </div>
+              <div class="col-12">
+                <label class="filter-label">Chất Liệu Mặt Lưng</label>
+                <input
+                  v-model="entityData.chatLieuMatLung"
+                  type="text"
+                  class="form-control search-input"
+                  placeholder="Nhập chất liệu mặt lưng"
                 />
               </div>
             </div>
             <div v-if="currentAttribute === 'pin'" class="row g-3">
               <div class="col-12">
+                <label class="filter-label">Loại Pin</label>
+                <input
+                  v-model="entityData.loaiPin"
+                  type="text"
+                  class="form-control search-input"
+                  placeholder="Nhập loại pin"
+                />
+              </div>
+              <div class="col-12">
                 <label class="filter-label">Dung Lượng Pin</label>
                 <input
-                  v-model="entityData.dungLuong"
+                  v-model="entityData.dungLuongPin"
                   type="text"
                   class="form-control search-input"
                   placeholder="Nhập dung lượng pin"
@@ -451,7 +523,7 @@
               <div class="col-12">
                 <label class="filter-label">Tên Công Nghệ Mạng</label>
                 <input
-                  v-model="entityData.tenCongNghe"
+                  v-model="entityData.tenCongNgheMang"
                   type="text"
                   class="form-control search-input"
                   placeholder="Nhập tên công nghệ mạng"
@@ -460,12 +532,21 @@
             </div>
             <div v-if="currentAttribute === 'hoTroCongNgheSac'" class="row g-3">
               <div class="col-12">
-                <label class="filter-label">Tên Hỗ Trợ Công Nghệ Sạc</label>
+                <label class="filter-label">Cổng Sạc</label>
                 <input
-                  v-model="entityData.tenCongNghe"
+                  v-model="entityData.congSac"
                   type="text"
                   class="form-control search-input"
-                  placeholder="Nhập tên hỗ trợ công nghệ sạc"
+                  placeholder="Nhập cổng sạc"
+                />
+              </div>
+              <div class="col-12">
+                <label class="filter-label">Công Nghệ Sạc</label>
+                <input
+                  v-model="entityData.congNgheHoTro"
+                  type="text"
+                  class="form-control search-input"
+                  placeholder="Nhập công nghệ sạc"
                 />
               </div>
             </div>
@@ -473,7 +554,7 @@
               <div class="col-12">
                 <label class="filter-label">Chỉ Số Kháng Bụi Nước</label>
                 <input
-                  v-model="entityData.chiSo"
+                  v-model="entityData.tenChiSo"
                   type="text"
                   class="form-control search-input"
                   placeholder="Nhập chỉ số kháng bụi nước"
@@ -508,122 +589,14 @@ import { defineComponent, ref, computed } from 'vue';
 import HeaderCard from '@/components/common/HeaderCard.vue';
 import FilterTableSection from '@/components/common/FilterTableSection.vue';
 import ToastNotification from '@/components/common/ToastNotification.vue';
-
-const mockData = {
-  '/he-dieu-hanh': [
-    { id: 'hdh1', tenHeDieuHanh: 'Android 14' },
-    { id: 'hdh2', tenHeDieuHanh: 'iOS 17' },
-    { id: 'hdh3', tenHeDieuHanh: 'HarmonyOS 4' },
-  ],
-  '/cong-nghe-man-hinh': [
-    { id: 'cmh1', tenCongNghe: 'Dynamic AMOLED 2X' },
-    { id: 'cmh2', tenCongNghe: 'Super Retina XDR' },
-    { id: 'cmh3', tenCongNghe: 'LTPO OLED' },
-  ],
-  '/nha-san-xuat': [
-    { id: 'nsx1', tenNhaSanXuat: 'Samsung' },
-    { id: 'nsx2', tenNhaSanXuat: 'Apple' },
-    { id: 'nsx3', tenNhaSanXuat: 'Huawei' },
-  ],
-  '/cum-camera': [
-    { id: 'cc1', thongSo: '108MP + 12MP + 10MP' },
-    { id: 'cc2', thongSo: '50MP + 48MP + 12MP' },
-    { id: 'cc3', thongSo: '64MP + 8MP + 5MP' },
-  ],
-  '/sim': [
-    { id: 'sim1', loaiSim: 'Nano SIM' },
-    { id: 'sim2', loaiSim: 'eSIM' },
-    { id: 'sim3', loaiSim: 'Dual SIM (Nano + eSIM)' },
-  ],
-  '/thiet-ke': [
-    { id: 'tk1', loaiThietKe: 'Nguyên khối' },
-    { id: 'tk2', loaiThietKe: 'Gập ngang' },
-    { id: 'tk3', loaiThietKe: 'Gập dọc' },
-  ],
-  '/pin': [
-    { id: 'pin1', dungLuong: '4500mAh' },
-    { id: 'pin2', dungLuong: '5000mAh' },
-    { id: 'pin3', dungLuong: '4300mAh' },
-  ],
-  '/cpu': [
-    { id: 'cpu1', tenCpu: 'Snapdragon 8 Gen 3' },
-    { id: 'cpu2', tenCpu: 'A17 Pro' },
-    { id: 'cpu3', tenCpu: 'Kirin 9000s' },
-  ],
-  '/gpu': [
-    { id: 'gpu1', tenGpu: 'Adreno 750' },
-    { id: 'gpu2', tenGpu: 'Apple GPU (6-core)' },
-    { id: 'gpu3', tenGpu: 'Maleoon 910' },
-  ],
-  '/cong-nghe-mang': [
-    { id: 'cnm1', tenCongNghe: '5G SA/NSA' },
-    { id: 'cnm2', tenCongNghe: '4G LTE' },
-    { id: 'cnm3', tenCongNghe: '3G' },
-  ],
-  '/ho-tro-cong-nghe-sac': [
-    { id: 'sac1', tenCongNghe: 'SuperVOOC 100W' },
-    { id: 'sac2', tenCongNghe: 'MagSafe 15W' },
-    { id: 'sac3', tenCongNghe: 'Fast Charge 66W' },
-  ],
-  '/chi-so-khang-bui-nuoc': [
-    { id: 'kb1', chiSo: 'IP68' },
-    { id: 'kb2', chiSo: 'IP67' },
-    { id: 'kb3', chiSo: 'IP54' },
-  ],
-};
-
-const mockProducts = {
-  content: [
-    {
-      id: 'sp1',
-      tenSanPham: 'Samsung Galaxy S24 Ultra',
-      idHeDieuHanh: 'hdh1',
-      congNgheManHinh: 'cmh1',
-      idNhaSanXuat: 'nsx1',
-      idCumCamera: 'cc1',
-      idSim: 'sim3',
-      idThietKe: 'tk1',
-      idPin: 'pin2',
-      idCpu: 'cpu1',
-      idGpu: 'gpu1',
-      idCongNgheMang: 'cnm1',
-      hoTroCongNgheSac: 'sac3',
-      idChiSoKhangBuiVaNuoc: 'kb1',
-    },
-    {
-      id: 'sp2',
-      tenSanPham: 'iPhone 15 Pro Max',
-      idHeDieuHanh: 'hdh2',
-      congNgheManHinh: 'cmh2',
-      idNhaSanXuat: 'nsx2',
-      idCumCamera: 'cc2',
-      idSim: 'sim2',
-      idThietKe: 'tk1',
-      idPin: 'pin3',
-      idCpu: 'cpu2',
-      idGpu: 'gpu2',
-      idCongNgheMang: 'cnm1',
-      hoTroCongNgheSac: 'sac2',
-      idChiSoKhangBuiVaNuoc: 'kb1',
-    },
-    {
-      id: 'sp3',
-      tenSanPham: 'Huawei P60 Pro',
-      idHeDieuHanh: 'hdh3',
-      congNgheManHinh: 'cmh3',
-      idNhaSanXuat: 'nsx3',
-      idCumCamera: 'cc3',
-      idSim: 'sim1',
-      idThietKe: 'tk1',
-      idPin: 'pin1',
-      idCpu: 'cpu3',
-      idGpu: 'gpu3',
-      idCongNgheMang: 'cnm1',
-      hoTroCongNgheSac: 'sac1',
-      idChiSoKhangBuiVaNuoc: 'kb2',
-    },
-  ],
-};
+import {
+  getHeDieuHanh, addHeDieuHanh, getCongNgheManHinh, addCongNgheManHinh,
+  getNhaSanXuat, addNhaSanXuat, getCumCamera, addCumCamera,
+  getSim, addSim, getThietKe, addThietKe, getPin, addPin,
+  getCpu, addCpu, getGpu, addGpu, getCongNgheMang, addCongNgheMang,
+  getHoTroCongNgheSac, addHoTroCongNgheSac, getChiSoKhangBuiVaNuoc, addChiSoKhangBuiVaNuoc,
+  getProducts,
+} from '@/store/modules/products/chiTietSanPham'; 
 
 export default defineComponent({
   name: 'ProductInfo',
@@ -632,14 +605,14 @@ export default defineComponent({
     FilterTableSection,
     ToastNotification,
   },
-  emits: ['update:productData'], // Declare event for productData updates
+  emits: ['update:productData'],
   setup(props, { emit }) {
     const toastNotification = ref(null);
-    const isLoading = ref(false);
+    const isLoading = ref(true);
     const productData = ref({
       tenSanPham: '',
       idHeDieuHanh: '',
-      congNgheManHinh: '',
+      idCongNgheManHinh: '',
       idNhaSanXuat: '',
       idCumCamera: '',
       idSim: '',
@@ -648,23 +621,23 @@ export default defineComponent({
       idCpu: '',
       idGpu: '',
       idCongNgheMang: '',
-      hoTroCongNgheSac: '',
+      idHoTroCongNgheSac: '',
       idChiSoKhangBuiVaNuoc: '',
     });
-    const heDieuHanhOptions = ref(mockData['/he-dieu-hanh']);
-    const congNgheManHinhOptions = ref(mockData['/cong-nghe-man-hinh']);
-    const nhaSanXuatOptions = ref(mockData['/nha-san-xuat']);
-    const cumCameraOptions = ref(mockData['/cum-camera']);
-    const simOptions = ref(mockData['/sim']);
-    const thietKeOptions = ref(mockData['/thiet-ke']);
-    const pinOptions = ref(mockData['/pin']);
-    const cpuOptions = ref(mockData['/cpu']);
-    const gpuOptions = ref(mockData['/gpu']);
-    const congNgheMangOptions = ref(mockData['/cong-nghe-mang']);
-    const hoTroCongNgheSacOptions = ref(mockData['/ho-tro-cong-nghe-sac']);
-    const chiSoKhangBuiVaNuocOptions = ref(mockData['/chi-so-khang-bui-nuoc']);
-    const productNameOptions = ref(mockProducts.content);
-    const filteredProductNameOptions = ref(mockProducts.content);
+    const heDieuHanhOptions = ref([]);
+    const congNgheManHinhOptions = ref([]);
+    const nhaSanXuatOptions = ref([]);
+    const cumCameraOptions = ref([]);
+    const simOptions = ref([]);
+    const thietKeOptions = ref([]);
+    const pinOptions = ref([]);
+    const cpuOptions = ref([]);
+    const gpuOptions = ref([]);
+    const congNgheMangOptions = ref([]);
+    const hoTroCongNgheSacOptions = ref([]);
+    const chiSoKhangBuiVaNuocOptions = ref([]);
+    const productNameOptions = ref([]);
+    const filteredProductNameOptions = ref([]);
     const showProductDropdown = ref(false);
     const isProductSelected = ref(false);
     const showFormModal = ref(false);
@@ -689,6 +662,68 @@ export default defineComponent({
       return labels[currentAttribute.value] || currentAttribute.value;
     });
 
+    const fetchData = async () => {
+  try {
+    isLoading.value = true;
+    const [
+      heDieuHanhRes,
+      congNgheManHinhRes,
+      nhaSanXuatRes,
+      cumCameraRes,
+      simRes,
+      thietKeRes,
+      pinRes,
+      cpuRes,
+      gpuRes,
+      congNgheMangRes,
+      hoTroCongNgheSacRes,
+      chiSoKhangBuiVaNuocRes,
+      productsRes,
+    ] = await Promise.all([
+      getHeDieuHanh(),
+      getCongNgheManHinh(),
+      getNhaSanXuat(),
+      getCumCamera(),
+      getSim(),
+      getThietKe(),
+      getPin(),
+      getCpu(),
+      getGpu(),
+      getCongNgheMang(),
+      getHoTroCongNgheSac(),
+      getChiSoKhangBuiVaNuoc(),
+      getProducts(),
+    ]);
+
+    heDieuHanhOptions.value = heDieuHanhRes.data;
+    congNgheManHinhOptions.value = congNgheManHinhRes.data;
+    nhaSanXuatOptions.value = nhaSanXuatRes.data;
+    cumCameraOptions.value = cumCameraRes.data;
+    simOptions.value = simRes.data;
+    thietKeOptions.value = thietKeRes.data;
+    pinOptions.value = pinRes.data;
+    cpuOptions.value = cpuRes.data;
+    gpuOptions.value = gpuRes.data;
+    congNgheMangOptions.value = congNgheMangRes.data;
+    hoTroCongNgheSacOptions.value = hoTroCongNgheSacRes.data;
+    chiSoKhangBuiVaNuocOptions.value = chiSoKhangBuiVaNuocRes.data;
+    productNameOptions.value = productsRes.data || [];
+    filteredProductNameOptions.value = productsRes.data || [];
+  } catch (error) {
+    toastNotification.value?.addToast({
+      type: 'error',
+      message: 'Lỗi khi tải dữ liệu: ' + error.message,
+      duration: 3000,
+    });
+    productNameOptions.value = [];
+    filteredProductNameOptions.value = [];
+  } finally {
+    isLoading.value = false;
+  }
+};
+
+    fetchData();
+
     const filterProducts = () => {
       const searchTerm = productData.value.tenSanPham.toLowerCase().trim();
       filteredProductNameOptions.value = productNameOptions.value.filter((product) =>
@@ -698,18 +733,20 @@ export default defineComponent({
     };
 
     const selectProduct = (product) => {
-      productData.value = { ...product };
+      productData.value = {
+        ...product,
+        idCongNgheManHinh: product.congNgheManHinhId || '',
+        idHoTroCongNgheSac: product.hoTroCongNgheSacId || '',
+      };
       showProductDropdown.value = false;
       isProductSelected.value = true;
-
-      // Emit the updated productData
       emit('update:productData', productData.value);
-
       toastNotification.value?.addToast({
         type: 'success',
         message: 'Đã chọn sản phẩm!',
         duration: 3000,
       });
+      console.log('productData:', productData.value); // Debugging
     };
 
     const delayHideProductDropdown = () => {
@@ -730,52 +767,83 @@ export default defineComponent({
       entityData.value = {};
     };
 
-    const handleAddAttribute = () => {
-      const newId = `new_${Date.now()}`;
-      switch (currentAttribute.value) {
-        case 'heDieuHanh':
-          heDieuHanhOptions.value.push({ id: newId, tenHeDieuHanh: entityData.value.tenHeDieuHanh });
-          break;
-        case 'congNgheManHinh':
-          congNgheManHinhOptions.value.push({ id: newId, tenCongNghe: entityData.value.tenCongNghe });
-          break;
-        case 'nhaSanXuat':
-          nhaSanXuatOptions.value.push({ id: newId, tenNhaSanXuat: entityData.value.tenNhaSanXuat });
-          break;
-        case 'cumCamera':
-          cumCameraOptions.value.push({ id: newId, thongSo: entityData.value.thongSo });
-          break;
-        case 'sim':
-          simOptions.value.push({ id: newId, loaiSim: entityData.value.loaiSim });
-          break;
-        case 'thietKe':
-          thietKeOptions.value.push({ id: newId, loaiThietKe: entityData.value.loaiThietKe });
-          break;
-        case 'pin':
-          pinOptions.value.push({ id: newId, dungLuong: entityData.value.dungLuong });
-          break;
-        case 'cpu':
-          cpuOptions.value.push({ id: newId, tenCpu: entityData.value.tenCpu });
-          break;
-        case 'gpu':
-          gpuOptions.value.push({ id: newId, tenGpu: entityData.value.tenGpu });
-          break;
-        case 'congNgheMang':
-          congNgheMangOptions.value.push({ id: newId, tenCongNghe: entityData.value.tenCongNghe });
-          break;
-        case 'hoTroCongNgheSac':
-          hoTroCongNgheSacOptions.value.push({ id: newId, tenCongNghe: entityData.value.tenCongNghe });
-          break;
-        case 'chiSoKhangBuiVaNuoc':
-          chiSoKhangBuiVaNuocOptions.value.push({ id: newId, chiSo: entityData.value.chiSo });
-          break;
+    const handleAddAttribute = async () => {
+      try {
+        const newId = `new_${Date.now()}`;
+        const data = { id: newId, ...entityData.value };
+        switch (currentAttribute.value) {
+          case 'heDieuHanh':
+            await addHeDieuHanh(data);
+            heDieuHanhOptions.value.push(data);
+            break;
+          case 'congNgheManHinh':
+            await addCongNgheManHinh(data);
+            congNgheManHinhOptions.value.push({
+              id: newId,
+              congNgheManHinh: entityData.value.congNgheManHinh,
+              kichThuoc: entityData.value.kichThuoc,
+              doPhanGiai: entityData.value.doPhanGiai,
+              tanSoQuet: entityData.value.tanSoQuet,
+            });
+            break;
+          case 'nhaSanXuat':
+            await addNhaSanXuat(data);
+            nhaSanXuatOptions.value.push(data);
+            break;
+          case 'cumCamera':
+            await addCumCamera(data);
+            cumCameraOptions.value.push(data);
+            break;
+          case 'sim':
+            await addSim(data);
+            simOptions.value.push(data);
+            break;
+          case 'thietKe':
+            await addThietKe(data);
+            thietKeOptions.value.push(data);
+            break;
+          case 'pin':
+            await addPin(data);
+            pinOptions.value.push(data);
+            break;
+          case 'cpu':
+            await addCpu(data);
+            cpuOptions.value.push(data);
+            break;
+          case 'gpu':
+            await addGpu(data);
+            gpuOptions.value.push(data);
+            break;
+          case 'congNgheMang':
+            await addCongNgheMang(data);
+            congNgheMangOptions.value.push(data);
+            break;
+          case 'hoTroCongNgheSac':
+            await addHoTroCongNgheSac(data);
+            hoTroCongNgheSacOptions.value.push({
+              id: newId,
+              congSac: entityData.value.congSac,
+              congNgheHoTro: entityData.value.congNgheHoTro,
+            });
+            break;
+          case 'chiSoKhangBuiVaNuoc':
+            await addChiSoKhangBuiVaNuoc(data);
+            chiSoKhangBuiVaNuocOptions.value.push(data);
+            break;
+        }
+        toastNotification.value?.addToast({
+          type: 'success',
+          message: `Thêm ${currentAttributeLabel.value} thành công!`,
+          duration: 3000,
+        });
+        closeFormModal();
+      } catch (error) {
+        toastNotification.value?.addToast({
+          type: 'error',
+          message: `Lỗi khi thêm ${currentAttributeLabel.value}: ${error.message}`,
+          duration: 3000,
+        });
       }
-      toastNotification.value?.addToast({
-        type: 'success',
-        message: `Thêm ${currentAttributeLabel.value} thành công!`,
-        duration: 3000,
-      });
-      closeFormModal();
     };
 
     return {

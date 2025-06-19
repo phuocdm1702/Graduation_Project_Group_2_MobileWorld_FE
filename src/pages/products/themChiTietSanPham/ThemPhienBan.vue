@@ -9,41 +9,23 @@
             <div class="filter-group">
               <label class="filter-label">RAM</label>
               <div class="input-group">
-                <button
-                  @click="toggleDropdown('ram')"
-                  class="form-control search-input text-left"
-                >
+                <button @click="toggleDropdown('ram')" class="form-control search-input text-left">
                   {{
                     currentVariant.selectedRams.length > 0
                       ? currentVariant.selectedRams
-                          .map((id) => ramOptions.find((r) => r.id === id)?.dungLuong)
+                          .map((id) => ramOptions.find((r) => r.id === id)?.dungLuongRam)
                           .filter(Boolean)
                           .join(', ') || 'Không có RAM hợp lệ'
                       : 'Chọn RAM'
                   }}
                 </button>
-                <div
-                  v-if="dropdownOpen.ram"
-                  class="dropdown-menu show"
-                >
-                  <label
-                    v-for="ram in ramOptions"
-                    :key="ram.id"
-                    class="dropdown-item flex items-center"
-                  >
-                    <input
-                      type="checkbox"
-                      :value="ram.id"
-                      v-model="currentVariant.selectedRams"
-                      class="me-2"
-                    />
-                    {{ ram.dungLuong }}
+                <div v-if="dropdownOpen.ram" class="dropdown-menu show">
+                  <label v-for="ram in ramOptions" :key="ram.id" class="dropdown-item flex items-center">
+                    <input type="checkbox" :value="ram.id" v-model="currentVariant.selectedRams" class="me-2" />
+                    {{ ram.dungLuongRam }}
                   </label>
                 </div>
-                <button
-                  @click="openAddModal('ram')"
-                  class="btn btn-action"
-                >
+                <button @click="openAddModal('ram')" class="btn btn-action">
                   <i class="bi bi-plus-circle"></i>
                 </button>
               </div>
@@ -55,41 +37,23 @@
             <div class="filter-group">
               <label class="filter-label">Bộ Nhớ Trong</label>
               <div class="input-group">
-                <button
-                  @click="toggleDropdown('boNhoTrong')"
-                  class="form-control search-input text-left"
-                >
+                <button @click="toggleDropdown('boNhoTrong')" class="form-control search-input text-left">
                   {{
                     currentVariant.selectedBoNhoTrongs.length > 0
                       ? currentVariant.selectedBoNhoTrongs
-                          .map((id) => boNhoTrongOptions.find((b) => b.id === id)?.dungLuong)
+                          .map((id) => boNhoTrongOptions.find((b) => b.id === id)?.dungLuongBoNhoTrong)
                           .filter(Boolean)
                           .join(', ') || 'Không có ROM hợp lệ'
                       : 'Chọn Bộ Nhớ Trong'
                   }}
                 </button>
-                <div
-                  v-if="dropdownOpen.boNhoTrong"
-                  class="dropdown-menu show"
-                >
-                  <label
-                    v-for="boNho in boNhoTrongOptions"
-                    :key="boNho.id"
-                    class="dropdown-item flex items-center"
-                  >
-                    <input
-                      type="checkbox"
-                      :value="boNho.id"
-                      v-model="currentVariant.selectedBoNhoTrongs"
-                      class="me-2"
-                    />
-                    {{ boNho.dungLuong }}
+                <div v-if="dropdownOpen.boNhoTrong" class="dropdown-menu show">
+                  <label v-for="boNho in boNhoTrongOptions" :key="boNho.id" class="dropdown-item flex items-center">
+                    <input type="checkbox" :value="boNho.id" v-model="currentVariant.selectedBoNhoTrongs" class="me-2" />
+                    {{ boNho.dungLuongBoNhoTrong }}
                   </label>
                 </div>
-                <button
-                  @click="openAddModal('boNhoTrong')"
-                  class="btn btn-action"
-                >
+                <button @click="openAddModal('boNhoTrong')" class="btn btn-action">
                   <i class="bi bi-plus-circle"></i>
                 </button>
               </div>
@@ -101,23 +65,17 @@
             <div class="filter-group">
               <label class="filter-label">Màu Sắc</label>
               <div class="input-group">
-                <button
-                  @click="openColorModal"
-                  class="form-control search-input text-left"
-                >
+                <button @click="openColorModal" class="form-control search-input text-left">
                   {{
                     currentVariant.selectedMauSacs.length > 0
                       ? currentVariant.selectedMauSacs
-                          .map((id) => mauSacOptions.find((m) => m.id === id)?.tenMau)
+                          .map((id) => mauSacOptions.find((m) => m.id === id)?.mauSac)
                           .filter(Boolean)
                           .join(', ') || 'Không có màu hợp lệ'
                       : 'Chọn Màu Sắc'
                   }}
                 </button>
-                <button
-                  @click="openAddModal('mauSac')"
-                  class="btn btn-action"
-                >
+                <button @click="openAddModal('mauSac')" class="btn btn-action">
                   <i class="bi bi-plus-circle"></i>
                 </button>
               </div>
@@ -126,26 +84,17 @@
         </div>
 
         <!-- Danh sách biến thể -->
-        <div v-if="productVariants.length > 0" class="mt-4">
+        <div v-if="!isLoading && productVariants.length > 0" class="mt-4">
           <div v-for="(group, groupIndex) in groupVariantsByRamAndRom" :key="groupIndex" class="mb-4">
             <div class="d-flex justify-content-between align-items-center mb-2">
               <span class="table-count">Phiên bản {{ group.ram }}/{{ group.rom }}</span>
               <div class="action-buttons">
                 <div class="filter-group me-3">
                   <label class="filter-label">Giá Chung</label>
-                  <input
-                    v-model="groupCommonValues[group.groupKey].price"
-                    type="text"
-                    placeholder="Nhập giá chung"
-                    class="form-control search-input"
-                    @input="updateSelectedVariants(group)"
-                  />
+                  <input v-model="groupCommonValues[group.groupKey].price" type="text" placeholder="Nhập giá chung"
+                    class="form-control search-input" @input="updateSelectedVariants(group)" />
                 </div>
-                <button
-                  v-if="selectedVariants.length > 0"
-                  @click="removeMultipleVariants"
-                  class="btn btn-reset"
-                >
+                <button v-if="selectedVariants.length > 0" @click="removeMultipleVariants" class="btn btn-reset">
                   <i class="bi bi-trash-fill me-2"></i>
                   Xóa {{ selectedVariants.length }} Đã Chọn
                 </button>
@@ -156,11 +105,8 @@
                 <thead>
                   <tr>
                     <th class="text-center">
-                      <input
-                        type="checkbox"
-                        :checked="allSelected[group.groupKey] || false"
-                        @change="toggleGroupSelection(group, $event.target.checked)"
-                      />
+                      <input type="checkbox" :checked="allSelected[group.groupKey] || false"
+                        @change="toggleGroupSelection(group, $event.target.checked)" />
                     </th>
                     <th class="text-center">STT</th>
                     <th>Tên Sản Phẩm</th>
@@ -172,48 +118,32 @@
                 </thead>
                 <tbody>
                   <tr v-for="(variant, variantIndex) in group.variants" :key="variantIndex">
-                    <td class="text-center">
-                      <input
-                        type="checkbox"
-                        v-model="selectedVariants"
-                        :value="group.startIndex + variantIndex"
-                        @change="updateSelectedCount(group)"
-                      />
+                    <td>
+                      <input type="checkbox" v-model="selectedVariants" :value="group.startIndex + variantIndex"
+                        @change="updateSelectedCount(group)" />
                     </td>
                     <td class="text-center">{{ variantIndex + 1 }}</td>
                     <td>{{ productData.tenSanPham || 'N/A' }}</td>
                     <td>
                       <div class="d-flex align-items-center">
-                        <span
-                          class="color-swatch me-2"
-                          :style="{ backgroundColor: getColorFromName(mauSacOptions.find(mau => mau.id === variant.idMauSac)?.tenMau) || '#000' }"
-                        ></span>
-                        {{ mauSacOptions.find(mau => mau.id === variant.idMauSac)?.tenMau || 'N/A' }}
+                        <span class="color-swatch me-2"
+                          :style="{ backgroundColor: mauSacOptions.find(mau => mau.id === variant.idMauSac)?.maMau || '#000' }"></span>
+                        {{ mauSacOptions.find(mau => mau.id === variant.idMauSac)?.mauSac || 'N/A' }}
                       </div>
                     </td>
                     <td>
-                      <input
-                        v-model="variant.donGia"
-                        type="text"
-                        class="form-control search-input"
-                      />
+                      <input v-model="variant.donGia" type="text" class="form-control search-input" />
                     </td>
                     <td class="text-center">
                       {{ variantImeis[group.startIndex + variantIndex]?.length || 0 }}
                     </td>
                     <td class="action-buttons-cell">
-                      <button
-                        @click="openImeiModal(group.startIndex + variantIndex)"
-                        class="btn btn-sm btn-table"
-                        title="Nhập IMEI"
-                      >
+                      <button @click="openImeiModal(group.startIndex + variantIndex)" class="btn btn-sm btn-table"
+                        title="Nhập IMEI">
                         <i class="bi bi-upc-scan"></i>
                       </button>
-                      <button
-                        @click="removeVariant(group.startIndex + variantIndex)"
-                        class="btn btn-sm btn-table"
-                        title="Xóa"
-                      >
+                      <button @click="removeVariant(group.startIndex + variantIndex)" class="btn btn-sm btn-table"
+                        title="Xóa">
                         <i class="bi bi-trash-fill"></i>
                       </button>
                     </td>
@@ -223,57 +153,36 @@
             </div>
           </div>
         </div>
+        <div v-else-if="isLoading" class="mt-4">
+          <p>Đang tải dữ liệu...</p>
+        </div>
       </div>
     </FilterTableSection>
 
     <!-- Color Selection Modal -->
     <div v-if="showColorModal" class="modal fade show d-block" tabindex="-1">
-      <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-dialog-centered">
         <div class="modal-content">
           <div class="modal-header">
             <h5 class="modal-title">Chọn Màu Sắc</h5>
-            <button
-              type="button"
-              class="btn-close"
-              @click="closeColorModal"
-            ></button>
+            <button type="button" class="btn-close" @click="closeColorModal"></button>
           </div>
           <div class="modal-body">
             <div class="row g-3">
-              <div
-                v-for="mau in mauSacOptions"
-                :key="mau.id"
-                class="col-4"
-              >
+              <div v-for="mau in mauSacOptions" :key="mau.id" class="col-4">
                 <label class="d-flex align-items-center">
-                  <input
-                    type="checkbox"
-                    :value="mau.id"
-                    v-model="currentVariant.selectedMauSacs"
-                    class="me-2"
-                  />
-                  <span
-                    class="color-swatch me-2"
-                    :style="{ backgroundColor: getColorFromName(mau.tenMau) || '#FFFFFF' }"
-                  ></span>
-                  <span>{{ mau.tenMau }}</span>
+                  <input type="checkbox" :value="mau.id" v-model="currentVariant.selectedMauSacs" class="me-2" />
+                  <span class="color-swatch me-2" :style="{ backgroundColor: mau.maMau || '#FFFFFF' }"></span>
+                  <span>{{ mau.mauSac }}</span>
                 </label>
               </div>
             </div>
           </div>
           <div class="modal-footer">
-            <button
-              type="button"
-              class="btn btn-reset"
-              @click="closeColorModal"
-            >
+            <button type="button" class="btn btn-reset" @click="closeColorModal">
               Đóng
             </button>
-            <button
-              type="button"
-              class="btn btn-action"
-              @click="confirmColorSelection"
-            >
+            <button type="button" class="btn btn-action" @click="confirmColorSelection">
               Xác nhận
             </button>
           </div>
@@ -287,27 +196,15 @@
         <div class="modal-content">
           <div class="modal-header">
             <h5 class="modal-title">Nhập IMEI</h5>
-            <button
-              type="button"
-              class="btn-close"
-              @click="closeImeiModal"
-            ></button>
+            <button type="button" class="btn-close" @click="closeImeiModal"></button>
           </div>
           <div class="modal-body">
             <div class="mb-3">
               <label class="filter-label">Nhập IMEI (mỗi IMEI trên một dòng)</label>
-              <textarea
-                v-model="imeiInput"
-                rows="5"
-                class="form-control search-input"
-                placeholder="Nhập IMEI, mỗi IMEI trên một dòng..."
-              ></textarea>
+              <textarea v-model="imeiInput" rows="5" class="form-control search-input"
+                placeholder="Nhập IMEI, mỗi IMEI trên một dòng..."></textarea>
               <div class="mt-2">
-                <p
-                  v-for="(imei, index) in filteredImeiList"
-                  :key="index"
-                  class="text-sm"
-                >
+                <p v-for="(imei, index) in filteredImeiList" :key="index" class="text-sm">
                   IMEI {{ index + 1 }}: {{ imei.length }} chữ số
                   <span :class="imei.length === 15 ? 'text-success' : 'text-danger'">
                     {{ imei.length === 15 ? '(Đủ 15 số)' : '(Cần 15 số)' }}
@@ -319,37 +216,21 @@
             <div class="row g-3">
               <div class="col-8">
                 <label class="filter-label">Nhập từ file Excel</label>
-                <input
-                  type="file"
-                  accept=".xlsx, .xls"
-                  @change="handleExcelImport"
-                  class="form-control search-input"
-                />
+                <input type="file" accept=".xlsx, .xls" @change="handleExcelImport" class="form-control search-input" />
               </div>
               <div class="col-4">
                 <label class="filter-label">Tải mẫu Excel</label>
-                <button
-                  @click="downloadImeiTemplate"
-                  class="btn btn-action w-100"
-                >
+                <button @click="downloadImeiTemplate" class="btn btn-action w-100">
                   Tải mẫu IMEI
                 </button>
               </div>
             </div>
           </div>
           <div class="modal-footer">
-            <button
-              type="button"
-              class="btn btn-reset"
-              @click="closeImeiModal"
-            >
+            <button type="button" class="btn btn-reset" @click="closeImeiModal">
               Đóng
             </button>
-            <button
-              type="button"
-              class="btn btn-action"
-              @click="saveImei"
-            >
+            <button type="button" class="btn btn-action" @click="saveImei">
               Lưu
             </button>
           </div>
@@ -363,60 +244,41 @@
         <div class="modal-content">
           <div class="modal-header">
             <h5 class="modal-title">Thêm {{ currentAttributeLabel }}</h5>
-            <button
-              type="button"
-              class="btn-close"
-              @click="closeFormModal"
-            ></button>
+            <button type="button" class="btn-close" @click="closeFormModal"></button>
           </div>
           <div class="modal-body">
             <div v-if="currentAttribute === 'ram'" class="row g-3">
               <div class="col-12">
                 <label class="filter-label">Dung Lượng RAM</label>
-                <input
-                  v-model="entityData.dungLuong"
-                  type="text"
-                  class="form-control search-input"
-                  placeholder="Nhập dung lượng RAM (ví dụ: 8GB)"
-                />
+                <input v-model="entityData.dungLuongRam" type="text" class="form-control search-input"
+                  placeholder="Nhập dung lượng RAM (ví dụ: 8GB)" />
               </div>
             </div>
             <div v-if="currentAttribute === 'boNhoTrong'" class="row g-3">
               <div class="col-12">
                 <label class="filter-label">Dung Lượng Bộ Nhớ Trong</label>
-                <input
-                  v-model="entityData.dungLuong"
-                  type="text"
-                  class="form-control search-input"
-                  placeholder="Nhập dung lượng bộ nhớ trong (ví dụ: 128GB)"
-                />
+                <input v-model="entityData.dungLuongBoNhoTrong" type="text" class="form-control search-input"
+                  placeholder="Nhập dung lượng bộ nhớ trong (ví dụ: 128GB)" />
               </div>
             </div>
             <div v-if="currentAttribute === 'mauSac'" class="row g-3">
               <div class="col-12">
                 <label class="filter-label">Tên Màu Sắc</label>
-                <input
-                  v-model="entityData.tenMau"
-                  type="text"
-                  class="form-control search-input"
-                  placeholder="Nhập tên màu sắc (ví dụ: Đen)"
-                />
+                <input v-model="entityData.mauSac" type="text" class="form-control search-input"
+                  placeholder="Nhập tên màu sắc (ví dụ: Đen)" />
+              </div>
+              <div class="col-12">
+                <label class="filter-label">Mã Màu (Hex)</label>
+                <input v-model="entityData.maMau" type="text" class="form-control search-input"
+                  placeholder="Nhập mã màu (ví dụ: #FFFFFF)" />
               </div>
             </div>
           </div>
           <div class="modal-footer">
-            <button
-              type="button"
-              class="btn btn-reset"
-              @click="closeFormModal"
-            >
+            <button type="button" class="btn btn-reset" @click="closeFormModal">
               Đóng
             </button>
-            <button
-              type="button"
-              class="btn btn-action"
-              @click="handleAddAttribute"
-            >
+            <button type="button" class="btn btn-action" @click="handleAddAttribute">
               Thêm
             </button>
           </div>
@@ -427,27 +289,10 @@
 </template>
 
 <script>
-import { defineComponent, ref, computed } from 'vue';
+import { defineComponent, ref, computed, onUnmounted } from 'vue';
 import FilterTableSection from '@/components/common/FilterTableSection.vue';
 import ToastNotification from '@/components/common/ToastNotification.vue';
-
-const mockData = {
-  '/ram': [
-    { id: 'ram1', dungLuong: '8GB' },
-    { id: 'ram2', dungLuong: '12GB' },
-    { id: 'ram3', dungLuong: '16GB' },
-  ],
-  '/bo-nho-trong': [
-    { id: 'bnt1', dungLuong: '128GB' },
-    { id: 'bnt2', dungLuong: '256GB' },
-    { id: 'bnt3', dungLuong: '512GB' },
-  ],
-  '/mau-sac': [
-    { id: 'ms1', tenMau: 'Đen Phantôm' },
-    { id: 'ms2', tenMau: 'Trắng Ngọc Trai' },
-    { id: 'ms3', tenMau: 'Xanh Thiên Hà' },
-  ],
-};
+import { getRam, addRam, getBoNhoTrong, addBoNhoTrong, getMauSac, addMauSac } from '@/store/modules/products/chiTietSanPham';
 
 export default defineComponent({
   name: 'ProductVariants',
@@ -464,6 +309,7 @@ export default defineComponent({
   emits: ['variants-updated'],
   setup(props, { emit }) {
     const toastNotification = ref(null);
+    const isLoading = ref(true);
     const productVariants = ref([]);
     const currentVariant = ref({
       selectedRams: [],
@@ -474,9 +320,9 @@ export default defineComponent({
     const allSelected = ref({});
     const groupCommonValues = ref({});
     const variantImeis = ref({});
-    const ramOptions = ref(mockData['/ram']);
-    const boNhoTrongOptions = ref(mockData['/bo-nho-trong']);
-    const mauSacOptions = ref(mockData['/mau-sac']);
+    const ramOptions = ref([]);
+    const boNhoTrongOptions = ref([]);
+    const mauSacOptions = ref([]);
     const dropdownOpen = ref({
       ram: false,
       boNhoTrong: false,
@@ -494,8 +340,15 @@ export default defineComponent({
       const grouped = {};
 
       productVariants.value.forEach((variant, index) => {
-        const ram = ramOptions.value.find((r) => r.id === variant.idRam)?.dungLuong || 'Unknown';
-        const rom = boNhoTrongOptions.value.find((b) => b.id === variant.idBoNhoTrong)?.dungLuong || 'Unknown';
+        const ramOption = ramOptions.value.find((r) => r.id === variant.idRam);
+        const romOption = boNhoTrongOptions.value.find((b) => b.id === variant.idBoNhoTrong);
+        const ram = ramOption ? ramOption.dungLuongRam : 'Unknown';
+        const rom = romOption ? romOption.dungLuongBoNhoTrong : 'Unknown';
+
+        if (!ramOption || !romOption) {
+          console.warn('Không tìm thấy RAM hoặc ROM cho variant:', variant);
+        }
+
         const groupKey = `${ram}/${rom}`;
 
         if (!grouped[groupKey]) {
@@ -530,12 +383,68 @@ export default defineComponent({
       return labels[currentAttribute.value] || currentAttribute.value;
     });
 
+    // Fetch data from APIs
+    const fetchData = async () => {
+      try {
+        const [ramRes, boNhoTrongRes, mauSacRes] = await Promise.all([
+          getRam(),
+          getBoNhoTrong(),
+          getMauSac(),
+        ]);
+        ramOptions.value = ramRes.data || [];
+        boNhoTrongOptions.value = boNhoTrongRes.data || [];
+        // Ánh xạ dữ liệu màu sắc để khớp với API
+        mauSacOptions.value = (mauSacRes.data || []).map(item => ({
+          id: item.id,
+          ma: item.ma,
+          mauSac: item.mauSac,
+          maMau: item.maMau,
+          deleted: item.deleted
+        }));
+        isLoading.value = false;
+      } catch (error) {
+        console.error('Lỗi tải dữ liệu:', error);
+        toastNotification.value?.addToast({
+          type: 'error',
+          message: 'Lỗi khi tải dữ liệu: ' + error.message,
+          duration: 3000,
+        });
+        isLoading.value = false;
+      }
+    };
+
+    fetchData();
+
+    // Update selected options based on current variants
+    const updateSelectedOptions = () => {
+      const rams = new Set();
+      const boNhoTrongs = new Set();
+      const mauSacs = new Set();
+
+      productVariants.value.forEach((variant) => {
+        rams.add(variant.idRam);
+        boNhoTrongs.add(variant.idBoNhoTrong);
+        mauSacs.add(variant.idMauSac);
+      });
+
+      currentVariant.value.selectedRams = [...rams];
+      currentVariant.value.selectedBoNhoTrongs = [...boNhoTrongs];
+      currentVariant.value.selectedMauSacs = [...mauSacs];
+    };
+
     const toggleDropdown = (type) => {
       dropdownOpen.value[type] = !dropdownOpen.value[type];
       Object.keys(dropdownOpen.value).forEach((key) => {
         if (key !== type) {
           dropdownOpen.value[key] = false;
         }
+      });
+    };
+
+    // Close all dropdowns
+    const closeAllDropdowns = () => {
+      Object.keys(dropdownOpen.value).forEach((key) => {
+        dropdownOpen.value[key] = false;
       });
     };
 
@@ -584,8 +493,19 @@ export default defineComponent({
         });
       });
 
-      productVariants.value = [...productVariants.value, ...newVariants];
-      return true;
+      if (newVariants.length > 0) {
+        productVariants.value = [...productVariants.value, ...newVariants];
+        updateSelectedOptions(); // Update selected options after adding
+        validateSelections();
+        emit('variants-updated', productVariants.value);
+        toastNotification.value?.addToast({
+          type: 'success',
+          message: 'Thêm biến thể thành công!',
+          duration: 3000,
+        });
+        return true;
+      }
+      return false;
     };
 
     const removeVariant = (index) => {
@@ -593,6 +513,7 @@ export default defineComponent({
       delete variantImeis.value[index];
       selectedVariants.value = selectedVariants.value.filter((i) => i !== index);
       validateSelections();
+      updateSelectedOptions(); // Update selected options after removal
       emit('variants-updated', productVariants.value);
     };
 
@@ -605,6 +526,7 @@ export default defineComponent({
       });
       selectedVariants.value = [];
       validateSelections();
+      updateSelectedOptions(); // Update selected options after removal
       emit('variants-updated', productVariants.value);
     };
 
@@ -649,16 +571,8 @@ export default defineComponent({
       });
     };
 
-    const getColorFromName = (name) => {
-      const colorMap = {
-        'Đen Phantôm': '#1A2526',
-        'Trắng Ngọc Trai': '#F5F6F5',
-        'Xanh Thiên Hà': '#2C4F6E',
-      };
-      return colorMap[name] || '#FFFFFF';
-    };
-
     const openAddModal = (attribute) => {
+      closeAllDropdowns();
       currentAttribute.value = attribute;
       entityData.value = {};
       showFormModal.value = true;
@@ -670,28 +584,43 @@ export default defineComponent({
       entityData.value = {};
     };
 
-    const handleAddAttribute = () => {
-      const newId = `new_${Date.now()}`;
-      switch (currentAttribute.value) {
-        case 'ram':
-          ramOptions.value.push({ id: newId, dungLuong: entityData.value.dungLuong });
-          break;
-        case 'boNhoTrong':
-          boNhoTrongOptions.value.push({ id: newId, dungLuong: entityData.value.dungLuong });
-          break;
-        case 'mauSac':
-          mauSacOptions.value.push({ id: newId, tenMau: entityData.value.tenMau });
-          break;
+    const handleAddAttribute = async () => {
+      try {
+        const newId = `new_${Date.now()}`;
+        const data = { id: newId, ...entityData.value };
+        switch (currentAttribute.value) {
+          case 'ram':
+            await addRam(data);
+            ramOptions.value.push(data);
+            break;
+          case 'boNhoTrong':
+            await addBoNhoTrong(data);
+            boNhoTrongOptions.value.push(data);
+            break;
+          case 'mauSac':
+            data.ma = `MS${Date.now().toString().slice(-5)}`; // Tạo mã màu tự động
+            data.deleted = false; // Thêm trường deleted mặc định
+            await addMauSac(data);
+            mauSacOptions.value.push(data);
+            break;
+        }
+        toastNotification.value?.addToast({
+          type: 'success',
+          message: `Thêm ${currentAttributeLabel.value} thành công!`,
+          duration: 3000,
+        });
+        closeFormModal();
+      } catch (error) {
+        toastNotification.value?.addToast({
+          type: 'error',
+          message: `Lỗi khi thêm ${currentAttributeLabel.value}: ${error.message}`,
+          duration: 3000,
+        });
       }
-      toastNotification.value?.addToast({
-        type: 'success',
-        message: `Thêm ${currentAttributeLabel.value} thành công!`,
-        duration: 3000,
-      });
-      closeFormModal();
     };
 
     const openColorModal = () => {
+      closeAllDropdowns();
       showColorModal.value = true;
     };
 
@@ -704,15 +633,17 @@ export default defineComponent({
         closeColorModal();
         validateSelections();
         emit('variants-updated', productVariants.value);
+      } else {
         toastNotification.value?.addToast({
-          type: 'success',
-          message: 'Thêm biến thể thành công!',
+          type: 'error',
+          message: 'Không thể thêm biến thể!',
           duration: 3000,
         });
       }
     };
 
     const openImeiModal = (index) => {
+      closeAllDropdowns();
       currentVariantIndex.value = index;
       imeiInput.value = variantImeis.value[index]?.join('\n') || '';
       showImeiModal.value = true;
@@ -769,8 +700,29 @@ export default defineComponent({
       }
     };
 
+    // Handle click outside to close dropdowns
+    const handleClickOutside = (event) => {
+      const dropdowns = document.querySelectorAll('.dropdown-menu.show');
+      const buttons = document.querySelectorAll('.form-control.search-input');
+      if (
+        !Array.from(dropdowns).some((d) => d.contains(event.target)) &&
+        !Array.from(buttons).some((b) => b.contains(event.target))
+      ) {
+        closeAllDropdowns();
+      }
+    };
+
+    // Add event listener for click outside
+    document.addEventListener('mousedown', handleClickOutside);
+
+    // Cleanup event listener on component unmount
+    onUnmounted(() => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    });
+
     return {
       toastNotification,
+      isLoading,
       productVariants,
       currentVariant,
       ramOptions,
@@ -797,9 +749,10 @@ export default defineComponent({
       updateSelectedVariants,
       toggleGroupSelection,
       updateSelectedCount,
-      getColorFromName,
+      validateSelections,
       openAddModal,
       closeFormModal,
+      handleAddAttribute,
       openColorModal,
       closeColorModal,
       confirmColorSelection,
@@ -808,7 +761,6 @@ export default defineComponent({
       saveImei,
       downloadImeiTemplate,
       handleExcelImport,
-      handleAddAttribute,
       entityData,
     };
   },
@@ -918,7 +870,7 @@ export default defineComponent({
 .table td {
   border: 1px solid rgba(52, 211, 153, 0.2);
   padding: 0.75rem;
-  text-align: left;
+  text-align: center;
   font-size: 0.9rem;
 }
 
@@ -935,7 +887,6 @@ export default defineComponent({
 .action-buttons-cell {
   display: flex;
   justify-content: center;
-  gap: 0.5rem;
 }
 
 .btn-table {
@@ -962,6 +913,8 @@ export default defineComponent({
 
 .modal-content {
   background: #f8f9fa;
+  width: 50%;
+  margin: 0 auto;
   border-radius: 12px;
   border: 1px solid rgba(52, 211, 153, 0.2);
   animation: zoomIn 0.3s ease-out;

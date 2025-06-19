@@ -25,6 +25,7 @@ import ProductInfo from './themChiTietSanPham/ThongTinSanPham.vue';
 import ProductVariants from './themChiTietSanPham/ThemPhienBan.vue';
 import ProductImages from './themChiTietSanPham/ThemAnhSanPham.vue';
 import ToastNotification from '@/components/common/ToastNotification.vue';
+import { getMauSac } from '@/store/modules/products/chiTietSanPham'; 
 
 export default defineComponent({
   name: 'ProductDetails',
@@ -53,11 +54,23 @@ export default defineComponent({
     });
     const productVariants = ref([]);
     const variantImeis = ref({});
-    const mauSacOptions = ref([
-      { id: 'ms1', tenMau: 'Đen Phantôm' },
-      { id: 'ms2', tenMau: 'Trắng Ngọc Trai' },
-      { id: 'ms3', tenMau: 'Xanh Thiên Hà' },
-    ]);
+    const mauSacOptions = ref([]);
+
+    // Fetch màu sắc từ API
+    const fetchMauSac = async () => {
+      try {
+        const response = await getMauSac();
+        mauSacOptions.value = response.data;
+      } catch (error) {
+        toastNotification.value?.addToast({
+          type: 'error',
+          message: 'Lỗi khi tải danh sách màu sắc: ' + error.message,
+          duration: 3000,
+        });
+      }
+    };
+
+    fetchMauSac();
 
     const updateProductData = (newData) => {
       productData.value = { ...newData };
