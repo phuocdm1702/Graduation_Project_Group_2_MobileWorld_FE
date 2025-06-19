@@ -1,8 +1,6 @@
 <template>
   <div class="container-fluid py-4 statistics-management">
     <!-- Breadcrumb -->
-
-
     <!-- Header Section -->
     <HeaderCard
         title="Thống Kê & Báo Cáo"
@@ -19,7 +17,8 @@
           <div class="col-lg-4 col-md-6">
             <div class="filter-group">
               <label class="filter-label">Khoảng thời gian thống kê</label>
-              <select v-model="filterType" class="form-control filter-select" @change="fetchData">
+              <select v-model="filterType" class="form-control filter-select"
+                      @change="fetchData(); fetchRevenueChartData()">
                 <option value="day">Hôm nay</option>
                 <option value="week">Tuần này</option>
                 <option value="month">Tháng này</option>
@@ -34,11 +33,11 @@
             <div class="filter-group">
               <label class="filter-label">Thời gian tùy chọn</label>
               <div class="date-range-wrapper d-flex align-items-center">
-                <input type="date" v-model="startDate" class="form-control date-input" />
+                <input type="date" v-model="startDate" class="form-control date-input"/>
                 <span class="date-separator mx-2">đến</span>
-                <input type="date" v-model="endDate" class="form-control date-input" />
+                <input type="date" v-model="endDate" class="form-control date-input"/>
                 <button
-                    @click="fetchData"
+                    @click="fetchData(); fetchRevenueChartData()"
                     class="btn btn-action ms-2"
                 >
                   Lọc
@@ -99,10 +98,6 @@
               <i class="bi bi-file-earmark-excel me-2"></i>
               Xuất báo cáo
             </button>
-            <button class="btn btn-action" @click="printReport">
-              <i class="bi bi-printer me-2"></i>
-              In báo cáo
-            </button>
           </div>
         </div>
       </div>
@@ -110,18 +105,15 @@
 
     <!-- Statistics Cards Row -->
     <div class="row g-4 mb-4">
-      <div class="col-lg-3 col-md-6" v-for="(stat, index) in statistics" :key="index">
+      <div class="col-lg-3 col-md-6" v-for="(stat, index) in statistics" :key="stat.title">
         <div class="stat-card glass-card p-4 h-100" :style="{ animationDelay: `${index * 0.1}s` }">
           <div class="d-flex justify-content-between align-items-start mb-3">
             <div class="stat-icon" :class="stat.bgColor">
-              <i class="bi bi-currency-dollar fs-4"></i>
+              <i class="bi" :class="stat.icon"></i>
             </div>
             <div class="text-end">
               <div class="stat-value fw-bold mb-1">{{ formatCurrency(stat.revenue) }}</div>
-              <div class="stat-change text-success">
-                <i class="bi bi-trending-up me-1"></i>
-                {{ formatGrowth(growthData[`growthDoanhThu${stat.title}`] || 0) }}
-              </div>
+              <div class="stat-change" v-html="formatGrowth(growthData[`growthDoanhThu${stat.title}`] || 0)"></div>
             </div>
           </div>
           <h6 class="stat-title mb-1">{{ stat.title }}</h6>
@@ -138,7 +130,7 @@
       <div class="col-lg-8">
         <FilterTableSection title="Biểu Đồ Doanh Thu" icon="bi bi-bar-chart-line">
           <div class="chart-container p-4">
-            <canvas ref="revenueChart" class="revenue-chart"></canvas>
+            <canvas id="revenueChart" class="revenue-chart"></canvas>
           </div>
         </FilterTableSection>
       </div>
@@ -147,19 +139,23 @@
       <div class="col-lg-4">
         <FilterTableSection title="Sản Phẩm Bán Chạy" icon="bi bi-trophy">
           <div class="top-products-container p-4">
-            <div v-for="(product, index) in topProducts" :key="product.id" class="product-item d-flex align-items-center mb-3">
+            <div v-for="(product, index) in topProducts" :key="product.id"
+                 class="product-item d-flex align-items-center mb-3">
               <div class="product-rank me-3">
                 <span class="rank-number" :class="getRankClass(index)">{{ index + 1 }}</span>
               </div>
               <div class="product-info flex-grow-1">
                 <div class="product-name fw-semibold">{{ product.productName }}</div>
                 <div class="product-stats">
-                  <small class="text-muted">Đã bán: {{ product.soldQuantity }} | Giá: {{ formatCurrency(product.price) }}</small>
+                  <small class="text-muted">Đã bán: {{ product.soldQuantity }} | Giá: {{
+                      formatCurrency(product.price)
+                    }}</small>
                 </div>
               </div>
               <div class="product-progress">
                 <div class="progress" style="width: 60px; height: 4px;">
-                  <div class="progress-bar bg-mint" :style="{ width: (product.soldQuantity / Math.max(...topProducts.map(p => p.soldQuantity)) * 100) + '%' }"></div>
+                  <div class="progress-bar bg-mint"
+                       :style="{ width: (product.soldQuantity / Math.max(...topProducts.map(p => p.soldQuantity)) * 100) + '%' }"></div>
                 </div>
               </div>
             </div>
@@ -171,42 +167,64 @@
     <!-- Additional Charts Row -->
     <div class="row g-4 mb-4 align-items-stretch">
       <!-- Order Status Distribution -->
-      <div class="col-lg-6">
+      <div class="col-lg-4 col-md-12">
         <FilterTableSection title="Phân Bố Trạng Thái Đơn Hàng" icon="bi bi-pie-chart">
           <div class="chart-container p-4">
-            <div class="flex justify-center mb-4">
+            <div class="d-flex justify-content-center mb-4">
               <button
                   @click="chartFilterType = 'day'; fetchOrderStatusStats()"
-                  :class="chartFilterType === 'day' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'"
-                  class="px-3 py-1 rounded-l-lg border-r border-gray-300 hover:bg-blue-600 hover:text-white transition-colors text-sm"
+                  :class="['btn', chartFilterType === 'day' ? 'btn-primary' : 'btn-outline-secondary']"
+                  class="px-3 py-1 rounded-start"
               >
                 Ngày
               </button>
               <button
                   @click="chartFilterType = 'month'; fetchOrderStatusStats()"
-                  :class="chartFilterType === 'month' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'"
-                  class="px-3 py-1 border-r border-gray-300 hover:bg-blue-600 hover:text-white transition-colors text-sm"
+                  :class="['btn', chartFilterType === 'month' ? 'btn-primary' : 'btn-outline-secondary']"
+                  class="px-3 py-1"
               >
                 Tháng
               </button>
               <button
                   @click="chartFilterType = 'year'; fetchOrderStatusStats()"
-                  :class="chartFilterType === 'year' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'"
-                  class="px-3 py-1 rounded-r-lg hover:bg-blue-600 hover:text-white transition-colors text-sm"
+                  :class="['btn', chartFilterType === 'year' ? 'btn-primary' : 'btn-outline-secondary']"
+                  class="px-3 py-1 rounded-end"
               >
                 Năm
               </button>
             </div>
-            <canvas ref="statusChart" class="status-chart"></canvas>
+            <div v-if="error" class="text-danger text-center mb-3">
+              {{ error }}
+            </div>
+            <div v-else-if="!orderStatusStats || Object.values(orderStatusStats).every(val => val === 0)"
+                 class="text-muted text-center mb-3">
+              Không có dữ liệu để hiển thị.
+            </div>
+            <canvas id="orderStatusChart" class="status-chart"></canvas>
           </div>
         </FilterTableSection>
       </div>
 
       <!-- Sales Channels -->
-      <div class="col-lg-6">
+      <div class="col-lg-4 col-md-12">
         <FilterTableSection title="Phân Phối Đa Kênh" icon="bi bi-shop">
           <div class="chart-container p-4">
-            <canvas ref="salesChannelChart" id="loaiHoaDonChart" class="max-w-full max-h-full"></canvas>
+            <div v-if="loaiHoaDon.length === 0" class="text-muted text-center mb-3">
+              Không có dữ liệu để hiển thị.
+            </div>
+            <canvas id="loaiHoaDonChart" class="status-chart"></canvas>
+          </div>
+        </FilterTableSection>
+      </div>
+
+      <!-- Top Brands -->
+      <div class="col-lg-4 col-md-12">
+        <FilterTableSection title="Hãng Bán Chạy" icon="bi bi-star">
+          <div class="chart-container p-4">
+            <div v-if="hangBanChay.length === 0" class="text-muted text-center mb-3">
+              Không có dữ liệu để hiển thị.
+            </div>
+            <canvas id="hangBanChayChart" class="status-chart"></canvas>
           </div>
         </FilterTableSection>
       </div>
@@ -242,18 +260,27 @@
 
     <!-- Top Products Table -->
     <FilterTableSection title="Sản Phẩm Bán Chạy" icon="bi bi-trophy">
+      <div v-if="topProducts.length === 0" class="text-center text-gray-500 py-4">
+        Không có dữ liệu sản phẩm bán chạy.
+      </div>
       <DataTable
+          v-else
           title="Sản Phẩm Bán Chạy"
-          :headers="columnsTopProducts"
+          :headers="[{value: 'index', text: '#'}, {value: 'imageUrl', text: 'Ảnh'}, {value: 'productName', text: 'Tên Sản Phẩm'}, {value: 'price', text: 'Giá Bán'}, {value: 'soldQuantity', text: 'Số Lượng Đã Bán'}]"
           :data="topProducts"
           :pageSizeOptions="[5, 10, 15]"
       >
-        <template v-slot:index="{ item, index }">
+        <template v-slot:index="{ index }">
           {{ (currentPage * pageSize) + (index + 1) }}
         </template>
         <template v-slot:imageUrl="{ item }">
-          <img v-if="item.imageUrl" :src="item.imageUrl" alt="Ảnh" class="w-10 h-10 object-cover rounded" />
+            <span v-if="item.imageUrl && item.imageUrl.trim() !== ''">
+                <img :src="item.imageUrl" alt="Ảnh" class="w-10 h-10 object-cover rounded"/>
+            </span>
           <span v-else>N/A</span>
+        </template>
+        <template v-slot:productName="{ item }">
+          {{ item.productName || 'N/A' }}
         </template>
         <template v-slot:price="{ item }">
           {{ formatCurrency(item.price) }}
@@ -262,22 +289,21 @@
           {{ item.soldQuantity || '0' }}
         </template>
       </DataTable>
-      <footer
-          v-if="totalPages > 1"
-          class="bg-white shadow-lg rounded-lg p-4 flex justify-center items-center mt-4"
-      >
-      </footer>
     </FilterTableSection>
 
     <!-- Out of Stock Products Table -->
     <FilterTableSection title="Sản Phẩm Sắp Hết Hàng" icon="bi bi-exclamation-triangle">
+      <div v-if="sanPhamHetHang.length === 0" class="text-center text-gray-500 py-4">
+        Không có dữ liệu sản phẩm sắp hết hàng.
+      </div>
       <DataTable
+          v-else
           title="Sản Phẩm Sắp Hết Hàng"
-          :headers="columnsSanPhamHetHang"
+          :headers="[{value: 'index', text: '#'}, {value: 'tenSanPham', text: 'Tên Sản Phẩm'}, {value: 'soLuong', text: 'Số Lượng'}]"
           :data="sanPhamHetHang"
           :pageSizeOptions="[5, 8, 10]"
       >
-        <template v-slot:index="{ item, index }">
+        <template v-slot:index="{ index }">
           {{ (sanPhamHetHangCurrentPage * sanPhamHetHangPageSize) + (index + 1) }}
         </template>
         <template v-slot:tenSanPham="{ item }">
@@ -287,24 +313,17 @@
           {{ item.soLuong || '0' }}
         </template>
       </DataTable>
-      <footer
-          v-if="sanPhamHetHangTotalPages > 1"
-          class="bg-white shadow-lg rounded-lg p-4 flex justify-center items-center mt-4"
-      >
-
-      </footer>
     </FilterTableSection>
-
   </div>
 </template>
 
 <script>
-import { ref, onMounted, onUnmounted, computed, watch, nextTick } from 'vue';
-import { useRoute } from 'vue-router';
+import {ref, computed, watch} from 'vue';
+import {useRoute} from 'vue-router';
 import FilterTableSection from '@/components/common/FilterTableSection.vue';
 import HeaderCard from '@/components/common/HeaderCard.vue';
 import DataTable from '@/components/common/DataTable.vue';
-import { ThongKeJs } from '@/store/modules/statistics/ThongKe.js';
+import {ThongKeJs} from '@/store/modules/statistics/ThongKe.js';
 
 export default {
   name: 'ThongKe',
@@ -329,6 +348,7 @@ export default {
       chartFilterType,
       fetchData,
       fetchOrderStatusStats,
+      fetchRevenueChartData,
       changePage,
       currentPage,
       totalPages,
@@ -341,10 +361,17 @@ export default {
       sanPhamHetHangCurrentPage,
       sanPhamHetHangTotalPages,
       sanPhamHetHangPageSize,
-      exportExcel
+      exportExcel,
+      revenueData,
+      updateRevenueChart,
+      totalRevenue,
+      totalOrders,
+      growthRate,
+      chartTypes,
+      selectedChartType,
+      resetFilters
     } = ThongKeJs();
 
-    // Breadcrumb
     const breadcrumbItems = computed(() => {
       if (typeof route.meta.breadcrumb === 'function') {
         return route.meta.breadcrumb(route);
@@ -352,43 +379,15 @@ export default {
       return route.meta?.breadcrumb || ['Thống Kê'];
     });
 
-    // Chart-related refs
-    const revenueChart = ref(null);
-    const statusChart = ref(null);
-    const salesChannelChart = ref(null);
-    let revenueChartInstance = null;
-    let statusChartInstance = null;
-    let salesChannelChartInstance = null;
-
-    // Chart types
-    const chartTypes = ref([
-      { value: 'line', label: 'Đường', icon: 'bi bi-graph-up' },
-      { value: 'bar', label: 'Cột', icon: 'bi bi-bar-chart' }
-    ]);
-    const selectedChartType = ref('line');
-
-    // Statistics data
-    const totalRevenue = computed(() => {
-      return statistics.value.find(stat => stat.title === 'Tháng này')?.revenue || 0;
-    });
-    const totalOrders = computed(() => {
-      return statistics.value.find(stat => stat.title === 'Tháng này')?.orders || 0;
-    });
-    const growthRate = computed(() => {
-      return growthData.value.growthDoanhThuThang || 0;
-    });
-
-    // Detailed statistics headers
     const detailedStatsHeaders = ref([
-      { text: 'Thời gian', value: 'period' },
-      { text: 'Doanh thu', value: 'revenue' },
-      { text: 'Số đơn hàng', value: 'orders' },
-      { text: 'Giá trị TB/đơn', value: 'avgOrder' },
-      { text: 'Tăng trưởng', value: 'growth' },
-      { text: 'Trạng thái', value: 'status' }
+      {text: 'Thời gian', value: 'period'},
+      {text: 'Doanh thu', value: 'revenue'},
+      {text: 'Số đơn hàng', value: 'orders'},
+      {text: 'Giá trị TB/đơn', value: 'avgOrder'},
+      {text: 'Tăng trưởng', value: 'growth'},
+      {text: 'Trạng thái', value: 'status'}
     ]);
 
-    // Detailed statistics data
     const detailedStats = computed(() => {
       return statistics.value.map(stat => ({
         period: stat.title,
@@ -400,25 +399,6 @@ export default {
       }));
     });
 
-    // Revenue chart data
-    const revenueData = ref({
-      labels: ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'],
-      datasets: [{
-        label: 'Doanh thu (VNĐ)',
-        data: [],
-        borderColor: '#34d399',
-        backgroundColor: 'rgba(52, 211, 153, 0.1)',
-        tension: 0.4,
-        fill: true,
-        pointBackgroundColor: '#34d399',
-        pointBorderColor: '#ffffff',
-        pointBorderWidth: 2,
-        pointRadius: 5,
-        pointHoverRadius: 7
-      }]
-    });
-
-    // Methods
     const getRankClass = (index) => {
       if (index === 0) return 'rank-gold';
       if (index === 1) return 'rank-silver';
@@ -428,342 +408,43 @@ export default {
 
     const getStatusClass = (status) => {
       switch (status) {
-        case 'Xuất sắc': return 'status-excellent';
-        case 'Tốt': return 'status-good';
-        case 'Bình thường': return 'status-normal';
-        default: return 'status-default';
+        case 'Xuất sắc':
+          return 'status-excellent';
+        case 'Tốt':
+          return 'status-good';
+        case 'Bình thường':
+          return 'status-normal';
+        default:
+          return 'status-default';
       }
-    };
-
-    const resetFilters = () => {
-      filterType.value = 'month';
-      startDate.value = '';
-      endDate.value = '';
-      selectedChartType.value = 'line';
-      fetchData();
     };
 
     const printReport = () => {
       window.print();
     };
 
-    const loadChartJS = async () => {
-      try {
-        if (window.Chart) {
-          return window.Chart;
-        }
-        const script = document.createElement('script');
-        script.src = 'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js';
-        document.head.appendChild(script);
-        return new Promise((resolve, reject) => {
-          script.onload = () => resolve(window.Chart);
-          script.onerror = reject;
-        });
-      } catch (error) {
-        console.error('Failed to load Chart.js:', error);
-        return null;
-      }
-    };
-
-    const initializeCharts = async () => {
-      await nextTick();
-      try {
-        const Chart = await loadChartJS();
-        if (!Chart) {
-          console.error('Chart.js not available');
-          return;
-        }
-
-        // Revenue Chart
-        if (revenueChart.value) {
-          const ctx = revenueChart.value.getContext('2d');
-          if (revenueChartInstance) {
-            revenueChartInstance.destroy();
-          }
-          revenueChartInstance = new Chart(ctx, {
-            type: selectedChartType.value,
-            data: revenueData.value,
-            options: {
-              responsive: true,
-              maintainAspectRatio: false,
-              plugins: {
-                legend: { display: false },
-                tooltip: {
-                  backgroundColor: 'rgba(31, 41, 55, 0.9)',
-                  titleColor: '#ffffff',
-                  bodyColor: '#ffffff',
-                  borderColor: '#34d399',
-                  borderWidth: 1,
-                  callbacks: {
-                    label: function(context) {
-                      return 'Doanh thu: ' + formatCurrency(context.parsed.y);
-                    }
-                  }
-                }
-              },
-              scales: {
-                y: {
-                  beginAtZero: true,
-                  ticks: {
-                    callback: function(value) {
-                      return (value / 1000000).toFixed(1) + 'M';
-                    },
-                    color: '#6b7280'
-                  },
-                  grid: {
-                    color: 'rgba(52, 211, 153, 0.1)',
-                    borderColor: 'rgba(52, 211, 153, 0.2)'
-                  }
-                },
-                x: {
-                  ticks: { color: '#6b7280' },
-                  grid: { display: false }
-                }
-              },
-              animation: {
-                duration: 1000,
-                easing: 'easeInOutQuart'
-              }
-            }
-          });
-        }
-
-        // Status Chart
-        if (statusChart.value) {
-          const ctx = statusChart.value.getContext('2d');
-          if (statusChartInstance) {
-            statusChartInstance.destroy();
-          }
-          statusChartInstance = new Chart(ctx, {
-            type: 'doughnut',
-            data: {
-              labels: ['Chờ xác nhận', 'Chờ giao hàng', 'Đang giao', 'Hoàn thành', 'Đã hủy'],
-              datasets: [{
-                data: [
-                  orderStatusStats.value['Chờ xác nhận'] || 0,
-                  orderStatusStats.value['Chờ giao hàng'] || 0,
-                  orderStatusStats.value['Đang giao'] || 0,
-                  orderStatusStats.value['Hoàn thành'] || 0,
-                  orderStatusStats.value['Đã hủy'] || 0
-                ],
-                backgroundColor: ['#FF6384', '#FFCE56', '#4BC0C0', '#9966FF', '#FF4444'],
-                borderWidth: 1
-              }]
-            },
-            options: {
-              responsive: true,
-              maintainAspectRatio: false,
-              plugins: {
-                legend: {
-                  position: 'bottom',
-                  labels: {
-                    padding: 20,
-                    usePointStyle: true,
-                    color: '#6b7280',
-                    font: { size: 12 }
-                  }
-                },
-                tooltip: {
-                  backgroundColor: 'rgba(31, 41, 55, 0.9)',
-                  titleColor: '#ffffff',
-                  bodyColor: '#ffffff',
-                  borderColor: '#34d399',
-                  borderWidth: 1,
-                  callbacks: {
-                    label: function(context) {
-                      return context.label + ': ' + context.parsed;
-                    }
-                  }
-                }
-              },
-              cutout: '60%',
-              animation: {
-                animateRotate: true,
-                duration: 1500
-              }
-            }
-          });
-        }
-
-        // Sales Channel Chart
-        if (salesChannelChart.value) {
-          const ctx = salesChannelChart.value.getContext('2d');
-          if (salesChannelChartInstance) {
-            salesChannelChartInstance.destroy();
-          }
-          salesChannelChartInstance = new Chart(ctx, {
-            type: 'doughnut',
-            data: {
-              labels: loaiHoaDon.value.map(item => item.loaiDon),
-              datasets: [{
-                data: loaiHoaDon.value.map(item => item.soLuong),
-                backgroundColor: ['#FF6384', '#36A2EB'],
-                borderWidth: 1
-              }]
-            },
-            options: {
-              responsive: true,
-              maintainAspectRatio: false,
-              plugins: {
-                legend: {
-                  position: 'bottom',
-                  labels: {
-                    boxWidth: 20,
-                    padding: 15,
-                    color: '#6b7280',
-                    font: { size: 12 }
-                  }
-                },
-                tooltip: {
-                  backgroundColor: 'rgba(31, 41, 55, 0.9)',
-                  titleColor: '#ffffff',
-                  bodyColor: '#ffffff',
-                  borderColor: '#34d399',
-                  borderWidth: 1,
-                  callbacks: {
-                    label: function(context) {
-                      return context.label + ': ' + context.parsed;
-                    }
-                  }
-                }
-              },
-              cutout: '60%',
-              animation: {
-                animateRotate: true,
-                duration: 1500
-              }
-            }
-          });
-        }
-      } catch (error) {
-        console.error('Error initializing charts:', error);
-      }
-    };
-
-    const updateRevenueChart = async () => {
-      if (revenueChartInstance && selectedChartType.value) {
-        try {
-          const Chart = await loadChartJS();
-          if (!Chart) return;
-          revenueChartInstance.destroy();
-          const ctx = revenueChart.value.getContext('2d');
-          revenueChartInstance = new Chart(ctx, {
-            type: selectedChartType.value,
-            data: revenueData.value,
-            options: {
-              responsive: true,
-              maintainAspectRatio: false,
-              plugins: {
-                legend: { display: false },
-                tooltip: {
-                  backgroundColor: 'rgba(31, 41, 55, 0.9)',
-                  titleColor: '#ffffff',
-                  bodyColor: '#ffffff',
-                  borderColor: '#34d399',
-                  borderWidth: 1,
-                  callbacks: {
-                    label: function(context) {
-                      return 'Doanh thu: ' + formatCurrency(context.parsed.y);
-                    }
-                  }
-                }
-              },
-              scales: {
-                y: {
-                  beginAtZero: true,
-                  ticks: {
-                    callback: function(value) {
-                      return (value / 1000000).toFixed(1) + 'M';
-                    },
-                    color: '#6b7280'
-                  },
-                  grid: {
-                    color: 'rgba(52, 211, 153, 0.1)',
-                    borderColor: 'rgba(52, 211, 153, 0.2)'
-                  }
-                },
-                x: {
-                  ticks: { color: '#6b7280' },
-                  grid: { display: false }
-                }
-              },
-              animation: {
-                duration: 800,
-                easing: 'easeInOutQuart'
-              }
-            }
-          });
-        } catch (error) {
-          console.error('Error updating revenue chart:', error);
-        }
-      }
-    };
-
-    const updateChartData = () => {
-      let labels = [];
-      let data = [];
-      switch (filterType.value) {
-        case 'day':
-          labels = ['6h', '9h', '12h', '15h', '18h', '21h'];
-          data = [500000, 800000, 1200000, 900000, 1500000, 600000];
-          break;
-        case 'week':
-          labels = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'];
-          data = [2800000, 3200000, 2900000, 3500000, 4100000, 3800000, 3200000];
-          break;
-        case 'month':
-          labels = ['Tuần 1', 'Tuần 2', 'Tuần 3', 'Tuần 4'];
-          data = [12000000, 15000000, 13500000, 16800000];
-          break;
-        case 'year':
-          labels = ['Q1', 'Q2', 'Q3', 'Q4'];
-          data = [155000000, 178000000, 165000000, 192000000];
-          break;
-        case 'custom':
-          labels = ['Ngày 1', 'Ngày 2', 'Ngày 3', 'Ngày 4'];
-          data = [10000000, 12000000, 11000000, 13000000];
-          break;
-      }
-      revenueData.value.labels = labels;
-      revenueData.value.datasets[0].data = data;
-      if (revenueChartInstance) {
-        revenueChartInstance.data = revenueData.value;
-        revenueChartInstance.update('active');
-      }
-    };
-
-    const destroyCharts = () => {
-      if (revenueChartInstance) {
-        revenueChartInstance.destroy();
-        revenueChartInstance = null;
-      }
-      if (statusChartInstance) {
-        statusChartInstance.destroy();
-        statusChartInstance = null;
-      }
-      if (salesChannelChartInstance) {
-        salesChannelChartInstance.destroy();
-        salesChannelChartInstance = null;
+    const updateChart = () => {
+      if (revenueData.value.labels.length > 0) {
+        revenueData.value.datasets[0].type = selectedChartType.value;
+        updateRevenueChart();
       }
     };
 
     watch(selectedChartType, () => {
-      updateRevenueChart();
+      updateChart();
     });
 
     watch(filterType, () => {
-      updateChartData();
-      fetchData();
+      fetchRevenueChartData();
     });
 
-    onMounted(() => {
-      fetchData();
-      fetchOrderStatusStats();
-      setTimeout(initializeCharts, 200);
-    });
-
-    onUnmounted(() => {
-      destroyCharts();
+    watch([totalRevenue, totalOrders, growthRate], ([newRevenue, newOrders, newGrowth]) => {
+      console.log('Reactive update:', {
+        totalRevenue: newRevenue,
+        totalOrders: newOrders,
+        growthRate: newGrowth,
+        formattedRevenue: formatCurrency(newRevenue)
+      });
     });
 
     return {
@@ -781,6 +462,7 @@ export default {
       chartFilterType,
       fetchData,
       fetchOrderStatusStats,
+      fetchRevenueChartData,
       changePage,
       currentPage,
       totalPages,
@@ -794,9 +476,6 @@ export default {
       sanPhamHetHangTotalPages,
       sanPhamHetHangPageSize,
       exportExcel,
-      revenueChart,
-      statusChart,
-      salesChannelChart,
       chartTypes,
       selectedChartType,
       totalRevenue,
@@ -808,16 +487,13 @@ export default {
       getStatusClass,
       resetFilters,
       printReport,
-      initializeCharts,
-      updateRevenueChart,
-      updateChartData
+      updateChart
     };
   }
 };
 </script>
 
 <style scoped>
-/* Animations */
 @keyframes fadeInUp {
   from {
     opacity: 0;
@@ -851,18 +527,15 @@ export default {
   }
 }
 
-/* Gradient Definitions */
 .gradient-custom-teal {
   background: #34d399;
 }
 
-/* Base Styles */
 .statistics-management {
   min-height: 100vh;
   animation: fadeInUp 0.4s ease-out;
 }
 
-/* Glass Card Effect */
 .glass-card {
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(15px);
@@ -873,7 +546,6 @@ export default {
   animation: zoomIn 0.3s ease-out;
 }
 
-/* Filter Styles */
 .filter-label {
   display: block;
   font-weight: 600;
@@ -926,7 +598,6 @@ export default {
   border-color: #34d399;
 }
 
-/* Filter Stats */
 .filter-stats {
   display: flex;
   justify-content: space-between;
@@ -958,7 +629,6 @@ export default {
   color: #dc3545 !important;
 }
 
-/* Action Buttons */
 .filter-actions {
   display: flex;
   justify-content: space-between;
@@ -1003,7 +673,6 @@ export default {
   box-shadow: 0 0 15px rgba(52, 211, 153, 0.3);
 }
 
-/* Statistics Cards */
 .stat-card {
   transition: all 0.3s ease;
   cursor: pointer;
@@ -1041,21 +710,23 @@ export default {
   background: linear-gradient(135deg, #14b8a6, #0d9488);
 }
 
-/* Chart Containers */
 .chart-container {
   height: 400px;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+  position: relative;
 }
 
 .revenue-chart,
 .status-chart {
   max-width: 100%;
-  max-height: 100%;
+  max-height: 280px;
+  width: 100%;
+  height: auto;
 }
 
-/* Top Products */
 .top-products-container {
   height: 400px;
   overflow-y: auto;
@@ -1119,7 +790,6 @@ export default {
   color: #6b7280;
 }
 
-/* Statistics Table */
 .growth-badge {
   padding: 0.25rem 0.5rem;
   border-radius: 4px;
@@ -1161,7 +831,6 @@ export default {
   color: #6b7280;
 }
 
-/* Ensure equal height for charts and top products */
 .row.align-items-stretch {
   display: flex;
   flex-wrap: wrap;
@@ -1180,7 +849,15 @@ export default {
   flex-grow: 1;
 }
 
-/* Responsive Design */
+@media (max-width: 992px) {
+  .row.align-items-stretch > .col-lg-4 {
+    margin-bottom: 1.5rem;
+  }
+  .chart-container {
+    height: 350px;
+  }
+}
+
 @media (max-width: 768px) {
   .filter-actions {
     flex-direction: column;
@@ -1216,6 +893,10 @@ export default {
   .top-products-container {
     height: 300px;
   }
+
+  .status-chart {
+    max-height: 250px;
+  }
 }
 
 @media (max-width: 576px) {
@@ -1223,9 +904,12 @@ export default {
   .top-products-container {
     height: 250px;
   }
+
+  .status-chart {
+    max-height: 200px;
+  }
 }
 
-/* Scrollbar Styling */
 .top-products-container::-webkit-scrollbar {
   width: 4px;
 }
@@ -1244,7 +928,6 @@ export default {
   background: linear-gradient(135deg, #16a34a, #059669);
 }
 
-/* Progress Bar Styling */
 .progress {
   background-color: rgba(52, 211, 153, 0.1);
   border-radius: 2px;
@@ -1256,7 +939,6 @@ export default {
   transition: width 0.6s ease;
 }
 
-/* Print Styles */
 @media print {
   .filter-actions,
   .action-buttons {

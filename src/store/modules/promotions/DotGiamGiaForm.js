@@ -22,7 +22,7 @@ window.handleCheckboxChangeCTSP = function (id, isChecked) {
 
 let useDotGiamGiaInstance = null;
 
-export const useDotGiamGia = () => {
+export const useDotGiamGia = (toastNotification) => {
     const route = useRoute();
     const router = useRouter();
 
@@ -47,7 +47,7 @@ export const useDotGiamGia = () => {
     const ctspIdsInDotGiamGia = ref([]);
     const isLoading = ref(false);
 
-    const toast = ref(null);
+    const toast = toastNotification; // Gán toastNotification cho toast
 
     const dotGiamGia = ref({
         id: null,
@@ -231,7 +231,7 @@ type="checkbox"
 value="${item.sp.id}"
 ${idDSPs.value.includes(item.sp.id) ? "checked" : ""}
 onchange="handleCheckboxChange(${item.sp.id})"
-/>`;
+    />`;
             },
         },
         { key: "index", label: "#", formatter: (_, __, index) => index + 1 },
@@ -252,12 +252,12 @@ onchange="handleCheckboxChange(${item.sp.id})"
             label: "",
             formatter: (value, item) => {
                 return `
-<input
+    <input
 type="checkbox"
 value="${item.ctsp.id}"
 ${item.selected ? "checked" : ""}
 onchange="handleCheckboxChangeCTSP(${item.ctsp.id}, this.checked)"
-/>`;
+    />`;
             },
         },
         {
@@ -345,7 +345,7 @@ onchange="handleCheckboxChangeCTSP(${item.ctsp.id}, this.checked)"
 
     const checkDuplicate = async (field, value, excludeId = null) => {
         try {
-            const { data } = await axios.get(`http://localhost:8080/dot_giam_gia/ViewAddDotGiamGia/exists/${field}`, {
+            const { data } = await axios.get(`/api/dotGiamGia/ViewAddDotGiamGia/exists/${field}`, {
                 params: { [field]: value, excludeId },
             });
             return data;
@@ -354,56 +354,6 @@ onchange="handleCheckboxChangeCTSP(${item.ctsp.id}, this.checked)"
             toast.value?.addToast({ type: 'error', message: 'Lỗi khi kiểm tra trùng lặp', duration: 3000 });
             return false;
         }
-    };
-
-    const validate = async function () {
-        const today = new Date().toISOString().split("T")[0];
-        if (dotGiamGia.value.tenDotGiamGia === "") {
-            toast.value?.addToast({ type: 'error', message: 'Vui lòng nhập tên đợt giảm giá', duration: 3000 });
-            return false;
-        }
-        const isDuplicateTen = await checkDuplicate('tenDotGiamGia', dotGiamGia.value.tenDotGiamGia, dotGiamGia.value.id);
-        if (isDuplicateTen) {
-            toast.value?.addToast({ type: 'error', message: 'Tên đợt giảm giá đã tồn tại', duration: 3000 });
-            return false;
-        }
-        if (dotGiamGia.value.loaiGiamGiaApDung === "") {
-            toast.value?.addToast({ type: 'error', message: 'Vui lòng chọn loại giảm giá', duration: 3000 });
-            return false;
-        }
-        if (dotGiamGia.value.giaTriGiamGia === 0 && dotGiamGia.value.loaiGiamGiaApDung !== "Tiền mặt") {
-            toast.value?.addToast({ type: 'error', message: 'Vui lòng nhập giá trị giảm giá', duration: 3000 });
-            return false;
-        }
-        if (!dotGiamGia.value.soTienGiamToiDa || dotGiamGia.value.soTienGiamToiDa <= 0) {
-            toast.value?.addToast({ type: 'error', message: 'Số tiền giảm tối đa phải lớn hơn 0', duration: 3000 });
-            return false;
-        }
-        if (dotGiamGia.value.ngayBatDau === "") {
-            toast.value?.addToast({ type: 'error', message: 'Vui lòng chọn ngày bắt đầu', duration: 3000 });
-            return false;
-        }
-        if (dotGiamGia.value.ngayBatDau < today) {
-            toast.value?.addToast({
-                type: 'error',
-                message: 'Ngày bắt đầu không được nhỏ hơn ngày hiện tại',
-                duration: 3000
-            });
-            return false;
-        }
-        if (dotGiamGia.value.ngayKetThuc === "" || dotGiamGia.value.ngayKetThuc < dotGiamGia.value.ngayBatDau) {
-            toast.value?.addToast({ type: 'error', message: 'Vui lòng chọn lại ngày kết thúc', duration: 3000 });
-            return false;
-        }
-        if (idDSPs.value.length === 0) {
-            toast.value?.addToast({
-                type: 'error',
-                message: 'Vui lòng chọn dòng sản phẩm trong đợt giảm giá',
-                duration: 3000
-            });
-            return false;
-        }
-        return true;
     };
 
     const fetchDongSanPham = async () => {
@@ -443,36 +393,32 @@ onchange="handleCheckboxChangeCTSP(${item.ctsp.id}, this.checked)"
             idDSPs: idDSPs.value.filter(id => id && !isNaN(id)),
             ctspList: ctspList.value.filter(item => item.selected && item.ctsp?.id),
         };
-        const isValid = await validate();
-        if (isValid) {
-            try {
-                const toastId = toast.value?.addToast({ type: 'info', message: 'Đang xử lý...', isLoading: true });
-                if (edit.value) {
-                    await axios.put(
-                        `/api/dotGiamGia/AddDotGiamGia/${dotGiamGia.value.id}`,
-                        requestData,
-                        { headers: { "Content-Type": "application/json" } }
-                    );
-                    toast.value?.removeToast(toastId);
-                    toast.value?.addToast({ type: 'success', message: 'Cập nhật thành công', duration: 3000 });
-                    resetForm();
-                } else {
-                    await axios.post(
-                        "/api/dotGiamGia/AddDotGiamGia",
-                        requestData,
-                        { headers: { "Content-Type": "application/json" } }
-                    );
-                    toast.value?.removeToast(toastId);
-                    toast.value?.addToast({ type: 'success', message: 'Thêm thành công', duration: 3000 });
-                    resetForm();
-                }
+        try {
+            const toastId = toast.value?.addToast({ type: 'info', message: 'Đang xử lý...', isLoading: true });
+            let response;
+            if (edit.value) {
+                response = await axios.put(
+                    `/api/dotGiamGia/AddDotGiamGia/${dotGiamGia.value.id}`,
+                    requestData,
+                    { headers: { "Content-Type": "application/json" } }
+                );
 
-                await new Promise(resolve => setTimeout(resolve, 3000));
-                router.push('/dotGiamGia');
-            } catch (error) {
-                console.error("Lỗi:", error);
-                toast.value?.addToast({ type: 'error', message: 'Thao tác thất bại!', duration: 3000 });
+                toast.value?.addToast({ type: 'success', message: 'Cập nhật thành công', duration: 3000 });
+            } else {
+                response = await axios.post(
+                    "/api/dotGiamGia/AddDotGiamGia",
+                    requestData,
+                    { headers: { "Content-Type": "application/json" } }
+                );
+                toast.value?.addToast({ type: 'success', message: 'Thêm thành công', duration: 3000 });
             }
+            resetForm();
+            setTimeout(() => {
+                router.push('/dotGiamGia');
+            }, 3000); // Chờ 3 giây để hiển thị toast
+        } catch (error) {
+            console.error("Lỗi:", error);
+            toast.value?.addToast({ type: 'error', message: 'Thao tác thất bại!', duration: 3000 });
         }
     };
 
