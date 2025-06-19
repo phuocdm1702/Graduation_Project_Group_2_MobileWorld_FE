@@ -146,12 +146,14 @@
                     type="text"
                     class="form-control shadow-none border-start-0"
                     placeholder="Tìm kiếm khách hàng..."
-                    :value="searchCustomer"
+                    v-model="searchCustomer"
                     @input="debouncedCustomerSearch($event.target.value)"
                     style="
                       border-radius: 0 10px 10px 0;
                       transition: all 0.3s ease;
                     "
+                    @focus="this.classList.add('border-teal')"
+                    @blur="this.classList.remove('border-teal')"
                   />
                 </div>
               </div>
@@ -649,7 +651,7 @@
                 <!-- Voucher Section -->
                 <div class="voucher-section mb-5">
                   <h6
-                    class="fw-bold text-dark mb-3"
+                    class="fw-bold text-dark mb-2"
                     style="font-size: 1.3rem; letter-spacing: 0.5px"
                   >
                     Mã Giảm Giá
@@ -675,7 +677,7 @@
                       Chọn mã giảm giá
                     </button>
                     <div
-                      class="price-info mt-4 p-3 rounded-3 shadow-sm animate__animated animate__fadeInUp"
+                      class="price-info mt-4 p-3 rounded-2 bg-light shadow-sm animate__animated animate__fadeInUp"
                       style="border-left: 4px solid #34d399"
                     >
                       <div
@@ -721,7 +723,7 @@
                     </div>
                     <div
                       v-if="suggestAdditionalPurchase.message"
-                      class="suggestion-alert mt-3 p-3 rounded-3 animate__animated animate__bounceIn"
+                      class="suggestion-alert mt-3 p-3 rounded-2 animate__animated animate__bounceIn"
                       style="
                         background: linear-gradient(135deg, #fff3e0, #ffe8cc);
                         border: 1px solid #ff9800;
@@ -819,13 +821,9 @@
 
                 <!-- Pay Button -->
                 <button
-                  class="btn w-100 py-3 bg-custom-teal-btn text-white mt-auto"
+                  class="btn w-100 py-3 pay-btn gradient-custom-green text-white"
+                  :disabled="!activeInvoiceId || cartItems.length === 0 || isCreatingOrder"
                   @click="ThanhToan"
-                  :disabled="
-                    !activeInvoiceId ||
-                    cartItems.length === 0 ||
-                    isCreatingOrder
-                  "
                 >
                   <i class="bi bi-credit-card me-2"></i>
                   <span class="fw-semibold">Thanh toán</span>
@@ -1449,6 +1447,10 @@ export default defineComponent({
 
 .gradient-custom-yellow {
   background: linear-gradient(135deg, #facc15, #f97316);
+}
+
+.gradient-custom-green {
+  background: linear-gradient(135deg, #28a745, #1e7e34);
 }
 
 .cursor-pointer {
