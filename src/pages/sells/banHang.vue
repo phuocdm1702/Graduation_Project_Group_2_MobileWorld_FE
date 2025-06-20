@@ -700,7 +700,7 @@
                             class="form-control shadow-none border-start-0"
                             placeholder="Nhập phí vận chuyển"
                             :disabled="totalPrice >= FREE_SHIP_THRESHOLD"
-                            min="0"
+                            min=""
                             style="
                               border-radius: 0 8px 8px 0;
                               transition: all 0.3s ease;

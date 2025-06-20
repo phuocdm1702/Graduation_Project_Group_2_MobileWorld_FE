@@ -103,7 +103,7 @@ export default {
       { text: "RAM", value: "ram" },
       { text: "Bộ nhớ", value: "storage" },
       { text: "IMEI", value: "imei" },
-      { text: "Đơn giá", value: "priceInfo" }, // Changed from "price"
+      { text: "Đơn giá", value: "currentPrice" }, // Changed from "price"
       { text: "Số lượng", value: "quantity" },
       { text: "Thành tiền", value: "total" },
       { text: "Hành động", value: "actions" },
@@ -870,7 +870,6 @@ export default {
           code: t.code,
           name: t.name,
         }));
-        showToast("success", "Đã tải danh sách tỉnh/thành phố");
       } catch (error) {
         showToast("error", "Lỗi khi tải danh sách tỉnh/thành phố");
       }
@@ -891,7 +890,6 @@ export default {
           name: q.name,
         }));
         wards.value = []; // Reset wards khi chọn tỉnh mới
-        showToast("success", "Đã tải danh sách quận/huyện");
       } catch (error) {
         showToast("error", "Lỗi khi tải danh sách quận/huyện");
       }
@@ -911,7 +909,6 @@ export default {
           code: p.code,
           name: p.name,
         }));
-        showToast("success", "Đã tải danh sách phường/xã");
       } catch (error) {
         showToast("error", "Lỗi khi tải danh sách phường/xã");
       }
@@ -1000,7 +997,7 @@ export default {
               expiry: pgg.ngayHetHan,
             }));
       } catch (error) {
-        showToast("error", "Lỗi khi tải mã giảm giá");
+         console.error("Lỗi khi tải mã giảm giá",error);
       }
     };
 
@@ -1196,14 +1193,6 @@ export default {
                 expiry: formatDate(item.ngayKetThuc),
                 rawExpiry: item.ngayKetThuc,
               }));
-          if (publicDiscountCodes.value.length > 0) {
-            showToast(
-                "success",
-                `Đã tải ${publicDiscountCodes.value.length} mã giảm giá công khai`
-            );
-          } else {
-            showToast("warning", "Không có mã giảm giá công khai còn hiệu lực");
-          }
         } else {
           showToast("error", "Dữ liệu mã giảm giá không đúng định dạng");
         }
@@ -1232,25 +1221,23 @@ const updateShippingFee = async () => {
   }
   if (totalPrice.value >= FREE_SHIP_THRESHOLD) {
     shippingFee.value = 0;
-    showToast("success", "Miễn phí vận chuyển cho đơn hàng từ 20,000,000 VNĐ trở lên");
+    showToast("success", "Miễn phí vận chuyển cho đơn hàng từ 50,000,000 VNĐ trở lên");
     return;
   }
   try {
-    // Giả lập API tính phí vận chuyển
-    const response = await apiService.get(`/api/shipping-fee`, {
-      params: {
-        shippingUnit: selectedShippingUnit.value.name,
-        city: receiver.value.city,
-        district: receiver.value.district,
-        ward: receiver.value.ward,
-        address: receiver.value.address,
-      },
-    });
-    shippingFee.value = response.data.fee || 30000; // Giá trị mặc định
+    
+    if (selectedShippingUnit.value.name === "Giao Hàng Nhanh") {
+      shippingFee.value = 100000; 
+    } else if (selectedShippingUnit.value.name === "Giao Hàng Tiết Kiệm") {
+      shippingFee.value = 30000; 
+    } else {
+      shippingFee.value = 30000; 
+    }
     showToast("success", `Đã cập nhật phí vận chuyển cho ${selectedShippingUnit.value.name}`);
   } catch (error) {
+    console.error("Lỗi khi tính phí vận chuyển:", error);
+    shippingFee.value = 30000; 
     showToast("error", "Lỗi khi tính phí vận chuyển");
-    shippingFee.value = ""; // Giá trị mặc định
   }
 };
 
