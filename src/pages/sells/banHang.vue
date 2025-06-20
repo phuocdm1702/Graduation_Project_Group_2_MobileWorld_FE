@@ -1313,6 +1313,10 @@
                         <p class="text-muted mb-0">
                           Giảm: {{ formatPrice(code.value) }}
                         </p>
+                         <p class="text-muted mb-0">
+                          Hết hạn:
+                          {{ code.expiry }}
+                        </p>
                       </div>
                       <button
                         class="btn btn-sm gradient-custom-teal text-white"
