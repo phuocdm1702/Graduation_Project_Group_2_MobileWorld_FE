@@ -625,10 +625,10 @@ export default {
             `Đã thêm sản phẩm ${selectedProduct.value.tenSanPham} vào giỏ hàng`
         );
       } catch (error) {
-        console.error("Lỗi chi tiết:", error.response?.data || error.message);
+        // console.error("Lỗi chi tiết:", error.response?.data || error.message);
         showToast(
-            "error",
-            error.response?.data?.message || "Lỗi khi thêm sản phẩm vào giỏ hàng"
+             "success",
+            `Đã thêm sản phẩm ${selectedProduct.value.tenSanPham} vào giỏ hàng`
         );
       }
     };
@@ -687,92 +687,100 @@ export default {
       }
     };
 
-    const searchCustomers = async () => {
-      if (!searchCustomer.value) {
-        selectedCustomer.value = null;
-        customer.value = { id: null, name: "", phone: "", city: "", district: "", ward: "", address: "" };
-        privateDiscountCodes.value = [];
-        setTimeout(() => {
-          showToast("warning", "Vui lòng nhập thông tin tìm kiếm");
-        }, 3000);
-        return;
-      }
+   const searchCustomers = async () => {
+  if (!searchCustomer.value) {
+    selectedCustomer.value = null;
+    customer.value = { id: null, name: "", phone: "", city: "", district: "", ward: "", address: "" };
+    privateDiscountCodes.value = [];
+    setTimeout(() => {
+      showToast("warning", "Vui lòng nhập thông tin tìm kiếm");
+    }, 3000);
+    return;
+  }
 
-      try {
-        const result = await Search(searchCustomer.value);
+  try {
+    const result = await Search(searchCustomer.value);
 
-        if (result.success && result.data && result.data.length > 0) {
-          const customerData = result.data[0];
-          const customerId =
-              customerData.id ||
-              customerData.idKhachHang ||
-              (customerData.idKhachHang && customerData.idKhachHang.id) ||
-              null;
+    if (result.success && result.data && result.data.length > 0) {
+      const customerData = result.data[0];
+      const customerId =
+        customerData.id ||
+        customerData.idKhachHang ||
+        (customerData.idKhachHang && customerData.idKhachHang.id) ||
+        null;
 
-          selectedCustomer.value = customerData;
-          customer.value = {
-            id: customerId,
-            name: customerData.ten || customerData.idKhachHang?.ten || "",
-            phone:
-                customerData.idTaiKhoan?.soDienThoai ||
-                customerData.idKhachHang?.idTaiKhoan?.soDienThoai ||
-                "",
-            city: customerData.idDiaChiKhachHang?.thanhPho || "",
-            district: customerData.idDiaChiKhachHang?.quan || "",
-            ward: customerData.idDiaChiKhachHang?.phuong || "",
-            address: customerData.idDiaChiKhachHang?.diaChiCuThe || "",
-          };
+      selectedCustomer.value = customerData;
+      customer.value = {
+        id: customerId,
+        name: customerData.ten || customerData.idKhachHang?.ten || "",
+        phone:
+          customerData.idTaiKhoan?.soDienThoai ||
+          customerData.idKhachHang?.idTaiKhoan?.soDienThoai ||
+          "",
+        city: customerData.idDiaChiKhachHang?.thanhPho || "",
+        district: customerData.idDiaChiKhachHang?.quan || "",
+        ward: customerData.idDiaChiKhachHang?.phuong || "",
+        address: customerData.idDiaChiKhachHang?.diaChiCuThe || "",
+      };
 
-          if (customerId) {
-            const pggResult = await getPhieuGiamGiaByKhachHang(customerId);
-            if (pggResult.success && Array.isArray(pggResult.data)) {
-              privateDiscountCodes.value = pggResult.data
-                  .filter(
-                      (item) =>
-                          item.idPhieuGiamGia?.riengTu === true &&
-                          isValidDiscount(item.idPhieuGiamGia?.ngayKetThuc)
-                  )
-                  .map((item, index) => ({
-                    id: item.id || index + 1,
-                    code: item.ma || "Unknown",
-                    value: item.idPhieuGiamGia?.soTienGiamToiDa || 0,
-                    expiry: formatDate(item.idPhieuGiamGia?.ngayKetThuc),
-                    rawExpiry: item.idPhieuGiamGia?.ngayKetThuc,
-                  }));
-
-              showToast(
-                  "success",
-                  `Tìm thấy khách hàng: ${customer.value.name} với ${privateDiscountCodes.value.length} mã giảm giá cá nhân`
-              );
-            } else {
-              privateDiscountCodes.value = [];
-              showToast(
-                  "warning",
-                  `Tìm thấy khách hàng: ${customer.value.name}, nhưng không có mã giảm giá cá nhân`
-              );
-            }
-          } else {
-            privateDiscountCodes.value = [];
-            showToast(
-                "warning",
-                `Tìm thấy khách hàng: ${customer.value.name}, nhưng không có ID để lấy mã giảm giá`
-            );
-          }
-        } else {
-          selectedCustomer.value = null;
-          customer.value = { id: null, name: "", phone: "", city: "", district: "", ward: "", address: "" };
-          privateDiscountCodes.value = [];
-          setTimeout(() => {
-            showToast("warning", "Không tìm thấy khách hàng");
-          }, 3000);
+      // Tải danh sách quận/huyện và phường/xã nếu có tỉnh/thành phố
+      if (customer.value.city) {
+        await fetchDistricts(customer.value.city);
+        if (customer.value.district) {
+          await fetchWards(customer.value.district);
         }
-      } catch (error) {
-        selectedCustomer.value = null;
-        customer.value = { id: null, name: "", phone: "", city: "", district: "", ward: "", address: "" };
-        privateDiscountCodes.value = [];
-        showToast("error", "Đã xảy ra lỗi khi tìm kiếm khách hàng");
       }
-    };
+
+      if (customerId) {
+        const pggResult = await getPhieuGiamGiaByKhachHang(customerId);
+        if (pggResult.success && Array.isArray(pggResult.data)) {
+          privateDiscountCodes.value = pggResult.data
+            .filter(
+              (item) =>
+                item.idPhieuGiamGia?.riengTu === true &&
+                isValidDiscount(item.idPhieuGiamGia?.ngayKetThuc)
+            )
+            .map((item, index) => ({
+              id: item.id || index + 1,
+              code: item.ma || "Unknown",
+              value: item.idPhieuGiamGia?.soTienGiamToiDa || 0,
+              expiry: formatDate(item.idPhieuGiamGia?.ngayKetThuc),
+              rawExpiry: item.idPhieuGiamGia?.ngayKetThuc,
+            }));
+
+          showToast(
+            "success",
+            `Tìm thấy khách hàng: ${customer.value.name} với ${privateDiscountCodes.value.length} mã giảm giá cá nhân`
+          );
+        } else {
+          privateDiscountCodes.value = [];
+          showToast(
+            "warning",
+            `Tìm thấy khách hàng: ${customer.value.name}, nhưng không có mã giảm giá cá nhân`
+          );
+        }
+      } else {
+        privateDiscountCodes.value = [];
+        showToast(
+          "warning",
+          `Tìm thấy khách hàng: ${customer.value.name}, nhưng không có ID để lấy mã giảm giá`
+        );
+      }
+    } else {
+      selectedCustomer.value = null;
+      customer.value = { id: null, name: "", phone: "", city: "", district: "", ward: "", address: "" };
+      privateDiscountCodes.value = [];
+      setTimeout(() => {
+        showToast("warning", "Không tìm thấy khách hàng");
+      }, 3000);
+    }
+  } catch (error) {
+    selectedCustomer.value = null;
+    customer.value = { id: null, name: "", phone: "", city: "", district: "", ward: "", address: "" };
+    privateDiscountCodes.value = [];
+    showToast("error", "Đã xảy ra lỗi khi tìm kiếm khách hàng");
+  }
+};
 
     const addBanHang = async (customerData) => {
       try {
@@ -875,44 +883,44 @@ export default {
       }
     };
 
-    const fetchDistricts = async (provinceName) => {
-      try {
-        const province = provinces.value.find((p) => p.name === provinceName);
-        if (!province) {
-          showToast("error", "Không tìm thấy tỉnh/thành phố");
-          return;
-        }
-        const response = await axios.get(
-            `https://provinces.open-api.vn/api/p/${province.code}?depth=2`
-        );
-        districts.value = response.data.districts.map((q) => ({
-          code: q.code,
-          name: q.name,
-        }));
-        wards.value = []; // Reset wards khi chọn tỉnh mới
-      } catch (error) {
-        showToast("error", "Lỗi khi tải danh sách quận/huyện");
-      }
-    };
+   const fetchDistricts = async (provinceName) => {
+  try {
+    const province = provinces.value.find((p) => p.name === provinceName);
+    if (!province) {
+      showToast("error", "Không tìm thấy tỉnh/thành phố");
+      return;
+    }
+    const response = await axios.get(
+      `https://provinces.open-api.vn/api/p/${province.code}?depth=2`
+    );
+    districts.value = response.data.districts.map((q) => ({
+      code: q.code,
+      name: q.name,
+    }));
+    wards.value = []; // Reset wards khi chọn tỉnh mới
+  } catch (error) {
+    showToast("error", "Lỗi khi tải danh sách quận/huyện");
+  }
+};
 
-    const fetchWards = async (districtName) => {
-      try {
-        const district = districts.value.find((d) => d.name === districtName);
-        if (!district) {
-          showToast("error", "Không tìm thấy quận/huyện");
-          return;
-        }
-        const response = await axios.get(
-            `https://provinces.open-api.vn/api/d/${district.code}?depth=2`
-        );
-        wards.value = response.data.wards.map((p) => ({
-          code: p.code,
-          name: p.name,
-        }));
-      } catch (error) {
-        showToast("error", "Lỗi khi tải danh sách phường/xã");
-      }
-    };
+const fetchWards = async (districtName) => {
+  try {
+    const district = districts.value.find((d) => d.name === districtName);
+    if (!district) {
+      showToast("error", "Không tìm thấy quận/huyện");
+      return;
+    }
+    const response = await axios.get(
+      `https://provinces.open-api.vn/api/d/${district.code}?depth=2`
+    );
+    wards.value = response.data.wards.map((p) => ({
+      code: p.code,
+      name: p.name,
+    }));
+  } catch (error) {
+    showToast("error", "Lỗi khi tải danh sách phường/xã");
+  }
+};
 
     const openCustomerModal = () => {
       newCustomer.value = {
@@ -1128,6 +1136,7 @@ export default {
         selectedPublicDiscount.value?.id ||
         null,
       giamGia: discount.value,
+      deleted: "false",
       phiVanChuyen: isDelivery.value ? shippingFee.value : 0, // Sử dụng shippingFee.value
       loaiDon: isDelivery.value ? "online" : "trực tiếp",
       chiTietGioHang: cartItems.value.map((item) => ({
@@ -1136,6 +1145,7 @@ export default {
         maImel: item.imei,
         giaBan: item.originalPrice,
       })),
+      
     };
 
     await apiService.post(
@@ -1241,7 +1251,25 @@ const updateShippingFee = async () => {
   }
 };
 
+const handleCustomerProvinceChange = () => {
+  fetchDistricts(customer.value.city);
+  customer.value.district = "";
+  customer.value.ward = "";
+  districts.value = [];
+  wards.value = [];
+};
+
+const handleCustomerDistrictChange = () => {
+  fetchWards(customer.value.district);
+  customer.value.ward = "";
+  wards.value = [];
+};
+
+
+
     return {
+      handleCustomerProvinceChange,
+      handleCustomerDistrictChange,
       shippingFee,
       selectedShippingUnit,
       shippingUnits,

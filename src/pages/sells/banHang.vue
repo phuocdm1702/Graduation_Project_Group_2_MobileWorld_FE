@@ -280,12 +280,17 @@
                 </template>
                 <template #price="{ item }">
                   <span>{{ formatPrice(item.currentPrice) }}</span>
+                  <small v-if="item.priceChangeText" class="text-muted d-block">
+                    {{ item.priceChangeText }}
+                  </small>
                 </template>
                 <template #quantity="{ item }">
                   <span>{{ item.quantity }}</span>
                 </template>
                 <template #total="{ item }">
-                  <span>{{ formatPrice(item.currentPrice * item.quantity) }}</span>
+                  <span>{{
+                    formatPrice(item.currentPrice * item.quantity)
+                  }}</span>
                 </template>
                 <template #actions="{ item }">
                   <button
@@ -526,8 +531,7 @@
                           <select
                             v-model="customer.city"
                             class="form-select shadow-none border-start-0"
-                            :disabled="!isReceiverEditable"
-                            @change="handleReceiverProvinceChange"
+                            @change="handleCustomerProvinceChange"
                             style="
                               border-radius: 0 8px 8px 0;
                               transition: all 0.3s ease;
@@ -557,19 +561,26 @@
                           <span class="input-group-text bg-light border-end-0">
                             <i class="bi bi-geo text-teal"></i>
                           </span>
-                          <input
+                          <select
                             v-model="customer.district"
-                            type="text"
-                            class="form-control shadow-none border-start-0"
-                            placeholder="Quận/Huyện"
+                            class="form-select shadow-none border-start-0"
+                            @change="handleCustomerDistrictChange"
                             style="
                               border-radius: 0 8px 8px 0;
                               transition: all 0.3s ease;
                             "
-                          />
+                          >
+                            <option value="" disabled>Chọn quận/huyện</option>
+                            <option
+                              v-for="district in districts"
+                              :key="district.code"
+                              :value="district.name"
+                            >
+                              {{ district.name }}
+                            </option>
+                          </select>
                         </div>
                       </div>
-
                       <div class="col-md-6">
                         <label
                           class="form-label fw-medium text-dark mb-2"
@@ -581,16 +592,23 @@
                           <span class="input-group-text bg-light border-end-0">
                             <i class="bi bi-geo-fill text-teal"></i>
                           </span>
-                          <input
+                          <select
                             v-model="customer.ward"
-                            type="text"
-                            class="form-control shadow-none border-start-0"
-                            placeholder="Phường/Xã"
+                            class="form-select shadow-none border-start-0"
                             style="
                               border-radius: 0 8px 8px 0;
                               transition: all 0.3s ease;
                             "
-                          />
+                          >
+                            <option value="">Chọn phường/xã</option>
+                            <option
+                              v-for="ward in wards"
+                              :key="ward.code"
+                              :value="ward.name"
+                            >
+                              {{ ward.name }}
+                            </option>
+                          </select>
                         </div>
                       </div>
                       <div class="col-12">
@@ -700,7 +718,7 @@
                             class="form-control shadow-none border-start-0"
                             placeholder="Nhập phí vận chuyển"
                             :disabled="totalPrice >= FREE_SHIP_THRESHOLD"
-                            min=""
+                            min="0"
                             style="
                               border-radius: 0 8px 8px 0;
                               transition: all 0.3s ease;
