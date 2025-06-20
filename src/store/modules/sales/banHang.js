@@ -103,7 +103,7 @@ export default {
       { text: "RAM", value: "ram" },
       { text: "Bộ nhớ", value: "storage" },
       { text: "IMEI", value: "imei" },
-      { text: "Đơn giá", value: "price" },
+      { text: "Đơn giá", value: "priceInfo" }, // Changed from "price"
       { text: "Số lượng", value: "quantity" },
       { text: "Thành tiền", value: "total" },
       { text: "Hành động", value: "actions" },
@@ -148,7 +148,7 @@ export default {
       if (!invoiceSearchQuery.value) return pendingInvoices.value;
       const query = invoiceSearchQuery.value.toLowerCase();
       return pendingInvoices.value.filter((invoice) =>
-        invoice.ma.toLowerCase().includes(query)
+          invoice.ma.toLowerCase().includes(query)
       );
     });
 
@@ -157,10 +157,10 @@ export default {
       if (productSearchQuery.value) {
         const query = productSearchQuery.value.toLowerCase();
         filtered = filtered.filter(
-          (p) =>
-            p.tenSanPham.toLowerCase().includes(query) ||
-            p.maSanPham.toLowerCase().includes(query) ||
-            p.mauSac.toLowerCase().includes(query)
+            (p) =>
+                p.tenSanPham.toLowerCase().includes(query) ||
+                p.maSanPham.toLowerCase().includes(query) ||
+                p.mauSac.toLowerCase().includes(query)
         );
       }
       if (filterColor.value) {
@@ -177,13 +177,35 @@ export default {
 
     const totalPrice = computed(() => {
       return cartItems.value.reduce(
-        (sum, item) => sum + Number(item.price) * item.quantity,
-        0
+          (sum, item) => sum + Number(item.originalPrice) * item.quantity,
+          0
       );
     });
-
     const totalPayment = computed(() => {
       return totalPrice.value - discount.value;
+    });
+
+    const priceChangeInfo = computed(() => {
+      return cartItems.value.map((item) => {
+        const product = products.value.find(
+            (p) =>
+                p.id === item.id &&
+                p.mauSac === item.color &&
+                p.dungLuongRam === item.ram &&
+                p.dungLuongBoNhoTrong === item.storage
+        );
+        const currentPrice = product ? product.giaBan : item.originalPrice;
+        return {
+          ...item,
+          currentPrice,
+          priceChangeText:
+              currentPrice !== item.originalPrice
+                  ? `Tăng từ ${formatPrice(item.originalPrice)} lên ${formatPrice(
+                      currentPrice
+                  )}`
+                  : null,
+        };
+      });
     });
 
     const suggestAdditionalPurchase = computed(() => {
@@ -200,9 +222,9 @@ export default {
           return code.value > (best?.value || 0) ? code : best;
         }
         return code.value > (best?.value || 0) &&
-          (!best || code.minOrder < best.minOrder)
-          ? code
-          : best;
+        (!best || code.minOrder < best.minOrder)
+            ? code
+            : best;
       }, null);
 
       if (!bestDiscount) {
@@ -216,7 +238,7 @@ export default {
       if (totalPrice.value >= bestDiscount.minOrder) {
         return {
           message: `Bạn có thể áp dụng mã ${
-            bestDiscount.code
+              bestDiscount.code
           } để được giảm ${formatPrice(bestDiscount.value)}.`,
           additionalAmount: 0,
           bestDiscount,
@@ -226,7 +248,7 @@ export default {
       const additionalAmount = bestDiscount.minOrder - totalPrice.value;
       return {
         message: `Mua thêm ${formatPrice(additionalAmount)} để sử dụng mã ${
-          bestDiscount.code
+            bestDiscount.code
         } và được giảm ${formatPrice(bestDiscount.value)}.`,
         additionalAmount,
         bestDiscount,
@@ -348,7 +370,7 @@ export default {
       activeInvoiceId.value = invoice.id;
       try {
         const response = await apiService.get(
-          `/api/gio-hang/data/${invoice.id}`
+            `/api/gio-hang/data/${invoice.id}`
         );
         cartItems.value = response.data.chiTietGioHangDTOS.map((item) => ({
           id: item.chiTietSanPhamId,
@@ -357,11 +379,12 @@ export default {
           ram: item.ram,
           storage: item.boNhoTrong,
           imei: item.maImel,
-          price: Number(item.giaBan),
+          originalPrice: Number(item.giaBan),
+          currentPrice: Number(item.giaBan), // Initially same as original
           quantity: item.soLuong,
         }));
         const index = pendingInvoices.value.findIndex(
-          (inv) => inv.id === invoice.id
+            (inv) => inv.id === invoice.id
         );
         if (index !== -1) {
           pendingInvoices.value[index].items = cartItems.value;
@@ -374,9 +397,9 @@ export default {
 
     const confirmCancelInvoice = (invoice) => {
       showConfirm(
-        `Bạn có chắc chắn muốn hủy hóa đơn ${invoice.ma}?`,
-        () => cancelInvoice(invoice),
-        () => {}
+          `Bạn có chắc chắn muốn hủy hóa đơn ${invoice.ma}?`,
+          () => cancelInvoice(invoice),
+          () => {}
       );
     };
 
@@ -385,7 +408,7 @@ export default {
       try {
         await apiService.delete(`/api/xoa-hd-cho/${invoice.id}`);
         pendingInvoices.value = pendingInvoices.value.filter(
-          (inv) => inv.id !== invoice.id
+            (inv) => inv.id !== invoice.id
         );
         if (activeInvoiceId.value === invoice.id) {
           activeInvoiceId.value = null;
@@ -404,7 +427,7 @@ export default {
     const fetchProducts = async () => {
       try {
         const response = await apiService.get(
-          "/api/san-pham?page=0&size=999999999"
+            "/api/san-pham?page=0&size=999999999"
         );
         products.value = response.data.content.map((sp) => ({
           id: sp.id,
@@ -419,7 +442,7 @@ export default {
         }));
       } catch (error) {
         const message =
-          error.response?.data?.message || "Lỗi khi tải danh sách sản phẩm";
+            error.response?.data?.message || "Lỗi khi tải danh sách sản phẩm";
         showToast("error", message);
       }
     };
@@ -433,23 +456,23 @@ export default {
       try {
         const response = await apiService.get(`/api/san-pham?page=0&size=10`);
         products.value.push(
-          ...response.data.content.map((sp) => ({
-            id: sp.id,
-            sanPhamId: sp.idSanPham,
-            tenSanPham: sp.tenSanPham,
-            maSanPham: sp.ma,
-            mauSac: sp.mauSac || "N/A",
-            dungLuongRam: sp.dungLuongRam || "N/A",
-            dungLuongBoNhoTrong: sp.dungLuongBoNhoTrong || "N/A",
-            soLuong: sp.soLuong || 0,
-            giaBan: sp.giaBan || 0,
-          }))
+            ...response.data.content.map((sp) => ({
+              id: sp.id,
+              sanPhamId: sp.idSanPham,
+              tenSanPham: sp.tenSanPham,
+              maSanPham: sp.ma,
+              mauSac: sp.mauSac || "N/A",
+              dungLuongRam: sp.dungLuongRam || "N/A",
+              dungLuongBoNhoTrong: sp.dungLuongBoNhoTrong || "N/A",
+              soLuong: sp.soLuong || 0,
+              giaBan: sp.giaBan || 0,
+            }))
         );
         totalPages.value = response.data.totalPages;
         showToast("success", "Đã tải thêm sản phẩm");
       } catch (error) {
         const message =
-          error.response?.data?.message || "Lỗi khi tải thêm sản phẩm";
+            error.response?.data?.message || "Lỗi khi tải thêm sản phẩm";
         showToast("error", message);
       } finally {
         isLoadingMore.value = false;
@@ -459,7 +482,7 @@ export default {
     const removeItem = async (item) => {
       try {
         const response = await apiService.delete(
-          `/api/gio-hang/xoa?hdId=${activeInvoiceId.value}&spId=${item.id}`
+            `/api/gio-hang/xoa?hdId=${activeInvoiceId.value}&spId=${item.id}`
         );
         cartItems.value = response.data.chiTietGioHangDTOS.map((item) => ({
           id: item.chiTietSanPhamId,
@@ -468,11 +491,12 @@ export default {
           ram: item.ram,
           storage: item.boNhoTrong,
           imei: item.maImel,
-          price: Number(item.giaBan),
+          originalPrice: Number(item.giaBan),
+          currentPrice: Number(item.giaBan),
           quantity: item.soLuong,
         }));
         const invoice = pendingInvoices.value.find(
-          (inv) => inv.id === activeInvoiceId.value
+            (inv) => inv.id === activeInvoiceId.value
         );
         if (invoice) invoice.items = cartItems.value;
         showToast("success", `Đã xóa sản phẩm ${item.name} khỏi giỏ hàng`);
@@ -487,13 +511,13 @@ export default {
       showIMEIModal.value = true;
       try {
         const response = await apiService.get(
-          `/api/san-pham/${product.sanPhamId}/imeis?mauSac=${encodeURIComponent(
-            product.mauSac
-          )}&dungLuongRam=${encodeURIComponent(
-            product.dungLuongRam
-          )}&dungLuongBoNhoTrong=${encodeURIComponent(
-            product.dungLuongBoNhoTrong
-          )}`
+            `/api/san-pham/${product.sanPhamId}/imeis?mauSac=${encodeURIComponent(
+                product.mauSac
+            )}&dungLuongRam=${encodeURIComponent(
+                product.dungLuongRam
+            )}&dungLuongBoNhoTrong=${encodeURIComponent(
+                product.dungLuongBoNhoTrong
+            )}`
         );
         availableIMEIs.value = response.data.map((imei) => ({
           id: imei,
@@ -503,8 +527,8 @@ export default {
       } catch (error) {
         console.error("Lỗi chi tiết:", error.response?.data || error.message);
         showToast(
-          "error",
-          error.response?.data?.message || "Lỗi khi tải danh sách IMEI"
+            "error",
+            error.response?.data?.message || "Lỗi khi tải danh sách IMEI"
         );
       }
     };
@@ -531,7 +555,7 @@ export default {
 
     const removeIMEI = (imei) => {
       selectedIMEIs.value = selectedIMEIs.value.filter(
-        (selected) => selected !== imei
+          (selected) => selected !== imei
       );
     };
 
@@ -544,17 +568,25 @@ export default {
 
       try {
         const response = await apiService.get(
-          `/api/chi-tiet-san-pham/id?sanPhamId=${
-            selectedProduct.value.sanPhamId
-          }&mauSac=${encodeURIComponent(
-            selectedProduct.value.mauSac
-          )}&dungLuongRam=${encodeURIComponent(
-            selectedProduct.value.dungLuongRam
-          )}&dungLuongBoNhoTrong=${encodeURIComponent(
-            selectedProduct.value.dungLuongBoNhoTrong
-          )}`
+            `/api/chi-tiet-san-pham/id?sanPhamId=${
+                selectedProduct.value.sanPhamId
+            }&mauSac=${encodeURIComponent(
+                selectedProduct.value.mauSac
+            )}&dungLuongRam=${encodeURIComponent(
+                selectedProduct.value.dungLuongRam
+            )}&dungLuongBoNhoTrong=${encodeURIComponent(
+                selectedProduct.value.dungLuongBoNhoTrong
+            )}`
         );
         const chiTietSanPhamId = response.data;
+
+        // Fetch latest product price
+        const productResponse = await apiService.get(
+            `/api/san-pham?page=0&size=1&keyword=${encodeURIComponent(
+                selectedProduct.value.maSanPham
+            )}`
+        );
+        const latestPrice = productResponse.data.content[0]?.giaBan || selectedProduct.value.giaBan;
 
         const chiTietGioHangDTO = {
           chiTietSanPhamId: chiTietSanPhamId,
@@ -563,8 +595,8 @@ export default {
         };
 
         const postResponse = await apiService.post(
-          `/api/add/gio-hang?idHD=${activeInvoiceId.value}`,
-          chiTietGioHangDTO
+            `/api/add/gio-hang?idHD=${activeInvoiceId.value}`,
+            chiTietGioHangDTO
         );
         cartItems.value = postResponse.data.chiTietGioHangDTOS.map((item) => ({
           id: item.chiTietSanPhamId,
@@ -573,25 +605,26 @@ export default {
           ram: item.ram,
           storage: item.boNhoTrong,
           imei: item.maImel,
-          price: Number(item.giaBan),
+          originalPrice: Number(item.giaBan),
+          currentPrice: latestPrice,
           quantity: item.soLuong,
         }));
 
         const invoice = pendingInvoices.value.find(
-          (inv) => inv.id === activeInvoiceId.value
+            (inv) => inv.id === activeInvoiceId.value
         );
         if (invoice) invoice.items = cartItems.value;
 
         closeIMEIModal();
         showToast(
-          "success",
-          `Đã thêm sản phẩm ${selectedProduct.value.tenSanPham} vào giỏ hàng`
+            "success",
+            `Đã thêm sản phẩm ${selectedProduct.value.tenSanPham} vào giỏ hàng`
         );
       } catch (error) {
         console.error("Lỗi chi tiết:", error.response?.data || error.message);
         showToast(
-          "error",
-          error.response?.data?.message || "Lỗi khi thêm sản phẩm vào giỏ hàng"
+            "error",
+            error.response?.data?.message || "Lỗi khi thêm sản phẩm vào giỏ hàng"
         );
       }
     };
@@ -600,16 +633,16 @@ export default {
       if (!selectedCartItem.value) return;
       try {
         const imeiArray = selectedCartItem.value.imei
-          .split(", ")
-          .filter((i) => i !== imei);
+            .split(", ")
+            .filter((i) => i !== imei);
         const chiTietGioHangDTO = {
           chiTietSanPhamId: selectedCartItem.value.id,
           soLuong: imeiArray.length,
           maImel: imeiArray.join(", "),
         };
         const response = await apiService.post(
-          `/api/add/gio-hang?idHD=${activeInvoiceId.value}`,
-          chiTietGioHangDTO
+            `/api/add/gio-hang?idHD=${activeInvoiceId.value}`,
+            chiTietGioHangDTO
         );
         cartItems.value = response.data.chiTietGioHangDTOS.map((item) => ({
           id: item.chiTietSanPhamId,
@@ -618,11 +651,12 @@ export default {
           ram: item.ram,
           storage: item.boNhoTrong,
           imei: item.maImel,
-          price: Number(item.giaBan),
+          originalPrice: Number(item.giaBan),
+          currentPrice: Number(item.giaBan),
           quantity: item.soLuong,
         }));
         const invoice = pendingInvoices.value.find(
-          (inv) => inv.id === activeInvoiceId.value
+            (inv) => inv.id === activeInvoiceId.value
         );
         if (invoice) invoice.items = cartItems.value;
         if (imeiArray.length === 0) {
@@ -650,97 +684,97 @@ export default {
     };
 
     const searchCustomers = async () => {
-  if (!searchCustomer.value) {
-    selectedCustomer.value = null;
-    customer.value = { id: null, name: "", phone: "", city: "", district: "", ward: "", address: "" };
-    privateDiscountCodes.value = [];
-    setTimeout(() => {
-      showToast("warning", "Vui lòng nhập thông tin tìm kiếm");
-    }, 3000);
-    return;
-  }
-
-  try {
-    const result = await Search(searchCustomer.value);
-
-    if (result.success && result.data && result.data.length > 0) {
-      const customerData = result.data[0];
-      const customerId =
-        customerData.id ||
-        customerData.idKhachHang ||
-        (customerData.idKhachHang && customerData.idKhachHang.id) ||
-        null;
-
-      selectedCustomer.value = customerData;
-      customer.value = {
-        id: customerId,
-        name: customerData.ten || customerData.idKhachHang?.ten || "",
-        phone:
-          customerData.idTaiKhoan?.soDienThoai ||
-          customerData.idKhachHang?.idTaiKhoan?.soDienThoai ||
-          "",
-        city: customerData.idDiaChiKhachHang?.thanhPho || "",
-        district: customerData.idDiaChiKhachHang?.quan || "",
-        ward: customerData.idDiaChiKhachHang?.phuong || "",
-        address: customerData.idDiaChiKhachHang?.diaChiCuThe || "",
-      };
-
-      if (customerId) {
-        const pggResult = await getPhieuGiamGiaByKhachHang(customerId);
-        if (pggResult.success && Array.isArray(pggResult.data)) {
-          privateDiscountCodes.value = pggResult.data
-            .filter(
-              (item) =>
-                item.idPhieuGiamGia?.riengTu === true &&
-                isValidDiscount(item.idPhieuGiamGia?.ngayKetThuc)
-            )
-            .map((item, index) => ({
-              id: item.id || index + 1,
-              code: item.ma || "Unknown",
-              value: item.idPhieuGiamGia?.soTienGiamToiDa || 0,
-              expiry: formatDate(item.idPhieuGiamGia?.ngayKetThuc),
-              rawExpiry: item.idPhieuGiamGia?.ngayKetThuc,
-            }));
-
-          showToast(
-            "success",
-            `Tìm thấy khách hàng: ${customer.value.name} với ${privateDiscountCodes.value.length} mã giảm giá cá nhân`
-          );
-        } else {
-          privateDiscountCodes.value = [];
-          showToast(
-            "warning",
-            `Tìm thấy khách hàng: ${customer.value.name}, nhưng không có mã giảm giá cá nhân`
-          );
-        }
-      } else {
+      if (!searchCustomer.value) {
+        selectedCustomer.value = null;
+        customer.value = { id: null, name: "", phone: "", city: "", district: "", ward: "", address: "" };
         privateDiscountCodes.value = [];
-        showToast(
-          "warning",
-          `Tìm thấy khách hàng: ${customer.value.name}, nhưng không có ID để lấy mã giảm giá`
-        );
+        setTimeout(() => {
+          showToast("warning", "Vui lòng nhập thông tin tìm kiếm");
+        }, 3000);
+        return;
       }
-    } else {
-      selectedCustomer.value = null;
-      customer.value = { id: null, name: "", phone: "", city: "", district: "", ward: "", address: "" };
-      privateDiscountCodes.value = [];
-      setTimeout(() => {
-        showToast("warning", "Không tìm thấy khách hàng");
-      }, 3000);
-    }
-  } catch (error) {
-    selectedCustomer.value = null;
-    customer.value = { id: null, name: "", phone: "", city: "", district: "", ward: "", address: "" };
-    privateDiscountCodes.value = [];
-    showToast("error", "Đã xảy ra lỗi khi tìm kiếm khách hàng");
-  }
-};
+
+      try {
+        const result = await Search(searchCustomer.value);
+
+        if (result.success && result.data && result.data.length > 0) {
+          const customerData = result.data[0];
+          const customerId =
+              customerData.id ||
+              customerData.idKhachHang ||
+              (customerData.idKhachHang && customerData.idKhachHang.id) ||
+              null;
+
+          selectedCustomer.value = customerData;
+          customer.value = {
+            id: customerId,
+            name: customerData.ten || customerData.idKhachHang?.ten || "",
+            phone:
+                customerData.idTaiKhoan?.soDienThoai ||
+                customerData.idKhachHang?.idTaiKhoan?.soDienThoai ||
+                "",
+            city: customerData.idDiaChiKhachHang?.thanhPho || "",
+            district: customerData.idDiaChiKhachHang?.quan || "",
+            ward: customerData.idDiaChiKhachHang?.phuong || "",
+            address: customerData.idDiaChiKhachHang?.diaChiCuThe || "",
+          };
+
+          if (customerId) {
+            const pggResult = await getPhieuGiamGiaByKhachHang(customerId);
+            if (pggResult.success && Array.isArray(pggResult.data)) {
+              privateDiscountCodes.value = pggResult.data
+                  .filter(
+                      (item) =>
+                          item.idPhieuGiamGia?.riengTu === true &&
+                          isValidDiscount(item.idPhieuGiamGia?.ngayKetThuc)
+                  )
+                  .map((item, index) => ({
+                    id: item.id || index + 1,
+                    code: item.ma || "Unknown",
+                    value: item.idPhieuGiamGia?.soTienGiamToiDa || 0,
+                    expiry: formatDate(item.idPhieuGiamGia?.ngayKetThuc),
+                    rawExpiry: item.idPhieuGiamGia?.ngayKetThuc,
+                  }));
+
+              showToast(
+                  "success",
+                  `Tìm thấy khách hàng: ${customer.value.name} với ${privateDiscountCodes.value.length} mã giảm giá cá nhân`
+              );
+            } else {
+              privateDiscountCodes.value = [];
+              showToast(
+                  "warning",
+                  `Tìm thấy khách hàng: ${customer.value.name}, nhưng không có mã giảm giá cá nhân`
+              );
+            }
+          } else {
+            privateDiscountCodes.value = [];
+            showToast(
+                "warning",
+                `Tìm thấy khách hàng: ${customer.value.name}, nhưng không có ID để lấy mã giảm giá`
+            );
+          }
+        } else {
+          selectedCustomer.value = null;
+          customer.value = { id: null, name: "", phone: "", city: "", district: "", ward: "", address: "" };
+          privateDiscountCodes.value = [];
+          setTimeout(() => {
+            showToast("warning", "Không tìm thấy khách hàng");
+          }, 3000);
+        }
+      } catch (error) {
+        selectedCustomer.value = null;
+        customer.value = { id: null, name: "", phone: "", city: "", district: "", ward: "", address: "" };
+        privateDiscountCodes.value = [];
+        showToast("error", "Đã xảy ra lỗi khi tìm kiếm khách hàng");
+      }
+    };
 
     const addBanHang = async (customerData) => {
       try {
         const response = await apiService.post(
-          "/khach-hang/add-Bh",
-          customerData
+            "/khach-hang/add-Bh",
+            customerData
         );
         return { success: true, data: response.data };
       } catch (error) {
@@ -789,8 +823,8 @@ export default {
           selectedCustomer.value = response.data;
           isCustomerModalOpen.value = false;
           showToast(
-            "success",
-            `Thêm khách hàng thành công: ${customer.value.name}`
+              "success",
+              `Thêm khách hàng thành công: ${customer.value.name}`
           );
 
           if (isDelivery.value) {
@@ -802,10 +836,10 @@ export default {
         }
       } catch (error) {
         showToast(
-          "error",
-          `Lỗi khi thêm khách hàng: ${
-            error.response?.data?.message || error.message
-          }`
+            "error",
+            `Lỗi khi thêm khách hàng: ${
+                error.response?.data?.message || error.message
+            }`
         );
       }
     };
@@ -813,71 +847,71 @@ export default {
     const getPhieuGiamGiaByKhachHang = async (idKhachHang) => {
       try {
         const response = await apiService.get(
-          `/api/by-khach-hang/${idKhachHang}`
+            `/api/by-khach-hang/${idKhachHang}`
         );
         return { success: true, data: response.data };
       } catch (error) {
         return {
           success: false,
           message:
-            error.response?.data || "Không lấy được danh sách phiếu giảm giá",
+              error.response?.data || "Không lấy được danh sách phiếu giảm giá",
         };
       }
     };
 
     const fetchLocations = async () => {
-  try {
-    const response = await axios.get("https://provinces.open-api.vn/api/p/");
-    provinces.value = response.data.map((t) => ({
-      code: t.code,
-      name: t.name,
-    }));
-    showToast("success", "Đã tải danh sách tỉnh/thành phố");
-  } catch (error) {
-    showToast("error", "Lỗi khi tải danh sách tỉnh/thành phố");
-  }
-};
+      try {
+        const response = await axios.get("https://provinces.open-api.vn/api/p/");
+        provinces.value = response.data.map((t) => ({
+          code: t.code,
+          name: t.name,
+        }));
+        showToast("success", "Đã tải danh sách tỉnh/thành phố");
+      } catch (error) {
+        showToast("error", "Lỗi khi tải danh sách tỉnh/thành phố");
+      }
+    };
 
     const fetchDistricts = async (provinceName) => {
-  try {
-    const province = provinces.value.find((p) => p.name === provinceName);
-    if (!province) {
-      showToast("error", "Không tìm thấy tỉnh/thành phố");
-      return;
-    }
-    const response = await axios.get(
-      `https://provinces.open-api.vn/api/p/${province.code}?depth=2`
-    );
-    districts.value = response.data.districts.map((q) => ({
-      code: q.code,
-      name: q.name,
-    }));
-    wards.value = []; // Reset wards khi chọn tỉnh mới
-    showToast("success", "Đã tải danh sách quận/huyện");
-  } catch (error) {
-    showToast("error", "Lỗi khi tải danh sách quận/huyện");
-  }
-};
+      try {
+        const province = provinces.value.find((p) => p.name === provinceName);
+        if (!province) {
+          showToast("error", "Không tìm thấy tỉnh/thành phố");
+          return;
+        }
+        const response = await axios.get(
+            `https://provinces.open-api.vn/api/p/${province.code}?depth=2`
+        );
+        districts.value = response.data.districts.map((q) => ({
+          code: q.code,
+          name: q.name,
+        }));
+        wards.value = []; // Reset wards khi chọn tỉnh mới
+        showToast("success", "Đã tải danh sách quận/huyện");
+      } catch (error) {
+        showToast("error", "Lỗi khi tải danh sách quận/huyện");
+      }
+    };
 
     const fetchWards = async (districtName) => {
-  try {
-    const district = districts.value.find((d) => d.name === districtName);
-    if (!district) {
-      showToast("error", "Không tìm thấy quận/huyện");
-      return;
-    }
-    const response = await axios.get(
-      `https://provinces.open-api.vn/api/d/${district.code}?depth=2`
-    );
-    wards.value = response.data.wards.map((p) => ({
-      code: p.code,
-      name: p.name,
-    }));
-    showToast("success", "Đã tải danh sách phường/xã");
-  } catch (error) {
-    showToast("error", "Lỗi khi tải danh sách phường/xã");
-  }
-};
+      try {
+        const district = districts.value.find((d) => d.name === districtName);
+        if (!district) {
+          showToast("error", "Không tìm thấy quận/huyện");
+          return;
+        }
+        const response = await axios.get(
+            `https://provinces.open-api.vn/api/d/${district.code}?depth=2`
+        );
+        wards.value = response.data.wards.map((p) => ({
+          code: p.code,
+          name: p.name,
+        }));
+        showToast("success", "Đã tải danh sách phường/xã");
+      } catch (error) {
+        showToast("error", "Lỗi khi tải danh sách phường/xã");
+      }
+    };
 
     const openCustomerModal = () => {
       newCustomer.value = {
@@ -892,32 +926,32 @@ export default {
     };
 
     const handleProvinceChange = () => {
-  fetchDistricts(newCustomer.value.city);
-  newCustomer.value.district = "";
-  newCustomer.value.ward = "";
-  districts.value = [];
-  wards.value = [];
-};
+      fetchDistricts(newCustomer.value.city);
+      newCustomer.value.district = "";
+      newCustomer.value.ward = "";
+      districts.value = [];
+      wards.value = [];
+    };
 
-const handleDistrictChange = () => {
-  fetchWards(newCustomer.value.district);
-  newCustomer.value.ward = "";
-  wards.value = [];
-};
+    const handleDistrictChange = () => {
+      fetchWards(newCustomer.value.district);
+      newCustomer.value.ward = "";
+      wards.value = [];
+    };
 
-const handleReceiverProvinceChange = () => {
-  fetchDistricts(receiver.value.city);
-  receiver.value.district = "";
-  receiver.value.ward = "";
-  districts.value = [];
-  wards.value = [];
-};
+    const handleReceiverProvinceChange = () => {
+      fetchDistricts(receiver.value.city);
+      receiver.value.district = "";
+      receiver.value.ward = "";
+      districts.value = [];
+      wards.value = [];
+    };
 
-const handleReceiverDistrictChange = () => {
-  fetchWards(receiver.value.district);
-  receiver.value.ward = "";
-  wards.value = [];
-};
+    const handleReceiverDistrictChange = () => {
+      fetchWards(receiver.value.district);
+      receiver.value.ward = "";
+      wards.value = [];
+    };
 
     const toggleDelivery = () => {
       if (isDelivery.value && selectedCustomer.value) {
@@ -945,22 +979,22 @@ const handleReceiverDistrictChange = () => {
       try {
         const response = await apiService.get("/api/phieu-giam-gia");
         privateDiscountCodes.value = response.data
-          .filter((pgg) => pgg.type === "private")
-          .map((pgg) => ({
-            id: pgg.id,
-            code: pgg.ma,
-            value: pgg.giaTri,
-          }));
+            .filter((pgg) => pgg.type === "private")
+            .map((pgg) => ({
+              id: pgg.id,
+              code: pgg.ma,
+              value: pgg.giaTri,
+            }));
         publicDiscountCodes.value = response.data
-          .filter((pgg) => pgg.type === "public")
-          .map((pgg) => ({
-            id: pgg.id,
-            code: pgg.ma,
-            value: pgg.giaTri,
-            percent: pgg.phanTram,
-            minOrder: pgg.donToiThieu,
-            expiry: pgg.ngayHetHan,
-          }));
+            .filter((pgg) => pgg.type === "public")
+            .map((pgg) => ({
+              id: pgg.id,
+              code: pgg.ma,
+              value: pgg.giaTri,
+              percent: pgg.phanTram,
+              minOrder: pgg.donToiThieu,
+              expiry: pgg.ngayHetHan,
+            }));
       } catch (error) {
         showToast("error", "Lỗi khi tải mã giảm giá");
       }
@@ -981,8 +1015,8 @@ const handleReceiverDistrictChange = () => {
       if (selectedPrivateDiscount.value) {
         discount.value = selectedPrivateDiscount.value.value;
         showToast(
-          "success",
-          `Áp dụng mã giảm giá ${selectedPrivateDiscount.value.code} thành công`
+            "success",
+            `Áp dụng mã giảm giá ${selectedPrivateDiscount.value.code} thành công`
         );
       }
     };
@@ -991,8 +1025,8 @@ const handleReceiverDistrictChange = () => {
       if (selectedPublicDiscount.value) {
         discount.value = selectedPublicDiscount.value.value;
         showToast(
-          "success",
-          `Áp dụng mã giảm giá ${selectedPublicDiscount.value.code} thành công`
+            "success",
+            `Áp dụng mã giảm giá ${selectedPublicDiscount.value.code} thành công`
         );
       }
     };
@@ -1030,10 +1064,10 @@ const handleReceiverDistrictChange = () => {
         const totalInput = (tienChuyenKhoan.value || 0) + (tienMat.value || 0);
         if (totalInput !== totalPayment) {
           showToast(
-            "error",
-            `Số tiền thanh toán (${formatPrice(
-              totalInput
-            )}) không khớp với tổng thanh toán (${formatPrice(totalPayment)})`
+              "error",
+              `Số tiền thanh toán (${formatPrice(
+                  totalInput
+              )}) không khớp với tổng thanh toán (${formatPrice(totalPayment)})`
           );
           return;
         }
@@ -1075,34 +1109,40 @@ const handleReceiverDistrictChange = () => {
         }
 
         const hoaDonRequest = {
-          idKhachHang: customer.value?.id || null, // Gửi null nếu không có khách hàng
+          idKhachHang: customer.value?.id || null,
           tenKhachHang: customer.value?.name || "Khách vãng lai",
           soDienThoaiKhachHang: customer.value?.phone || null,
           diaChiKhachHang:
-            receiver.value && isDelivery.value
-              ? {
-                  thanhPho: receiver.value.city,
-                  quan: receiver.value.district,
-                  phuong: receiver.value.ward,
-                  diaChiCuThe: receiver.value.address,
-                }
-              : null,
+              receiver.value && isDelivery.value
+                  ? {
+                    thanhPho: receiver.value.city,
+                    quan: receiver.value.district,
+                    phuong: receiver.value.ward,
+                    diaChiCuThe: receiver.value.address,
+                  }
+                  : null,
           hinhThucThanhToan,
           idPhieuGiamGia:
-            selectedPrivateDiscount.value?.id ||
-            selectedPublicDiscount.value?.id ||
-            null,
+              selectedPrivateDiscount.value?.id ||
+              selectedPublicDiscount.value?.id ||
+              null,
           giamGia: discount.value,
           phiVanChuyen: isDelivery.value ? 0 : null,
           loaiDon: isDelivery.value ? "online" : "trực tiếp",
+          chiTietGioHang: cartItems.value.map(item => ({
+            chiTietSanPhamId: item.id,
+            soLuong: item.quantity,
+            maImel: item.imei,
+            giaBan: item.originalPrice, // Use originalPrice for order
+          })),
         };
 
         await apiService.post(
-          `/api/thanh-toan/${activeInvoiceId.value}`,
-          hoaDonRequest
+            `/api/thanh-toan/${activeInvoiceId.value}`,
+            hoaDonRequest
         );
         pendingInvoices.value = pendingInvoices.value.filter(
-          (inv) => inv.id !== activeInvoiceId.value
+            (inv) => inv.id !== activeInvoiceId.value
         );
         cartItems.value = [];
         activeInvoiceId.value = null;
@@ -1123,10 +1163,10 @@ const handleReceiverDistrictChange = () => {
         resetNotification();
       } catch (error) {
         showToast(
-          "error",
-          `Lỗi khi thanh toán: ${
-            error.response?.data?.message || error.message
-          }`
+            "error",
+            `Lỗi khi thanh toán: ${
+                error.response?.data?.message || error.message
+            }`
         );
       } finally {
         isCreatingOrder.value = false;
@@ -1139,23 +1179,23 @@ const handleReceiverDistrictChange = () => {
         const response = await fetchPGG();
         if (Array.isArray(response)) {
           publicDiscountCodes.value = response
-            .filter(
-              (item) =>
-                item.riengTu === false && isValidDiscount(item.ngayKetThuc)
-            )
-            .map((item, index) => ({
-              id: item.id || index + 1,
-              code: item.ma || "Unknown",
-              value: item.soTienGiamToiDa || 0,
-              percent: item.phanTramGiamGia || 0,
-              minOrder: item.hoaDonToiThieu || 0,
-              expiry: formatDate(item.ngayKetThuc),
-              rawExpiry: item.ngayKetThuc,
-            }));
+              .filter(
+                  (item) =>
+                      item.riengTu === false && isValidDiscount(item.ngayKetThuc)
+              )
+              .map((item, index) => ({
+                id: item.id || index + 1,
+                code: item.ma || "Unknown",
+                value: item.soTienGiamToiDa || 0,
+                percent: item.phanTramGiamGia || 0,
+                minOrder: item.hoaDonToiThieu || 0,
+                expiry: formatDate(item.ngayKetThuc),
+                rawExpiry: item.ngayKetThuc,
+              }));
           if (publicDiscountCodes.value.length > 0) {
             showToast(
-              "success",
-              `Đã tải ${publicDiscountCodes.value.length} mã giảm giá công khai`
+                "success",
+                `Đã tải ${publicDiscountCodes.value.length} mã giảm giá công khai`
             );
           } else {
             showToast("warning", "Không có mã giảm giá công khai còn hiệu lực");
@@ -1167,11 +1207,11 @@ const handleReceiverDistrictChange = () => {
         showToast("error", "Lỗi khi tải danh sách mã giảm giá công khai");
       }
       fetchPendingInvoices();
-  fetchProducts();
-  fetchDiscountCodes();
-  fetchLocations(); // Đã gọi để tải danh sách tỉnh/thành phố
-      
+      fetchProducts();
+      fetchDiscountCodes();
+      fetchLocations();
     });
+
     return {
       // State
       isCreatingInvoice,
@@ -1220,6 +1260,7 @@ const handleReceiverDistrictChange = () => {
       wards,
       totalPrice,
       totalPayment,
+      priceChangeInfo,
       cartHeaders,
       productHeaders,
       notificationType,
