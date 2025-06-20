@@ -128,7 +128,7 @@ export default {
       {
         value: "giaBan",
         text: "Giá",
-        formatter: (value) => `${value.toLocaleString()} đ`,
+        formatter: (value) => formatPrice(value),
       },
       { value: "actions", text: "Thao tác", cellSlot: "productActionsSlot" },
     ]);
@@ -182,8 +182,12 @@ export default {
       );
     });
     const totalPayment = computed(() => {
-      return totalPrice.value - discount.value;
-    });
+  let total = totalPrice.value - discount.value;
+  if (isDelivery.value && totalPrice.value < FREE_SHIP_THRESHOLD) {
+    total += shippingFee.value;
+  }
+  return total > 0 ? total : 0;
+});
 
     const priceChangeInfo = computed(() => {
       return cartItems.value.map((item) => {
@@ -291,11 +295,11 @@ export default {
     };
 
     const formatPrice = (price) => {
-      return new Intl.NumberFormat("vi-VN", {
-        style: "currency",
-        currency: "VND",
-      }).format(price);
-    };
+  return new Intl.NumberFormat("vi-VN", {
+    style: "currency",
+    currency: "VND",
+  }).format(price).replace("₫", "VND");
+};
 
     const formatDate = (dateString) => {
       if (!dateString) return "N/A";
@@ -1054,7 +1058,7 @@ export default {
       showToast("warning", "Chức năng quét QR đang được phát triển");
     };
 
-    const ThanhToan = () => {
+  const ThanhToan = () => {
       if (cartItems.value.length === 0) {
         showToast("error", "Giỏ hàng trống");
         return;
@@ -1084,94 +1088,94 @@ export default {
       createOrder();
     };
 
-    const createOrder = async () => {
-      isCreatingOrder.value = true;
-      try {
-        const hinhThucThanhToan = [];
-        if (paymentMethod.value === "cash") {
-          hinhThucThanhToan.push({
-            phuongThucThanhToanId: 1,
-            tienMat: totalPrice.value - discount.value,
-            tienChuyenKhoan: 0,
-          });
-        } else if (paymentMethod.value === "transfer") {
-          hinhThucThanhToan.push({
-            phuongThucThanhToanId: 2,
-            tienMat: 0,
-            tienChuyenKhoan: totalPrice.value - discount.value,
-          });
-        } else if (paymentMethod.value === "both") {
-          hinhThucThanhToan.push({
-            phuongThucThanhToanId: 3,
-            tienMat: tienMat.value,
-            tienChuyenKhoan: tienChuyenKhoan.value,
-          });
-        }
+     const createOrder = async () => {
+  isCreatingOrder.value = true;
+  try {
+    const hinhThucThanhToan = [];
+    if (paymentMethod.value === "cash") {
+      hinhThucThanhToan.push({
+        phuongThucThanhToanId: 1,
+        tienMat: totalPrice.value - discount.value,
+        tienChuyenKhoan: 0,
+      });
+    } else if (paymentMethod.value === "transfer") {
+      hinhThucThanhToan.push({
+        phuongThucThanhToanId: 2,
+        tienMat: 0,
+        tienChuyenKhoan: totalPrice.value - discount.value,
+      });
+    } else if (paymentMethod.value === "both") {
+      hinhThucThanhToan.push({
+        phuongThucThanhToanId: 3,
+        tienMat: tienMat.value,
+        tienChuyenKhoan: tienChuyenKhoan.value,
+      });
+    }
 
-        const hoaDonRequest = {
-          idKhachHang: customer.value?.id || null,
-          tenKhachHang: customer.value?.name || "Khách vãng lai",
-          soDienThoaiKhachHang: customer.value?.phone || null,
-          diaChiKhachHang:
-              receiver.value && isDelivery.value
-                  ? {
-                    thanhPho: receiver.value.city,
-                    quan: receiver.value.district,
-                    phuong: receiver.value.ward,
-                    diaChiCuThe: receiver.value.address,
-                  }
-                  : null,
-          hinhThucThanhToan,
-          idPhieuGiamGia:
-              selectedPrivateDiscount.value?.id ||
-              selectedPublicDiscount.value?.id ||
-              null,
-          giamGia: discount.value,
-          phiVanChuyen: isDelivery.value ? 0 : null,
-          loaiDon: isDelivery.value ? "online" : "trực tiếp",
-          chiTietGioHang: cartItems.value.map(item => ({
-            chiTietSanPhamId: item.id,
-            soLuong: item.quantity,
-            maImel: item.imei,
-            giaBan: item.originalPrice, // Use originalPrice for order
-          })),
-        };
-
-        await apiService.post(
-            `/api/thanh-toan/${activeInvoiceId.value}`,
-            hoaDonRequest
-        );
-        pendingInvoices.value = pendingInvoices.value.filter(
-            (inv) => inv.id !== activeInvoiceId.value
-        );
-        cartItems.value = [];
-        activeInvoiceId.value = null;
-        selectedCustomer.value = null;
-        customer.value = { id: null, name: "", phone: "" };
-        receiver.value = {
-          name: "",
-          phone: "",
-          city: "",
-          district: "",
-          ward: "",
-          address: "",
-        };
-        discount.value = 0;
-        selectedPrivateDiscount.value = null;
-        selectedPublicDiscount.value = null;
-        showToast("success", "Thanh toán thành công");
-        resetNotification();
-      } catch (error) {
-        showToast(
-            "error",
-            `Lỗi khi thanh toán: ${
-                error.response?.data?.message || error.message
-            }`
-        );
-      } finally {
-        isCreatingOrder.value = false;
-      }
+    const hoaDonRequest = {
+      idKhachHang: customer.value?.id || null,
+      tenKhachHang: customer.value?.name || "Khách vãng lai",
+      soDienThoaiKhachHang: customer.value?.phone || null,
+      diaChiKhachHang:
+        customer.value && isDelivery.value
+          ? {
+              thanhPho: customer.value.city,
+              quan: customer.value.district,
+              phuong: customer.value.ward,
+              diaChiCuThe: customer.value.address,
+            }
+          : null,
+      hinhThucThanhToan,
+      idPhieuGiamGia:
+        selectedPrivateDiscount.value?.id ||
+        selectedPublicDiscount.value?.id ||
+        null,
+      giamGia: discount.value,
+      phiVanChuyen: isDelivery.value ? shippingFee.value : 0, // Sử dụng shippingFee.value
+      loaiDon: isDelivery.value ? "online" : "trực tiếp",
+      chiTietGioHang: cartItems.value.map((item) => ({
+        chiTietSanPhamId: item.id,
+        soLuong: item.quantity,
+        maImel: item.imei,
+        giaBan: item.originalPrice,
+      })),
     };
+
+    await apiService.post(
+      `/api/thanh-toan/${activeInvoiceId.value}`,
+      hoaDonRequest
+    );
+    pendingInvoices.value = pendingInvoices.value.filter(
+      (inv) => inv.id !== activeInvoiceId.value
+    );
+    cartItems.value = [];
+    activeInvoiceId.value = null;
+    selectedCustomer.value = null;
+    customer.value = { id: null, name: "", phone: "" };
+    receiver.value = {
+      name: "",
+      phone: "",
+      city: "",
+      district: "",
+      ward: "",
+      address: "",
+    };
+    discount.value = 0;
+    selectedPrivateDiscount.value = null;
+    selectedPublicDiscount.value = null;
+    showToast("success", "Thanh toán thành công");
+    resetNotification();
+  } catch (error) {
+    showToast(
+      "error",
+      `Lỗi khi thanh toán: ${
+        error.response?.data?.message || error.message
+      }`
+    );
+  } finally {
+    isCreatingOrder.value = false;
+  }
+};
 
     // Initialize data
     onMounted(async () => {
@@ -1212,7 +1216,50 @@ export default {
       fetchLocations();
     });
 
+    // Trong phần setup
+const shippingFee = ref(0); // Phí vận chuyển, ánh xạ với phiVanChuyen trong HoaDon
+const selectedShippingUnit = ref(null); // Đơn vị vận chuyển
+const shippingUnits = ref([
+  { id: 1, name: "Giao Hàng Nhanh", logo: "/src/assets/Logo/logoGHN.png" },
+  { id: 2, name: "Giao Hàng Tiết Kiệm", logo: "/src/assets/Logo/LogoGHTK.png" },
+]); // Danh sách đơn vị vận chuyển
+const FREE_SHIP_THRESHOLD = 50000000; // Ngưỡng miễn phí vận chuyển: 20 triệu
+
+const updateShippingFee = async () => {
+  if (!isDelivery.value || !selectedShippingUnit.value) {
+    shippingFee.value = 0;
+    return;
+  }
+  if (totalPrice.value >= FREE_SHIP_THRESHOLD) {
+    shippingFee.value = 0;
+    showToast("success", "Miễn phí vận chuyển cho đơn hàng từ 20,000,000 VNĐ trở lên");
+    return;
+  }
+  try {
+    // Giả lập API tính phí vận chuyển
+    const response = await apiService.get(`/api/shipping-fee`, {
+      params: {
+        shippingUnit: selectedShippingUnit.value.name,
+        city: receiver.value.city,
+        district: receiver.value.district,
+        ward: receiver.value.ward,
+        address: receiver.value.address,
+      },
+    });
+    shippingFee.value = response.data.fee || 30000; // Giá trị mặc định
+    showToast("success", `Đã cập nhật phí vận chuyển cho ${selectedShippingUnit.value.name}`);
+  } catch (error) {
+    showToast("error", "Lỗi khi tính phí vận chuyển");
+    shippingFee.value = ""; // Giá trị mặc định
+  }
+};
+
     return {
+      shippingFee,
+      selectedShippingUnit,
+      shippingUnits,
+      updateShippingFee,
+      
       // State
       isCreatingInvoice,
       isCreatingOrder,
