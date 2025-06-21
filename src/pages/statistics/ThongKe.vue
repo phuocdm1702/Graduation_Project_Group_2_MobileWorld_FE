@@ -79,12 +79,12 @@
                   <span class="stat-label">Số đơn hàng:</span>
                   <span class="stat-value">{{ totalOrders }}</span>
                 </div>
-                <div class="stat-item">
-                  <span class="stat-label">Tăng trưởng:</span>
-                  <span class="stat-value" :class="growthRate >= 0 ? 'text-success' : 'text-danger'">
-                    {{ growthRate >= 0 ? '+' : '' }}{{ growthRate }}%
-                  </span>
-                </div>
+<!--                <div class="stat-item">-->
+<!--                  <span class="stat-label">Tăng trưởng:</span>-->
+<!--                  <span class="stat-value" :class="growthRate >= 0 ? 'text-success' : 'text-danger'">-->
+<!--                    {{ growthRate >= 0 ? '+' : '' }}{{ growthRate }}%-->
+<!--                  </span>-->
+<!--                </div>-->
               </div>
             </div>
           </div>

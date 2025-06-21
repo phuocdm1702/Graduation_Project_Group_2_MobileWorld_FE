@@ -7,6 +7,7 @@ import ToastNotification from "@/components/common/ToastNotification.vue";
 import FilterTableSection from "@/components/common/FilterTableSection.vue";
 import QrcodeVue from "qrcode.vue";
 import axios from "axios";
+import { useRouter } from "vue-router";
 
 // Debounce utility function
 const debounce = (func, delay) => {
@@ -102,6 +103,7 @@ export default {
     const provinces = ref([]);
     const districts = ref([]);
     const wards = ref([]);
+    const router = useRouter();
 
     // DataTable headers
     const cartHeaders = ref([
@@ -1336,9 +1338,10 @@ export default {
         };
 
         await apiService.post(
-          `/api/thanh-toan/${activeInvoiceId.value}`,
-          hoaDonRequest
+            `/api/thanh-toan/${activeInvoiceId.value}`,
+            hoaDonRequest
         );
+        const invoiceId = response.data.id || activeInvoiceId.value; // Lấy invoiceId từ response hoặc activeInvoiceId
         pendingInvoices.value = pendingInvoices.value.filter(
           (inv) => inv.id !== activeInvoiceId.value
         );
@@ -1365,8 +1368,12 @@ export default {
         discount.value = 0;
         selectedPrivateDiscount.value = null;
         selectedPublicDiscount.value = null;
-        showToast("success", "Thanh toán thành công");
+        showToast("success", "Thanh toán thành công, chuẩn bị hiện hóa đơn chi tiết sau vài giây");
         resetNotification();
+
+        setTimeout(() => {
+          router.push(`/hoaDon/${invoiceId}/detail`);
+        }, 8000);
       } catch (error) {
         showToast(
           "error",
@@ -1443,6 +1450,7 @@ export default {
       shippingUnits,
       updateShippingFee,
       // State
+      router,
       isCreatingInvoice,
       isCreatingOrder,
       activeInvoiceId,
@@ -1520,11 +1528,9 @@ export default {
       loadPendingInvoice,
       confirmCancelInvoice,
       cancelInvoice,
-      // Product-Related
       fetchProducts,
       handleScroll,
       removeItem,
-      // IMEI-Related
       showIMEIList,
       showIMEIModalForItem,
       closeIMEIModal,
@@ -1533,7 +1539,6 @@ export default {
       removeIMEI,
       addProductWithIMEIs,
       deleteIMEI,
-      // Customer-Related
       Search,
       searchCustomers,
       addBanHang,
@@ -1548,12 +1553,10 @@ export default {
       handleReceiverProvinceChange,
       handleReceiverDistrictChange,
       toggleDelivery,
-      // Discount-Related
       fetchDiscountCodes,
       fetchPGG,
       applyPrivateDiscount,
       applyPublicDiscount,
-      // Payment-Related
       selectPayment,
       generateQRCode,
       scanQR,
