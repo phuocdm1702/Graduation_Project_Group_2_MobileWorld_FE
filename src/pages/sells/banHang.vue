@@ -787,9 +787,7 @@
                           style="font-size: 0.95rem"
                           >Tổng tiền hàng:</span
                         >
-                        <span class="fw-bold text-dark">{{
-                          formatPrice(totalPrice)
-                        }}</span>
+                        <span class="fw-bold text-dark">{{ formatPrice(tongTien) }}</span>
                       </div>
                       <div
                         class="d-flex justify-content-between align-items-center mb-2"
