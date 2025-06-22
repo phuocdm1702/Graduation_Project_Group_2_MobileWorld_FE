@@ -955,52 +955,47 @@
                       v-else
                       class="text-secondary text-center d-flex align-items-center justify-content-center gap-2 mt-3 fs-5"
                     >
-                      <i class="bi bi-x-octagon text-danger"></i>
-                      Không có mã giảm giá gợi ý khả dụng
-                    </div>
-                  </div>
-
-                  <!-- Thông tin thanh toán -->
-                  <div
-                    class="price-info p-4 rounded-3 bg-light shadow-sm animate__animated animate__fadeInUp"
-                    style="border-left: 5px solid #34d399; margin-top: 20px"
-                  >
+                      Chọn mã giảm giá
+                    </button>
                     <div
-                      class="d-flex justify-content-between align-items-center mb-3"
+                      class="price-info mt-4 p-3 rounded-2 bg-light shadow-sm animate__animated animate__fadeInUp"
+                      style="border-left: 4px solid #34d399"
                     >
-                      <span
-                        class="fw-medium text-dark"
-                        style="font-size: 0.95rem"
-                        >Tổng tiền hàng:</span
+                      <div
+                        class="d-flex justify-content-between align-items-center mb-2"
                       >
-                      <span class="fw-bold text-dark">{{
-                        formatPrice(tongTien)
-                      }}</span>
-                    </div>
-                    <div
-                      class="d-flex justify-content-between align-items-center mb-3"
-                    >
-                      <span
-                        class="fw-medium text-dark"
-                        style="font-size: 0.95rem"
-                        >Giảm giá:</span
+                        <span
+                          class="fw-medium text-dark"
+                          style="font-size: 0.95rem"
+                          >Tổng tiền hàng:</span
+                        >
+                        <span class="fw-bold text-dark">{{
+                          formatPrice(totalPrice)
+                        }}</span>
+                      </div>
+                      <div
+                        class="d-flex justify-content-between align-items-center mb-2"
                       >
-                      <span class="fw-bold text-danger"
-                        >−{{ formatPrice(discount) }}</span
+                        <span
+                          class="fw-medium text-dark"
+                          style="font-size: 0.95rem"
+                          >Giảm giá:</span
+                        >
+                        <span class="fw-bold text-danger"
+                          >−{{ formatPrice(discount) }}</span
+                        >
+                      </div>
+                      <div
+                        v-if="isDelivery"
+                        class="d-flex justify-content-between align-items-center mb-2"
                       >
-                    </div>
-                    <div
-                      v-if="isDelivery"
-                      class="d-flex justify-content-between align-items-center mb-3"
-                    >
-                      <span
-                        class="fw-medium text-dark"
-                        style="font-size: 0.95rem"
-                        >Phí vận chuyển:</span
-                      >
-                      <span class="fw-bold text-dark">
-                        {{
-                          tongTien >= FREE_SHIP_THRESHOLD
+                        <span
+                          class="fw-medium text-dark"
+                          style="font-size: 0.95rem"
+                          >Phí vận chuyển:</span
+                        >
+                        <span class="fw-bold text-dark">{{
+                          totalPrice >= FREE_SHIP_THRESHOLD
                             ? "Miễn phí"
                             : formatPrice(shippingFee)
                         }}
