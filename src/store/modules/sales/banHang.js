@@ -9,6 +9,7 @@ import QrcodeVue from "qrcode.vue";
 import axios from "axios";
 import { useRouter } from "vue-router";
 
+// Debounce utility function
 const debounce = (func, delay) => {
   let timeoutId;
   return (...args) => {
@@ -27,6 +28,7 @@ export default {
     QrcodeVue,
   },
   setup() {
+    // State
     const isCreatingInvoice = ref(false);
     const isCreatingOrder = ref(false);
     const activeInvoiceId = ref(null);
@@ -35,8 +37,6 @@ export default {
     const cartItems = ref([]);
     const showIMEIModal = ref(false);
     const showCartIMEIModal = ref(false);
-    const showDiscountModal = ref(false);
-    const selectedCartItem = ref(null);
     const isCustomerModalOpen = ref(false);
     const isLoadingMore = ref(false);
     const productSearchQuery = ref("");
@@ -47,7 +47,15 @@ export default {
     const selectedIMEIs = ref([]);
     const searchCustomer = ref("");
     const selectedCustomer = ref(null);
-    const customer = ref({ id: null, name: "", phone: "", city: "", district: "", ward: "", address: "" });
+    const customer = ref({
+      id: null,
+      name: "",
+      phone: "",
+      city: "",
+      district: "",
+      ward: "",
+      address: "",
+    });
     const receiver = ref({
       name: "",
       phone: "",
@@ -58,9 +66,9 @@ export default {
     });
     const isReceiverEditable = ref(true);
     const isDelivery = ref(false);
-    const selectedPrivateDiscount = ref(null);
-    const selectedPublicDiscount = ref(null);
-    const discount = ref(0);
+    const selectedDiscount = ref(null); // PGG được chọn tự động
+    const privateDiscountCodes = ref([]); // Danh sách PGG riêng tư
+    const publicDiscountCodes = ref([]); // Danh sách PGG công khai
     const paymentMethod = ref("cash");
     const tienChuyenKhoan = ref(0);
     const tienMat = ref(0);
@@ -79,29 +87,21 @@ export default {
     const notificationOnCancel = ref(() => {});
     const notificationModal = ref(null);
     const toastNotification = ref(null);
-    const activeTab = ref("private");
     const qrCodeValue = ref("");
     const qrCodeAmount = ref(0);
     const currentPage = ref(0);
     const totalPages = ref(1);
 
+    // Sample data
     const products = ref([]);
     const availableIMEIs = ref([]);
-    const privateDiscountCodes = ref([]);
-    const publicDiscountCodes = ref([]);
     const provinces = ref([]);
     const districts = ref([]);
     const wards = ref([]);
     const router = useRouter();
+    const manualDiscountSelected = ref(false); // Cờ để kiểm soát chọn PGG thủ công
 
-    const tongTien = computed(() => {
-      return cartItems.value.reduce((total, item) => {
-        const price = Number(item.originalPrice || item.currentPrice || 0);
-        const qty = Number(item.quantity || 0);
-        return total + price * qty;
-      }, 0);
-    });
-
+    // DataTable headers
     const cartHeaders = ref([
       { text: "STT", value: "stt" },
       { text: "Tên sản phẩm", value: "name" },
@@ -139,21 +139,77 @@ export default {
       { value: "actions", text: "Thao tác", cellSlot: "productActionsSlot" },
     ]);
 
+    // Computed
+    // Thêm computed để đồng bộ discount với selectedDiscount
+    // Thêm computed để đồng bộ discount với selectedDiscount
+    const discount = computed({
+      get: () => (selectedDiscount.value ? selectedDiscount.value.value : 0),
+      set: (newValue) => {
+        // Nếu cần, có thể thêm logic để cập nhật selectedDiscount.value
+        if (selectedDiscount.value) {
+          selectedDiscount.value.value = newValue;
+        }
+      },
+    });
+    const suggestedDiscounts = computed(() => {
+      return publicDiscountCodes.value
+        .filter((discount) => {
+          // Chỉ lấy PGG công khai không đủ điều kiện (tongTien < minOrder) và còn hạn
+          return (
+            tongTien.value < discount.minOrder &&
+            isValidDiscount(discount.rawExpiry)
+          );
+        })
+        .map((discount) => ({
+          ...discount,
+          missingAmount: discount.minOrder - tongTien.value, // Tính số tiền còn thiếu
+        }))
+        .sort((a, b) => b.value - a.value); // Sắp xếp theo giá trị giảm giá giảm dần
+    });
+    const alternativeDiscounts = computed(() => {
+      const allDiscounts = [
+        ...publicDiscountCodes.value.map((code) => ({
+          ...code,
+          type: "public",
+        })),
+        ...privateDiscountCodes.value.map((code) => ({
+          ...code,
+          type: "private",
+        })),
+      ];
+
+      // Lọc các PGG khả dụng, ngoại trừ PGG tốt nhất (nếu có)
+      return allDiscounts
+        .filter((discount) => {
+          if (
+            discount.type === "public" &&
+            tongTien.value < discount.minOrder
+          ) {
+            return false; // Loại bỏ PGG công khai nếu tổng tiền chưa đạt yêu cầu
+          }
+          return (
+            isValidDiscount(discount.rawExpiry) &&
+            (!selectedDiscount.value ||
+              discount.id !== selectedDiscount.value.id)
+          ); // Loại bỏ PGG tốt nhất
+        })
+        .sort((a, b) => b.value - a.value); // Sắp xếp theo giá trị giảm giá giảm dần
+    });
     const uniqueColors = computed(() => [
       ...new Set(products.value.map((p) => p.mauSac)),
     ]);
     const uniqueRams = computed(() => [
-      ...new Set(products.value.map((p) => p.ram)),
+      ...new Set(products.value.map((p) => p.dungLuongRam)),
     ]);
     const uniqueStorages = computed(() => [
-      ...new Set(products.value.map((p) => p.boNhoTrong)),
+      ...new Set(products.value.map((p) => p.dungLuongBoNhoTrong)),
     ]);
 
     const filteredPendingInvoices = computed(() => {
       if (!invoiceSearchQuery.value) return pendingInvoices.value;
       const query = invoiceSearchQuery.value.toLowerCase();
       return pendingInvoices.value.filter((invoice) =>
-          invoice.ma.toLowerCase().includes(query)
+        invoice.ma.toLowerCase().includes(query)
       );
     });
 
@@ -162,22 +218,31 @@ export default {
       if (productSearchQuery.value) {
         const query = productSearchQuery.value.toLowerCase();
         filtered = filtered.filter(
-            (p) =>
-                p.tenSanPham.toLowerCase().includes(query) ||
-                p.maSanPham.toLowerCase().includes(query) ||
-                p.mauSac.toLowerCase().includes(query)
+          (p) =>
+            p.tenSanPham.toLowerCase().includes(query) ||
+            p.maSanPham.toLowerCase().includes(query) ||
+            p.mauSac.toLowerCase().includes(query)
         );
       }
       if (filterColor.value) {
         filtered = filtered.filter((p) => p.mauSac === filterColor.value);
       }
       if (filterRam.value) {
-        filtered = filtered.filter((p) => p.ram === filterRam.value);
+        filtered = filtered.filter((p) => p.dungLuongRam === filterRam.value);
       }
       if (filterStorage.value) {
-        filtered = filtered.filter((p) => p.boNhoTrong === filterStorage.value);
+        filtered = filtered.filter(
+          (p) => p.dungLuongBoNhoTrong === filterStorage.value
+        );
       }
       return filtered;
+    });
+
+    const tongTien = computed(() => {
+      return cartItems.value.reduce(
+        (sum, item) => sum + Number(item.originalPrice) * item.quantity,
+        0
+      );
     });
 
     const totalPayment = computed(() => {
@@ -189,16 +254,34 @@ export default {
     });
 
     const priceChangeInfo = computed(() => {
-      return cartItems.value.map((item) => ({
-        ...item,
-        priceChangeText: item.ghiChuGia || null,
-      }));
+      return cartItems.value.map((item) => {
+        const product = products.value.find(
+          (p) =>
+            p.id === item.id &&
+            p.mauSac === item.color &&
+            p.dungLuongRam === item.ram &&
+            p.dungLuongBoNhoTrong === item.storage
+        );
+        const currentPrice = product ? product.giaBan : item.originalPrice;
+        return {
+          ...item,
+          currentPrice,
+          priceChangeText:
+            currentPrice !== item.originalPrice
+              ? `Tăng từ ${formatPrice(item.originalPrice)} lên ${formatPrice(
+                  currentPrice
+                )}`
+              : null,
+        };
+      });
     });
 
     const suggestAdditionalPurchase = computed(() => {
-      if (!publicDiscountCodes.value.length) {
+      if (!publicDiscountCodes.value.length || selectedDiscount.value) {
         return {
-          message: "Không có mã giảm giá công khai nào khả dụng.",
+          message: selectedDiscount.value
+            ? `Đã áp dụng mã giảm giá ${selectedDiscount.value.code}.`
+            : "Không có mã giảm giá công khai nào khả dụng.",
           additionalAmount: 0,
           bestDiscount: null,
         };
@@ -209,9 +292,9 @@ export default {
           return code.value > (best?.value || 0) ? code : best;
         }
         return code.value > (best?.value || 0) &&
-        (!best || code.minOrder < best.minOrder)
-            ? code
-            : best;
+          (!best || code.minOrder < best.minOrder)
+          ? code
+          : best;
       }, null);
 
       if (!bestDiscount) {
@@ -224,7 +307,9 @@ export default {
 
       if (tongTien.value >= bestDiscount.minOrder) {
         return {
-          message: `Bạn có thể áp dụng mã ${bestDiscount.code} để được giảm ${formatPrice(bestDiscount.value)}.`,
+          message: `Bạn có thể áp dụng mã ${
+            bestDiscount.code
+          } để được giảm ${formatPrice(bestDiscount.value)}.`,
           additionalAmount: 0,
           bestDiscount,
         };
@@ -232,7 +317,9 @@ export default {
 
       const additionalAmount = bestDiscount.minOrder - tongTien.value;
       return {
-        message: `Mua thêm ${formatPrice(additionalAmount)} để sử dụng mã ${bestDiscount.code} và được giảm ${formatPrice(bestDiscount.value)}.`,
+        message: `Mua thêm ${formatPrice(additionalAmount)} để sử dụng mã ${
+          bestDiscount.code
+        } và được giảm ${formatPrice(bestDiscount.value)}.`,
         additionalAmount,
         bestDiscount,
       };
@@ -250,6 +337,46 @@ export default {
       }
       return false;
     });
+
+    // Shipping Fee
+    const shippingFee = ref(0);
+    const selectedShippingUnit = ref(null);
+    const shippingUnits = ref([
+      { id: 1, name: "Giao Hàng Nhanh", logo: "/src/assets/Logo/logoGHN.png" },
+      {
+        id: 2,
+        name: "Giao Hàng Tiết Kiệm",
+        logo: "/src/assets/Logo/LogoGHTK.png",
+      },
+    ]);
+    const FREE_SHIP_THRESHOLD = 50000000;
+
+    // Utility Methods
+    const selectDiscount = async (discount) => {
+      try {
+        const result = await validateDiscount(
+          discount.code,
+          customer.value?.id || null
+        );
+        if (result.success && result.data) {
+          selectedDiscount.value = { ...discount }; // Gán bản sao mới
+          manualDiscountSelected.value = true; // Đánh dấu đã chọn thủ công
+          showToast(
+            "success",
+            `Đã áp dụng mã giảm giá ${discount.code} (-${formatPrice(
+              discount.value
+            )})`
+          );
+        } else {
+          showToast(
+            "error",
+            result.message || "Không thể áp dụng mã giảm giá này"
+          );
+        }
+      } catch (error) {
+        showToast("error", "Lỗi khi áp dụng mã giảm giá");
+      }
+    };
 
     const showToast = (type, message, isLoading = false, duration = 3000) => {
       toastNotification.value.addToast({ type, message, isLoading, duration });
@@ -278,11 +405,12 @@ export default {
     };
 
     const formatPrice = (price) => {
-      if (isNaN(price) || price === null || price === undefined) return "0 VND";
       return new Intl.NumberFormat("vi-VN", {
         style: "currency",
         currency: "VND",
-      }).format(price).replace("₫", "VND");
+      })
+        .format(price)
+        .replace("₫", "VND");
     };
 
     const formatDate = (dateString) => {
@@ -298,6 +426,7 @@ export default {
       return expiry >= now;
     };
 
+    // Debounced Search Functions
     const debouncedInvoiceSearch = debounce((query) => {
       invoiceSearchQuery.value = query;
     }, 300);
@@ -311,6 +440,7 @@ export default {
       searchCustomers();
     }, 300);
 
+    // Invoice-Related Methods
     const fetchPendingInvoices = async () => {
       try {
         const response = await apiService.get("/api/hoa-don-cho");
@@ -321,7 +451,7 @@ export default {
           items: [],
         }));
       } catch (error) {
-        // showToast("error", "Lỗi khi tải hóa đơn chờ");
+        showToast("error", "Lỗi khi tải hóa đơn chờ");
       }
     };
 
@@ -352,47 +482,41 @@ export default {
       }
     };
 
-    const loadPendingInvoice = async ({ id }) => {
+    const loadPendingInvoice = async (invoice) => {
+      activeInvoiceId.value = invoice.id;
       try {
-        const response = await apiService.get(`/api/gio-hang/data/${id || activeInvoiceId.value}`);
+        const response = await apiService.get(
+          `/api/gio-hang/data/${invoice.id}`
+        );
         cartItems.value = response.data.chiTietGioHangDTOS.map((item) => ({
-          sanPhamId: item.chiTietSanPhamId,
-          imei: item.maImel,
+          id: item.chiTietSanPhamId,
           name: item.tenSanPham,
           color: item.mauSac,
           ram: item.ram,
           storage: item.boNhoTrong,
-          originalPrice: Number(item.giaBan) || 0,
-          quantity: Number(item.soLuong) || 0,
-          ghiChuGia: item.ghiChuGia || null,
+          imei: item.maImel,
+          originalPrice: Number(item.giaBan),
+          currentPrice: Number(item.giaBan),
+          quantity: item.soLuong,
         }));
-
-        // Hiển thị thông báo giá thay đổi từ backend
-        cartItems.value.forEach((item) => {
-          if (item.ghiChuGia) {
-            showToast("warning", item.ghiChuGia);
-          }
-        });
-
-        // Đảm bảo tongTien từ API được sử dụng làm giá trị khởi đầu (nếu hợp lệ)
-        const apiTongTien = Number(response.data.tongTien) || 0;
-        if (apiTongTien !== tongTien.value) {
-          console.warn("API tongTien không khớp với tính toán, sử dụng giá trị API:", apiTongTien);
+        const index = pendingInvoices.value.findIndex(
+          (inv) => inv.id === invoice.id
+        );
+        if (index !== -1) {
+          pendingInvoices.value[index].items = cartItems.value;
         }
-
-        activeInvoiceId.value = response.data.id || activeInvoiceId.value || null; // Gán id từ API hoặc giữ giá trị cũ
-        customer.value.id = response.data.khachHangId;
+        showToast("info", `Đã tải hóa đơn ${invoice.ma}`);
+        await applyBestDiscount(); // Áp dụng PGG tốt nhất
       } catch (error) {
         showToast("error", "Lỗi khi tải giỏ hàng");
-        console.error(error);
       }
     };
 
     const confirmCancelInvoice = (invoice) => {
       showConfirm(
-          `Bạn có chắc chắn muốn hủy hóa đơn ${invoice.ma}?`,
-          () => cancelInvoice(invoice),
-          () => {}
+        `Bạn có chắc chắn muốn hủy hóa đơn ${invoice.ma}?`,
+        () => cancelInvoice(invoice),
+        () => {}
       );
     };
 
@@ -401,11 +525,13 @@ export default {
       try {
         await apiService.delete(`/api/xoa-hd-cho/${invoice.id}`);
         pendingInvoices.value = pendingInvoices.value.filter(
-            (inv) => inv.id !== invoice.id
+          (inv) => inv.id !== invoice.id
         );
         if (activeInvoiceId.value === invoice.id) {
           activeInvoiceId.value = null;
           cartItems.value = [];
+          selectedDiscount.value = null;
+          discount.value = 0;
         }
         showToast("success", `Đã hủy hóa đơn ${invoice.ma}`);
         resetNotification();
@@ -416,10 +542,11 @@ export default {
       }
     };
 
+    // Product-Related Methods
     const fetchProducts = async () => {
       try {
         const response = await apiService.get(
-            "/api/san-pham?page=0&size=999999999"
+          "/api/san-pham?page=0&size=999999999"
         );
         products.value = response.data.content.map((sp) => ({
           id: sp.id,
@@ -434,7 +561,7 @@ export default {
         }));
       } catch (error) {
         const message =
-            error.response?.data?.message || "Lỗi khi tải danh sách sản phẩm";
+          error.response?.data?.message || "Lỗi khi tải danh sách sản phẩm";
         showToast("error", message);
       }
     };
@@ -448,23 +575,23 @@ export default {
       try {
         const response = await apiService.get(`/api/san-pham?page=0&size=10`);
         products.value.push(
-            ...response.data.content.map((sp) => ({
-              id: sp.id,
-              sanPhamId: sp.idSanPham,
-              tenSanPham: sp.tenSanPham,
-              maSanPham: sp.ma,
-              mauSac: sp.mauSac || "N/A",
-              dungLuongRam: sp.dungLuongRam || "N/A",
-              dungLuongBoNhoTrong: sp.dungLuongBoNhoTrong || "N/A",
-              soLuong: sp.soLuong || 0,
-              giaBan: sp.giaBan || 0,
-            }))
+          ...response.data.content.map((sp) => ({
+            id: sp.id,
+            sanPhamId: sp.idSanPham,
+            tenSanPham: sp.tenSanPham,
+            maSanPham: sp.ma,
+            mauSac: sp.mauSac || "N/A",
+            dungLuongRam: sp.dungLuongRam || "N/A",
+            dungLuongBoNhoTrong: sp.dungLuongBoNhoTrong || "N/A",
+            soLuong: sp.soLuong || 0,
+            giaBan: sp.giaBan || 0,
+          }))
         );
         totalPages.value = response.data.totalPages;
         showToast("success", "Đã tải thêm sản phẩm");
       } catch (error) {
         const message =
-            error.response?.data?.message || "Lỗi khi tải thêm sản phẩm";
+          error.response?.data?.message || "Lỗi khi tải thêm sản phẩm";
         showToast("error", message);
       } finally {
         isLoadingMore.value = false;
@@ -474,11 +601,10 @@ export default {
     const removeItem = async (item) => {
       try {
         const response = await apiService.delete(
-            `/api/gio-hang/xoa?hdId=${activeInvoiceId.value}&spId=${item.id}`
+          `/api/gio-hang/xoa?hdId=${activeInvoiceId.value}&spId=${item.id}`
         );
         cartItems.value = response.data.chiTietGioHangDTOS.map((item) => ({
           id: item.chiTietSanPhamId,
-          sanPhamId: item.tenSanPham,
           name: item.tenSanPham,
           color: item.mauSac,
           ram: item.ram,
@@ -487,30 +613,31 @@ export default {
           originalPrice: Number(item.giaBan),
           currentPrice: Number(item.giaBan),
           quantity: item.soLuong,
-          ghiChuGia: item.ghiChuGia || "",
         }));
         const invoice = pendingInvoices.value.find(
-            (inv) => inv.id === activeInvoiceId.value
+          (inv) => inv.id === activeInvoiceId.value
         );
         if (invoice) invoice.items = cartItems.value;
         showToast("success", `Đã xóa sản phẩm ${item.name} khỏi giỏ hàng`);
+        await applyBestDiscount(); // Áp dụng PGG tốt nhất
       } catch (error) {
         showToast("error", "Lỗi khi xóa sản phẩm khỏi giỏ hàng");
       }
     };
 
+    // IMEI-Related Methods
     const showIMEIList = async (product) => {
       selectedProduct.value = product;
       showIMEIModal.value = true;
       try {
         const response = await apiService.get(
-            `/api/san-pham/${product.sanPhamId}/imeis?mauSac=${encodeURIComponent(
-                product.mauSac
-            )}&dungLuongRam=${encodeURIComponent(
-                product.dungLuongRam
-            )}&dungLuongBoNhoTrong=${encodeURIComponent(
-                product.dungLuongBoNhoTrong
-            )}`
+          `/api/san-pham/${product.sanPhamId}/imeis?mauSac=${encodeURIComponent(
+            product.mauSac
+          )}&dungLuongRam=${encodeURIComponent(
+            product.dungLuongRam
+          )}&dungLuongBoNhoTrong=${encodeURIComponent(
+            product.dungLuongBoNhoTrong
+          )}`
         );
         availableIMEIs.value = response.data.map((imei) => ({
           id: imei,
@@ -520,8 +647,8 @@ export default {
       } catch (error) {
         console.error("Lỗi chi tiết:", error.response?.data || error.message);
         showToast(
-            "error",
-            error.response?.data?.message || "Lỗi khi tải danh sách IMEI"
+          "error",
+          error.response?.data?.message || "Lỗi khi tải danh sách IMEI"
         );
       }
     };
@@ -548,15 +675,12 @@ export default {
 
     const removeIMEI = (imei) => {
       selectedIMEIs.value = selectedIMEIs.value.filter(
-          (selected) => selected !== imei
+        (selected) => selected !== imei
       );
     };
 
     const addProductWithIMEIs = async () => {
-      if (selectedIMEIs.value.length === 0) {
-        showToast("error", "Vui lòng chọn ít nhất một IMEI!");
-        return;
-      }
+      if (selectedIMEIs.value.length === 0) return;
       if (!selectedProduct.value?.sanPhamId) {
         showToast("error", "Vui lòng chọn một sản phẩm hợp lệ!");
         return;
@@ -564,103 +688,67 @@ export default {
 
       try {
         const response = await apiService.get(
-            `/api/chi-tiet-san-pham/id?sanPhamId=${selectedProduct.value.sanPhamId}&mauSac=${encodeURIComponent(
-                selectedProduct.value.mauSac
-            )}&dungLuongRam=${encodeURIComponent(
-                selectedProduct.value.dungLuongRam
-            )}&dungLuongBoNhoTrong=${encodeURIComponent(
-                selectedProduct.value.dungLuongBoNhoTrong
-            )}`
+          `/api/chi-tiet-san-pham/id?sanPhamId=${
+            selectedProduct.value.sanPhamId
+          }&mauSac=${encodeURIComponent(
+            selectedProduct.value.mauSac
+          )}&dungLuongRam=${encodeURIComponent(
+            selectedProduct.value.dungLuongRam
+          )}&dungLuongBoNhoTrong=${encodeURIComponent(
+            selectedProduct.value.dungLuongBoNhoTrong
+          )}`
         );
-        if (!response.data) {
-          showToast("error", "Không tìm thấy chi tiết sản phẩm hoặc IMEI khả dụng!");
-          return;
-        }
         const chiTietSanPhamId = response.data;
 
+        // Fetch latest product price
         const productResponse = await apiService.get(
-            `/api/san-pham?page=0&size=1&keyword=${encodeURIComponent(
-                selectedProduct.value.maSanPham
-            )}`
+          `/api/san-pham?page=0&size=1&keyword=${encodeURIComponent(
+            selectedProduct.value.maSanPham
+          )}`
         );
-        if (!productResponse.data.content[0]) {
-          showToast("error", "Không tìm thấy thông tin sản phẩm!");
-          return;
-        }
-        const latestPrice = Number(productResponse.data.content[0].giaBan) || selectedProduct.value.giaBan;
+        const latestPrice =
+          productResponse.data.content[0]?.giaBan ||
+          selectedProduct.value.giaBan;
 
         const chiTietGioHangDTO = {
           chiTietSanPhamId: chiTietSanPhamId,
+          soLuong: selectedIMEIs.value.length,
           maImel: selectedIMEIs.value.join(", "),
-          idPhieuGiamGia: selectedPublicDiscount.value?.id || selectedPrivateDiscount.value?.id || null,
-          giaBan: latestPrice,
+          idPhieuGiamGia: selectedDiscount.value?.id || null,
         };
 
         const postResponse = await apiService.post(
-            `/api/add/gio-hang?idHD=${activeInvoiceId.value}`,
-            chiTietGioHangDTO
+          `/api/add/gio-hang?idHD=${activeInvoiceId.value}`,
+          chiTietGioHangDTO
         );
+        cartItems.value = postResponse.data.chiTietGioHangDTOS.map((item) => ({
+          id: item.chiTietSanPhamId,
+          name: item.tenSanPham,
+          color: item.mauSac,
+          ram: item.ram,
+          storage: item.boNhoTrong,
+          imei: item.maImel,
+          originalPrice: Number(item.giaBan),
+          currentPrice: latestPrice,
+          quantity: item.soLuong,
+        }));
 
-        // Kiểm tra tính toàn vẹn của phản hồi
-        if (!postResponse.data || !postResponse.data.chiTietGioHangDTOS || !postResponse.data.gioHangId) {
-          showToast("error", "Dữ liệu phản hồi từ server không hợp lệ!");
-          return;
-        }
-
-        const existingItems = cartItems.value.filter(
-            (item) => !selectedIMEIs.value.includes(item.imei.split(", ")[0]) // Chỉnh sửa để kiểm tra từng IMEI
+        const invoice = pendingInvoices.value.find(
+          (inv) => inv.id === activeInvoiceId.value
         );
-        const newItems = postResponse.data.chiTietGioHangDTOS
-            .filter((item) => selectedIMEIs.value.includes(item.maImel))
-            .map((item) => ({
-              id: item.chiTietSanPhamId,
-              sanPhamId: selectedProduct.value.sanPhamId,
-              name: item.tenSanPham,
-              color: item.mauSac,
-              ram: item.ram,
-              storage: item.boNhoTrong,
-              imei: item.maImel,
-              originalPrice: Number(item.giaBanGoc) || 0,
-              currentPrice: Number(item.giaBan) || 0,
-              quantity: Number(item.soLuong) || 1, // Mặc định 1 vì backend tạo riêng cho mỗi IMEI
-              ghiChuGia: item.ghiChuGia || "",
-            }));
-        const gh = postResponse.data;
-
-        cartItems.value = [...existingItems, ...newItems];
-
-        // Cập nhật activeInvoiceId từ gioHangId
-        const invoiceId = parseInt(gh.gioHangId.replace("GH_", ""));
-        if (isNaN(invoiceId)) {
-          // showToast("error", "ID hóa đơn không hợp lệ từ server!");
-          return;
-        }
-        activeInvoiceId.value = invoiceId;
-
-        // Hiển thị thông báo giá thay đổi
-        newItems.forEach((item) => {
-          if (item.ghiChuGia) {
-            showToast("warning", item.ghiChuGia);
-          }
-        });
-
-        // Cập nhật hoặc thêm vào pendingInvoices
-        let invoice = pendingInvoices.value.find((inv) => inv.id === activeInvoiceId.value);
-        if (!invoice) {
-          invoice = { id: activeInvoiceId.value, ma: `HD${activeInvoiceId.value}`, status: "Chờ", items: [] };
-          pendingInvoices.value.push(invoice);
-        }
-        invoice.items = cartItems.value;
+        if (invoice) invoice.items = cartItems.value;
 
         closeIMEIModal();
         showToast(
-            "success",
-            `Đã thêm sản phẩm ${selectedProduct.value.tenSanPham} vào giỏ hàng`
+          "success",
+          `Đã thêm sản phẩm ${selectedProduct.value.tenSanPham} vào giỏ hàng`
         );
+        await applyBestDiscount(); // Áp dụng PGG tốt nhất
       } catch (error) {
+        console.error("Lỗi chi tiết:", error.response?.data || error.message);
         showToast(
-            "error",
-            error.response?.data?.message || "Lỗi khi thêm sản phẩm vào giỏ hàng. Vui lòng kiểm tra IMEI."
+          "error",
+          error.response?.data?.message || "Lỗi khi thêm sản phẩm vào giỏ hàng"
         );
       }
     };
@@ -669,24 +757,19 @@ export default {
       if (!selectedCartItem.value) return;
       try {
         const imeiArray = selectedCartItem.value.imei
-            .split(", ")
-            .filter((i) => i !== imei);
+          .split(", ")
+          .filter((i) => i !== imei);
         const chiTietGioHangDTO = {
           chiTietSanPhamId: selectedCartItem.value.id,
           soLuong: imeiArray.length,
           maImel: imeiArray.join(", "),
         };
         const response = await apiService.post(
-            `/api/add/gio-hang?idHD=${activeInvoiceId.value}`,
-            chiTietGioHangDTO
+          `/api/add/gio-hang?idHD=${activeInvoiceId.value}`,
+          chiTietGioHangDTO
         );
-
-        const remainingItems = cartItems.value.filter(
-            (item) => item.imei !== selectedCartItem.value.imei
-        );
-        const updatedItems = response.data.chiTietGioHangDTOS.map((item) => ({
+        cartItems.value = response.data.chiTietGioHangDTOS.map((item) => ({
           id: item.chiTietSanPhamId,
-          sanPhamId: item.tenSanPham,
           name: item.tenSanPham,
           color: item.mauSac,
           ram: item.ram,
@@ -695,27 +778,22 @@ export default {
           originalPrice: Number(item.giaBan),
           currentPrice: Number(item.giaBan),
           quantity: item.soLuong,
-          ghiChuGia: item.ghiChuGia || "",
         }));
-
-        cartItems.value = [...remainingItems, ...updatedItems];
-
         const invoice = pendingInvoices.value.find(
-            (inv) => inv.id === activeInvoiceId.value
+          (inv) => inv.id === activeInvoiceId.value
         );
         if (invoice) invoice.items = cartItems.value;
         if (imeiArray.length === 0) {
           closeCartIMEIModal();
         }
         showToast("success", `Đã xóa IMEI ${imei}`);
+        await applyBestDiscount(); // Áp dụng PGG tốt nhất
       } catch (error) {
-        showToast(
-            "error",
-            error.response?.data?.message || "Lỗi khi xóa IMEI"
-        );
+        showToast("error", "Lỗi khi xóa IMEI");
       }
     };
 
+    // Customer-Related Methods
     const Search = async (query) => {
       try {
         const response = await apiService.get("/khach-hang/search", {
@@ -731,96 +809,132 @@ export default {
     };
 
     const searchCustomers = async () => {
-      if (!searchCustomer.value) {
-        selectedCustomer.value = null;
-        customer.value = { id: null, name: "", phone: "", city: "", district: "", ward: "", address: "" };
-        privateDiscountCodes.value = [];
-        setTimeout(() => {
-          showToast("warning", "Vui lòng nhập thông tin tìm kiếm");
-        }, 3000);
-        return;
-      }
-
-      try {
-        const result = await Search(searchCustomer.value);
-
-        if (result.success && result.data && result.data.length > 0) {
-          const customerData = result.data[0];
-          const customerId =
-              customerData.id ||
-              customerData.idKhachHang ||
-              (customerData.idKhachHang && customerData.idKhachHang.id) ||
-              null;
-
-          selectedCustomer.value = customerData;
-          customer.value = {
-            id: customerId,
-            name: customerData.ten || customerData.idKhachHang?.ten || "",
-            phone:
-                customerData.idTaiKhoan?.soDienThoai ||
-                customerData.idKhachHang?.idTaiKhoan?.soDienThoai || "",
-            city: customerData.idDiaChiKhachHang?.thanhPho || "",
-            district: customerData.idDiaChiKhachHang?.quan || "",
-            ward: customerData.idDiaChiKhachHang?.phuong || "",
-            address: customerData.idDiaChiKhachHang?.diaChiCuThe || "",
-          };
-
-          if (customerId) {
-            const pggResult = await getPhieuGiamGiaByKhachHang(customerId);
-            if (pggResult.success && Array.isArray(pggResult.data)) {
-              privateDiscountCodes.value = pggResult.data
-                  .filter(
-                      (item) =>
-                          item.idPhieuGiamGia?.riengTu === true &&
-                          isValidDiscount(item.idPhieuGiamGia?.ngayKetThuc)
-                  )
-                  .map((item, index) => ({
-                    id: item.id || index + 1,
-                    code: item.ma || "Unknown",
-                    value: item.idPhieuGiamGia?.soTienGiamToiDa || 0,
-                    expiry: formatDate(item.idPhieuGiamGia?.ngayKetThuc),
-                    rawExpiry: item.idPhieuGiamGia?.ngayKetThuc,
-                  }));
-
-              showToast(
-                  "success",
-                  `Tìm thấy khách hàng: ${customer.value.name} với ${privateDiscountCodes.value.length} mã giảm giá cá nhân`
-              );
-            } else {
-              privateDiscountCodes.value = [];
-              showToast(
-                  "warning",
-                  `Tìm thấy khách hàng: ${customer.value.name}, nhưng không có mã giảm giá cá nhân`
-              );
-            }
-          } else {
-            privateDiscountCodes.value = [];
-            showToast(
-                "warning",
-                `Tìm thấy khách hàng: ${customer.value.name}, nhưng không có ID để lấy mã giảm giá`
-            );
-          }
-        } else {
-          selectedCustomer.value = null;
-          customer.value = { id: null, name: "", phone: "", city: "", district: "", ward: "", address: "" };
-          privateDiscountCodes.value = [];
-          setTimeout(() => {
-            showToast("warning", "Không tìm thấy khách hàng");
-          }, 3000);
-        }
-      } catch (error) {
-        selectedCustomer.value = null;
-        customer.value = { id: null, name: "", phone: "", city: "", district: "", ward: "", address: "" };
-        privateDiscountCodes.value = [];
-        showToast("error", "Đã xảy ra lỗi khi tìm kiếm khách hàng");
-      }
+  if (!searchCustomer.value) {
+    selectedCustomer.value = null;
+    customer.value = {
+      id: null,
+      name: "",
+      phone: "",
+      city: "",
+      district: "",
+      ward: "",
+      address: "",
     };
+    privateDiscountCodes.value = [];
+    setTimeout(() => {
+      showToast("warning", "Vui lòng nhập thông tin tìm kiếm");
+    }, 3000);
+    return;
+  }
+
+  try {
+    const result = await Search(searchCustomer.value);
+
+    if (result.success && result.data && result.data.length > 0) {
+      const customerData = result.data[0];
+      const customerId =
+        customerData.id ||
+        customerData.idKhachHang ||
+        (customerData.idKhachHang && customerData.idKhachHang.id) ||
+        null;
+
+      selectedCustomer.value = customerData;
+      customer.value = {
+        id: customerId,
+        name: customerData.ten || customerData.idKhachHang?.ten || "",
+        phone:
+          customerData.idTaiKhoan?.soDienThoai ||
+          customerData.idKhachHang?.idTaiKhoan?.soDienThoai ||
+          "",
+        city: customerData.idDiaChiKhachHang?.thanhPho || "",
+        district: customerData.idDiaChiKhachHang?.quan || "",
+        ward: customerData.idDiaChiKhachHang?.phuong || "",
+        address: customerData.idDiaChiKhachHang?.diaChiCuThe || "",
+      };
+
+      // Điền quận và phường nếu có thành phố và quận
+      if (customer.value.city) {
+        await fetchDistricts(customer.value.city);
+        if (customer.value.district) {
+          await fetchWards(customer.value.district);
+        }
+      }
+
+      if (customerId) {
+        const pggResult = await getPhieuGiamGiaByKhachHang(customerId);
+        if (pggResult.success && Array.isArray(pggResult.data)) {
+          privateDiscountCodes.value = pggResult.data
+            .filter(
+              (item) =>
+                item.idPhieuGiamGia?.riengTu === true &&
+                isValidDiscount(item.idPhieuGiamGia?.ngayKetThuc)
+            )
+            .map((item, index) => ({
+              id: item.id || index + 1,
+              code: item.ma || "Unknown",
+              value: item.idPhieuGiamGia?.soTienGiamToiDa || 0,
+              expiry: formatDate(item.idPhieuGiamGia?.ngayKetThuc),
+              rawExpiry: item.idPhieuGiamGia?.ngayKetThuc,
+              type: "private",
+            }));
+          showToast(
+            "success",
+            `Tìm thấy khách hàng: ${customer.value.name} với ${privateDiscountCodes.value.length} mã giảm giá cá nhân`
+          );
+        } else {
+          privateDiscountCodes.value = [];
+          showToast(
+            "warning",
+            `Tìm thấy khách hàng: ${customer.value.name}, nhưng không có mã giảm giá cá nhân`
+          );
+        }
+      } else {
+        privateDiscountCodes.value = [];
+        showToast(
+          "warning",
+          `Tìm thấy khách hàng: ${customer.value.name}, nhưng không có ID để lấy mã giảm giá`
+        );
+      }
+      await applyBestDiscount();
+    } else {
+      selectedCustomer.value = null;
+      customer.value = {
+        id: null,
+        name: "",
+        phone: "",
+        city: "",
+        district: "",
+        ward: "",
+        address: "",
+      };
+      privateDiscountCodes.value = [];
+      setTimeout(() => {
+        showToast("warning", "Không tìm thấy khách hàng");
+      }, 3000);
+      await applyBestDiscount();
+    }
+  } catch (error) {
+    selectedCustomer.value = null;
+    customer.value = {
+      id: null,
+      name: "",
+      phone: "",
+      city: "",
+      district: "",
+      ward: "",
+      address: "",
+    };
+    privateDiscountCodes.value = [];
+    showToast("error", "Đã xảy ra lỗi khi tìm kiếm khách hàng");
+    await applyBestDiscount();
+  }
+};
 
     const addBanHang = async (customerData) => {
       try {
         const response = await apiService.post(
-            "/khach-hang/add-Bh",
-            customerData
+          "/khach-hang/add-Bh",
+          customerData
         );
         return { success: true, data: response.data };
       } catch (error) {
@@ -837,15 +951,31 @@ export default {
         showToast("error", "Vui lòng nhập tên khách hàng");
         return;
       }
+      if (newCustomer.value.name.length > 30) {
+        showToast("error", "Tên khách hàng không được vượt quá 30 ký tự");
+        return;
+      }
+      const nameRegex = /^[a-zA-ZÀ-ỹ\s'.-]+$/u;
+      if (!nameRegex.test(newCustomer.value.name.trim())) {
+        showToast(
+          "error",
+          "Tên khách hàng chỉ được chứa chữ cái và khoảng trắng"
+        );
+        return;
+      }
 
       if (!newCustomer.value.phone || !newCustomer.value.phone.trim()) {
         showToast("error", "Vui lòng nhập số điện thoại");
         return;
       }
 
-      const phoneRegex = /^\d{10}$/;
-      if (!phoneRegex.test(newCustomer.value.phone.trim())) {
-        showToast("error", "Số điện thoại phải có đúng 10 chữ số");
+      const phone = newCustomer.value.phone.trim();
+      const phoneRegex = /^(0|\+84)[0-9]{9}$/;
+      if (!phoneRegex.test(phone)) {
+        showToast(
+          "error",
+          "Số điện thoại phải đúng định dạng Việt Nam (bắt đầu bằng 0 hoặc +84 và đủ 10 chữ số)"
+        );
         return;
       }
 
@@ -873,23 +1003,24 @@ export default {
           selectedCustomer.value = response.data;
           isCustomerModalOpen.value = false;
           showToast(
-              "success",
-              `Thêm khách hàng thành công: ${customer.value.name}`
+            "success",
+            `Thêm khách hàng thành công: ${customer.value.name}`
           );
 
           if (isDelivery.value) {
             receiver.value = { ...customer.value };
             isReceiverEditable.value = false;
           }
+          await applyBestDiscount(); // Áp dụng PGG tốt nhất
         } else {
           showToast("error", response.message || "Lỗi khi thêm khách hàng");
         }
       } catch (error) {
         showToast(
-            "error",
-            `Lỗi khi thêm khách hàng: ${
-                error.response?.data?.message || error.message
-            }`
+          "error",
+          `Lỗi khi thêm khách hàng: ${
+            error.response?.data?.message || error.message
+          }`
         );
       }
     };
@@ -897,21 +1028,23 @@ export default {
     const getPhieuGiamGiaByKhachHang = async (idKhachHang) => {
       try {
         const response = await apiService.get(
-            `/api/by-khach-hang/${idKhachHang}`
+          `/api/by-khach-hang/${idKhachHang}`
         );
         return { success: true, data: response.data };
       } catch (error) {
         return {
           success: false,
           message:
-              error.response?.data || "Không lấy được danh sách phiếu giảm giá",
+            error.response?.data || "Không lấy được danh sách phiếu giảm giá",
         };
       }
     };
 
     const fetchLocations = async () => {
       try {
-        const response = await axios.get("https://provinces.open-api.vn/api/p/");
+        const response = await axios.get(
+          "https://provinces.open-api.vn/api/p/"
+        );
         provinces.value = response.data.map((t) => ({
           code: t.code,
           name: t.name,
@@ -929,7 +1062,7 @@ export default {
           return;
         }
         const response = await axios.get(
-            `https://provinces.open-api.vn/api/p/${province.code}?depth=2`
+          `https://provinces.open-api.vn/api/p/${province.code}?depth=2`
         );
         districts.value = response.data.districts.map((q) => ({
           code: q.code,
@@ -949,7 +1082,7 @@ export default {
           return;
         }
         const response = await axios.get(
-            `https://provinces.open-api.vn/api/d/${district.code}?depth=2`
+          `https://provinces.open-api.vn/api/d/${district.code}?depth=2`
         );
         wards.value = response.data.wards.map((p) => ({
           code: p.code,
@@ -1019,53 +1152,30 @@ export default {
           address: "",
         };
       }
+      updateShippingFee();
     };
 
-    const fetchDiscountCodes = async () => {
-      try {
-        const response = await apiService.get("/api/phieu-giam-gia");
-        privateDiscountCodes.value = response.data
-            .filter((pgg) => pgg.type === "private")
-            .map((pgg) => ({
-              id: pgg.id,
-              code: pgg.ma,
-              value: Number(pgg.giaTri),
-            }));
-        publicDiscountCodes.value = response.data
-            .filter((pgg) => pgg.type === "public")
-            .map((pgg) => ({
-              id: pgg.id,
-              code: pgg.ma,
-              value: Number(pgg.giaTri),
-              percent: pgg.phanTram,
-              minOrder: Number(pgg.donToiThieu),
-              expiry: formatDate(pgg.ngayHetHan),
-              rawExpiry: pgg.ngayHetHan,
-            }));
-      } catch (error) {
-        console.error("Lỗi khi tải mã giảm giá", error);
-      }
-    };
-
+    // Discount-Related Methods
     const fetchPGG = async () => {
       try {
         const response = await apiService.get("/api/PGG-all");
         publicDiscountCodes.value = response.data
-            .filter(
-                (item) =>
-                    item.riengTu === false &&
-                    item.trangThai === true &&
-                    isValidDiscount(item.ngayKetThuc)
-            )
-            .map((item, index) => ({
-              id: item.id || index + 1,
-              code: item.ma || "Unknown",
-              value: Number(item.soTienGiamToiDa) || 0,
-              percent: Number(item.phanTramGiamGia) || 0,
-              minOrder: Number(item.hoaDonToiThieu) || 0,
-              expiry: formatDate(item.ngayKetThuc),
-              rawExpiry: item.ngayKetThuc,
-            }));
+          .filter(
+            (item) =>
+              item.riengTu === false &&
+              item.trangThai === true &&
+              isValidDiscount(item.ngayKetThuc)
+          )
+          .map((item, index) => ({
+            id: item.id || index + 1,
+            code: item.ma || "Unknown",
+            value: Number(item.soTienGiamToiDa) || 0,
+            percent: Number(item.phanTramGiamGia) || 0,
+            minOrder: Number(item.hoaDonToiThieu) || 0,
+            expiry: formatDate(item.ngayKetThuc),
+            rawExpiry: item.ngayKetThuc,
+            type: "public",
+          }));
       } catch (error) {
         console.error("Lỗi khi lấy danh sách PGG", error);
         showToast("error", "Lỗi khi tải danh sách mã giảm giá");
@@ -1074,13 +1184,16 @@ export default {
 
     const validateDiscount = async (ma, khachHangId) => {
       try {
-        const response = await apiService.get("/api/phieu-giam-gia/validate-at-checkout", {
-          params: {
-            ma,
-            totalPrice: tongTien.value,
-            khachHangId: khachHangId || null,
-          },
-        });
+        const response = await apiService.get(
+          "/api/phieu-giam-gia/validate-at-checkout",
+          {
+            params: {
+              ma,
+              totalPrice: tongTien.value,
+              khachHangId: khachHangId || null,
+            },
+          }
+        );
         return { success: true, data: response.data };
       } catch (error) {
         return {
@@ -1090,60 +1203,97 @@ export default {
       }
     };
 
-    const applyPrivateDiscount = async () => {
-      if (!selectedPrivateDiscount.value) {
-        showToast("error", "Vui lòng chọn mã giảm giá riêng tư");
-        return;
-      }
-      if (!customer.value.id) {
-        showToast("error", "Vui lòng chọn khách hàng để áp dụng mã riêng tư");
+    const applyBestDiscount = async () => {
+      if (!cartItems.value.length || tongTien.value <= 0) {
+        selectedDiscount.value = null;
+        manualDiscountSelected.value = false; // Reset cờ khi giỏ hàng trống
         return;
       }
 
-      const result = await validateDiscount(selectedPrivateDiscount.value.code, customer.value.id);
-      if (!result.success) {
-        showToast("error", result.message);
-        return;
-      }
-
-      discount.value = selectedPrivateDiscount.value.value;
-      selectedPublicDiscount.value = null;
-      showToast(
-          "success",
-          `Áp dụng mã giảm giá ${selectedPrivateDiscount.value.code} thành công`
-      );
-    };
-
-    const applyPublicDiscount = async () => {
-      if (!selectedPublicDiscount.value) {
-        showToast("error", "Vui lòng chọn mã giảm giá công khai");
-        return;
-      }
-
-      const result = await validateDiscount(selectedPublicDiscount.value.code, customer.value.id || null);
-      if (!result.success) {
-        showToast("error", result.message);
-        return;
-      }
-
-      if (tongTien.value < selectedPublicDiscount.value.minOrder) {
-        showToast(
-            "error",
-            `Tổng tiền phải đạt tối thiểu ${formatPrice(
-                selectedPublicDiscount.value.minOrder
-            )} để áp dụng mã này.`
+      if (manualDiscountSelected.value) {
+        const result = await validateDiscount(
+          selectedDiscount.value.code,
+          customer.value?.id || null
         );
+        if (!result.success || !result.data) {
+          selectedDiscount.value = null;
+          manualDiscountSelected.value = false;
+          showToast("info", "Mã giảm giá đã chọn không còn hợp lệ");
+        }
         return;
       }
 
-      discount.value = selectedPublicDiscount.value.value;
-      selectedPrivateDiscount.value = null;
-      showToast(
-          "success",
-          `Áp dụng mã giảm giá ${selectedPublicDiscount.value.code} thành công`
-      );
+      try {
+        await fetchPGG();
+
+        if (customer.value?.id) {
+          const pggResult = await getPhieuGiamGiaByKhachHang(customer.value.id);
+          if (pggResult.success && Array.isArray(pggResult.data)) {
+            privateDiscountCodes.value = pggResult.data
+              .filter(
+                (item) =>
+                  item.idPhieuGiamGia?.riengTu === true &&
+                  isValidDiscount(item.idPhieuGiamGia?.ngayKetThuc)
+              )
+              .map((item, index) => ({
+                id: item.id || index + 1,
+                code: item.ma || "Unknown",
+                value: item.idPhieuGiamGia?.soTienGiamToiDa || 0,
+                expiry: formatDate(item.idPhieuGiamGia?.ngayKetThuc),
+                rawExpiry: item.idPhieuGiamGia?.ngayKetThuc,
+                type: "private",
+              }));
+          }
+        }
+
+        const allDiscounts = [
+          ...publicDiscountCodes.value.map((code) => ({
+            ...code,
+            type: "public",
+          })),
+          ...privateDiscountCodes.value,
+        ];
+
+        let bestDiscount = null;
+        for (const code of allDiscounts) {
+          const result = await validateDiscount(
+            code.code,
+            customer.value?.id || null
+          );
+          if (result.success && result.data) {
+            const discountValue = code.value;
+            if (
+              (code.type === "public" && tongTien.value >= code.minOrder) ||
+              code.type === "private"
+            ) {
+              if (!bestDiscount || discountValue > bestDiscount.value) {
+                bestDiscount = code;
+              }
+            }
+          }
+        }
+
+        if (bestDiscount) {
+          selectedDiscount.value = { ...bestDiscount };
+          showToast(
+            "success",
+            `Đã áp dụng mã giảm giá ${bestDiscount.code} (-${formatPrice(
+              bestDiscount.value
+            )})`
+          );
+        } else {
+          selectedDiscount.value = null;
+          showToast("info", "Không có mã giảm giá nào khả dụng");
+        }
+      } catch (error) {
+        console.error("Lỗi khi áp dụng mã giảm giá:", error);
+        selectedDiscount.value = null;
+        manualDiscountSelected.value = false;
+        showToast("error", "Lỗi khi tìm mã giảm giá tốt nhất");
+      }
     };
 
+    // Payment-Related Methods
     const selectPayment = (method) => {
       paymentMethod.value = method;
       tienChuyenKhoan.value = 0;
@@ -1174,11 +1324,15 @@ export default {
 
       const totalPaymentValue = totalPayment.value;
       if (paymentMethod.value === "both") {
-        const totalInput = (tienChuyenKhoan?.value || 0) + (tienMat?.value || 0);
+        const totalInput = (tienChuyenKhoan.value || 0) + (tienMat.value || 0);
         if (totalInput !== totalPaymentValue) {
           showToast(
-              "error",
-              `Số tiền thanh toán (${formatPrice(totalInput)}) không khớp với tổng thanh toán (${formatPrice(totalPaymentValue)})`
+            "error",
+            `Số tiền thanh toán (${formatPrice(
+              totalInput
+            )}) không khớp với tổng thanh toán (${formatPrice(
+              totalPaymentValue
+            )})`
           );
           return;
         }
@@ -1193,142 +1347,113 @@ export default {
         }
       }
 
-      await fetchPGG();
-
-      const currentDiscountCode = selectedPublicDiscount.value?.code || selectedPrivateDiscount?.value?.code || null;
-      if (currentDiscountCode) {
-        try {
-          const response = await apiService.get("/api/phieu-giam-gia/find-better-discount", {
-            params: {
-              currentDiscountMa: currentDiscountCode,
-              totalPrice: tongTien.value,
-              khachHangId: customer.value.id || null,
-            },
-          });
-          if (response.data) {
-            const betterDiscount = {
-              id: response.data.id,
-              code: response.data.ma,
-              value: Number(response.data.soTienGiamToiDa),
-              minOrder: Number(response.data.hoaDonToiThieu),
-            };
-            showConfirm(
-                `Bạn có muốn áp dụng mã ${betterDiscount.code} giảm ${formatPrice(betterDiscount.value)} thay vì mã hiện tại giảm ${formatPrice(discount.value)}?`,
-                () => {
-                  selectedPublicDiscount.value = betterDiscount;
-                  selectedPrivateDiscount.value = null;
-                  discount.value = betterDiscount.value;
-                  showToast("success", `Đã áp dụng mã ${betterDiscount.code}`);
-                  showDiscountModal.value = true;
-                },
-                () => {
-                  createOrder();
-                }
-            );
-            return;
-          }
-        } catch (error) {
-          console.error("Lỗi khi kiểm tra phiếu tốt hơn:", error);
-        }
-      }
-
-      await createOrder();
+      await applyBestDiscount(); // Áp dụng PGG tốt nhất trước khi thanh toán
+      createOrder();
     };
 
     const createOrder = async () => {
-      if (!activeInvoiceId.value) {
-        showToast("error", "Không có hóa đơn đang hoạt động để thanh toán!");
-        return;
-      }
-
+      isCreatingOrder.value = true;
       try {
-        const hoaDonRequest = {
-          idKhachHang: customer.value.id || null,
-          idNhanVien: 1, // Giả định nhân viên ID
-          idPhieuGiamGia: selectedPublicDiscount.value?.id || selectedPrivateDiscount.value?.id || null,
-          phiVanChuyen: shippingFee.value || 0,
-          loaiDon: isDelivery.value ? "online" : "trực tiếp",
-          tenKhachHang: customer.value.name || "Khách vãng lai",
-          soDienThoaiKhachHang: customer.value.phone || "",
-          diaChiKhachHang: isDelivery.value ? {
-            diaChiCuThe: customer.value.address,
-            phuong: customer.value.ward,
-            quan: customer.value.district,
-            thanhPho: customer.value.city,
-          } : null,
-          hinhThucThanhToan: paymentMethod.value === "both" ? [
-            { phuongThucThanhToanId: 1, tienMat: tienMat.value || 0 },
-            { phuongThucThanhToanId: 2, tienChuyenKhoan: tienChuyenKhoan.value || 0 },
-          ] : [
-            {
-              phuongThucThanhToanId: paymentMethod.value === "cash" ? 1 : 2,
-              tienMat: paymentMethod.value === "cash" ? totalPayment.value : 0,
-              tienChuyenKhoan: paymentMethod.value === "transfer" ? totalPayment.value : 0,
-            },
-          ],
-        };
-
-        const response = await apiService.post(`/api/thanh-toan/${activeInvoiceId.value}`, hoaDonRequest);
-        if (!response.data || !response.data.id) {
-          throw new Error("Phản hồi từ server không chứa ID hóa đơn!");
+        const hinhThucThanhToan = [];
+        if (paymentMethod.value === "cash") {
+          hinhThucThanhToan.push({
+            phuongThucThanhToanId: 1,
+            tienMat: totalPayment.value,
+            tienChuyenKhoan: 0,
+          });
+        } else if (paymentMethod.value === "transfer") {
+          hinhThucThanhToan.push({
+            phuongThucThanhToanId: 2,
+            tienMat: 0,
+            tienChuyenKhoan: totalPayment.value,
+          });
+        } else if (paymentMethod.value === "both") {
+          hinhThucThanhToan.push({
+            phuongThucThanhToanId: 3,
+            tienMat: tienMat.value,
+            tienChuyenKhoan: tienChuyenKhoan.value,
+          });
         }
 
-        const invoiceId = response.data.id;
-        showToast("success", `Thanh toán hóa đơn ${response.data.ma} thành công!`);
+        const hoaDonRequest = {
+          idKhachHang: customer.value?.id || null,
+          tenKhachHang: customer.value?.name || "Khách vãng lai",
+          soDienThoaiKhachHang: customer.value?.phone || null,
+          diaChiKhachHang:
+            customer.value && isDelivery.value
+              ? {
+                  thanhPho: customer.value.city,
+                  quan: customer.value.district,
+                  phuong: customer.value.ward,
+                  diaChiCuThe: customer.value.address,
+                }
+              : null,
+          hinhThucThanhToan,
+          idPhieuGiamGia: selectedDiscount.value?.id || null,
+          giamGia: discount.value,
+          phiVanChuyen: isDelivery.value ? shippingFee.value : 0,
+          loaiDon: isDelivery.value ? "online" : "trực tiếp",
+          tongTien: tongTien.value,
+          chiTietGioHang: cartItems.value.map((item) => ({
+            chiTietSanPhamId: item.id,
+            soLuong: item.quantity,
+            maImel: item.imei,
+            giaBan: item.originalPrice,
+          })),
+        };
 
-        // Reset giỏ hàng trước khi chuyển trang
-        resetCart();
+        const response = await apiService.post(
+          `/api/thanh-toan/${activeInvoiceId.value}`,
+          hoaDonRequest
+        );
+        const invoiceId = response.data.id || activeInvoiceId.value;
+        pendingInvoices.value = pendingInvoices.value.filter(
+          (inv) => inv.id !== activeInvoiceId.value
+        );
+        cartItems.value = [];
+        activeInvoiceId.value = null;
+        selectedCustomer.value = null;
+        customer.value = {
+          id: null,
+          name: "",
+          phone: "",
+          city: "",
+          district: "",
+          ward: "",
+          address: "",
+        };
+        receiver.value = {
+          name: "",
+          phone: "",
+          city: "",
+          district: "",
+          ward: "",
+          address: "",
+        };
+        discount.value = 0;
+        selectedDiscount.value = null;
+        showToast(
+          "success",
+          "Thanh toán thành công, chuẩn bị hiện hóa đơn chi tiết sau vài giây"
+        );
+        resetNotification();
 
-        // Chuyển hướng đến trang chi tiết hóa đơn
         setTimeout(() => {
           router.push(`/hoaDon/${invoiceId}/detail`);
-        }, 2000); // Giảm thời gian chờ để trải nghiệm mượt mà hơn
+        }, 8000);
       } catch (error) {
         showToast(
-            "error",
-            error.response?.data?.message || "Lỗi khi tạo đơn hàng"
+          "error",
+          `Lỗi khi thanh toán: ${
+            error.response?.data?.message || error.message
+          }`
         );
-        console.error("Lỗi thanh toán:", error);
+      } finally {
+        isCreatingOrder.value = false;
       }
     };
 
-    const resetCart = () => {
-      cartItems.value = [];
-      activeInvoiceId.value = null;
-      customer.value = { id: null, name: "", phone: "", city: "", district: "", ward: "", address: "" };
-      receiver.value = { name: "", phone: "", city: "", district: "", ward: "", address: "" };
-      selectedCustomer.value = null;
-      selectedPrivateDiscount.value = null;
-      selectedPublicDiscount.value = null;
-      discount.value = 0;
-      paymentMethod.value = "cash";
-      tienChuyenKhoan.value = 0;
-      tienMat.value = 0;
-      qrCodeValue.value = "";
-      shippingFee.value = 0;
-      selectedShippingUnit.value = null;
-    };
-
-    onMounted(async () => {
-      try {
-        await fetchPGG();
-        fetchPendingInvoices();
-        fetchProducts();
-        fetchDiscountCodes();
-        fetchLocations();
-      } catch (error) {
-        showToast("error", "Lỗi khi khởi tạo dữ liệu");
-      }
-    });
-
-    const shippingFee = ref(0);
-    const selectedShippingUnit = ref(null);
-    const shippingUnits = ref([
-      { id: 1, name: "Giao Hàng Nhanh", logo: "/src/assets/Logo/logoGHN.png" },
-      { id: 2, name: "Giao Hàng Tiết Kiệm", logo: "/src/assets/Logo/LogoGHTK.png" },
-    ]);
-    const FREE_SHIP_THRESHOLD = 50000000;
-
+    // Shipping Fee Method
     const updateShippingFee = async () => {
       if (!isDelivery.value || !selectedShippingUnit.value) {
         shippingFee.value = 0;
@@ -1336,7 +1461,10 @@ export default {
       }
       if (tongTien.value >= FREE_SHIP_THRESHOLD) {
         shippingFee.value = 0;
-        showToast("success", "Miễn phí vận chuyển cho đơn hàng từ 50,000,000 VNĐ trở lên");
+        showToast(
+          "success",
+          "Miễn phí vận chuyển cho đơn hàng từ 50,000,000 VNĐ trở lên"
+        );
         return;
       }
       try {
@@ -1347,7 +1475,10 @@ export default {
         } else {
           shippingFee.value = 30000;
         }
-        showToast("success", `Đã cập nhật phí vận chuyển cho ${selectedShippingUnit.value.name}`);
+        showToast(
+          "success",
+          `Đã cập nhật phí vận chuyển cho ${selectedShippingUnit.value.name}`
+        );
       } catch (error) {
         console.error("Lỗi khi tính phí vận chuyển:", error);
         shippingFee.value = 30000;
@@ -1355,11 +1486,57 @@ export default {
       }
     };
 
+    // Initialize data
+    onMounted(async () => {
+      try {
+        await fetchPGG();
+        fetchPendingInvoices();
+        fetchProducts();
+        fetchLocations();
+        await applyBestDiscount(); // Áp dụng PGG tốt nhất khi khởi tạo
+      } catch (error) {
+        showToast("error", "Lỗi khi khởi tạo dữ liệu");
+      }
+    });
+
+    // Trong phần setup của component
+const handleCustomerProvinceChange = () => {
+  // Reset các trường liên quan khi thay đổi tỉnh/thành phố
+  customer.value.district = "";
+  customer.value.ward = "";
+  customer.value.address = "";
+  districts.value = [];
+  wards.value = [];
+  
+  // Gọi API để lấy danh sách quận/huyện nếu có tỉnh/thành phố được chọn
+  if (customer.value.city) {
+    fetchDistricts(customer.value.city);
+  }
+};
+
+const handleCustomerDistrictChange = () => {
+  // Reset các trường liên quan khi thay đổi quận/huyện
+  customer.value.ward = "";
+  customer.value.address = "";
+  wards.value = [];
+  
+  // Gọi API để lấy danh sách phường/xã nếu có quận/huyện được chọn
+  if (customer.value.district) {
+    fetchWards(customer.value.district);
+  }
+};
+
     return {
+      handleCustomerProvinceChange,
+      handleCustomerDistrictChange,
+      selectDiscount,
+      suggestedDiscounts,
+      alternativeDiscounts,
       shippingFee,
       selectedShippingUnit,
       shippingUnits,
       updateShippingFee,
+      // State
       router,
       isCreatingInvoice,
       isCreatingOrder,
@@ -1370,8 +1547,6 @@ export default {
       cartItems,
       showIMEIModal,
       showCartIMEIModal,
-      showDiscountModal,
-      selectedCartItem,
       isCustomerModalOpen,
       isLoadingMore,
       productSearchQuery,
@@ -1386,10 +1561,10 @@ export default {
       receiver,
       isReceiverEditable,
       isDelivery,
-      selectedPrivateDiscount,
-      selectedPublicDiscount,
+      selectedDiscount,
       discount,
-      suggestAdditionalPurchase,
+      privateDiscountCodes,
+      publicDiscountCodes,
       paymentMethod,
       tienChuyenKhoan,
       tienMat,
@@ -1400,8 +1575,6 @@ export default {
       uniqueRams,
       uniqueStorages,
       availableIMEIs,
-      privateDiscountCodes,
-      publicDiscountCodes,
       provinces,
       districts,
       wards,
@@ -1417,19 +1590,21 @@ export default {
       notificationOnCancel,
       notificationModal,
       toastNotification,
-      activeTab,
       qrCodeValue,
       qrCodeAmount,
       showQRCode,
+      // Utility Methods
       showToast,
       showConfirm,
       resetNotification,
       formatPrice,
       formatDate,
       isValidDiscount,
+      // Debounced Search
       debouncedInvoiceSearch,
       debouncedProductSearch,
       debouncedCustomerSearch,
+      // Invoice-Related
       fetchPendingInvoices,
       createNewPendingInvoice,
       loadPendingInvoice,
@@ -1460,16 +1635,14 @@ export default {
       handleReceiverProvinceChange,
       handleReceiverDistrictChange,
       toggleDelivery,
-      fetchDiscountCodes,
       fetchPGG,
-      applyPrivateDiscount,
-      applyPublicDiscount,
+      validateDiscount,
+      applyBestDiscount,
       selectPayment,
       generateQRCode,
       scanQR,
       ThanhToan,
       createOrder,
-      resetCart,
     };
   },
 };
