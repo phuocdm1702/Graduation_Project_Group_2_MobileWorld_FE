@@ -773,60 +773,55 @@
                     Mã Giảm Giá
                   </h6>
 
-                  <!-- Mã giảm giá -->
                   <!-- PGG tốt nhất -->
-                  <div
-                    class="position-relative p-4 rounded-4 shadow-sm animate__animated animate__fadeIn mb-4"
-                    style="border: 2px solid #34d399; background-color: #ecfdf5"
-                  >
-                    <!-- Ribbon -->
-                    <div
-                      class="position-absolute top-0 end-0 bg-success text-white px-3 py-1"
-                      style="
-                        font-size: 0.8rem;
-                        font-weight: bold;
-                        border-bottom-left-radius: 1rem 0.5rem;
-                        transform: translate(10%, -10%);
-                        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-                      "
-                    >
-                      PGG tốt nhất
-                    </div>
+<div
+  class="position-relative p-4 rounded-4 shadow-sm animate__animated animate__fadeIn mb-4"
+  style="border: 2px solid #34d399; background-color: #ecfdf5"
+>
+  <!-- Ribbon -->
+  <div
+    v-if="selectedDiscount && isBestDiscount"
+    class="position-absolute top-0 end-0 bg-success text-white px-3 py-1"
+    style="
+      font-size: 0.8rem;
+      font-weight: bold;
+      border-bottom-left-radius: 1rem 0.5rem;
+      transform: translate(10%, -10%);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    "
+  >
+    PGG tốt nhất
+  </div>
 
-                    <div
-                      v-if="selectedDiscount"
-                      class="d-flex justify-content-between align-items-center"
-                    >
-                      <div class="text-dark">
-                        <div
-                          class="fw-semibold mb-2 d-flex align-items-center gap-2"
-                          style="font-size: 1rem"
-                        >
-                          <i
-                            class="bi bi-ticket-perforated-fill text-success fs-5"
-                          ></i>
-                          Mã giảm giá tự động:
-                        </div>
-                        <div
-                          class="badge bg-success text-white px-3 py-2 fs-5"
-                          style="letter-spacing: 0.5px"
-                        >
-                          {{ selectedDiscount.code }}
-                        </div>
-                      </div>
-                      <div class="text-danger fw-bold fs-4">
-                        −{{ formatPrice(selectedDiscount.value) }}
-                      </div>
-                    </div>
+  <div
+    v-if="selectedDiscount"
+    class="d-flex justify-content-between align-items-center"
+  >
+    <div class="text-dark">
+      <div
+        class="fw-semibold mb-2 d-flex align-items-center gap-2"
+        style="font-size: 1rem"
+      >
+        <i class="bi bi-ticket-perforated-fill text-success fs-5"></i>
+        Mã giảm giá tự động:
+      </div>
+      <div class="badge bg-success text-white px-3 py-2 fs-5" style="letter-spacing: 0.5px">
+        {{ selectedDiscount.code }}
+      </div>
+    </div>
+    <div class="text-danger fw-bold fs-4">
+      −{{ formatPrice(selectedDiscount.value) }}
+    </div>
+  </div>
 
-                    <div
-                      v-else
-                      class="text-secondary text-center d-flex align-items-center justify-content-center gap-2 py-2 fs-5"
-                    >
-                      <i class="bi bi-x-octagon text-danger"></i>
-                      Không có mã giảm giá khả dụng
-                    </div>
-                  </div>
+  <div
+    v-else
+    class="text-secondary text-center d-flex align-items-center justify-content-center gap-2 py-2 fs-5"
+  >
+    <i class="bi bi-x-octagon text-danger"></i>
+    Không có mã giảm giá khả dụng
+  </div>
+</div>
 
                   <!-- Tiêu đề -->
                   <h6
