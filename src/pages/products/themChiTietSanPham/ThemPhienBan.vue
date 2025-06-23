@@ -13,9 +13,9 @@
                   {{
                     currentVariant.selectedRams.length > 0
                       ? currentVariant.selectedRams
-                          .map((id) => ramOptions.find((r) => r.id === id)?.dungLuongRam)
-                          .filter(Boolean)
-                          .join(', ') || 'Không có RAM hợp lệ'
+                        .map((id) => ramOptions.find((r) => r.id === id)?.dungLuongRam)
+                        .filter(Boolean)
+                        .join(', ') || 'Không có RAM hợp lệ'
                       : 'Chọn RAM'
                   }}
                 </button>
@@ -41,15 +41,16 @@
                   {{
                     currentVariant.selectedBoNhoTrongs.length > 0
                       ? currentVariant.selectedBoNhoTrongs
-                          .map((id) => boNhoTrongOptions.find((b) => b.id === id)?.dungLuongBoNhoTrong)
-                          .filter(Boolean)
-                          .join(', ') || 'Không có ROM hợp lệ'
+                        .map((id) => boNhoTrongOptions.find((b) => b.id === id)?.dungLuongBoNhoTrong)
+                        .filter(Boolean)
+                        .join(', ') || 'Không có ROM hợp lệ'
                       : 'Chọn Bộ Nhớ Trong'
                   }}
                 </button>
                 <div v-if="dropdownOpen.boNhoTrong" class="dropdown-menu show">
                   <label v-for="boNho in boNhoTrongOptions" :key="boNho.id" class="dropdown-item flex items-center">
-                    <input type="checkbox" :value="boNho.id" v-model="currentVariant.selectedBoNhoTrongs" class="me-2" />
+                    <input type="checkbox" :value="boNho.id" v-model="currentVariant.selectedBoNhoTrongs"
+                      class="me-2" />
                     {{ boNho.dungLuongBoNhoTrong }}
                   </label>
                 </div>
@@ -69,9 +70,9 @@
                   {{
                     currentVariant.selectedMauSacs.length > 0
                       ? currentVariant.selectedMauSacs
-                          .map((id) => mauSacOptions.find((m) => m.id === id)?.mauSac)
-                          .filter(Boolean)
-                          .join(', ') || 'Không có màu hợp lệ'
+                        .map((id) => mauSacOptions.find((m) => m.id === id)?.mauSac)
+                        .filter(Boolean)
+                        .join(', ') || 'Không có màu hợp lệ'
                       : 'Chọn Màu Sắc'
                   }}
                 </button>
@@ -128,7 +129,7 @@
                       <div class="d-flex align-items-center">
                         <span class="color-swatch me-2"
                           :style="{ backgroundColor: mauSacOptions.find(mau => mau.id === variant.idMauSac)?.maMau || '#000' }"></span>
-                        {{ mauSacOptions.find(mau => mau.id === variant.idMauSac)?.mauSac || 'N/A' }}
+                        {{mauSacOptions.find(mau => mau.id === variant.idMauSac)?.mauSac || 'N/A'}}
                       </div>
                     </td>
                     <td>
@@ -161,7 +162,7 @@
 
     <!-- Color Selection Modal -->
     <div v-if="showColorModal" class="modal fade show d-block" tabindex="-1">
-      <div class="modal-dialog-centered">
+      <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
           <div class="modal-header">
             <h5 class="modal-title">Chọn Màu Sắc</h5>
@@ -289,10 +290,12 @@
 </template>
 
 <script>
-import { defineComponent, ref, computed, onUnmounted } from 'vue';
+import { defineComponent, ref, computed, watch, onMounted, onUnmounted } from 'vue';
 import FilterTableSection from '@/components/common/FilterTableSection.vue';
 import ToastNotification from '@/components/common/ToastNotification.vue';
 import { getRam, addRam, getBoNhoTrong, addBoNhoTrong, getMauSac, addMauSac } from '@/store/modules/products/chiTietSanPham';
+import * as XLSX from 'xlsx';
+import { nextTick } from 'vue';
 
 export default defineComponent({
   name: 'ProductVariants',
@@ -305,12 +308,21 @@ export default defineComponent({
       type: Object,
       required: true,
     },
+    productVariants: {
+      type: Array,
+      default: () => [],
+    },
+    variantImeis: {
+      type: Object,
+      default: () => ({}),
+    },
   },
-  emits: ['variants-updated'],
+  emits: ['variants-updated', 'reset-form'],
   setup(props, { emit }) {
     const toastNotification = ref(null);
     const isLoading = ref(true);
-    const productVariants = ref([]);
+    const localProductVariants = ref([...props.productVariants]);
+    const localVariantImeis = ref({ ...props.variantImeis });
     const currentVariant = ref({
       selectedRams: [],
       selectedBoNhoTrongs: [],
@@ -319,7 +331,6 @@ export default defineComponent({
     const selectedVariants = ref([]);
     const allSelected = ref({});
     const groupCommonValues = ref({});
-    const variantImeis = ref({});
     const ramOptions = ref([]);
     const boNhoTrongOptions = ref([]);
     const mauSacOptions = ref([]);
@@ -335,11 +346,24 @@ export default defineComponent({
     const imeiInput = ref('');
     const entityData = ref({});
 
+    // Watch for changes in props.productVariants and props.variantImeis to reset local state
+    watch(() => props.productVariants, (newVariants) => {
+      localProductVariants.value = [...newVariants];
+      updateSelectedOptions();
+      validateSelections();
+      console.log('ProductVariants updated - localProductVariants:', localProductVariants.value);
+    }, { deep: true });
+
+    watch(() => props.variantImeis, (newImeis) => {
+      localVariantImeis.value = { ...newImeis };
+      console.log('ProductVariants updated - localVariantImeis:', localVariantImeis.value);
+    }, { deep: true });
+
     const groupVariantsByRamAndRom = computed(() => {
       const groups = [];
       const grouped = {};
 
-      productVariants.value.forEach((variant, index) => {
+      localProductVariants.value.forEach((variant, index) => {
         const ramOption = ramOptions.value.find((r) => r.id === variant.idRam);
         const romOption = boNhoTrongOptions.value.find((b) => b.id === variant.idBoNhoTrong);
         const ram = ramOption ? ramOption.dungLuongRam : 'Unknown';
@@ -393,7 +417,6 @@ export default defineComponent({
         ]);
         ramOptions.value = ramRes.data || [];
         boNhoTrongOptions.value = boNhoTrongRes.data || [];
-        // Ánh xạ dữ liệu màu sắc để khớp với API
         mauSacOptions.value = (mauSacRes.data || []).map(item => ({
           id: item.id,
           ma: item.ma,
@@ -421,15 +444,15 @@ export default defineComponent({
       const boNhoTrongs = new Set();
       const mauSacs = new Set();
 
-      productVariants.value.forEach((variant) => {
+      localProductVariants.value.forEach((variant) => {
         rams.add(variant.idRam);
         boNhoTrongs.add(variant.idBoNhoTrong);
         mauSacs.add(variant.idMauSac);
       });
 
-      currentVariant.value.selectedRams = [...rams];
-      currentVariant.value.selectedBoNhoTrongs = [...boNhoTrongs];
-      currentVariant.value.selectedMauSacs = [...mauSacs];
+      currentVariant.value.selectedRams = [...rams].filter(Boolean);
+      currentVariant.value.selectedBoNhoTrongs = [...boNhoTrongs].filter(Boolean);
+      currentVariant.value.selectedMauSacs = [...mauSacs].filter(Boolean);
     };
 
     const toggleDropdown = (type) => {
@@ -441,7 +464,6 @@ export default defineComponent({
       });
     };
 
-    // Close all dropdowns
     const closeAllDropdowns = () => {
       Object.keys(dropdownOpen.value).forEach((key) => {
         dropdownOpen.value[key] = false;
@@ -475,7 +497,7 @@ export default defineComponent({
       currentVariant.value.selectedRams.forEach((ramId) => {
         currentVariant.value.selectedBoNhoTrongs.forEach((boNhoId) => {
           currentVariant.value.selectedMauSacs.forEach((mauSacId) => {
-            const exists = productVariants.value.some(
+            const exists = localProductVariants.value.some(
               (variant) =>
                 variant.idRam === ramId &&
                 variant.idBoNhoTrong === boNhoId &&
@@ -494,10 +516,12 @@ export default defineComponent({
       });
 
       if (newVariants.length > 0) {
-        productVariants.value = [...productVariants.value, ...newVariants];
-        updateSelectedOptions(); // Update selected options after adding
+        localProductVariants.value = [...localProductVariants.value, ...newVariants];
+        updateSelectedOptions();
         validateSelections();
-        emit('variants-updated', productVariants.value);
+        emit('variants-updated', { variants: localProductVariants.value, imeis: localVariantImeis.value });
+        console.log('Emitting productVariants:', localProductVariants.value);
+        console.log('Emitting variantImeis:', localVariantImeis.value);
         toastNotification.value?.addToast({
           type: 'success',
           message: 'Thêm biến thể thành công!',
@@ -509,25 +533,29 @@ export default defineComponent({
     };
 
     const removeVariant = (index) => {
-      productVariants.value.splice(index, 1);
-      delete variantImeis.value[index];
+      localProductVariants.value.splice(index, 1);
+      delete localVariantImeis.value[index];
       selectedVariants.value = selectedVariants.value.filter((i) => i !== index);
       validateSelections();
-      updateSelectedOptions(); // Update selected options after removal
-      emit('variants-updated', productVariants.value);
+      updateSelectedOptions();
+      emit('variants-updated', { variants: localProductVariants.value, imeis: localVariantImeis.value });
+      console.log('After removeVariant - productVariants:', localProductVariants.value);
+      console.log('After removeVariant - variantImeis:', localVariantImeis.value);
     };
 
     const removeMultipleVariants = () => {
-      productVariants.value = productVariants.value.filter(
+      localProductVariants.value = localProductVariants.value.filter(
         (_, index) => !selectedVariants.value.includes(index)
       );
       selectedVariants.value.forEach((index) => {
-        delete variantImeis.value[index];
+        delete localVariantImeis.value[index];
       });
       selectedVariants.value = [];
       validateSelections();
-      updateSelectedOptions(); // Update selected options after removal
-      emit('variants-updated', productVariants.value);
+      updateSelectedOptions();
+      emit('variants-updated', { variants: localProductVariants.value, imeis: localVariantImeis.value });
+      console.log('After removeMultipleVariants - productVariants:', localProductVariants.value);
+      console.log('After removeMultipleVariants - variantImeis:', localVariantImeis.value);
     };
 
     const updateSelectedVariants = (group) => {
@@ -535,9 +563,10 @@ export default defineComponent({
       const price = groupCommonValues.value[groupKey]?.price || '';
       if (price) {
         group.variants.forEach((variant, index) => {
-          productVariants.value[group.startIndex + index].donGia = price;
+          localProductVariants.value[group.startIndex + index].donGia = price;
         });
       }
+      emit('variants-updated', { variants: localProductVariants.value, imeis: localVariantImeis.value });
     };
 
     const toggleGroupSelection = (group, checked) => {
@@ -598,8 +627,8 @@ export default defineComponent({
             boNhoTrongOptions.value.push(data);
             break;
           case 'mauSac':
-            data.ma = `MS${Date.now().toString().slice(-5)}`; // Tạo mã màu tự động
-            data.deleted = false; // Thêm trường deleted mặc định
+            data.ma = `MS${Date.now().toString().slice(-5)}`;
+            data.deleted = false;
             await addMauSac(data);
             mauSacOptions.value.push(data);
             break;
@@ -629,23 +658,15 @@ export default defineComponent({
     };
 
     const confirmColorSelection = () => {
-      if (addVariant()) {
+      const success = addVariant();
+      if (success) {
         closeColorModal();
-        validateSelections();
-        emit('variants-updated', productVariants.value);
-      } else {
-        toastNotification.value?.addToast({
-          type: 'error',
-          message: 'Không thể thêm biến thể!',
-          duration: 3000,
-        });
       }
     };
 
     const openImeiModal = (index) => {
-      closeAllDropdowns();
       currentVariantIndex.value = index;
-      imeiInput.value = variantImeis.value[index]?.join('\n') || '';
+      imeiInput.value = localVariantImeis.value[index]?.join('\n') || '';
       showImeiModal.value = true;
     };
 
@@ -656,84 +677,127 @@ export default defineComponent({
     };
 
     const saveImei = () => {
-      const imeis = imeiInput.value
-        .split('\n')
-        .map((imei) => imei.trim())
-        .filter((imei) => imei.length === 15);
-      if (imeis.length > 0) {
-        variantImeis.value[currentVariantIndex.value] = imeis;
-        toastNotification.value?.addToast({
-          type: 'success',
-          message: 'Lưu IMEI thành công!',
-          duration: 2000,
-        });
-      } else {
+      const imeis = filteredImeiList.value.filter((imei) => imei.length === 15);
+      if (imeis.length === 0 && imeiInput.value.trim()) {
         toastNotification.value?.addToast({
           type: 'error',
-          message: 'Vui lòng nhập ít nhất một IMEI hợp lệ (15 chữ số)!',
+          message: 'Không có IMEI hợp lệ (cần 15 chữ số)!',
           duration: 3000,
         });
+        return;
       }
+      localVariantImeis.value[currentVariantIndex.value] = imeis;
+      emit('variants-updated', { variants: localProductVariants.value, imeis: localVariantImeis.value });
+      console.log('After saveImei - variantImeis:', localVariantImeis.value);
+      toastNotification.value?.addToast({
+        type: 'success',
+        message: 'Lưu IMEI thành công!',
+        duration: 3000,
+      });
       closeImeiModal();
     };
 
-    const downloadImeiTemplate = () => {
-      const link = new Blob(['Mock IMEI template content'], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-      const url = URL.createObjectURL(link);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'imei-template.xlsx';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    };
-
-    const handleExcelImport = (event) => {
+    const handleExcelImport = async (event) => {
       const file = event.target.files[0];
-      if (file) {
+      if (!file) return;
+      try {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const data = new Uint8Array(e.target.result);
+          const workbook = XLSX.read(data, { type: 'array' });
+          const sheetName = workbook.SheetNames[0];
+          const sheet = workbook.Sheets[sheetName];
+          const json = XLSX.utils.sheet_to_json(sheet);
+          const imeis = json
+            .map((row) => row.IMEI?.toString().trim())
+            .filter((imei) => imei && imei.length === 15);
+          imeiInput.value = imeis.join('\n');
+          toastNotification.value?.addToast({
+            type: 'success',
+            message: `Đã nhập ${imeis.length} IMEI từ Excel!`,
+            duration: 3000,
+          });
+        };
+        reader.readAsArrayBuffer(file);
+      } catch (error) {
         toastNotification.value?.addToast({
-          type: 'success',
-          message: 'Đã nhập file Excel (giả lập)!',
+          type: 'error',
+          message: 'Lỗi khi nhập file Excel: ' + error.message,
           duration: 3000,
         });
       }
     };
 
-    // Handle click outside to close dropdowns
+    const downloadImeiTemplate = () => {
+      const ws = XLSX.utils.json_to_sheet([{ IMEI: '123456789012345' }]);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'IMEI Template');
+      XLSX.write(wb, 'imei_template.xlsx');
+      toastNotification.value?.addToast({
+        type: 'info',
+        message: 'Đã tải mẫu Excel!',
+        duration: 3000,
+      });
+    };
+
+    const resetForm = async () => {
+  localProductVariants.value = [];
+  localVariantImeis.value = {};
+  currentVariant.value = {
+    selectedRams: [],
+    selectedBoNhoTrongs: [],
+    selectedMauSacs: [],
+  };
+  selectedVariants.value = [];
+  allSelected.value = {};
+  groupCommonValues.value = {};
+  closeAllDropdowns();
+  showColorModal.value = false;
+  showImeiModal.value = false;
+  showFormModal.value = false;
+  currentAttribute.value = '';
+  imeiInput.value = '';
+  entityData.value = {};
+  await nextTick(); // Đảm bảo giao diện được cập nhật
+  emit('variants-updated', { variants: [], imeis: {} });
+  emit('reset-form');
+  toastNotification.value?.addToast({
+    type: 'info',
+    message: 'Đã làm mới danh sách biến thể!',
+    duration: 3000,
+  });
+  console.log('ProductVariants reset - localProductVariants:', localProductVariants.value);
+  console.log('ProductVariants reset - currentVariant:', currentVariant.value);
+};
+
+    // Close dropdowns when clicking outside
     const handleClickOutside = (event) => {
-      const dropdowns = document.querySelectorAll('.dropdown-menu.show');
-      const buttons = document.querySelectorAll('.form-control.search-input');
-      if (
-        !Array.from(dropdowns).some((d) => d.contains(event.target)) &&
-        !Array.from(buttons).some((b) => b.contains(event.target))
-      ) {
+      if (!event.target.closest('.input-group')) {
         closeAllDropdowns();
       }
     };
 
-    // Add event listener for click outside
-    document.addEventListener('mousedown', handleClickOutside);
+    onMounted(() => {
+      document.addEventListener('click', handleClickOutside);
+    });
 
-    // Cleanup event listener on component unmount
     onUnmounted(() => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('click', handleClickOutside);
     });
 
     return {
       toastNotification,
-      isLoading,
-      productVariants,
+      productVariants: localProductVariants,
+      variantImeis: localVariantImeis,
       currentVariant,
+      selectedVariants,
+      allSelected,
+      groupCommonValues,
       ramOptions,
       boNhoTrongOptions,
       mauSacOptions,
       dropdownOpen,
-      groupVariantsByRamAndRom,
-      selectedVariants,
-      allSelected,
-      groupCommonValues,
-      variantImeis,
+      isLoading,
       showFormModal,
       currentAttribute,
       currentAttributeLabel,
@@ -741,15 +805,10 @@ export default defineComponent({
       showImeiModal,
       currentVariantIndex,
       imeiInput,
+      entityData,
+      groupVariantsByRamAndRom,
       filteredImeiList,
       toggleDropdown,
-      addVariant,
-      removeVariant,
-      removeMultipleVariants,
-      updateSelectedVariants,
-      toggleGroupSelection,
-      updateSelectedCount,
-      validateSelections,
       openAddModal,
       closeFormModal,
       handleAddAttribute,
@@ -759,15 +818,66 @@ export default defineComponent({
       openImeiModal,
       closeImeiModal,
       saveImei,
-      downloadImeiTemplate,
+      removeVariant,
+      removeMultipleVariants,
+      updateSelectedVariants,
+      toggleGroupSelection,
+      updateSelectedCount,
       handleExcelImport,
-      entityData,
+      downloadImeiTemplate,
+      resetForm,
     };
   },
 });
 </script>
 
 <style scoped>
+.color-swatch {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  border: 1px solid #ddd;
+}
+
+.table-responsive {
+  overflow-x: auto;
+}
+
+.table {
+  min-width: 100%;
+}
+
+.table-count {
+  font-weight: 600;
+  color: #1f3a44;
+}
+
+.action-buttons {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.action-buttons-cell {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+}
+
+.btn-table {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.875rem;
+}
+
+.btn-table i {
+  margin: 0;
+}
+
+.text-left {
+  text-align: left;
+}
+
 .filter-label {
   display: block;
   font-weight: 600;
@@ -790,21 +900,12 @@ export default defineComponent({
   box-shadow: 0 0 10px rgba(52, 211, 153, 0.2);
 }
 
-.input-group {
-  display: flex;
-  align-items: center;
-}
-
-.input-group .form-control {
-  flex: 1;
-}
-
 .btn-action {
   background: #34d399;
   color: white;
   border: none;
   padding: 0.5rem 1rem;
-  font-size: 0.9rem;
+  font-size: 1rem;
   border-radius: 8px;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -843,7 +944,6 @@ export default defineComponent({
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   max-height: 200px;
   overflow-y: auto;
-  animation: fadeInUp 0.3s ease-out;
 }
 
 .dropdown-item {
@@ -856,68 +956,14 @@ export default defineComponent({
   background: rgba(52, 211, 153, 0.1);
 }
 
-.table-responsive {
-  margin-top: 1rem;
-}
-
-.table {
-  width: 100%;
-  border-collapse: collapse;
-  background: #f8f9fa;
-}
-
-.table th,
-.table td {
-  border: 1px solid rgba(52, 211, 153, 0.2);
-  padding: 0.75rem;
-  text-align: center;
-  font-size: 0.9rem;
-}
-
-.table th {
-  background: #f1f3f5;
-  font-weight: 600;
-  color: #1f3a44;
-}
-
-.table td {
-  color: #1f3a44;
-}
-
-.action-buttons-cell {
-  display: flex;
-  justify-content: center;
-}
-
-.btn-table {
-  color: #1f3a44;
-  border: none;
-  background: none;
-}
-
-.btn-table:hover {
-  color: #16a34a;
-  text-shadow: 0 0 15px rgba(52, 211, 153, 0.3);
-}
-
-.color-swatch {
-  width: 24px;
-  height: 24px;
-  border-radius: 4px;
-  border: 1px solid rgba(0, 0, 0, 0.1);
-}
-
 .modal {
   background: rgba(0, 0, 0, 0.5);
 }
 
 .modal-content {
   background: #f8f9fa;
-  width: 50%;
-  margin: 0 auto;
   border-radius: 12px;
   border: 1px solid rgba(52, 211, 153, 0.2);
-  animation: zoomIn 0.3s ease-out;
 }
 
 .modal-header {
@@ -942,55 +988,5 @@ export default defineComponent({
 
 .btn-close:hover {
   color: #1f3a44;
-}
-
-.text-success {
-  color: #34d399;
-}
-
-.text-danger {
-  color: #dc3545;
-}
-
-@media (max-width: 768px) {
-  .action-buttons {
-    flex-direction: column;
-    gap: 1rem;
-  }
-
-  .action-buttons .btn {
-    width: 100%;
-    justify-content: center;
-  }
-}
-
-@media (max-width: 576px) {
-  .table th,
-  .table td {
-    font-size: 0.8rem;
-    padding: 0.5rem;
-  }
-}
-
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(15px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes zoomIn {
-  from {
-    opacity: 0;
-    transform: scale(0.97);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
 }
 </style>

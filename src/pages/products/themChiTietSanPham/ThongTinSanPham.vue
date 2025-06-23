@@ -11,11 +11,7 @@
     <!-- Main Form Section -->
     <FilterTableSection title="Thông Tin Sản Phẩm" icon="bi bi-box-seam">
       <div class="m-3">
-        <div v-if="isLoading" class="text-center">
-          <p class="text-gray-700">Đang tải dữ liệu...</p>
-        </div>
-
-        <div v-else class="row g-4">
+        <div class="row g-4">
           <!-- Tên Sản Phẩm -->
           <div class="col-lg-12">
             <div class="search-group">
@@ -25,7 +21,7 @@
                 <input
                   v-model.trim="productData.tenSanPham"
                   type="text"
-                  placeholder="Nhập hoặc chọn tên sản phẩm"
+                  placeholder="Nhập tên sản phẩm (mới hoặc chọn)"
                   class="form-control search-input"
                   @focus="showProductDropdown = true"
                   @blur="delayHideProductDropdown"
@@ -45,6 +41,18 @@
                   </div>
                 </div>
               </div>
+              <div v-if="isProductSelected" class="mt-2">
+                <span class="text-success">Sản phẩm đã chọn: {{ productData.tenSanPham }}</span>
+                <button
+                  @click="clearProductSelection"
+                  class="btn btn-reset btn-sm ms-2"
+                >
+                  <i class="bi bi-x-circle"></i> Hủy chọn
+                </button>
+              </div>
+              <div v-else-if="productData.tenSanPham && filteredProductNameOptions.length === 0" class="mt-2 text-info">
+                Sẽ thêm sản phẩm mới: {{ productData.tenSanPham }}
+              </div>
             </div>
           </div>
 
@@ -56,7 +64,6 @@
                 <select
                   v-model="productData.idHeDieuHanh"
                   class="form-control search-input"
-                  :disabled="isProductSelected"
                 >
                   <option value="">Chọn Hệ Điều Hành</option>
                   <option v-for="option in heDieuHanhOptions" :key="option.id" :value="option.id">
@@ -79,7 +86,6 @@
                 <select
                   v-model="productData.idCongNgheManHinh"
                   class="form-control search-input"
-                  :disabled="isProductSelected"
                 >
                   <option value="">Chọn Công Nghệ Màn Hình</option>
                   <option v-for="option in congNgheManHinhOptions" :key="option.id" :value="option.id">
@@ -102,7 +108,6 @@
                 <select
                   v-model="productData.idNhaSanXuat"
                   class="form-control search-input"
-                  :disabled="isProductSelected"
                 >
                   <option value="">Chọn Nhà Sản Xuất</option>
                   <option v-for="option in nhaSanXuatOptions" :key="option.id" :value="option.id">
@@ -127,7 +132,6 @@
                 <select
                   v-model="productData.idCumCamera"
                   class="form-control search-input"
-                  :disabled="isProductSelected"
                 >
                   <option value="">Chọn Cụm Camera</option>
                   <option v-for="option in cumCameraOptions" :key="option.id" :value="option.id">
@@ -150,7 +154,6 @@
                 <select
                   v-model="productData.idSim"
                   class="form-control search-input"
-                  :disabled="isProductSelected"
                 >
                   <option value="">Chọn Sim</option>
                   <option v-for="option in simOptions" :key="option.id" :value="option.id">
@@ -173,7 +176,6 @@
                 <select
                   v-model="productData.idThietKe"
                   class="form-control search-input"
-                  :disabled="isProductSelected"
                 >
                   <option value="">Chọn Thiết Kế</option>
                   <option v-for="option in thietKeOptions" :key="option.id" :value="option.id">
@@ -198,7 +200,6 @@
                 <select
                   v-model="productData.idPin"
                   class="form-control search-input"
-                  :disabled="isProductSelected"
                 >
                   <option value="">Chọn Pin</option>
                   <option v-for="option in pinOptions" :key="option.id" :value="option.id">
@@ -221,7 +222,6 @@
                 <select
                   v-model="productData.idCpu"
                   class="form-control search-input"
-                  :disabled="isProductSelected"
                 >
                   <option value="">Chọn CPU</option>
                   <option v-for="option in cpuOptions" :key="option.id" :value="option.id">
@@ -244,7 +244,6 @@
                 <select
                   v-model="productData.idGpu"
                   class="form-control search-input"
-                  :disabled="isProductSelected"
                 >
                   <option value="">Chọn GPU</option>
                   <option v-for="option in gpuOptions" :key="option.id" :value="option.id">
@@ -269,7 +268,6 @@
                 <select
                   v-model="productData.idCongNgheMang"
                   class="form-control search-input"
-                  :disabled="isProductSelected"
                 >
                   <option value="">Chọn Công Nghệ Mạng</option>
                   <option v-for="option in congNgheMangOptions" :key="option.id" :value="option.id">
@@ -292,7 +290,6 @@
                 <select
                   v-model="productData.idHoTroCongNgheSac"
                   class="form-control search-input"
-                  :disabled="isProductSelected"
                 >
                   <option value="">Chọn Hỗ Trợ Công Nghệ Sạc</option>
                   <option v-for="option in hoTroCongNgheSacOptions" :key="option.id" :value="option.id">
@@ -315,7 +312,6 @@
                 <select
                   v-model="productData.idChiSoKhangBuiVaNuoc"
                   class="form-control search-input"
-                  :disabled="isProductSelected"
                 >
                   <option value="">Chọn Chỉ Số Kháng Bụi Nước</option>
                   <option v-for="option in chiSoKhangBuiVaNuocOptions" :key="option.id" :value="option.id">
@@ -329,6 +325,43 @@
                   <i class="bi bi-plus-circle"></i>
                 </button>
               </div>
+            </div>
+          </div>
+
+          <!-- Hỗ Trợ Bộ Nhớ Ngoài -->
+          <div class="col-lg-4 col-md-6">
+            <div class="filter-group">
+              <label class="filter-label">Hỗ Trợ Bộ Nhớ Ngoài</label>
+              <div class="input-group">
+                <select
+                  v-model="productData.idHoTroBoNhoNgoai"
+                  class="form-control search-input"
+                >
+                  <option value="">Chọn Hỗ Trợ Bộ Nhớ Ngoài</option>
+                  <option v-for="option in hoTroBoNhoNgoaiOptions" :key="option.id" :value="option.id">
+                    {{ option.hoTroBoNhoNgoai }}
+                  </option>
+                </select>
+                <button
+                  @click="openAddModal('hoTroBoNhoNgoai')"
+                  class="btn btn-action"
+                >
+                  <i class="bi bi-plus-circle"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Ghi Chú -->
+          <div class="col-lg-12">
+            <div class="filter-group">
+              <label class="filter-label">Ghi Chú</label>
+              <textarea
+                v-model="productData.ghiChu"
+                class="form-control search-input"
+                placeholder="Nhập ghi chú"
+                rows="3"
+              ></textarea>
             </div>
           </div>
         </div>
@@ -561,6 +594,17 @@
                 />
               </div>
             </div>
+            <div v-if="currentAttribute === 'hoTroBoNhoNgoai'" class="row g-3">
+              <div class="col-12">
+                <label class="filter-label">Hỗ Trợ Bộ Nhớ Ngoài</label>
+                <input
+                  v-model="entityData.hoTroBoNhoNgoai"
+                  type="text"
+                  class="form-control search-input"
+                  placeholder="Nhập hỗ trợ bộ nhớ ngoài"
+                />
+              </div>
+            </div>
           </div>
           <div class="modal-footer">
             <button
@@ -585,7 +629,7 @@
 </template>
 
 <script>
-import { defineComponent, ref, computed } from 'vue';
+import { defineComponent, ref, computed, watch } from 'vue';
 import HeaderCard from '@/components/common/HeaderCard.vue';
 import FilterTableSection from '@/components/common/FilterTableSection.vue';
 import ToastNotification from '@/components/common/ToastNotification.vue';
@@ -595,8 +639,9 @@ import {
   getSim, addSim, getThietKe, addThietKe, getPin, addPin,
   getCpu, addCpu, getGpu, addGpu, getCongNgheMang, addCongNgheMang,
   getHoTroCongNgheSac, addHoTroCongNgheSac, getChiSoKhangBuiVaNuoc, addChiSoKhangBuiVaNuoc,
-  getProducts,
-} from '@/store/modules/products/chiTietSanPham'; 
+  getHoTroBoNhoNgoai, addHoTroBoNhoNgoai,
+  getProducts, addChiTietSanPham,
+} from '@/store/modules/products/chiTietSanPham';
 
 export default defineComponent({
   name: 'ProductInfo',
@@ -605,25 +650,17 @@ export default defineComponent({
     FilterTableSection,
     ToastNotification,
   },
-  emits: ['update:productData'],
+  props: {
+    productData: {
+      type: Object,
+      required: true,
+    },
+  },
+  emits: ['update:productData', 'reset-form'],
   setup(props, { emit }) {
     const toastNotification = ref(null);
-    const isLoading = ref(true);
-    const productData = ref({
-      tenSanPham: '',
-      idHeDieuHanh: '',
-      idCongNgheManHinh: '',
-      idNhaSanXuat: '',
-      idCumCamera: '',
-      idSim: '',
-      idThietKe: '',
-      idPin: '',
-      idCpu: '',
-      idGpu: '',
-      idCongNgheMang: '',
-      idHoTroCongNgheSac: '',
-      idChiSoKhangBuiVaNuoc: '',
-    });
+    const isLoading = ref(false); // Đặt mặc định là false để không hiển thị loading
+    const localProductData = ref({ ...props.productData });
     const heDieuHanhOptions = ref([]);
     const congNgheManHinhOptions = ref([]);
     const nhaSanXuatOptions = ref([]);
@@ -636,10 +673,12 @@ export default defineComponent({
     const congNgheMangOptions = ref([]);
     const hoTroCongNgheSacOptions = ref([]);
     const chiSoKhangBuiVaNuocOptions = ref([]);
+    const hoTroBoNhoNgoaiOptions = ref([]);
     const productNameOptions = ref([]);
     const filteredProductNameOptions = ref([]);
     const showProductDropdown = ref(false);
     const isProductSelected = ref(false);
+    const isNewProduct = ref(false);
     const showFormModal = ref(false);
     const currentAttribute = ref('');
     const entityData = ref({});
@@ -658,95 +697,157 @@ export default defineComponent({
         congNgheMang: 'Công Nghệ Mạng',
         hoTroCongNgheSac: 'Hỗ Trợ Công Nghệ Sạc',
         chiSoKhangBuiVaNuoc: 'Chỉ Số Kháng Bụi Nước',
+        hoTroBoNhoNgoai: 'Hỗ Trợ Bộ Nhớ Ngoài',
       };
       return labels[currentAttribute.value] || currentAttribute.value;
     });
 
-    const fetchData = async () => {
-  try {
-    isLoading.value = true;
-    const [
-      heDieuHanhRes,
-      congNgheManHinhRes,
-      nhaSanXuatRes,
-      cumCameraRes,
-      simRes,
-      thietKeRes,
-      pinRes,
-      cpuRes,
-      gpuRes,
-      congNgheMangRes,
-      hoTroCongNgheSacRes,
-      chiSoKhangBuiVaNuocRes,
-      productsRes,
-    ] = await Promise.all([
-      getHeDieuHanh(),
-      getCongNgheManHinh(),
-      getNhaSanXuat(),
-      getCumCamera(),
-      getSim(),
-      getThietKe(),
-      getPin(),
-      getCpu(),
-      getGpu(),
-      getCongNgheMang(),
-      getHoTroCongNgheSac(),
-      getChiSoKhangBuiVaNuoc(),
-      getProducts(),
-    ]);
+    watch(() => props.productData, (newData) => {
+      localProductData.value = { ...newData };
+      isProductSelected.value = false;
+      isNewProduct.value = false;
+      showProductDropdown.value = false;
+      filteredProductNameOptions.value = productNameOptions.value;
+    }, { deep: true });
 
-    heDieuHanhOptions.value = heDieuHanhRes.data;
-    congNgheManHinhOptions.value = congNgheManHinhRes.data;
-    nhaSanXuatOptions.value = nhaSanXuatRes.data;
-    cumCameraOptions.value = cumCameraRes.data;
-    simOptions.value = simRes.data;
-    thietKeOptions.value = thietKeRes.data;
-    pinOptions.value = pinRes.data;
-    cpuOptions.value = cpuRes.data;
-    gpuOptions.value = gpuRes.data;
-    congNgheMangOptions.value = congNgheMangRes.data;
-    hoTroCongNgheSacOptions.value = hoTroCongNgheSacRes.data;
-    chiSoKhangBuiVaNuocOptions.value = chiSoKhangBuiVaNuocRes.data;
-    productNameOptions.value = productsRes.data || [];
-    filteredProductNameOptions.value = productsRes.data || [];
-  } catch (error) {
-    toastNotification.value?.addToast({
-      type: 'error',
-      message: 'Lỗi khi tải dữ liệu: ' + error.message,
-      duration: 3000,
-    });
-    productNameOptions.value = [];
-    filteredProductNameOptions.value = [];
-  } finally {
-    isLoading.value = false;
-  }
-};
+    const fetchData = async () => {
+      try {
+        const [
+          heDieuHanhRes,
+          congNgheManHinhRes,
+          nhaSanXuatRes,
+          cumCameraRes,
+          simRes,
+          thietKeRes,
+          pinRes,
+          cpuRes,
+          gpuRes,
+          congNgheMangRes,
+          hoTroCongNgheSacRes,
+          chiSoKhangBuiVaNuocRes,
+          hoTroBoNhoNgoaiRes,
+          productsRes,
+        ] = await Promise.all([
+          getHeDieuHanh(),
+          getCongNgheManHinh(),
+          getNhaSanXuat(),
+          getCumCamera(),
+          getSim(),
+          getThietKe(),
+          getPin(),
+          getCpu(),
+          getGpu(),
+          getCongNgheMang(),
+          getHoTroCongNgheSac(),
+          getChiSoKhangBuiVaNuoc(),
+          getHoTroBoNhoNgoai(),
+          getProducts(),
+        ]);
+
+        heDieuHanhOptions.value = heDieuHanhRes.data || [];
+        congNgheManHinhOptions.value = congNgheManHinhRes.data || [];
+        nhaSanXuatOptions.value = nhaSanXuatRes.data || [];
+        cumCameraOptions.value = cumCameraRes.data || [];
+        simOptions.value = simRes.data || [];
+        thietKeOptions.value = thietKeRes.data || [];
+        pinOptions.value = pinRes.data || [];
+        cpuOptions.value = cpuRes.data || [];
+        gpuOptions.value = gpuRes.data || [];
+        congNgheMangOptions.value = congNgheMangRes.data || [];
+        hoTroCongNgheSacOptions.value = hoTroCongNgheSacRes.data || [];
+        chiSoKhangBuiVaNuocOptions.value = chiSoKhangBuiVaNuocRes.data || [];
+        hoTroBoNhoNgoaiOptions.value = hoTroBoNhoNgoaiRes.data || [];
+        productNameOptions.value = productsRes.data || [];
+        filteredProductNameOptions.value = productsRes.data || [];
+
+        if (heDieuHanhOptions.value.length > 0) localProductData.value.idHeDieuHanh = heDieuHanhOptions.value[0].id;
+        if (congNgheManHinhOptions.value.length > 0) localProductData.value.idCongNgheManHinh = congNgheManHinhOptions.value[0].id;
+        if (nhaSanXuatOptions.value.length > 0) localProductData.value.idNhaSanXuat = nhaSanXuatOptions.value[0].id;
+        if (cumCameraOptions.value.length > 0) localProductData.value.idCumCamera = cumCameraOptions.value[0].id;
+        if (simOptions.value.length > 0) localProductData.value.idSim = simOptions.value[0].id;
+        if (thietKeOptions.value.length > 0) localProductData.value.idThietKe = thietKeOptions.value[0].id;
+        if (pinOptions.value.length > 0) localProductData.value.idPin = pinOptions.value[0].id;
+        if (cpuOptions.value.length > 0) localProductData.value.idCpu = cpuOptions.value[0].id;
+        if (gpuOptions.value.length > 0) localProductData.value.idGpu = gpuOptions.value[0].id;
+        if (congNgheMangOptions.value.length > 0) localProductData.value.idCongNgheMang = congNgheMangOptions.value[0].id;
+        if (hoTroCongNgheSacOptions.value.length > 0) localProductData.value.idHoTroCongNgheSac = hoTroCongNgheSacOptions.value[0].id;
+        if (chiSoKhangBuiVaNuocOptions.value.length > 0) localProductData.value.idChiSoKhangBuiVaNuoc = chiSoKhangBuiVaNuocOptions.value[0].id;
+        if (hoTroBoNhoNgoaiOptions.value.length > 0) localProductData.value.idHoTroBoNhoNgoai = hoTroBoNhoNgoaiOptions.value[0].id;
+
+        emit('update:productData', localProductData.value);
+      } catch (error) {
+        toastNotification.value?.addToast({
+          type: 'error',
+          message: 'Lỗi khi tải dữ liệu: ' + error.message,
+          duration: 3000,
+        });
+        productNameOptions.value = [];
+        filteredProductNameOptions.value = [];
+      }
+    };
 
     fetchData();
 
     const filterProducts = () => {
-      const searchTerm = productData.value.tenSanPham.toLowerCase().trim();
-      filteredProductNameOptions.value = productNameOptions.value.filter((product) =>
-        product.tenSanPham.toLowerCase().includes(searchTerm)
-      );
-      isProductSelected.value = false;
+      const searchTerm = localProductData.value.tenSanPham?.toLowerCase().trim() || '';
+      if (!searchTerm) {
+        filteredProductNameOptions.value = productNameOptions.value;
+      } else {
+        filteredProductNameOptions.value = productNameOptions.value.filter((product) =>
+          product.tenSanPham?.toLowerCase().includes(searchTerm)
+        );
+      }
+      isNewProduct.value = searchTerm !== '' && filteredProductNameOptions.value.length === 0;
+      if (!isProductSelected.value) {
+        emit('update:productData', localProductData.value);
+      }
     };
 
     const selectProduct = (product) => {
-      productData.value = {
+      localProductData.value = {
         ...product,
         idCongNgheManHinh: product.congNgheManHinhId || '',
         idHoTroCongNgheSac: product.hoTroCongNgheSacId || '',
+        idHoTroBoNhoNgoai: product.idHoTroBoNhoNgoai || '',
+        ghiChu: product.ghiChu || '',
       };
       showProductDropdown.value = false;
       isProductSelected.value = true;
-      emit('update:productData', productData.value);
+      isNewProduct.value = false;
+      emit('update:productData', localProductData.value);
       toastNotification.value?.addToast({
         type: 'success',
         message: 'Đã chọn sản phẩm!',
         duration: 3000,
       });
-      console.log('productData:', productData.value); // Debugging
+    };
+
+    const clearProductSelection = () => {
+      isProductSelected.value = false;
+      isNewProduct.value = localProductData.value.tenSanPham !== '';
+      localProductData.value = {
+        tenSanPham: localProductData.value.tenSanPham,
+        idHeDieuHanh: heDieuHanhOptions.value.length > 0 ? heDieuHanhOptions.value[0].id : '',
+        idCongNgheManHinh: congNgheManHinhOptions.value.length > 0 ? congNgheManHinhOptions.value[0].id : '',
+        idNhaSanXuat: nhaSanXuatOptions.value.length > 0 ? nhaSanXuatOptions.value[0].id : '',
+        idCumCamera: cumCameraOptions.value.length > 0 ? cumCameraOptions.value[0].id : '',
+        idSim: simOptions.value.length > 0 ? simOptions.value[0].id : '',
+        idThietKe: thietKeOptions.value.length > 0 ? thietKeOptions.value[0].id : '',
+        idPin: pinOptions.value.length > 0 ? pinOptions.value[0].id : '',
+        idCpu: cpuOptions.value.length > 0 ? cpuOptions.value[0].id : '',
+        idGpu: gpuOptions.value.length > 0 ? gpuOptions.value[0].id : '',
+        idCongNgheMang: congNgheMangOptions.value.length > 0 ? congNgheMangOptions.value[0].id : '',
+        idHoTroCongNgheSac: hoTroCongNgheSacOptions.value.length > 0 ? hoTroCongNgheSacOptions.value[0].id : '',
+        idChiSoKhangBuiVaNuoc: chiSoKhangBuiVaNuocOptions.value.length > 0 ? chiSoKhangBuiVaNuocOptions.value[0].id : '',
+        idHoTroBoNhoNgoai: hoTroBoNhoNgoaiOptions.value.length > 0 ? hoTroBoNhoNgoaiOptions.value[0].id : '',
+        ghiChu: '',
+      };
+      emit('update:productData', localProductData.value);
+      toastNotification.value?.addToast({
+        type: 'info',
+        message: 'Đã hủy chọn sản phẩm. Bạn có thể thêm sản phẩm mới.',
+        duration: 3000,
+      });
     };
 
     const delayHideProductDropdown = () => {
@@ -775,6 +876,7 @@ export default defineComponent({
           case 'heDieuHanh':
             await addHeDieuHanh(data);
             heDieuHanhOptions.value.push(data);
+            localProductData.value.idHeDieuHanh = newId;
             break;
           case 'congNgheManHinh':
             await addCongNgheManHinh(data);
@@ -785,38 +887,47 @@ export default defineComponent({
               doPhanGiai: entityData.value.doPhanGiai,
               tanSoQuet: entityData.value.tanSoQuet,
             });
+            localProductData.value.idCongNgheManHinh = newId;
             break;
           case 'nhaSanXuat':
             await addNhaSanXuat(data);
             nhaSanXuatOptions.value.push(data);
+            localProductData.value.idNhaSanXuat = newId;
             break;
           case 'cumCamera':
             await addCumCamera(data);
             cumCameraOptions.value.push(data);
+            localProductData.value.idCumCamera = newId;
             break;
           case 'sim':
             await addSim(data);
             simOptions.value.push(data);
+            localProductData.value.idSim = newId;
             break;
           case 'thietKe':
             await addThietKe(data);
             thietKeOptions.value.push(data);
+            localProductData.value.idThietKe = newId;
             break;
           case 'pin':
             await addPin(data);
             pinOptions.value.push(data);
+            localProductData.value.idPin = newId;
             break;
           case 'cpu':
             await addCpu(data);
             cpuOptions.value.push(data);
+            localProductData.value.idCpu = newId;
             break;
           case 'gpu':
             await addGpu(data);
             gpuOptions.value.push(data);
+            localProductData.value.idGpu = newId;
             break;
           case 'congNgheMang':
             await addCongNgheMang(data);
             congNgheMangOptions.value.push(data);
+            localProductData.value.idCongNgheMang = newId;
             break;
           case 'hoTroCongNgheSac':
             await addHoTroCongNgheSac(data);
@@ -825,10 +936,17 @@ export default defineComponent({
               congSac: entityData.value.congSac,
               congNgheHoTro: entityData.value.congNgheHoTro,
             });
+            localProductData.value.idHoTroCongNgheSac = newId;
             break;
           case 'chiSoKhangBuiVaNuoc':
             await addChiSoKhangBuiVaNuoc(data);
             chiSoKhangBuiVaNuocOptions.value.push(data);
+            localProductData.value.idChiSoKhangBuiVaNuoc = newId;
+            break;
+          case 'hoTroBoNhoNgoai':
+            await addHoTroBoNhoNgoai(data);
+            hoTroBoNhoNgoaiOptions.value.push(data);
+            localProductData.value.idHoTroBoNhoNgoai = newId;
             break;
         }
         toastNotification.value?.addToast({
@@ -836,6 +954,7 @@ export default defineComponent({
           message: `Thêm ${currentAttributeLabel.value} thành công!`,
           duration: 3000,
         });
+        emit('update:productData', localProductData.value);
         closeFormModal();
       } catch (error) {
         toastNotification.value?.addToast({
@@ -846,9 +965,33 @@ export default defineComponent({
       }
     };
 
+    const resetForm = () => {
+      localProductData.value = {
+        tenSanPham: localProductData.value.tenSanPham,
+        idHeDieuHanh: heDieuHanhOptions.value.length > 0 ? heDieuHanhOptions.value[0].id : '',
+        idCongNgheManHinh: congNgheManHinhOptions.value.length > 0 ? congNgheManHinhOptions.value[0].id : '',
+        idNhaSanXuat: nhaSanXuatOptions.value.length > 0 ? nhaSanXuatOptions.value[0].id : '',
+        idCumCamera: cumCameraOptions.value.length > 0 ? cumCameraOptions.value[0].id : '',
+        idSim: simOptions.value.length > 0 ? simOptions.value[0].id : '',
+        idThietKe: thietKeOptions.value.length > 0 ? thietKeOptions.value[0].id : '',
+        idPin: pinOptions.value.length > 0 ? pinOptions.value[0].id : '',
+        idCpu: cpuOptions.value.length > 0 ? cpuOptions.value[0].id : '',
+        idGpu: gpuOptions.value.length > 0 ? gpuOptions.value[0].id : '',
+        idCongNgheMang: congNgheMangOptions.value.length > 0 ? congNgheMangOptions.value[0].id : '',
+        idHoTroCongNgheSac: hoTroCongNgheSacOptions.value.length > 0 ? hoTroCongNgheSacOptions.value[0].id : '',
+        idChiSoKhangBuiVaNuoc: chiSoKhangBuiVaNuocOptions.value.length > 0 ? chiSoKhangBuiVaNuocOptions.value[0].id : '',
+        idHoTroBoNhoNgoai: hoTroBoNhoNgoaiOptions.value.length > 0 ? hoTroBoNhoNgoaiOptions.value[0].id : '',
+        ghiChu: '',
+      };
+      isProductSelected.value = false;
+      isNewProduct.value = false;
+      emit('update:productData', localProductData.value);
+      emit('reset-form');
+    };
+
     return {
       toastNotification,
-      productData,
+      productData: localProductData,
       heDieuHanhOptions,
       congNgheManHinhOptions,
       nhaSanXuatOptions,
@@ -861,10 +1004,12 @@ export default defineComponent({
       congNgheMangOptions,
       hoTroCongNgheSacOptions,
       chiSoKhangBuiVaNuocOptions,
+      hoTroBoNhoNgoaiOptions,
       productNameOptions,
       filteredProductNameOptions,
       showProductDropdown,
       isProductSelected,
+      isNewProduct,
       isLoading,
       showFormModal,
       currentAttribute,
@@ -872,10 +1017,12 @@ export default defineComponent({
       entityData,
       filterProducts,
       selectProduct,
+      clearProductSelection,
       delayHideProductDropdown,
       openAddModal,
       closeFormModal,
       handleAddAttribute,
+      resetForm,
     };
   },
 });
@@ -997,13 +1144,18 @@ export default defineComponent({
   box-shadow: 0 0 15px rgba(108, 117, 125, 0.3);
 }
 
+.btn-sm {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.875rem;
+}
+
 .dropdown-menu {
   position: absolute;
   top: 100%;
   left: 0;
   z-index: 1000;
   width: 100%;
-  background: #f8f9fa;
+  background: #ffffff;
   border: 1px solid rgba(52, 211, 153, 0.2);
   border-radius: 8px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
@@ -1014,12 +1166,19 @@ export default defineComponent({
 
 .dropdown-item {
   padding: 0.5rem 1rem;
+  color: #1f3a44;
+  background: transparent;
   cursor: pointer;
-  transition: background 0.2s ease;
+  transition: all 0.2s ease;
 }
 
 .dropdown-item:hover {
   background: rgba(52, 211, 153, 0.1);
+  color: #16a34a;
+}
+
+.dropdown-item:active {
+  background: rgba(52, 211, 153, 0.2);
 }
 
 .modal {
@@ -1055,5 +1214,13 @@ export default defineComponent({
 
 .btn-close:hover {
   color: #1f3a44;
+}
+
+.text-success {
+  color: #34d399;
+}
+
+.text-info {
+  color: #3498db;
 }
 </style>
