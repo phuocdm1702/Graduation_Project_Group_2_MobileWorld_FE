@@ -1,12 +1,16 @@
 <template>
   <div class="container-fluid p-4">
     <ProductInfo
-      :product-data.sync="productData"
+      :product-data="productData"
       @update:product-data="updateProductData"
+      @reset-form="handleResetForm"
     />
     <ProductVariants
       :product-data="productData"
+      :product-variants="productVariants"
+      :variant-imeis="variantImeis"
       @variants-updated="handleVariantsUpdated"
+      @reset-form="handleResetForm"
     />
     <ProductImages
       :product-data="productData"
@@ -20,12 +24,12 @@
 </template>
 
 <script>
-import { defineComponent, ref } from 'vue';
+import { defineComponent, ref, watch } from 'vue';
 import ProductInfo from './themChiTietSanPham/ThongTinSanPham.vue';
 import ProductVariants from './themChiTietSanPham/ThemPhienBan.vue';
 import ProductImages from './themChiTietSanPham/ThemAnhSanPham.vue';
 import ToastNotification from '@/components/common/ToastNotification.vue';
-import { getMauSac } from '@/store/modules/products/chiTietSanPham'; 
+import { getMauSac } from '@/store/modules/products/chiTietSanPham';
 
 export default defineComponent({
   name: 'ProductDetails',
@@ -40,7 +44,7 @@ export default defineComponent({
     const productData = ref({
       tenSanPham: '',
       idHeDieuHanh: '',
-      congNgheManHinh: '',
+      idCongNgheManHinh: '',
       idNhaSanXuat: '',
       idCumCamera: '',
       idSim: '',
@@ -49,14 +53,15 @@ export default defineComponent({
       idCpu: '',
       idGpu: '',
       idCongNgheMang: '',
-      hoTroCongNgheSac: '',
+      idHoTroCongNgheSac: '',
       idChiSoKhangBuiVaNuoc: '',
+      idHoTroBoNhoNgoai: '',
+      ghiChu: '',
     });
     const productVariants = ref([]);
     const variantImeis = ref({});
     const mauSacOptions = ref([]);
 
-    // Fetch màu sắc từ API
     const fetchMauSac = async () => {
       try {
         const response = await getMauSac();
@@ -79,6 +84,19 @@ export default defineComponent({
         message: 'Thông tin sản phẩm đã được cập nhật!',
         duration: 3000,
       });
+      console.log('Updated productData:', productData.value);
+    };
+
+    const handleVariantsUpdated = ({ variants, imeis }) => {
+      productVariants.value = variants;
+      variantImeis.value = imeis;
+      toastNotification.value?.addToast({
+        type: 'info',
+        message: 'Danh sách biến thể đã được cập nhật!',
+        duration: 3000,
+      });
+      console.log('Updated productVariants:', productVariants.value);
+      console.log('Updated variantImeis:', variantImeis.value);
     };
 
     const handleProductSubmitted = (payload) => {
@@ -95,7 +113,7 @@ export default defineComponent({
       productData.value = {
         tenSanPham: '',
         idHeDieuHanh: '',
-        congNgheManHinh: '',
+        idCongNgheManHinh: '',
         idNhaSanXuat: '',
         idCumCamera: '',
         idSim: '',
@@ -104,8 +122,10 @@ export default defineComponent({
         idCpu: '',
         idGpu: '',
         idCongNgheMang: '',
-        hoTroCongNgheSac: '',
+        idHoTroCongNgheSac: '',
         idChiSoKhangBuiVaNuoc: '',
+        idHoTroBoNhoNgoai: '',
+        ghiChu: '',
       };
       productVariants.value = [];
       variantImeis.value = {};
@@ -114,15 +134,9 @@ export default defineComponent({
         message: 'Biểu mẫu đã được làm mới!',
         duration: 3000,
       });
-    };
-
-    const handleVariantsUpdated = (variants) => {
-      productVariants.value = variants;
-      toastNotification.value?.addToast({
-        type: 'info',
-        message: 'Danh sách biến thể đã được cập nhật!',
-        duration: 3000,
-      });
+      console.log('Form reset - productData:', productData.value);
+      console.log('Form reset - productVariants:', productVariants.value);
+      console.log('Form reset - variantImeis:', variantImeis.value);
     };
 
     return {
@@ -132,9 +146,9 @@ export default defineComponent({
       variantImeis,
       mauSacOptions,
       updateProductData,
+      handleVariantsUpdated,
       handleProductSubmitted,
       handleResetForm,
-      handleVariantsUpdated,
     };
   },
 });

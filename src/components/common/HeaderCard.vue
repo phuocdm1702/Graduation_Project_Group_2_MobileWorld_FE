@@ -3,7 +3,7 @@
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
       <div class="flex flex-col gap-2">
         <h1 class="header-title sm:text-2xl font-extrabold tracking-tight" :style="{ color: titleColor }">
-          {{ dynamicTitle }}
+          {{ displayTitle }}
         </h1>
         <nav class="breadcrumb" aria-label="Breadcrumb">
           <ol class="flex items-center space-x-2">
@@ -31,91 +31,16 @@
 import { useRoute } from 'vue-router';
 import { computed } from 'vue';
 
-const menuItems = [
-  { name: 'Trang chủ', path: '/trangChu'},
-  { name: 'Bán Hàng', path: '/banHang' },
-  { name: 'Quản Lý Hóa đơn', path: '/hoaDon'},
-  {
-    name: 'Trang chủ',
-    path: '/trangChu',
-    children: [
-            {
-        name: 'Sản phẩm',
-        path: '/sanPham',
-        children: [
-          { name: 'Thêm Chi Tiết Sản phẩm', path: '/themChiTietSanPham' },
-        ],
-      },
-      { name: 'Nhà sản xuất', path: '/nhaSanXuat' },
-      { name: 'Cụm Camera', path: '/cumCamera' },
-      { name: 'Hình Ảnh', path: '/hinhAnh' },
-      { name: 'Hỗ trợ Cổng Sạc', path: '/hoTroCongSac' },
-      { name: 'Sạc', path: '/sac' },
-      { name: 'RAM', path: '/ram' },
-      { name: 'Bộ Nhớ Trong', path: '/boNhoTrong' },
-      { name: 'Bộ Nhớ Ngoài', path: '/boNhoNgoai' },
-      { name: 'CPU', path: '/cpu' },
-      { name: 'GPU', path: '/gpu' },
-      { name: 'Công Nghệ Mạng', path: '/congNgheMang' },
-      { name: 'Hệ điều hành', path: '/heDieuHanh' },
-      { name: 'Kháng bụi - Kháng Nước', path: '/khangBuiKhangNuoc' },
-      { name: 'Màu sắc', path: '/mauSac' },
-      { name: 'Pin', path: '/pin' },
-      { name: 'Sim', path: '/sim' },
-      { name: 'Thiết kế', path: '/thietKe' },
-      {
-        name: 'Nhân viên',
-        path: '/nhanVien',
-        children: [
-          { name: 'Thêm nhân viên', path: '/nhanVien/form' },
-          { name: 'Sửa nhân viên', path: '/nhanVien/form/:id?' },
-        ],
-      },
-      {
-        name: 'Khách hàng',
-        path: '/khachHang',
-        children: [
-          { name: 'Thêm khách hàng', path: '/khachHang/form' },
-          { name: 'Sửa khách hàng', path: '/khachHang/form/:id?' },
-        ],
-      },
-      {
-        name: 'Phiếu giảm giá',
-        path: '/phieuGiamGia',
-        children: [
-          { name: 'Thêm phiếu giảm giá', path: '/phieuGiamGia/form' },
-          { name: 'Sửa phiếu giảm giá', path: '/phieuGiamGia/form/:id?' },
-        ],
-      },
-      { name: 'Đợt giảm giá', path: '/dotGiamGia',
-        children: [
-          { name: 'Thêm đợt giảm giá', path: '/dotGiamGia/form' },
-          { name: 'Sửa đợt giảm giá', path: '/dotGiamGia/form/:id?' },
-        ],
-       },
-    ],
-  },
-  { name: 'Thống kê', path: '/thongKe', icon: 'ChartBarIcon' },
-];
-
 export default {
   name: 'HeaderCard',
   props: {
     title: {
       type: String,
-      default: 'Không Xác Định',
-    },
-    badgeText: {
-      type: String,
-      default: 'Default',
+      default: '',
     },
     titleColor: {
       type: String,
       default: '#15803d',
-    },
-    badgeClass: {
-      type: String,
-      default: 'bg-gradient-to-r from-blue-600 to-indigo-600',
     },
     backgroundOpacity: {
       type: Number,
@@ -125,69 +50,23 @@ export default {
   setup(props) {
     const route = useRoute();
 
+    // Lấy breadcrumb từ route meta
     const breadcrumbs = computed(() => {
-      const currentPath = route.path;
-      const crumbs = [];
-
-      // Helper function to check if a path matches, including dynamic routes
-      const pathMatches = (menuPath, currentPath) => {
-        if (!menuPath.includes(':')) {
-          return menuPath === currentPath;
-        }
-        // Handle dynamic routes like /nhanVien/form/:id?
-        const regex = new RegExp(`^${menuPath.replace(/:id\?/, '[^/]*')}$`);
-        return regex.test(currentPath);
-      };
-
-      // Helper function to find a menu item by path, recursively
-      const findMenuItem = (items, path, parents = []) => {
-        for (const item of items) {
-          if (pathMatches(item.path, path)) {
-            return { item, parents };
-          }
-          if (item.children) {
-            const result = findMenuItem(item.children, path, [...parents, item]);
-            if (result.item) return result;
-          }
-        }
-        return { item: null, parents: [] };
-      };
-
-      // Helper function to build breadcrumb trail
-      const buildBreadcrumbs = (path) => {
-        const { item, parents } = findMenuItem(menuItems, path);
-
-        // Add all parent items to breadcrumbs
-        parents.forEach((parent) => {
-          crumbs.push({ name: parent.name, path: parent.path });
-        });
-
-        // Add current item or fallback
-        if (item) {
-          // For dynamic routes, use the menu item path without the specific id
-          crumbs.push({ name: item.name, path: item.path.replace('/:id?', '') });
-        } else {
-          crumbs.push({ name: route.name || 'Trang hiện tại', path });
-        }
-      };
-
-      buildBreadcrumbs(currentPath);
-
-      // Add Home as the first breadcrumb
-      if (crumbs[0]?.path !== '/trangChu') {
-        crumbs.unshift({ name: 'Trang chủ', path: '/trangChu' });
-      }
-
-      return crumbs;
+      return route.meta?.breadcrumb || [
+        { name: 'Trang chủ', path: '/trangChu' },
+        { name: route.name || 'Trang hiện tại', path: route.path }
+      ];
     });
 
-    // Compute the dynamic title based on the last breadcrumb
-    const dynamicTitle = computed(() => {
-      const lastCrumb = breadcrumbs.value[breadcrumbs.value.length - 1];
-      return lastCrumb ? lastCrumb.name : props.title;
+    // Lấy title từ route meta hoặc props
+    const displayTitle = computed(() => {
+      return props.title || route.meta?.title || route.name || 'Không xác định';
     });
 
-    return { breadcrumbs, dynamicTitle };
+    return { 
+      breadcrumbs, 
+      displayTitle 
+    };
   },
 };
 </script>

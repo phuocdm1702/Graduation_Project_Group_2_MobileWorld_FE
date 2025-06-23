@@ -211,6 +211,12 @@ export default {
   transition: all 0.3s ease;
 }
 
+/* .p-3 {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+} */
+
 .table-row:hover {
   background: rgba(52, 211, 153, 0.05) !important;
 }
