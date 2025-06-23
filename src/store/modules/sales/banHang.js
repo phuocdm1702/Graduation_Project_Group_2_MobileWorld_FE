@@ -1340,21 +1340,22 @@ export default {
       showToast("warning", "Chức năng quét QR đang được phát triển");
     };
 
-    const ThanhToan = async () => {
+    const roundToTwoDecimals = (num) => Math.round(num * 100) / 100;
+
+const ThanhToan = async () => {
   if (cartItems.value.length === 0) {
     showToast("error", "Giỏ hàng trống");
     return;
   }
 
-  // Đảm bảo dữ liệu khách hàng được cập nhật
   if (searchCustomer.value) {
     await searchCustomers();
   }
 
-  const totalPaymentValue = totalPayment.value;
+  const totalPaymentValue = roundToTwoDecimals(totalPayment.value);
   if (paymentMethod.value === "both") {
-    const totalInput = (tienChuyenKhoan.value || 0) + (tienMat.value || 0);
-    if (totalInput !== totalPaymentValue) {
+    const totalInput = roundToTwoDecimals((tienChuyenKhoan.value || 0) + (tienMat.value || 0));
+    if (Math.abs(totalInput - totalPaymentValue) > 0.01) {
       showToast(
         "error",
         `Số tiền thanh toán (${formatPrice(totalInput)}) không khớp với tổng thanh toán (${formatPrice(totalPaymentValue)})`
@@ -1362,7 +1363,7 @@ export default {
       return;
     }
     if (tienChuyenKhoan.value < 0 || tienMat.value < 0) {
-      showToast("error", "Số tiền thanh toán không được âm");
+      showToast("error", "Số tiền không được âm");
       return;
     }
   } else if (paymentMethod.value === "transfer") {
@@ -1380,7 +1381,28 @@ const createOrder = async () => {
   isCreatingOrder.value = true;
   try {
     await applyBestDiscount();
-    const roundToTwoDecimals = (num) => Math.round(num * 100) / 100;
+
+    // Xác thực lại mã giảm giá
+    if (selectedDiscount.value) {
+      const result = await validateDiscount(
+        selectedDiscount.value.code,
+        customer.value?.id || null
+      );
+      if (!result.success || !result.data) {
+        console.warn("Mã giảm giá không hợp lệ:", selectedDiscount.value);
+        selectedDiscount.value = null;
+        discount.value = 0;
+        showToast("warning", "Mã giảm giá không hợp lệ, đã bỏ áp dụng.");
+      }
+    }
+
+    // Ghi log tính toán
+    console.log("Tính toán Frontend:", {
+      tongTien: tongTien.value,
+      discount: discount.value,
+      shippingFee: isDelivery.value ? shippingFee.value : 0,
+      totalPayment: totalPayment.value,
+    });
 
     const hinhThucThanhToan = [];
     if (paymentMethod.value === "cash") {
@@ -1397,7 +1419,7 @@ const createOrder = async () => {
       });
     } else if (paymentMethod.value === "both") {
       const totalInput = roundToTwoDecimals(tienMat.value || 0) + roundToTwoDecimals(tienChuyenKhoan.value || 0);
-      if (totalInput !== roundToTwoDecimals(totalPayment.value)) {
+      if (Math.abs(totalInput - roundToTwoDecimals(totalPayment.value)) > 0.01) {
         showToast("error", `Tổng tiền thanh toán (${formatPrice(totalInput)}) không khớp với tổng thanh toán (${formatPrice(totalPayment.value)})`);
         return;
       }
@@ -1419,22 +1441,35 @@ const createOrder = async () => {
             phuong: customer.value.ward,
             diaChiCuThe: customer.value.address,
           }
-        : null,
+        : {
+            thanhPho: "Chưa có dữ liệu",
+            quan: "Chưa có dữ liệu",
+            phuong: "Chưa có dữ liệu",
+            diaChiCuThe: "Chưa có dữ liệu",
+          },
       hinhThucThanhToan,
       idPhieuGiamGia: selectedDiscount.value?.id || null,
       giamGia: roundToTwoDecimals(discount.value),
-      phiVanChuyen: roundToTwoDecimals(isDelivery.value ? shippingFee.value : 0),
+      phiVanChuyen: roundToTwoDecimals(isDelivery.value && tongTien.value < FREE_SHIP_THRESHOLD ? shippingFee.value : 0),
       loaiDon: isDelivery.value ? "online" : "trực tiếp",
       tongTien: roundToTwoDecimals(tongTien.value),
-      chiTietGioHang: cartItems.value.map((item) => ({
-        chiTietSanPhamId: item.id,
-        soLuong: item.quantity,
-        maImel: item.imei,
-        giaBan: roundToTwoDecimals(item.originalPrice),
-      })),
+      chiTietGioHang: cartItems.value.map((item) => {
+        const currentItem = priceChangeInfo.value.find(
+          (ci) => ci.id === item.id &&
+                  ci.color === item.color &&
+                  ci.ram === item.ram &&
+                  ci.storage === item.storage
+        );
+        return {
+          chiTietSanPhamId: item.id,
+          soLuong: item.quantity,
+          maImel: item.imei,
+          giaBan: roundToTwoDecimals(currentItem?.currentPrice || item.originalPrice),
+        };
+      }),
     };
 
-    console.log("hoaDonRequest Details:", JSON.stringify(hoaDonRequest, null, 2));
+    console.log("hoaDonRequest:", JSON.stringify(hoaDonRequest, null, 2));
 
     const response = await apiService.post(
       `/api/thanh-toan/${activeInvoiceId.value}`,

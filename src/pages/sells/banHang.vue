@@ -827,7 +827,6 @@
                   <h6
                     class="fw-semibold text-dark mb-2 d-flex align-items-center gap-2 fs-5"
                   >
-                    <i class="bi bi-arrow-repeat text-success"></i>
                     Mã giảm giá thay thế
                   </h6>
 
@@ -902,7 +901,6 @@
                     style="margin-top: 20px"
                     class="fw-semibold text-dark mb-2 d-flex align-items-center gap-2 fs-5"
                   >
-                    <i class="bi bi-lightbulb-fill text-warning"></i>
                     Gợi ý
                   </h6>
 
