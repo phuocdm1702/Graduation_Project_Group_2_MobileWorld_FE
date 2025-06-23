@@ -1,7 +1,11 @@
 <template>
   <div class="container-fluid py-4 customer-management">
-    <HeaderCard title="Quản Lý Khách Hàng" badgeText="Hệ Thống POS" badgeClass="gradient-custom-teal"
-      :backgroundOpacity="0.95" />
+    <HeaderCard
+      title="Quản Lý Khách Hàng"
+      badgeText="Hệ Thống POS"
+      badgeClass="gradient-custom-teal"
+      :backgroundOpacity="0.95"
+    />
 
     <!-- Filter Section -->
     <FilterTableSection title="Bộ Lọc Tìm Kiếm" icon="bi bi-funnel">
@@ -12,8 +16,13 @@
               <label class="filter-label">Tìm kiếm</label>
               <div class="search-input-wrapper">
                 <i class="bi bi-search search-icon"></i>
-                <input type="text" class="form-control search-input" placeholder="Mã, tên, email, SĐT..."
-                  :value="keyword" @input="debouncedSearch($event.target.value)" />
+                <input
+                  type="text"
+                  class="form-control search-input"
+                  placeholder="Mã, tên, email, SĐT..."
+                  :value="keyword"
+                  @input="debouncedSearch($event.target.value)"
+                />
               </div>
             </div>
           </div>
@@ -40,12 +49,15 @@
         </div>
         <div class="filter-actions">
           <div class="row g-3">
-            <div class="col-lg-12" style="display: flex; align-items: center;">
+            <div class="col-lg-12" style="display: flex; align-items: center">
               <div class="filter-stats">
                 <div class="stat-item d-flex gap-2">
                   <span class="stat-label">Tổng số khách hàng:</span>
-                  <span class="stat-value" style="color: #15803d; font-weight: bold;">{{ filteredCustomers.length
-                    }}</span>
+                  <span
+                    class="stat-value"
+                    style="color: #15803d; font-weight: bold"
+                    >{{ filteredCustomers.length }}</span
+                  >
                 </div>
               </div>
             </div>
@@ -66,7 +78,13 @@
             <label for="import-excel" class="btn btn-action cursor-pointer">
               <i class="bi bi-file-earmark-excel me-2"></i>
               Nhập từ Excel
-              <input id="import-excel" type="file" accept=".xlsx, .xls" class="d-none" @change="handleExcelUpload" />
+              <input
+                id="import-excel"
+                type="file"
+                accept=".xlsx, .xls"
+                class="d-none"
+                @change="handleExcelUpload"
+              />
             </label>
             <button class="btn btn-action" @click="downloadTemplate">
               <i class="bi bi-file-earmark-excel me-2"></i>
@@ -81,18 +99,30 @@
     <FilterTableSection title="Danh Sách Khách Hàng" icon="bi bi-table">
       <div class="table-header">
         <div class="table-title-wrapper">
-          <span class="table-count">{{ filteredCustomers.length }} khách hàng</span>
+          <span class="table-count"
+            >{{ filteredCustomers.length }} khách hàng</span
+          >
         </div>
         <div class="table-controls">
           <div class="view-toggle">
-            <button class="btn btn-sm"
-              :class="{ 'btn-primary': viewMode === 'table', 'btn-outline-secondary': viewMode !== 'table' }"
-              @click="viewMode = 'table'">
+            <button
+              class="btn btn-sm"
+              :class="{
+                'btn-primary': viewMode === 'table',
+                'btn-outline-secondary': viewMode !== 'table',
+              }"
+              @click="viewMode = 'table'"
+            >
               <i class="bi bi-table"></i>
             </button>
-            <button class="btn btn-sm"
-              :class="{ 'btn-primary': viewMode === 'card', 'btn-outline-secondary': viewMode !== 'card' }"
-              @click="viewMode = 'card'">
+            <button
+              class="btn btn-sm"
+              :class="{
+                'btn-primary': viewMode === 'card',
+                'btn-outline-secondary': viewMode !== 'card',
+              }"
+              @click="viewMode = 'card'"
+            >
               <i class="bi bi-grid-3x3-gap"></i>
             </button>
           </div>
@@ -101,8 +131,15 @@
 
       <div class="table-body">
         <!-- Table View -->
-        <div v-if="viewMode === 'table'" class="animate__animated animate__zoomIn">
-          <DataTable :headers="headers" :data="filteredCustomers" :pageSizeOptions="[5, 10, 15, 20, 30, 40, 50]">
+        <div
+          v-if="viewMode === 'table'"
+          class="animate__animated animate__zoomIn"
+        >
+          <DataTable
+            :headers="headers"
+            :data="filteredCustomers"
+            :pageSizeOptions="[5, 10, 15, 20, 30, 40, 50]"
+          >
             <template #stt="{ item, index }">
               {{ index + 1 }}
             </template>
@@ -114,26 +151,62 @@
             <template #ten="{ item }">
               <div class="customer-cell">
                 <div class="customer-name">{{ item.ten }}</div>
-                <div class="customer-phone">{{ item.soDienThoai }}</div>
               </div>
             </template>
+            <template #soDienThoai="{ item }">
+              <div class="customer-cell">
+                <div class="customer-name">{{ item.idTaiKhoan.soDienThoai }}</div>
+              </div>
+            </template>
+             <template #email="{ item }">
+              <div class="customer-cell">
+                <div class="customer-name">{{ item.idTaiKhoan.email }}</div>
+              </div>
+            </template>
+            <template #diaChi="{ item }">
+        <div class="customer-cell">
+          <div class="customer-name">
+            <span v-if="item.idDiaChiKhachHang && item.idDiaChiKhachHang.macDinh === true">
+              {{ item.idDiaChiKhachHang.diaChiCuThe }},
+              {{ item.idDiaChiKhachHang.thanhPho }},
+              {{ item.idDiaChiKhachHang.quan }},
+              {{ item.idDiaChiKhachHang.phuong }}
+            </span>
+            <span v-else>Không có địa chỉ</span>
+          </div>
+        </div>
+      </template>
             <template #trangThai="{ item }">
-              <span class="status-badge" :class="getStatusBadgeClass(item.trangThai)">
-                <i :class="getStatusIcon(item.trangThai)" class="me-1"></i>
-                {{ item.trangThai }}
+              <span
+                class="status-badge"
+                :class="getStatusBadgeClass(item.idTaiKhoan.deleted)"
+              >
+                <i :class="getStatusIcon(item.idTaiKhoan.deleted)" class="me-1"></i>
+                {{ item.idTaiKhoan.deleted ? "Kích Hoạt":"Đã Hủy" }}
               </span>
             </template>
             <template #actions="{ item }">
               <div class="action-buttons-cell d-flex gap-2">
                 <label class="switch">
-                  <input type="checkbox" :checked="item.trangThai === 'Kích hoạt'"
-                    @change="toggleCustomerStatus(item)" />
+                  <input
+                    type="checkbox"
+                    :checked="item.idTaiKhoan.deleted"
+                    @change="toggleCustomerStatus(item)"
+                  />
                   <span class="slider round"></span>
                 </label>
-                <button class="btn btn-sm btn-table" @click="editCustomer(item)" title="Chỉnh sửa">
+                <button
+                  class="btn btn-sm btn-table"
+                  @click="editCustomer(item)"
+                  title="Chỉnh sửa"
+                >
                   <i class="bi bi-pencil-fill"></i>
                 </button>
-                <button class="btn btn-sm btn-table" @click="confirmDeleteCustomer(item)" title="Xóa">
+                <button
+                  class="btn btn-sm btn-table"
+                  @click="confirmDeleteCustomer(item)"
+                  title="Xóa"
+                >
                   <i class="bi bi-trash-fill"></i>
                 </button>
               </div>
@@ -143,30 +216,31 @@
 
         <!-- Card View -->
         <div v-else class="card-grid animate__animated animate__zoomIn">
-          <div v-for="customer in paginatedCustomers" :key="customer.ma" class="customer-card">
+          <div
+            v-for="customer in paginatedCustomers"
+            :key="customer.ma"
+            class="customer-card"
+          >
             <div class="invoice-card-header">
               <div class="invoice-code">{{ customer.ma }}</div>
-              <span class="status-badge" :class="getStatusBadgeClass(customer.trangThai)">
+              <span
+                class="status-badge"
+                :class="getStatusBadgeClass(customer.trangThai)"
+              >
                 {{ customer.trangThai }}
               </span>
             </div>
             <div class="invoice-card-body">
               <div class="customer-info">
                 <div class="customer-name">{{ customer.ten }}</div>
-                <div class="customer-phone">{{ customer.soDienThoai }}</div>
+              </div>
+              <div class="customer-info">
+                <div class="customer-phone">{{ customer.idTaiKhoan.soDienThoai }}</div>
               </div>
               <div class="invoice-details">
                 <div class="detail-row">
                   <span class="detail-label">Email:</span>
                   <span class="detail-value">{{ customer.email }}</span>
-                </div>
-                <div class="detail-row">
-                  <span class="detail-label">Ngày sinh:</span>
-                  <span class="detail-value">{{ customer.ngaySinh }}</span>
-                </div>
-                <div class="detail-row">
-                  <span class="detail-label">Giới tính:</span>
-                  <span class="detail-value">{{ customer.gioiTinh }}</span>
                 </div>
                 <div class="detail-row">
                   <span class="detail-label">Địa chỉ:</span>
@@ -176,14 +250,23 @@
             </div>
             <div class="invoice-card-actions">
               <label class="switch">
-                <input type="checkbox" :checked="customer.trangThai === 'Kích hoạt'"
-                  @change="toggleCustomerStatus(customer)" />
+                <input
+                  type="checkbox"
+                  :checked="customer.trangThai === 'Kích hoạt'"
+                  @change="toggleCustomerStatus(customer)"
+                />
                 <span class="slider round"></span>
               </label>
-              <button class="btn btn-sm btn-table" @click="editCustomer(customer)">
+              <button
+                class="btn btn-sm btn-table"
+                @click="editCustomer(customer)"
+              >
                 <i class="bi bi-pen-fill me-1"></i> Sửa
               </button>
-              <button class="btn btn-sm btn-table" @click="confirmDeleteCustomer(customer)">
+              <button
+                class="btn btn-sm btn-table"
+                @click="confirmDeleteCustomer(customer)"
+              >
                 <i class="bi bi-trash-fill me-1"></i> Xóa
               </button>
             </div>
@@ -195,15 +278,33 @@
           <nav aria-label="Page navigation">
             <ul class="pagination justify-content-center">
               <li class="page-item" :class="{ disabled: currentPage === 1 }">
-                <button class="page-link" @click="currentPage--" :disabled="currentPage === 1">
+                <button
+                  class="page-link"
+                  @click="currentPage--"
+                  :disabled="currentPage === 1"
+                >
                   <i class="bi bi-chevron-left"></i>
                 </button>
               </li>
-              <li v-for="page in totalPages" :key="page" class="page-item" :class="{ active: currentPage === page }">
-                <button class="page-link" @click="currentPage = page">{{ page }}</button>
+              <li
+                v-for="page in totalPages"
+                :key="page"
+                class="page-item"
+                :class="{ active: currentPage === page }"
+              >
+                <button class="page-link" @click="currentPage = page">
+                  {{ page }}
+                </button>
               </li>
-              <li class="page-item" :class="{ disabled: currentPage === totalPages }">
-                <button class="page-link" @click="currentPage++" :disabled="currentPage === totalPages">
+              <li
+                class="page-item"
+                :class="{ disabled: currentPage === totalPages }"
+              >
+                <button
+                  class="page-link"
+                  @click="currentPage++"
+                  :disabled="currentPage === totalPages"
+                >
                   <i class="bi bi-chevron-right"></i>
                 </button>
               </li>
@@ -213,59 +314,76 @@
       </div>
     </FilterTableSection>
 
-    <NotificationModal ref="notificationModal" :type="notificationType" :message="notificationMessage"
-      :isLoading="isNotificationLoading" :onConfirm="notificationOnConfirm" :onCancel="notificationOnCancel"
-      @close="resetNotification" />
+    <NotificationModal
+      ref="notificationModal"
+      :type="notificationType"
+      :message="notificationMessage"
+      :isLoading="isNotificationLoading"
+      :onConfirm="notificationOnConfirm"
+      :onCancel="notificationOnCancel"
+      @close="resetNotification"
+    />
     <ToastNotification ref="toastNotification" />
   </div>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
-import { useRouter } from 'vue-router';
-import { debounce } from 'lodash';
+import { ref, computed, onMounted } from "vue";
+import { useRouter } from "vue-router";
+import { debounce } from "lodash";
 import DataTable from "@/components/common/DataTable.vue";
 import NotificationModal from "@/components/common/NotificationModal.vue";
 import ToastNotification from "@/components/common/ToastNotification.vue";
 import HeaderCard from "@/components/common/HeaderCard.vue";
 import FilterTableSection from "@/components/common/FilterTableSection.vue";
+import { fetchKhachHang, trangThai,importKhachHang } from "../../store/modules/customers/khachHang";
+import * as XLSX from "xlsx";
+import { saveAs } from "file-saver";
 
 const router = useRouter();
-const keyword = ref('');
-const genderFilter = ref('tat-ca');
-const statusFilter = ref('tat-ca');
-const viewMode = ref('table');
+const keyword = ref("");
+const genderFilter = ref("tat-ca");
+const statusFilter = ref("tat-ca");
+const viewMode = ref("table");
 const currentPage = ref(1);
 const pageSize = ref(10);
-const notificationType = ref('');
-const notificationMessage = ref('');
+const notificationType = ref("");
+const notificationMessage = ref("");
 const isNotificationLoading = ref(false);
 const notificationOnConfirm = ref(null);
 const notificationOnCancel = ref(null);
 const notificationModal = ref(null);
 const toastNotification = ref(null);
 
-const customers = ref([
-  { ma: 'KH001', ten: 'Nguyễn Thị C', email: 'ntc@example.com', soDienThoai: '0123456789', ngaySinh: '1992-03-03', gioiTinh: 'Nữ', diaChi: 'Hà Nội', trangThai: 'Kích hoạt' },
-  { ma: 'KH002', ten: 'Trần Văn D', email: 'tvd@example.com', soDienThoai: '0987654321', ngaySinh: '1990-04-04', gioiTinh: 'Nam', diaChi: 'TP.HCM', trangThai: 'Hủy kích hoạt' },
-]);
+const customers = ref([]);
 
 const filteredCustomers = computed(() => {
-  return customers.value.filter(customer => {
+  return customers.value.filter((customer) => {
     const searchText = keyword.value.toLowerCase();
-    const matchesSearch = (
+    const matchesSearch =
       customer.ma.toLowerCase().includes(searchText) ||
       customer.ten.toLowerCase().includes(searchText) ||
       customer.email.toLowerCase().includes(searchText) ||
-      customer.soDienThoai.includes(searchText)
-    );
-    const matchesStatus = statusFilter.value === 'tat-ca' || customer.trangThai === statusFilter.value;
-    const matchesGender = genderFilter.value === 'tat-ca' || customer.gioiTinh === genderFilter.value;
+      customer.soDienThoai.includes(searchText);
+    const matchesStatus =
+      statusFilter.value === "tat-ca" ||
+      customer.trangThai === statusFilter.value;
+    const matchesGender =
+      genderFilter.value === "tat-ca" ||
+      customer.gioiTinh === genderFilter.value;
     return matchesSearch && matchesStatus && matchesGender;
   });
 });
 
-const totalPages = computed(() => Math.ceil(filteredCustomers.value.length / pageSize.value));
+onMounted(async () => {
+  const data = await fetchKhachHang();
+  customers.value = data;
+
+});
+
+const totalPages = computed(() =>
+  Math.ceil(filteredCustomers.value.length / pageSize.value)
+);
 
 const paginatedCustomers = computed(() => {
   const start = (currentPage.value - 1) * pageSize.value;
@@ -273,16 +391,14 @@ const paginatedCustomers = computed(() => {
 });
 
 const headers = [
-  { value: 'stt', text: 'STT' },
-  { value: 'ma', text: 'Mã Khách Hàng' },
-  { value: 'ten', text: 'Tên Khách Hàng' },
-  { value: 'email', text: 'Email' },
-  { value: 'soDienThoai', text: 'Số Điện Thoại' },
-  { value: 'ngaySinh', text: 'Ngày Sinh' },
-  { value: 'gioiTinh', text: 'Giới Tính' },
-  { value: 'diaChi', text: 'Địa Chỉ' },
-  { value: 'trangThai', text: 'Trạng Thái' },
-  { value: 'actions', text: 'Hành Động' },
+  { value: "stt", text: "STT" },
+  { value: "ma", text: "Mã Khách Hàng" },
+  { value: "ten", text: "Tên Khách Hàng" },
+   { value: "soDienThoai", text: "Số Điện Thoại" },
+  { value: "email", text: "Email" },
+  { value: "diaChi", text: "Địa Chỉ" },
+  { value: "trangThai", text: "Trạng Thái" },
+  { value: "actions", text: "Hành Động" },
 ];
 
 const debouncedSearch = debounce((value) => {
@@ -290,24 +406,25 @@ const debouncedSearch = debounce((value) => {
   currentPage.value = 1;
 }, 300);
 
+
 const resetFilters = () => {
-  keyword.value = '';
-  genderFilter.value = 'tat-ca';
-  statusFilter.value = 'tat-ca';
+  keyword.value = "";
+  genderFilter.value = "tat-ca";
+  statusFilter.value = "tat-ca";
   currentPage.value = 1;
 };
 
 const getStatusBadgeClass = (status) => {
   return {
-    'badge-waiting': status === 'Kích hoạt',
-    'badge-canceled': status === 'Hủy kích hoạt',
+    "badge-waiting": status,
+    "badge-canceled": !status,
   };
 };
 
 const getStatusIcon = (status) => {
   return {
-    'bi bi-check-circle': status === 'Kích hoạt',
-    'bi bi-x-circle': status === 'Hủy kích hoạt',
+    "bi bi-check-circle": status,
+    "bi bi-x-circle": !status,
   };
 };
 
@@ -317,62 +434,294 @@ const editCustomer = (customer) => {
 
 const confirmDeleteCustomer = (customer) => {
   notificationMessage.value = `Bạn có chắc chắn muốn xóa khách hàng ${customer.ten}?`;
-  notificationType.value = 'confirm';
+  notificationType.value = "confirm";
   notificationOnConfirm.value = () => deleteCustomer(customer);
   notificationOnCancel.value = resetNotification;
   notificationModal.value.openModal();
 };
 
 const deleteCustomer = (customer) => {
-  customers.value = customers.value.filter(c => c.ma !== customer.ma);
+  customers.value = customers.value.filter((c) => c.ma !== customer.ma);
   toastNotification.value.addToast({
-    type: 'success',
-    message: 'Xóa khách hàng thành công!',
+    type: "success",
+    message: "Xóa khách hàng thành công!",
   });
   resetNotification();
 };
 
-const toggleCustomerStatus = (customer) => {
-  const newStatus = customer.trangThai === 'Kích hoạt' ? 'Hủy kích hoạt' : 'Kích hoạt';
-  customers.value = customers.value.map(c =>
-    c.ma === customer.ma ? { ...c, trangThai: newStatus } : c
-  );
-  toastNotification.value.addToast({
-    type: 'info',
-    message: `Khách hàng ${customer.ten} đã được ${newStatus === 'Kích hoạt' ? 'kích hoạt' : 'hủy kích hoạt'}`,
-  });
+const toggleCustomerStatus = async (customer) => {
+  const newDeleted = !customer.idTaiKhoan.deleted; 
+  const newStatus = newDeleted ? "Kích Hoạt" : "Đã Hủy";
+
+  try {
+    const taiKhoanId = customer.idTaiKhoan?.id;
+    if (!taiKhoanId) {
+      throw new Error("Không tìm thấy ID tài khoản của khách hàng");
+    }
+
+    const result = await trangThai(taiKhoanId);
+
+    if (result.success) {
+      customers.value = customers.value.map((e) =>
+        e.id === customer.id
+          ? {
+              ...e,
+              trangThai: newStatus,
+              idTaiKhoan: { ...e.idTaiKhoan, deleted: newDeleted },
+            }
+          : e
+      );
+
+      toastNotification.value.addToast({
+        type: "success",
+        message: `Trạng thái của ${customer.ten} đã được cập nhật thành ${newStatus}!`,
+      });
+    } else {
+      throw new Error(result.message || "Cập nhật trạng thái thất bại");
+    }
+  } catch (error) {
+    toastNotification.value.addToast({
+      type: "error",
+      message: `Lỗi khi cập nhật trạng thái: ${error.message}`,
+    });
+    console.error("Lỗi khi cập nhật trạng thái:", error);
+  }
 };
 
 const resetNotification = () => {
-  notificationMessage.value = '';
-  notificationType.value = '';
+  notificationMessage.value = "";
+  notificationType.value = "";
   notificationOnConfirm.value = null;
   notificationOnCancel.value = null;
 };
 
+
 const exportExcel = () => {
-  toastNotification.value.addToast({
-    type: 'success',
-    message: 'Xuất Excel thành công!',
-  });
+  if (filteredCustomers.value.length === 0) {
+    toastNotification.value.addToast({
+      type: "warning",
+      message: "Không có dữ liệu để xuất!",
+    });
+    return;
+  }
+
+  try {
+    const exportData = filteredCustomers.value.map((customer, index) => ({
+      STT: index + 1,
+      "Mã Khách Hàng": customer.ma,
+      "Tên Khách Hàng": customer.ten,
+      Email: customer.idTaiKhoan?.email || "Chưa có dữ liệu",
+      "Số Điện Thoại": customer.idTaiKhoan?.soDienThoai || "Chưa có dữ liệu",
+      "Giới Tính": customer.gioiTinh === 0 ? "Nam" : 
+                    customer.gioiTinh === 1 ? "Nữ" : 
+                    customer.gioiTinh || "Chưa có dữ liệu",
+      "Địa Chỉ Cụ Thể":
+        customer.idDiaChiKhachHang?.macDinh === true
+          ? customer.idDiaChiKhachHang.diaChiCuThe || "Chưa có dữ liệu"
+          : "Chưa có dữ liệu",
+      Phường:
+        customer.idDiaChiKhachHang?.macDinh === true
+          ? customer.idDiaChiKhachHang.phuong || "Chưa có dữ liệu"
+          : "Chưa có dữ liệu",
+      Quận:
+        customer.idDiaChiKhachHang?.macDinh === true
+          ? customer.idDiaChiKhachHang.quan || "Chưa có dữ liệu"
+          : "Chưa có dữ liệu",
+      "Thành Phố":
+        customer.idDiaChiKhachHang?.macDinh === true
+          ? customer.idDiaChiKhachHang.thanhPho || "Chưa có dữ liệu"
+          : "Chưa có dữ liệu",
+      "Trạng Thái": customer.idTaiKhoan?.deleted ? "Kích Hoạt" : "Đã Hủy",
+    }));
+
+    // Log dữ liệu xuất để kiểm tra
+    console.log("Dữ liệu xuất Excel:", exportData);
+
+    const worksheet = XLSX.utils.json_to_sheet(exportData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Danh Sách Khách Hàng");
+
+    // Đặt độ rộng cột
+    worksheet["!cols"] = [
+      { wch: 5 }, // STT
+      { wch: 15 }, // Mã Khách Hàng
+      { wch: 20 }, // Tên Khách Hàng
+      { wch: 25 }, // Email
+      { wch: 15 }, // Số Điện Thoại
+      { wch: 10 }, // Giới Tính
+      { wch: 30 }, // Địa Chỉ Cụ Thể
+      { wch: 20 }, // Phường
+      { wch: 20 }, // Quận
+      { wch: 20 }, // Thành Phố
+      { wch: 15 }, // Trạng Thái
+    ];
+
+    // Định dạng tiêu đề và ô
+    const range = XLSX.utils.decode_range(worksheet["!ref"]);
+    for (let R = range.s.r; R <= range.e.r; ++R) {
+      for (let C = range.s.c; C <= range.e.c; ++C) {
+        const cellAddress = XLSX.utils.encode_cell({ r: R, c: C });
+        if (!worksheet[cellAddress]) continue;
+        worksheet[cellAddress].s = {
+          font: { bold: R === 0 },
+          alignment: { horizontal: "center", vertical: "center" },
+          border: {
+            top: { style: "thin" },
+            bottom: { style: "thin" },
+            left: { style: "thin" },
+            right: { style: "thin" },
+          },
+        };
+      }
+    }
+
+    const excelBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
+    const timestamp = new Date()
+      .toLocaleString("vi-VN")
+      .replace(/[:/,\s]/g, "-");
+    const data = new Blob([excelBuffer], { type: "application/octet-stream" });
+    saveAs(data, `Danh_Sach_Khach_Hang_${timestamp}.xlsx`);
+
+    toastNotification.value.addToast({
+      type: "success",
+      message: "Xuất Excel thành công!",
+    });
+  } catch (error) {
+    console.error("Lỗi khi xuất Excel:", error);
+    toastNotification.value.addToast({
+      type: "error",
+      message: "Đã xảy ra lỗi khi xuất Excel",
+    });
+  }
 };
 
 const downloadTemplate = () => {
   toastNotification.value.addToast({
-    type: 'success',
-    message: 'Tải template Excel thành công!',
+    type: "success",
+    message: "Tải template Excel thành công!",
   });
 };
 
-const handleExcelUpload = (event) => {
-  const file = event.target.files[0];
-  if (file) {
+const handleExcelUpload = async (event) => {
+  try {
+    const fileInput = event.target;
+    const file = fileInput.files[0];
+    if (!file) {
+      toastNotification.value.addToast({
+        type: "error",
+        message: "Vui lòng chọn file Excel để nhập!",
+      });
+      return;
+    }
+
+    if (!file.name.endsWith(".xlsx") && !file.name.endsWith(".xls")) {
+      toastNotification.value.addToast({
+        type: "error",
+        message: "Vui lòng chọn file Excel (.xlsx hoặc .xls)!",
+      });
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      try {
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, { type: "array", cellDates: true, dateNF: "dd/mm/yyyy" });
+        const sheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[sheetName];
+        const jsonData = XLSX.utils.sheet_to_json(worksheet, { raw: false, dateNF: "dd/mm/yyyy" });
+
+        // Log dữ liệu thô từ Excel để kiểm tra
+        console.log("Dữ liệu thô từ Excel:", jsonData);
+
+        // Xử lý dữ liệu từ Excel
+        const khachHangs = jsonData.map((row, index) => {
+          if (!row["Mã Khách Hàng"] || !row["Tên Khách Hàng"]) {
+            throw new Error(`Dòng ${index + 2}: Thiếu Mã Khách Hàng hoặc Tên Khách Hàng`);
+          }
+          if (row["Trạng Thái"] && !["Kích Hoạt", "Đã Hủy"].includes(row["Trạng Thái"].toString().trim())) {
+            throw new Error(`Dòng ${index + 2}: Trạng Thái phải là "Kích Hoạt" hoặc "Đã Hủy"`);
+          }
+          if (row["Giới Tính"] && !["Nam", "Nữ"].includes(row["Giới Tính"].toString().trim())) {
+            throw new Error(`Dòng ${index + 2}: Giới Tính phải là "Nam" hoặc "Nữ"`);
+          }
+
+          const customerData = {
+            ma: row["Mã Khách Hàng"]?.toString().trim() || "",
+            ten: row["Tên Khách Hàng"]?.toString().trim() || "",
+            idTaiKhoan: {
+              email: row["Email"]?.toString().trim() || "",
+              soDienThoai: row["Số Điện Thoại"]?.toString().trim() || "",
+              deleted: row["Trạng Thái"]?.toString().trim() === "Kích Hoạt",
+            },
+            gioiTinh: row["Giới Tính"]?.toString().trim() || null,
+            idDiaChiKhachHang: row["Địa Chỉ Cụ Thể"] || row["Phường"] || row["Quận"] || row["Thành Phố"]
+              ? {
+                  macDinh: true,
+                  diaChiCuThe: row["Địa Chỉ Cụ Thể"]?.toString().trim() || "",
+                  phuong: row["Phường"]?.toString().trim() || "",
+                  quan: row["Quận"]?.toString().trim() || "",
+                  thanhPho: row["Thành Phố"]?.toString().trim() || "",
+                }
+              : null,
+            trangThai: row["Trạng Thái"]?.toString().trim() === "Kích Hoạt" ? "Kích Hoạt" : "Đã Hủy",
+          };
+
+          console.log(`Dòng ${index + 2} - Dữ liệu khách hàng:`, customerData);
+          return customerData;
+        });
+
+        // Log dữ liệu trước khi gửi lên server
+        console.log("Dữ liệu khách hàng trước khi gửi:", khachHangs);
+
+        // Gửi dữ liệu lên server
+        const result = await importKhachHang(khachHangs);
+
+        if (result.success) {
+          console.log("Dữ liệu trả về từ server:", result.data);
+
+          // Cập nhật customers.value
+          customers.value = result.data;
+
+          console.log("Dữ liệu customers.value sau khi cập nhật:", customers.value);
+
+          toastNotification.value.addToast({
+            type: "success",
+            message: `Nhập thành công ${khachHangs.length} khách hàng từ Excel!`,
+          });
+        } else {
+          throw new Error(result.message || "Lỗi khi nhập dữ liệu từ Excel");
+        }
+      } catch (error) {
+        toastNotification.value.addToast({
+          type: "error",
+          message: error.message || "Đã xảy ra lỗi khi xử lý file Excel",
+        });
+        console.error("Lỗi khi xử lý file Excel:", error);
+      } finally {
+        fileInput.value = "";
+      }
+    };
+
+    reader.onerror = () => {
+      toastNotification.value.addToast({
+        type: "error",
+        message: "Lỗi khi đọc file Excel",
+      });
+      fileInput.value = "";
+    };
+
+    reader.readAsArrayBuffer(file);
+  } catch (error) {
     toastNotification.value.addToast({
-      type: 'success',
-      message: 'Nhập dữ liệu từ Excel thành công!',
+      type: "error",
+      message: "Đã xảy ra lỗi khi nhập dữ liệu từ Excel",
     });
+    console.error("Lỗi khi nhập Excel:", error);
+    fileInput.value = "";
   }
 };
+
 </script>
 
 <style scoped>
@@ -402,7 +751,6 @@ const handleExcelUpload = (event) => {
 }
 
 @keyframes gentleGlow {
-
   0%,
   100% {
     box-shadow: 0 0 5px rgba(52, 211, 153, 0.3);
@@ -513,7 +861,7 @@ const handleExcelUpload = (event) => {
 }
 
 .btn-action {
-  background:  #34d399;
+  background: #34d399;
   color: white;
   border: none;
   text-decoration: none;
@@ -831,7 +1179,7 @@ input:checked + .slider:before {
     margin-right: -0.25rem;
   }
 
-  .row.g-4>[class*="col-"] {
+  .row.g-4 > [class*="col-"] {
     padding-left: 0.25rem;
     padding-right: 0.25rem;
   }

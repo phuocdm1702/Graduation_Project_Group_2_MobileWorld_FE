@@ -145,13 +145,15 @@
                   <input
                     type="text"
                     class="form-control shadow-none border-start-0"
-                    placeholder="Tìm kiếm khách hàng..."
-                    :value="searchCustomer"
+                    placeholder="Tìm kiếm khách hàng,sdt..."
+                    v-model="searchCustomer"
                     @input="debouncedCustomerSearch($event.target.value)"
                     style="
                       border-radius: 0 10px 10px 0;
                       transition: all 0.3s ease;
                     "
+                    @focus="this.classList.add('border-teal')"
+                    @blur="this.classList.remove('border-teal')"
                   />
                 </div>
               </div>
@@ -277,13 +279,18 @@
                   </button>
                 </template>
                 <template #price="{ item }">
-                  <span>{{ formatPrice(item.price) }}</span>
+                  <span>{{ formatPrice(item.currentPrice) }}</span>
+                  <small v-if="item.priceChangeText" class="text-muted d-block">
+                    {{ item.priceChangeText }}
+                  </small>
                 </template>
                 <template #quantity="{ item }">
                   <span>{{ item.quantity }}</span>
                 </template>
                 <template #total="{ item }">
-                  <span>{{ formatPrice(item.price * item.quantity) }}</span>
+                  <span>{{
+                    formatPrice(item.currentPrice * item.quantity)
+                  }}</span>
                 </template>
                 <template #actions="{ item }">
                   <button
@@ -415,17 +422,31 @@
         >
           <div class="order-card h-100">
             <div
-              class="form-check form-switch m-3 d-flex justify-content-end gap-2"
+              class="card-header p-3 d-flex justify-content-between align-items-center border-bottom bg-white rounded-top"
             >
-              <input
-                class="form-check-input"
-                type="checkbox"
-                v-model="isDelivery"
-                @change="toggleDelivery"
-                style="border-color: #34d399"
-              />
-              <label class="form-check-label text-muted">Bán giao hàng</label>
+              <h5
+                class="fw-bold text-dark mb-0"
+                style="font-size: 1.25rem; letter-spacing: 0.3px"
+              >
+                Thông tin đơn
+              </h5>
+
+              <div
+                class="form-check form-switch d-flex align-items-center gap-2"
+              >
+                <input
+                  class="form-check-input"
+                  type="checkbox"
+                  v-model="isDelivery"
+                  @change="toggleDelivery"
+                  style="border-color: #34d399"
+                />
+                <label class="form-check-label text-muted mb-0"
+                  >Bán giao hàng</label
+                >
+              </div>
             </div>
+
             <div class="card-body p-3 pt-0 d-flex flex-column">
               <!-- Hiển thị placeholder khi giỏ hàng trống -->
               <div
@@ -474,7 +495,7 @@
                             <i class="bi bi-person text-teal"></i>
                           </span>
                           <input
-                            v-model="receiver.name"
+                            v-model="customer.name"
                             type="text"
                             class="form-control shadow-none border-start-0"
                             placeholder="Nhập tên người nhận"
@@ -498,7 +519,7 @@
                             <i class="bi bi-telephone text-teal"></i>
                           </span>
                           <input
-                            v-model="receiver.phone"
+                            v-model="customer.phone"
                             type="tel"
                             class="form-control shadow-none border-start-0"
                             placeholder="Nhập số điện thoại"
@@ -510,6 +531,7 @@
                           />
                         </div>
                       </div>
+                      <!-- Trong phần thông tin khách hàng -->
                       <div class="col-md-6">
                         <label
                           class="form-label fw-medium text-dark mb-2"
@@ -522,10 +544,9 @@
                             <i class="bi bi-geo-alt text-teal"></i>
                           </span>
                           <select
-                            v-model="receiver.city"
+                            v-model="customer.city"
                             class="form-select shadow-none border-start-0"
-                            :disabled="!isReceiverEditable"
-                            @change="handleReceiverProvinceChange"
+                            @change="handleCustomerProvinceChange"
                             style="
                               border-radius: 0 8px 8px 0;
                               transition: all 0.3s ease;
@@ -556,10 +577,9 @@
                             <i class="bi bi-geo text-teal"></i>
                           </span>
                           <select
-                            v-model="receiver.district"
+                            v-model="customer.district"
                             class="form-select shadow-none border-start-0"
-                            :disabled="!isReceiverEditable || !receiver.city"
-                            @change="handleReceiverDistrictChange"
+                            @change="handleCustomerDistrictChange"
                             style="
                               border-radius: 0 8px 8px 0;
                               transition: all 0.3s ease;
@@ -588,11 +608,8 @@
                             <i class="bi bi-geo-fill text-teal"></i>
                           </span>
                           <select
-                            v-model="receiver.ward"
+                            v-model="customer.ward"
                             class="form-select shadow-none border-start-0"
-                            :disabled="
-                              !isReceiverEditable || !receiver.district
-                            "
                             style="
                               border-radius: 0 8px 8px 0;
                               transition: all 0.3s ease;
@@ -609,6 +626,7 @@
                           </select>
                         </div>
                       </div>
+
                       <div class="col-12">
                         <label
                           class="form-label fw-medium text-dark mb-2"
@@ -621,7 +639,7 @@
                             <i class="bi bi-house-door text-teal"></i>
                           </span>
                           <input
-                            v-model="receiver.address"
+                            v-model="customer.address"
                             type="text"
                             class="form-control shadow-none border-start-0"
                             placeholder="Nhập địa chỉ cụ thể (số nhà, tên đường,...)"
@@ -633,6 +651,105 @@
                           />
                         </div>
                       </div>
+
+                      <!-- Chọn đơn vị vận chuyển -->
+                      <div class="col-12">
+                        <label
+                          class="form-label fw-medium text-dark mb-2"
+                          style="font-size: 0.95rem"
+                        >
+                          Đơn vị vận chuyển <span class="text-danger">*</span>
+                        </label>
+                        <div class="input-group">
+                          <span class="input-group-text bg-light border-end-0">
+                            <i class="bi bi-truck text-teal"></i>
+                          </span>
+                          <select
+                            v-model="selectedShippingUnit"
+                            class="form-select shadow-none border-start-0"
+                            @change="updateShippingFee"
+                            style="
+                              border-radius: 0 8px 8px 0;
+                              transition: all 0.3s ease;
+                            "
+                          >
+                            <option value="" disabled>
+                              Chọn đơn vị vận chuyển
+                            </option>
+                            <option
+                              v-for="unit in shippingUnits"
+                              :key="unit.id"
+                              :value="unit"
+                            >
+                              {{ unit.name }}
+                            </option>
+                          </select>
+                        </div>
+                        <!-- Hiển thị logo đơn vị vận chuyển -->
+                        <div
+                          v-if="selectedShippingUnit"
+                          class="mt-3 d-flex justify-content-center"
+                        >
+                          <div
+                            class="p-3 border rounded shadow-sm bg-white"
+                            style="
+                              max-width: 200px;
+                              width: 100%;
+                              text-align: center;
+                            "
+                          >
+                            <img
+                              :src="selectedShippingUnit.logo"
+                              :alt="selectedShippingUnit.name"
+                              style="
+                                max-height: 90px;
+                                object-fit: contain;
+                                width: 100%;
+                              "
+                            />
+                            <p
+                              class="mt-2 mb-0 fw-semibold text-dark"
+                              style="font-size: 0.9rem"
+                            >
+                              {{ selectedShippingUnit.name }}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                      <!-- Ô input phí vận chuyển -->
+                      <div class="col-12">
+                        <label
+                          class="form-label fw-medium text-dark mb-2"
+                          style="font-size: 0.95rem"
+                        >
+                          Phí vận chuyển
+                        </label>
+                        <div class="input-group">
+                          <span class="input-group-text bg-light border-end-0">
+                            <i class="bi bi-currency-dollar text-teal"></i>
+                          </span>
+                          <input
+                            v-model.number="shippingFee"
+                            type="number"
+                            class="form-control shadow-none border-start-0"
+                            placeholder="Nhập phí vận chuyển"
+                            :disabled="totalPrice >= FREE_SHIP_THRESHOLD"
+                            min="0"
+                            style="
+                              border-radius: 0 8px 8px 0;
+                              transition: all 0.3s ease;
+                            "
+                          />
+                        </div>
+                        <div
+                          v-if="totalPrice >= FREE_SHIP_THRESHOLD"
+                          class="text-success mt-2"
+                        >
+                          Miễn phí vận chuyển cho đơn hàng từ 20,000,000 VNĐ trở
+                          lên
+                        </div>
+                      </div>
+
                       <div class="mt-4 text-end" v-if="!isReceiverEditable">
                         <button
                           class="btn btn-outline-teal btn-sm px-4 py-2"
@@ -647,93 +764,265 @@
                 </div>
 
                 <!-- Voucher Section -->
-                <div class="voucher-section mb-5">
+                <div style="margin-top: 20px" class="voucher-section mb-5">
                   <h6
-                    class="fw-bold text-dark mb-3"
+                    class="fw-bold text-dark mb-3 d-flex align-items-center gap-2"
                     style="font-size: 1.3rem; letter-spacing: 0.5px"
                   >
+                    <i class="bi bi-ticket-perforated-fill text-success"></i>
                     Mã Giảm Giá
                   </h6>
+
+                  <!-- Mã giảm giá -->
+                  <!-- PGG tốt nhất -->
                   <div
-                    class="voucher-container bg-white p-3 rounded-3 shadow-sm animate__animated animate__fadeIn"
-                    style="
-                      border: 1px solid rgba(52, 211, 153, 0.1);
-                      backdrop-filter: blur(5px);
-                    "
+                    class="position-relative p-4 rounded-4 shadow-sm animate__animated animate__fadeIn mb-4"
+                    style="border: 2px solid #34d399; background-color: #ecfdf5"
                   >
-                    <button
-                      class="btn gradient-custom-teal text-white w-100 py-3 fw-medium btn-voucher"
-                      @click="showDiscountModal = true"
-                      style="
-                        border-radius: 10px;
-                        transition: all 0.3s ease;
-                        font-size: 1rem;
-                      "
-                      @mouseover="this.style.transform = 'scale(1.02)'"
-                      @mouseout="this.style.transform = 'scale(1)'"
-                    >
-                      Chọn mã giảm giá
-                    </button>
+                    <!-- Ribbon -->
                     <div
-                      class="price-info mt-4 p-3 rounded-3 shadow-sm animate__animated animate__fadeInUp"
-                      style="border-left: 4px solid #34d399"
+                      class="position-absolute top-0 end-0 bg-success text-white px-3 py-1"
+                      style="
+                        font-size: 0.8rem;
+                        font-weight: bold;
+                        border-bottom-left-radius: 1rem 0.5rem;
+                        transform: translate(10%, -10%);
+                        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+                      "
                     >
-                      <div
-                        class="d-flex justify-content-between align-items-center mb-2"
-                      >
-                        <span
-                          class="fw-medium text-dark"
-                          style="font-size: 0.95rem"
-                          >Tổng tiền hàng:</span
+                      PGG tốt nhất
+                    </div>
+
+                    <div
+                      v-if="selectedDiscount"
+                      class="d-flex justify-content-between align-items-center"
+                    >
+                      <div class="text-dark">
+                        <div
+                          class="fw-semibold mb-2 d-flex align-items-center gap-2"
+                          style="font-size: 1rem"
                         >
-                        <span class="fw-bold text-dark">{{
-                          formatPrice(totalPrice)
-                        }}</span>
+                          <i
+                            class="bi bi-ticket-perforated-fill text-success fs-5"
+                          ></i>
+                          Mã giảm giá tự động:
+                        </div>
+                        <div
+                          class="badge bg-success text-white px-3 py-2 fs-5"
+                          style="letter-spacing: 0.5px"
+                        >
+                          {{ selectedDiscount.code }}
+                        </div>
                       </div>
-                      <div
-                        class="d-flex justify-content-between align-items-center mb-2"
-                      >
-                        <span
-                          class="fw-medium text-dark"
-                          style="font-size: 0.95rem"
-                          >Giảm giá:</span
-                        >
-                        <span class="fw-bold text-danger"
-                          >−{{ formatPrice(discount) }}</span
-                        >
-                      </div>
-                      <hr
-                        class="my-2"
-                        style="border-color: rgba(52, 211, 153, 0.2)"
-                      />
-                      <div
-                        class="d-flex justify-content-between align-items-center"
-                      >
-                        <span
-                          class="fw-bold text-dark"
-                          style="font-size: 1.1rem"
-                          >Tổng thanh toán:</span
-                        >
-                        <span class="fw-bold fs-4 text-success">{{
-                          formatPrice(totalPrice - discount)
-                        }}</span>
+                      <div class="text-danger fw-bold fs-4">
+                        −{{ formatPrice(selectedDiscount.value) }}
                       </div>
                     </div>
+
                     <div
-                      v-if="suggestAdditionalPurchase.message"
-                      class="suggestion-alert mt-3 p-3 rounded-3 animate__animated animate__bounceIn"
-                      style="
-                        background: linear-gradient(135deg, #fff3e0, #ffe8cc);
-                        border: 1px solid #ff9800;
-                      "
+                      v-else
+                      class="text-secondary text-center d-flex align-items-center justify-content-center gap-2 py-2 fs-5"
                     >
-                      <p
-                        class="fw-medium text-dark mb-0"
-                        style="color: #e65100; font-size: 0.95rem"
+                      <i class="bi bi-x-octagon text-danger"></i>
+                      Không có mã giảm giá khả dụng
+                    </div>
+                  </div>
+
+                  <!-- Tiêu đề -->
+                  <h6
+                    class="fw-semibold text-dark mb-2 d-flex align-items-center gap-2 fs-5"
+                  >
+                    <i class="bi bi-arrow-repeat text-success"></i>
+                    Mã giảm giá thay thế
+                  </h6>
+
+                  <!-- Mã giảm giá thay thế -->
+                  <div
+                    class="position-relative p-4 rounded-3 shadow-sm animate__animated animate__fadeIn"
+                    style="border: 2px solid #a7f3d0; background-color: #ecfdf5"
+                  >
+                    <div
+                      v-if="alternativeDiscounts.length > 0"
+                      class="d-flex flex-column gap-3"
+                      style="max-height: 220px; overflow-y: auto"
+                    >
+                      <div
+                        v-for="discount in alternativeDiscounts"
+                        :key="discount.id"
+                        @click="selectDiscount(discount)"
+                        class="p-3 rounded-3 shadow-sm"
+                        :style="{
+                          backgroundColor: 'transparent',
+                          border:
+                            selectedDiscount &&
+                            selectedDiscount.id === discount.id
+                              ? '2px solid #34d399'
+                              : '1px solid #a7f3d0',
+                          cursor: 'pointer',
+                          transition: 'all 0.3s ease',
+                        }"
                       >
-                        <i class="bi bi-info-circle-fill me-2"></i
-                        >{{ suggestAdditionalPurchase.message }}
-                      </p>
+                        <div
+                          class="fw-bold d-flex align-items-center gap-1 mb-2"
+                          style="font-size: 1rem"
+                        >
+                          <i
+                            class="bi bi-ticket-perforated-fill text-success fs-5"
+                          ></i>
+                          {{ discount.code }}
+                          <span
+                            v-if="
+                              selectedDiscount &&
+                              selectedDiscount.id === discount.id
+                            "
+                            class="badge bg-success ms-2"
+                            >Đã chọn</span
+                          >
+                        </div>
+                        <div
+                          class="text-secondary mb-1"
+                          style="font-size: 0.95rem"
+                        >
+                          Giảm:
+                          <strong>{{ formatPrice(discount.value) }}</strong> ||
+                          Đơn tối thiểu: {{ formatPrice(discount.minOrder) }}
+                        </div>
+                        <div class="text-secondary" style="font-size: 0.95rem">
+                          Hết hạn: {{ discount.expiry }}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div
+                      v-else
+                      class="text-secondary text-center d-flex align-items-center justify-content-center gap-2 mt-3 fs-5"
+                    >
+                      <i class="bi bi-x-octagon text-danger"></i>
+                      Không có mã giảm giá thay thế khả dụng
+                    </div>
+                  </div>
+
+                  <!-- Tiêu đề -->
+                  <h6
+                    style="margin-top: 20px"
+                    class="fw-semibold text-dark mb-2 d-flex align-items-center gap-2 fs-5"
+                  >
+                    <i class="bi bi-lightbulb-fill text-warning"></i>
+                    Gợi ý
+                  </h6>
+
+                  <!-- Mã giảm giá gợi ý -->
+                  <div
+                    class="position-relative p-4 rounded-3 shadow-sm animate__animated animate__fadeIn"
+                    style="border: 2px solid #ffe58f; background-color: #fffbe6"
+                  >
+                    <div
+                      v-if="suggestedDiscounts.length > 0"
+                      class="d-flex flex-column gap-3"
+                      style="max-height: 200px; overflow-y: auto"
+                    >
+                      <div
+                        v-for="discount in suggestedDiscounts"
+                        :key="discount.id"
+                        class="p-3 rounded-3 shadow-sm"
+                        style="
+                          background-color: transparent;
+                          border: 1px solid #ffe58f;
+                        "
+                      >
+                        <div
+                          class="fw-bold mb-1 d-flex align-items-center gap-1"
+                          style="font-size: 1rem"
+                        >
+                          <i
+                            class="bi bi-ticket-perforated-fill text-warning fs-5"
+                          ></i>
+                          {{ discount.code }}
+                        </div>
+                        <div class="text-secondary" style="font-size: 0.95rem">
+                          Giảm:
+                          <strong>{{ formatPrice(discount.value) }}</strong> |
+                          Đơn tối thiểu: {{ formatPrice(discount.minOrder) }} |
+                          Hết hạn: {{ discount.expiry }}
+                        </div>
+                        <div
+                          class="text-warning fw-semibold mt-1"
+                          style="font-size: 0.95rem"
+                        >
+                          Còn thiếu:
+                          {{ formatPrice(discount.missingAmount) }} để áp dụng
+                        </div>
+                      </div>
+                    </div>
+
+                    <div
+                      v-else
+                      class="text-secondary text-center d-flex align-items-center justify-content-center gap-2 mt-3 fs-5"
+                    >
+                      <i class="bi bi-x-octagon text-danger"></i>
+                      Không có mã giảm giá gợi ý khả dụng
+                    </div>
+                  </div>
+
+                  <!-- Thông tin thanh toán -->
+                  <div
+                    class="price-info p-4 rounded-3 bg-light shadow-sm animate__animated animate__fadeInUp"
+                    style="border-left: 5px solid #34d399; margin-top: 20px"
+                  >
+                    <div
+                      class="d-flex justify-content-between align-items-center mb-3"
+                    >
+                      <span
+                        class="fw-medium text-dark"
+                        style="font-size: 0.95rem"
+                        >Tổng tiền hàng:</span
+                      >
+                      <span class="fw-bold text-dark">{{
+                        formatPrice(tongTien)
+                      }}</span>
+                    </div>
+                    <div
+                      class="d-flex justify-content-between align-items-center mb-3"
+                    >
+                      <span
+                        class="fw-medium text-dark"
+                        style="font-size: 0.95rem"
+                        >Giảm giá:</span
+                      >
+                      <span class="fw-bold text-danger"
+                        >−{{ formatPrice(discount) }}</span
+                      >
+                    </div>
+                    <div
+                      v-if="isDelivery"
+                      class="d-flex justify-content-between align-items-center mb-3"
+                    >
+                      <span
+                        class="fw-medium text-dark"
+                        style="font-size: 0.95rem"
+                        >Phí vận chuyển:</span
+                      >
+                      <span class="fw-bold text-dark">
+                        {{
+                          tongTien >= FREE_SHIP_THRESHOLD
+                            ? "Miễn phí"
+                            : formatPrice(shippingFee)
+                        }}
+                      </span>
+                    </div>
+                    <hr
+                      class="my-3"
+                      style="border-color: rgba(52, 211, 153, 0.2)"
+                    />
+                    <div
+                      class="d-flex justify-content-between align-items-center"
+                    >
+                      <span class="fw-bold text-dark" style="font-size: 1.1rem"
+                        >Tổng thanh toán:</span
+                      >
+                      <span class="fw-bold fs-4 text-success">{{
+                        formatPrice(totalPayment)
+                      }}</span>
                     </div>
                   </div>
                 </div>
@@ -819,13 +1108,13 @@
 
                 <!-- Pay Button -->
                 <button
-                  class="btn w-100 py-3 bg-custom-teal-btn text-white mt-auto"
-                  @click="ThanhToan"
+                  class="btn w-100 py-3 pay-btn gradient-custom-green text-white"
                   :disabled="
                     !activeInvoiceId ||
                     cartItems.length === 0 ||
                     isCreatingOrder
                   "
+                  @click="ThanhToan"
                 >
                   <i class="bi bi-credit-card me-2"></i>
                   <span class="fw-semibold">Thanh toán</span>
@@ -1124,153 +1413,6 @@
       </div>
 
       <!-- Discount Modal -->
-      <div
-        v-if="showDiscountModal"
-        class="modal fade show d-block"
-        tabindex="-1"
-        style="background: rgba(0, 0, 0, 0.5)"
-      >
-        <div class="modal-dialog modal-dialog-centered modal-lg">
-          <div
-            class="modal-content shadow-lg p-3 gradient-modal animate__animated animate__zoomIn"
-            style="
-              background: rgba(255, 255, 255, 0.95);
-              backdrop-filter: blur(15px);
-              border-radius: 16px;
-            "
-          >
-            <div
-              class="modal-header border-0 d-flex justify-content-between align-items-center"
-            >
-              <h5 class="modal-title fw-bold text-dark">Chọn mã giảm giá</h5>
-              <button
-                class="btn btn-outline-secondary btn-close-custom"
-                @click="showDiscountModal = false"
-              >
-                <i class="bi bi-x-lg"></i>
-              </button>
-            </div>
-            <div class="modal-body p-4">
-              <ul class="nav nav-tabs mb-4">
-                <li class="nav-item">
-                  <button
-                    class="nav-link"
-                    :class="{ active: activeTab === 'private' }"
-                    @click="activeTab = 'private'"
-                  >
-                    Mã cá nhân
-                  </button>
-                </li>
-                <li class="nav-item">
-                  <button
-                    class="nav-link"
-                    :class="{ active: activeTab === 'public' }"
-                    @click="activeTab = 'public'"
-                  >
-                    Mã công khai
-                  </button>
-                </li>
-              </ul>
-              <div v-if="activeTab === 'private'">
-                <div
-                  v-if="privateDiscountCodes.length === 0"
-                  class="text-center text-muted py-4"
-                >
-                  <i class="bi bi-info-circle me-2"></i>Không có mã giảm giá cá
-                  nhân nào.
-                </div>
-                <div v-else class="d-flex flex-column gap-3">
-                  <div
-                    v-for="code in privateDiscountCodes"
-                    :key="code.id"
-                    class="discount-card p-3 rounded shadow-sm"
-                    style="
-                      background: #fff;
-                      border: 1px solid rgba(52, 211, 153, 0.1);
-                    "
-                  >
-                    <div
-                      class="d-flex justify-content-between align-items-center"
-                    >
-                      <div>
-                        <h6 class="fw-bold text-dark mb-1">{{ code.code }}</h6>
-                        <p class="text-muted mb-0">
-                          Giảm: {{ formatPrice(code.value) }}
-                        </p>
-                      </div>
-                      <button
-                        class="btn btn-sm gradient-custom-teal text-white"
-                        @click="
-                          selectedPrivateDiscount = code;
-                          applyPrivateDiscount();
-                        "
-                      >
-                        Áp dụng
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div v-if="activeTab === 'public'">
-                <div
-                  v-if="publicDiscountCodes.length === 0"
-                  class="text-center text-muted py-4"
-                >
-                  <i class="bi bi-info-circle me-2"></i>Không có mã giảm giá
-                  công khai nào.
-                </div>
-                <div v-else class="d-flex flex-column gap-3">
-                  <div
-                    v-for="code in publicDiscountCodes"
-                    :key="code.id"
-                    class="discount-card p-3 rounded shadow-sm"
-                    style="
-                      background: #fff;
-                      border: 1px solid rgba(52, 211, 153, 0.1);
-                    "
-                  >
-                    <div
-                      class="d-flex justify-content-between align-items-center"
-                    >
-                      <div>
-                        <h6 class="fw-bold text-dark mb-1">{{ code.code }}</h6>
-                        <p class="text-muted mb-0">
-                          Giảm: {{ formatPrice(code.value) }} (Đơn tối thiểu:
-                          {{ formatPrice(code.minOrder) }})
-                        </p>
-                        <p class="text-muted mb-0">
-                          Hết hạn:
-                          {{
-                            new Date(code.expiry).toLocaleDateString("vi-VN")
-                          }}
-                        </p>
-                      </div>
-                      <button
-                        class="btn btn-sm gradient-custom-teal text-white"
-                        @click="
-                          selectedPublicDiscount = code;
-                          applyPublicDiscount();
-                        "
-                        :disabled="totalPrice < code.minOrder"
-                      >
-                        Áp dụng
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="modal-footer border-0">
-              <button
-                class="btn btn-light px-4 py-2"
-                @click="showDiscountModal = false"
-              >
-                Đóng
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
 
       <!-- Customer Modal -->
       <div
@@ -1321,75 +1463,6 @@
                     type="tel"
                     class="form-control shadow-none"
                     placeholder="Nhập số điện thoại"
-                  />
-                </div>
-                <div class="col-md-6">
-                  <label class="form-label fw-medium text-dark mb-2">
-                    Tỉnh/Thành phố
-                  </label>
-                  <select
-                    v-model="newCustomer.city"
-                    class="form-select shadow-none"
-                    @change="handleProvinceChange"
-                  >
-                    <option value="" disabled>Chọn tỉnh/thành phố</option>
-                    <option
-                      v-for="province in provinces"
-                      :key="province.code"
-                      :value="province.name"
-                    >
-                      {{ province.name }}
-                    </option>
-                  </select>
-                </div>
-                <div class="col-md-6">
-                  <label class="form-label fw-medium text-dark mb-2">
-                    Quận/Huyện
-                  </label>
-                  <select
-                    v-model="newCustomer.district"
-                    class="form-select shadow-none"
-                    @change="handleDistrictChange"
-                    :disabled="!newCustomer.city"
-                  >
-                    <option value="" disabled>Chọn quận/huyện</option>
-                    <option
-                      v-for="district in districts"
-                      :key="district.code"
-                      :value="district.name"
-                    >
-                      {{ district.name }}
-                    </option>
-                  </select>
-                </div>
-                <div class="col-md-6">
-                  <label class="form-label fw-medium text-dark mb-2">
-                    Phường/Xã
-                  </label>
-                  <select
-                    v-model="newCustomer.ward"
-                    class="form-select shadow-none"
-                    :disabled="!newCustomer.district"
-                  >
-                    <option value="" disabled>Chọn phường/xã</option>
-                    <option
-                      v-for="ward in wards"
-                      :key="ward.code"
-                      :value="ward.name"
-                    >
-                      {{ ward.name }}
-                    </option>
-                  </select>
-                </div>
-                <div class="col-12">
-                  <label class="form-label fw-medium text-dark mb-2">
-                    Địa chỉ cụ thể
-                  </label>
-                  <input
-                    v-model="newCustomer.address"
-                    type="text"
-                    class="form-control shadow-none"
-                    placeholder="Nhập địa chỉ cụ thể (số nhà, tên đường,...)"
                   />
                 </div>
               </div>
@@ -1449,6 +1522,10 @@ export default defineComponent({
 
 .gradient-custom-yellow {
   background: linear-gradient(135deg, #facc15, #f97316);
+}
+
+.gradient-custom-green {
+  background: linear-gradient(135deg, #28a745, #1e7e34);
 }
 
 .cursor-pointer {
