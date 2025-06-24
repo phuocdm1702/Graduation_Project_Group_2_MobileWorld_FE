@@ -1,5 +1,5 @@
 <template>
-  <div class="container-fluid py-4 product-management">
+  <div class="py-4 product-management">
     <!-- Header -->
     <HeaderCard title="Quản Lý Sản Phẩm" badgeText="Hệ Thống POS" badgeClass="gradient-custom-teal"
       :backgroundOpacity="0.95" />
@@ -53,7 +53,9 @@
               <select v-model="filters.idCongNgheManHinh" @change="searchProducts" class="form-control search-input">
                 <option value="">Tất cả</option>
                 <option v-for="option in congNgheManHinhOptions" :key="option.id" :value="option.id">
-                  {{ option.chuanManHinh }} {{ option.congNgheManHinh }} {{ option.doPhanGiai }} {{ option.tanSoQuet }} {{ option.doSangToiDa }}
+                  {{ option.chuanManHinh }} {{ option.congNgheManHinh }}
+                  {{ option.doPhanGiai }} {{ option.tanSoQuet }}
+                  {{ option.doSangToiDa }}
                 </option>
               </select>
             </div>
@@ -80,6 +82,7 @@
                 <option value="">Tất cả</option>
                 <option value="inStock">Còn hàng</option>
                 <option value="outOfStock">Hết hàng</option>
+                <option value="inactive">Ngừng bán</option>
               </select>
             </div>
           </div>
@@ -100,11 +103,9 @@
 
           <div class="action-buttons">
             <button class="btn btn-reset" @click="resetFilters">
-              <i class="bi bi-arrow-clockwise me-2"></i>
               Đặt lại bộ lọc
             </button>
             <router-link to="/themChiTietSanPham" class="btn btn-action">
-              <i class="bi bi-plus-circle me-2"></i>
               Thêm chi tiết sản phẩm
             </router-link>
           </div>
@@ -144,8 +145,8 @@
             <template #tenSanPham="{ item }">
               <div class="code-text">{{ item.tenSanPham }}</div>
             </template>
-            <template #nhaSanXuat="{ item }">
-              <div class="employee-name">{{ item.nhaSanXuat }}</div>
+            <template #tenNhaSanXuat="{ item }">
+              <div class="employee-name">{{ item.tenNhaSanXuat }}</div>
             </template>
             <template #heDieuHanh="{ item }">
               <div class="customer-name">{{ item.heDieuHanh }} {{ item.phienBan }}</div>
@@ -165,14 +166,14 @@
             <template #priceRange="{ item }">
               <div class="amount-cell">
                 <div class="total-amount">
-                  {{ formatPrice(item.minPrice) }} - {{ formatPrice(item.maxPrice) }}
+                  {{ item.priceRange }}
                 </div>
               </div>
             </template>
             <template #stockStatus="{ item }">
-              <span class="status-badge" :class="getStatusBadgeClass(item.imeiCount === 0 ? 'Hết hàng' : 'Còn hàng')">
-                <i :class="getStatusIcon(item.imeiCount === 0 ? 'Hết hàng' : 'Còn hàng')" class="me-1"></i>
-                {{ item.imeiCount === 0 ? 'Hết hàng' : 'Còn hàng' }}
+              <span class="status-badge" :class="getStatusBadgeClass(item.stockStatus)">
+                <i :class="getStatusIcon(item.stockStatus)" class="me-1"></i>
+                {{ item.stockStatus }}
               </span>
             </template>
             <template #actions="{ item }">
@@ -182,9 +183,6 @@
                 </button>
                 <button class="btn btn-sm btn-table" @click="editProduct(item)" title="Chỉnh sửa">
                   <i class="bi bi-pencil-fill"></i>
-                </button>
-                <button class="btn btn-sm btn-table" @click="confirmDeleteProduct(item)" title="Xóa">
-                  <i class="bi bi-trash-fill"></i>
                 </button>
               </div>
             </template>
@@ -196,16 +194,17 @@
           <div v-for="product in paginatedProducts" :key="product.id" class="product-card">
             <div class="product-card-header">
               <div class="product-code">{{ product.tenSanPham }}</div>
-              <span class="status-badge"
-                :class="getStatusBadgeClass(product.imeiCount === 0 ? 'Hết hàng' : 'Còn hàng')">
-                {{ product.imeiCount === 0 ? 'Hết hàng' : 'Còn hàng' }}
+              <span class="status-badge" :class="getStatusBadgeClass(product.stockStatus)">
+                {{ product.stockStatus }}
               </span>
             </div>
 
             <div class="product-card-body">
               <div class="product-info">
-                <div class="product-name">{{ product.nhaSanXuat }}</div>
-                <div class="product-detail">{{ product.heDieuHanh }} {{ product.phienBan }}</div>
+                <div class="product-name">{{ product.tenNhaSanXuat }}</div>
+                <div class="product-detail">
+                  {{ product.heDieuHanh }} {{ product.phienBan }}
+                </div>
               </div>
 
               <div class="product-details">
@@ -229,7 +228,7 @@
 
               <div class="product-amounts">
                 <div class="total-amount">
-                  {{ formatPrice(product.minPrice) }} - {{ formatPrice(product.maxPrice) }}
+                  {{ product.priceRange }}
                 </div>
               </div>
             </div>
@@ -240,9 +239,6 @@
               </button>
               <button class="btn btn-sm btn-table" @click="editProduct(product)">
                 <i class="bi bi-edit-fill"></i> Sửa
-              </button>
-              <button class="btn btn-sm btn-table" @click="confirmDeleteProduct(product)">
-                <i class="bi bi-trash-fill"></i> Xóa
               </button>
             </div>
           </div>
@@ -258,7 +254,9 @@
                 </button>
               </li>
               <li v-for="page in totalPages" :key="page" class="page-item" :class="{ active: currentPage === page }">
-                <button class="page-link" @click="currentPage = page">{{ page }}</button>
+                <button class="page-link" @click="currentPage = page">
+                  {{ page }}
+                </button>
               </li>
               <li class="page-item" :class="{ disabled: currentPage === totalPages }">
                 <button class="page-link" @click="currentPage++" :disabled="currentPage === totalPages">
@@ -284,7 +282,7 @@ import SanPhamJS from './js/SanPham';
 
 export default {
   name: 'ProductManagement',
-  ...SanPhamJS
+  ...SanPhamJS,
 };
 </script>
 
@@ -504,19 +502,18 @@ export default {
 }
 
 .status-badge {
-    padding: 0.25rem 0.75rem;
-    border-radius: 1rem;
-    width: 130px;
-    display: flex;
-    justify-content: center;
-    font-size: 0.75rem;
-    font-weight: 500;
-    align-items: center;
+  padding: 0.25rem 0.75rem;
+  border-radius: 1rem;
+  display: flex;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 500;
+  align-items: center;
 }
 
 .badge-completed {
-    background: #34d399;
-    color: white;
+  background: #34d399;
+  color: white;
 }
 
 .badge-canceled {
@@ -525,7 +522,8 @@ export default {
 }
 
 .badge-primary {
-  background: linear-gradient(135deg, #34d399, #16a34a);
+  background: #6c757d;
+  /* Màu cho trạng thái Ngừng bán */
   color: white;
 }
 
@@ -548,6 +546,8 @@ export default {
 .action-buttons-cell {
   display: flex;
   justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .btn-table {
@@ -645,6 +645,7 @@ export default {
   display: flex;
   gap: 0.5rem;
   justify-content: flex-end;
+  align-items: center;
 }
 
 .card-pagination {
@@ -710,6 +711,16 @@ export default {
     text-align: center;
     margin-bottom: 0.5rem;
   }
+
+  .action-buttons-cell {
+    flex-direction: row;
+    gap: 0.3rem;
+  }
+
+  .product-card-actions {
+    flex-direction: row;
+    gap: 0.3rem;
+  }
 }
 
 @media (max-width: 576px) {
@@ -723,7 +734,6 @@ export default {
   }
 }
 
-/* Reduced Motion */
 @media (prefers-reduced-motion: reduce) {
   * {
     animation-duration: 0.01ms !important;

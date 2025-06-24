@@ -99,12 +99,55 @@ export default {
     const districts = ref([]);
     const wards = ref([]);
     const router = useRouter();
+    const manualDiscountSelected = ref(false); // Cờ để kiểm soát chọn PGG thủ công
 
-    //pgg thu cong
-    const manualDiscountSelected = ref(false);
+    const cartSearchQuery = ref("");
+const cartFilterColor = ref("");
+const cartFilterRam = ref("");
+const cartFilterStorage = ref("");
+const showProductDetails = ref(false);
+const selectedCartItem = ref(null);
+const modalPosition = ref({ top: 0, left: 0 });
 
-    //luu pgg tot nhat
-    const bestDiscount = ref(null);
+const uniqueCartColors = computed(() => [
+  ...new Set(cartItems.value.map((item) => item.color)),
+]);
+const uniqueCartRams = computed(() => [
+  ...new Set(cartItems.value.map((item) => item.ram)),
+]);
+const uniqueCartStorages = computed(() => [
+  ...new Set(cartItems.value.map((item) => item.storage)),
+]);
+
+const filteredCartItems = computed(() => {
+  let filtered = cartItems.value;
+  if (cartSearchQuery.value) {
+    const query = cartSearchQuery.value.toLowerCase();
+    filtered = filtered.filter(
+      (item) =>
+        item.name.toLowerCase().includes(query) ||
+        item.imei.toLowerCase().includes(query) ||
+        item.color.toLowerCase().includes(query)
+    );
+  }
+  if (cartFilterColor.value) {
+    filtered = filtered.filter((item) => item.color === cartFilterColor.value);
+  }
+  if (cartFilterRam.value) {
+    filtered = filtered.filter((item) => item.ram === cartFilterRam.value);
+  }
+  if (cartFilterStorage.value) {
+    filtered = filtered.filter(
+      (item) => item.storage === cartFilterStorage.value
+    );
+  }
+  return filtered;
+});
+
+// Thêm debounced search cho giỏ hàng
+const debouncedCartSearch = debounce((query) => {
+  cartSearchQuery.value = query;
+}, 300);
 
     // DataTable headers
     const cartHeaders = ref([
@@ -145,13 +188,7 @@ export default {
     ]);
 
     // Computed
-
-    // Thêm computed property để kiểm tra xem selectedDiscount có phải là PGG tốt nhất
-    const isBestDiscount = computed(() => {
-      if (!selectedDiscount.value || !bestDiscount.value) return false;
-      return selectedDiscount.value.id === bestDiscount.value.id;
-    });
-
+    // Thêm computed để đồng bộ discount với selectedDiscount
     // Thêm computed để đồng bộ discount với selectedDiscount
     const discount = computed({
       get: () => (selectedDiscount.value ? selectedDiscount.value.value : 0),
@@ -363,6 +400,20 @@ export default {
     const FREE_SHIP_THRESHOLD = 50000000;
 
     // Utility Methods
+    const showProductDetailsModal = (item, event) => {
+  selectedCartItem.value = item;
+  modalPosition.value = {
+    top: event.clientY + 10, // Điều chỉnh vị trí modal theo con trỏ chuột
+    left: event.clientX + 10,
+  };
+  showProductDetails.value = true;
+};
+
+const hideProductDetailsModal = () => {
+  showProductDetails.value = false;
+  selectedCartItem.value = null;
+};
+
     const selectDiscount = async (discount) => {
       try {
         const result = await validateDiscount(
@@ -378,16 +429,6 @@ export default {
               discount.value
             )})`
           );
-          // Kiểm tra xem discount có phải là PGG tốt nhất
-          if (
-            bestDiscount.value &&
-            discount.id === bestDiscount.value.id &&
-            discount.value === bestDiscount.value.value
-          ) {
-            // Nếu là PGG tốt nhất, giữ Ribbon
-          } else {
-            // Nếu không phải PGG tốt nhất, Ribbon sẽ không hiển thị do isBestDiscount
-          }
         } else {
           showToast(
             "error",
@@ -850,7 +891,7 @@ export default {
 
   try {
     const result = await Search(searchCustomer.value);
-    console.log("Dữ liệu API thô:", result.data); // Debug
+
     if (result.success && result.data && result.data.length > 0) {
       const customerData = result.data[0];
       const customerId =
@@ -862,10 +903,8 @@ export default {
       selectedCustomer.value = customerData;
       customer.value = {
         id: customerId,
-        name: customerData.tenKhachHang || customerData.ten || customerData.idKhachHang?.ten || "",
+        name: customerData.ten || customerData.idKhachHang?.ten || "",
         phone:
-          customerData.soDienThoai ||
-          customerData.sdt ||
           customerData.idTaiKhoan?.soDienThoai ||
           customerData.idKhachHang?.idTaiKhoan?.soDienThoai ||
           "",
@@ -874,8 +913,8 @@ export default {
         ward: customerData.idDiaChiKhachHang?.phuong || "",
         address: customerData.idDiaChiKhachHang?.diaChiCuThe || "",
       };
-      console.log("Dữ liệu khách hàng sau tìm kiếm:", customer.value); // Debug
 
+      // Điền quận và phường nếu có thành phố và quận
       if (customer.value.city) {
         await fetchDistricts(customer.value.city);
         if (customer.value.district) {
@@ -911,6 +950,12 @@ export default {
             `Tìm thấy khách hàng: ${customer.value.name}, nhưng không có mã giảm giá cá nhân`
           );
         }
+      } else {
+        privateDiscountCodes.value = [];
+        showToast(
+          "warning",
+          `Tìm thấy khách hàng: ${customer.value.name}, nhưng không có ID để lấy mã giảm giá`
+        );
       }
       await applyBestDiscount();
     } else {
@@ -1223,7 +1268,6 @@ export default {
     const applyBestDiscount = async () => {
       if (!cartItems.value.length || tongTien.value <= 0) {
         selectedDiscount.value = null;
-        bestDiscount.value = null;
         manualDiscountSelected.value = false; // Reset cờ khi giỏ hàng trống
         return;
       }
@@ -1235,7 +1279,6 @@ export default {
         );
         if (!result.success || !result.data) {
           selectedDiscount.value = null;
-          bestDiscount.value = null;
           manualDiscountSelected.value = false;
           showToast("info", "Mã giảm giá đã chọn không còn hợp lệ");
         }
@@ -1273,7 +1316,7 @@ export default {
           ...privateDiscountCodes.value,
         ];
 
-        let tempBestDiscount = null;
+        let bestDiscount = null;
         for (const code of allDiscounts) {
           const result = await validateDiscount(
             code.code,
@@ -1285,33 +1328,28 @@ export default {
               (code.type === "public" && tongTien.value >= code.minOrder) ||
               code.type === "private"
             ) {
-              if (!tempBestDiscount || discountValue > tempBestDiscount.value) {
-                tempBestDiscount = code;
+              if (!bestDiscount || discountValue > bestDiscount.value) {
+                bestDiscount = code;
               }
             }
           }
         }
 
-        // Lưu PGG tốt nhất
-        bestDiscount.value = tempBestDiscount ? { ...tempBestDiscount } : null;
-
-        // Áp dụng PGG tốt nhất nếu chưa chọn thủ công
-        if (tempBestDiscount && !manualDiscountSelected.value) {
-          selectedDiscount.value = { ...tempBestDiscount };
+        if (bestDiscount) {
+          selectedDiscount.value = { ...bestDiscount };
           showToast(
             "success",
-            `Đã áp dụng mã giảm giá ${tempBestDiscount.code} (-${formatPrice(
-              tempBestDiscount.value
+            `Đã áp dụng mã giảm giá ${bestDiscount.code} (-${formatPrice(
+              bestDiscount.value
             )})`
           );
-        } else if (!tempBestDiscount) {
+        } else {
           selectedDiscount.value = null;
           showToast("info", "Không có mã giảm giá nào khả dụng");
         }
       } catch (error) {
         console.error("Lỗi khi áp dụng mã giảm giá:", error);
         selectedDiscount.value = null;
-        bestDiscount.value = null;
         manualDiscountSelected.value = false;
         showToast("error", "Lỗi khi tìm mã giảm giá tốt nhất");
       }
@@ -1341,158 +1379,141 @@ export default {
     };
 
     const ThanhToan = async () => {
-  if (cartItems.value.length === 0) {
-    showToast("error", "Giỏ hàng trống");
-    return;
-  }
-
-  // Đảm bảo dữ liệu khách hàng được cập nhật
-  if (searchCustomer.value) {
-    await searchCustomers();
-  }
-
-  const totalPaymentValue = totalPayment.value;
-  if (paymentMethod.value === "both") {
-    const totalInput = (tienChuyenKhoan.value || 0) + (tienMat.value || 0);
-    if (totalInput !== totalPaymentValue) {
-      showToast(
-        "error",
-        `Số tiền thanh toán (${formatPrice(totalInput)}) không khớp với tổng thanh toán (${formatPrice(totalPaymentValue)})`
-      );
-      return;
-    }
-    if (tienChuyenKhoan.value < 0 || tienMat.value < 0) {
-      showToast("error", "Số tiền thanh toán không được âm");
-      return;
-    }
-  } else if (paymentMethod.value === "transfer") {
-    if (!qrCodeValue.value) {
-      showToast("error", "Không thể tạo mã QR. Vui lòng thử lại.");
-      return;
-    }
-  }
-
-  await applyBestDiscount();
-  createOrder();
-};
-
-const createOrder = async () => {
-  isCreatingOrder.value = true;
-  try {
-    await applyBestDiscount();
-    const roundToTwoDecimals = (num) => Math.round(num * 100) / 100;
-
-    const hinhThucThanhToan = [];
-    if (paymentMethod.value === "cash") {
-      hinhThucThanhToan.push({
-        phuongThucThanhToanId: 1,
-        tienMat: roundToTwoDecimals(totalPayment.value),
-        tienChuyenKhoan: 0,
-      });
-    } else if (paymentMethod.value === "transfer") {
-      hinhThucThanhToan.push({
-        phuongThucThanhToanId: 2,
-        tienMat: 0,
-        tienChuyenKhoan: roundToTwoDecimals(totalPayment.value),
-      });
-    } else if (paymentMethod.value === "both") {
-      const totalInput = roundToTwoDecimals(tienMat.value || 0) + roundToTwoDecimals(tienChuyenKhoan.value || 0);
-      if (totalInput !== roundToTwoDecimals(totalPayment.value)) {
-        showToast("error", `Tổng tiền thanh toán (${formatPrice(totalInput)}) không khớp với tổng thanh toán (${formatPrice(totalPayment.value)})`);
+      if (cartItems.value.length === 0) {
+        showToast("error", "Giỏ hàng trống");
         return;
       }
-      hinhThucThanhToan.push({
-        phuongThucThanhToanId: 3,
-        tienMat: roundToTwoDecimals(tienMat.value),
-        tienChuyenKhoan: roundToTwoDecimals(tienChuyenKhoan.value),
-      });
-    }
 
-    const hoaDonRequest = {
-      idKhachHang: customer.value?.id || 1,
-      tenKhachHang: customer.value?.name || "Khách vãng lai",
-      soDienThoaiKhachHang: customer.value?.phone || "123456789",
-      diaChiKhachHang: customer.value && isDelivery.value
-        ? {
-            thanhPho: customer.value.city,
-            quan: customer.value.district,
-            phuong: customer.value.ward,
-            diaChiCuThe: customer.value.address,
-          }
-        : {
-            thanhPho: "Chưa có dữ liệu",
-            quan: "Chưa có dữ liệu",
-            phuong: "Chưa có dữ liệu",
-            diaChiCuThe: "Chưa có dữ liệu",
-          },
-      hinhThucThanhToan,
-      idPhieuGiamGia: selectedDiscount.value?.id || null,
-      giamGia: roundToTwoDecimals(discount.value),
-      phiVanChuyen: roundToTwoDecimals(isDelivery.value ? shippingFee.value : 0),
-      loaiDon: isDelivery.value ? "online" : "trực tiếp",
-      tongTien: roundToTwoDecimals(tongTien.value),
-      chiTietGioHang: cartItems.value.map((item) => ({
-        chiTietSanPhamId: item.id,
-        soLuong: item.quantity,
-        maImel: item.imei,
-        giaBan: roundToTwoDecimals(item.originalPrice),
-      })),
+      const totalPaymentValue = totalPayment.value;
+      if (paymentMethod.value === "both") {
+        const totalInput = (tienChuyenKhoan.value || 0) + (tienMat.value || 0);
+        if (totalInput !== totalPaymentValue) {
+          showToast(
+            "error",
+            `Số tiền thanh toán (${formatPrice(
+              totalInput
+            )}) không khớp với tổng thanh toán (${formatPrice(
+              totalPaymentValue
+            )})`
+          );
+          return;
+        }
+        if (tienChuyenKhoan.value < 0 || tienMat.value < 0) {
+          showToast("error", "Số tiền thanh toán không được âm");
+          return;
+        }
+      } else if (paymentMethod.value === "transfer") {
+        if (!qrCodeValue.value) {
+          showToast("error", "Không thể tạo mã QR. Vui lòng thử lại.");
+          return;
+        }
+      }
+
+      await applyBestDiscount(); // Áp dụng PGG tốt nhất trước khi thanh toán
+      createOrder();
     };
 
-    console.log("hoaDonRequest Details:", JSON.stringify(hoaDonRequest, null, 2));
+    const createOrder = async () => {
+      isCreatingOrder.value = true;
+      try {
+        const hinhThucThanhToan = [];
+        if (paymentMethod.value === "cash") {
+          hinhThucThanhToan.push({
+            phuongThucThanhToanId: 1,
+            tienMat: totalPayment.value,
+            tienChuyenKhoan: 0,
+          });
+        } else if (paymentMethod.value === "transfer") {
+          hinhThucThanhToan.push({
+            phuongThucThanhToanId: 2,
+            tienMat: 0,
+            tienChuyenKhoan: totalPayment.value,
+          });
+        } else if (paymentMethod.value === "both") {
+          hinhThucThanhToan.push({
+            phuongThucThanhToanId: 3,
+            tienMat: tienMat.value,
+            tienChuyenKhoan: tienChuyenKhoan.value,
+          });
+        }
 
-    const response = await apiService.post(
-      `/api/thanh-toan/${activeInvoiceId.value}`,
-      hoaDonRequest
-    );
+        const hoaDonRequest = {
+          idKhachHang: customer.value?.id || null,
+          tenKhachHang: customer.value?.name || "Khách vãng lai",
+          soDienThoaiKhachHang: customer.value?.phone || null,
+          diaChiKhachHang:
+            customer.value && isDelivery.value
+              ? {
+                  thanhPho: customer.value.city,
+                  quan: customer.value.district,
+                  phuong: customer.value.ward,
+                  diaChiCuThe: customer.value.address,
+                }
+              : null,
+          hinhThucThanhToan,
+          idPhieuGiamGia: selectedDiscount.value?.id || null,
+          giamGia: discount.value,
+          phiVanChuyen: isDelivery.value ? shippingFee.value : 0,
+          loaiDon: isDelivery.value ? "online" : "trực tiếp",
+          tongTien: tongTien.value,
+          chiTietGioHang: cartItems.value.map((item) => ({
+            chiTietSanPhamId: item.id,
+            soLuong: item.quantity,
+            maImel: item.imei,
+            giaBan: item.originalPrice,
+          })),
+        };
 
-    const invoiceId = response.data.id || activeInvoiceId.value;
-    pendingInvoices.value = pendingInvoices.value.filter(
-      (inv) => inv.id !== activeInvoiceId.value
-    );
-    cartItems.value = [];
-    activeInvoiceId.value = null;
-    selectedCustomer.value = null;
-    customer.value = {
-      id: null,
-      name: "",
-      phone: "",
-      city: "",
-      district: "",
-      ward: "",
-      address: "",
+        const response = await apiService.post(
+          `/api/thanh-toan/${activeInvoiceId.value}`,
+          hoaDonRequest
+        );
+        const invoiceId = response.data.id || activeInvoiceId.value;
+        pendingInvoices.value = pendingInvoices.value.filter(
+          (inv) => inv.id !== activeInvoiceId.value
+        );
+        cartItems.value = [];
+        activeInvoiceId.value = null;
+        selectedCustomer.value = null;
+        customer.value = {
+          id: null,
+          name: "",
+          phone: "",
+          city: "",
+          district: "",
+          ward: "",
+          address: "",
+        };
+        receiver.value = {
+          name: "",
+          phone: "",
+          city: "",
+          district: "",
+          ward: "",
+          address: "",
+        };
+        discount.value = 0;
+        selectedDiscount.value = null;
+        showToast(
+          "success",
+          "Thanh toán thành công, chuẩn bị hiện hóa đơn chi tiết sau vài giây"
+        );
+        resetNotification();
+
+        setTimeout(() => {
+          router.push(`/hoaDon/${invoiceId}/detail`);
+        }, 8000);
+      } catch (error) {
+        showToast(
+          "error",
+          `Lỗi khi thanh toán: ${
+            error.response?.data?.message || error.message
+          }`
+        );
+      } finally {
+        isCreatingOrder.value = false;
+      }
     };
-    receiver.value = {
-      name: "",
-      phone: "",
-      city: "",
-      district: "",
-      ward: "",
-      address: "",
-    };
-    discount.value = 0;
-    selectedDiscount.value = null;
-    console.log("Dữ liệu gửi đi:", hoaDonRequest);
-    showToast(
-      "success",
-      "Thanh toán thành công, chuẩn bị hiện hóa đơn chi tiết sau vài giây"
-    );
-    resetNotification();
-
-    setTimeout(() => {
-      router.push(`/hoaDon/${invoiceId}/detail`);
-    }, 8000);
-  } catch (error) {
-    const errorMessage =
-      error.response?.data?.message ||
-      error.message ||
-      "Lỗi không xác định khi thanh toán";
-    showToast("error", `Lỗi khi thanh toán: ${errorMessage}`);
-    console.error("createOrder Error:", error.response?.data || error);
-  } finally {
-    isCreatingOrder.value = false;
-  }
-};
 
     // Shipping Fee Method
     const updateShippingFee = async () => {
@@ -1541,153 +1562,161 @@ const createOrder = async () => {
     });
 
     // Trong phần setup của component
-    const handleCustomerProvinceChange = () => {
-      // Reset các trường liên quan khi thay đổi tỉnh/thành phố
-      customer.value.district = "";
-      customer.value.ward = "";
-      customer.value.address = "";
-      districts.value = [];
-      wards.value = [];
+const handleCustomerProvinceChange = () => {
+  // Reset các trường liên quan khi thay đổi tỉnh/thành phố
+  customer.value.district = "";
+  customer.value.ward = "";
+  customer.value.address = "";
+  districts.value = [];
+  wards.value = [];
+  
+  // Gọi API để lấy danh sách quận/huyện nếu có tỉnh/thành phố được chọn
+  if (customer.value.city) {
+    fetchDistricts(customer.value.city);
+  }
+};
 
-      // Gọi API để lấy danh sách quận/huyện nếu có tỉnh/thành phố được chọn
-      if (customer.value.city) {
-        fetchDistricts(customer.value.city);
-      }
-    };
-
-    const handleCustomerDistrictChange = () => {
-      // Reset các trường liên quan khi thay đổi quận/huyện
-      customer.value.ward = "";
-      customer.value.address = "";
-      wards.value = [];
-
-      // Gọi API để lấy danh sách phường/xã nếu có quận/huyện được chọn
-      if (customer.value.district) {
-        fetchWards(customer.value.district);
-      }
-    };
+const handleCustomerDistrictChange = () => {
+  // Reset các trường liên quan khi thay đổi quận/huyện
+  customer.value.ward = "";
+  customer.value.address = "";
+  wards.value = [];
+  
+  // Gọi API để lấy danh sách phường/xã nếu có quận/huyện được chọn
+  if (customer.value.district) {
+    fetchWards(customer.value.district);
+  }
+};
 
     return {
-      isBestDiscount,
-      suggestedDiscounts,
-      alternativeDiscounts,
-      shippingFee,
-      selectedShippingUnit,
-      shippingUnits,
-      // State
-      router,
-      isCreatingInvoice,
-      isCreatingOrder,
-      activeInvoiceId,
-      invoiceSearchQuery,
-      pendingInvoices,
-      filteredPendingInvoices,
-      cartItems,
-      showIMEIModal,
-      showCartIMEIModal,
-      isCustomerModalOpen,
-      isLoadingMore,
-      productSearchQuery,
-      filterColor,
-      filterRam,
-      filterStorage,
-      selectedProduct,
-      selectedIMEIs,
-      searchCustomer,
-      selectedCustomer,
-      customer,
-      receiver,
-      isReceiverEditable,
-      isDelivery,
-      selectedDiscount,
-      discount,
-      privateDiscountCodes,
-      publicDiscountCodes,
-      paymentMethod,
-      tienChuyenKhoan,
-      tienMat,
-      newCustomer,
-      products,
-      filteredProducts,
-      uniqueColors,
-      uniqueRams,
-      uniqueStorages,
-      availableIMEIs,
-      provinces,
-      districts,
-      wards,
-      tongTien,
-      totalPayment,
-      priceChangeInfo,
-      cartHeaders,
-      productHeaders,
-      notificationType,
-      notificationMessage,
-      isNotificationLoading,
-      notificationOnConfirm,
-      notificationOnCancel,
-      notificationModal,
-      toastNotification,
-      qrCodeValue,
-      qrCodeAmount,
-      showQRCode,
-      //update shiper
-      updateShippingFee,
-      //thay doi dia chi
-      handleCustomerProvinceChange,
-      handleCustomerDistrictChange,
-      //pgg
-      selectDiscount,
-      // Utility Methods
-      showToast,
-      showConfirm,
-      resetNotification,
-      formatPrice,
-      formatDate,
-      isValidDiscount,
-      // Debounced Search
-      debouncedInvoiceSearch,
-      debouncedProductSearch,
-      debouncedCustomerSearch,
-      // Invoice-Related
-      fetchPendingInvoices,
-      createNewPendingInvoice,
-      loadPendingInvoice,
-      confirmCancelInvoice,
-      cancelInvoice,
-      fetchProducts,
-      handleScroll,
-      removeItem,
-      showIMEIList,
-      showIMEIModalForItem,
-      closeIMEIModal,
-      closeCartIMEIModal,
-      handleIMEISelection,
-      removeIMEI,
-      addProductWithIMEIs,
-      deleteIMEI,
-      Search,
-      searchCustomers,
-      addBanHang,
-      addNewCustomer,
-      getPhieuGiamGiaByKhachHang,
-      fetchLocations,
-      fetchDistricts,
-      fetchWards,
-      openCustomerModal,
-      handleProvinceChange,
-      handleDistrictChange,
-      handleReceiverProvinceChange,
-      handleReceiverDistrictChange,
-      toggleDelivery,
-      fetchPGG,
-      validateDiscount,
-      applyBestDiscount,
-      selectPayment,
-      generateQRCode,
-      scanQR,
-      ThanhToan,
-      createOrder,
-    };
+  // Các biến và hàm hiện có
+  handleCustomerProvinceChange,
+  handleCustomerDistrictChange,
+  selectDiscount,
+  suggestedDiscounts,
+  alternativeDiscounts,
+  shippingFee,
+  selectedShippingUnit,
+  shippingUnits,
+  updateShippingFee,
+  router,
+  isCreatingInvoice,
+  isCreatingOrder,
+  activeInvoiceId,
+  invoiceSearchQuery,
+  pendingInvoices,
+  filteredPendingInvoices,
+  cartItems,
+  showIMEIModal,
+  showCartIMEIModal,
+  isCustomerModalOpen,
+  isLoadingMore,
+  productSearchQuery,
+  filterColor,
+  filterRam,
+  filterStorage,
+  selectedProduct,
+  selectedIMEIs,
+  searchCustomer,
+  selectedCustomer,
+  customer,
+  receiver,
+  isReceiverEditable,
+  isDelivery,
+  selectedDiscount,
+  discount,
+  privateDiscountCodes,
+  publicDiscountCodes,
+  paymentMethod,
+  tienChuyenKhoan,
+  tienMat,
+  newCustomer,
+  products,
+  filteredProducts,
+  uniqueColors,
+  uniqueRams,
+  uniqueStorages,
+  availableIMEIs,
+  provinces,
+  districts,
+  wards,
+  tongTien,
+  totalPayment,
+  priceChangeInfo,
+  cartHeaders,
+  productHeaders,
+  notificationType,
+  notificationMessage,
+  isNotificationLoading,
+  notificationOnConfirm,
+  notificationOnCancel,
+  notificationModal,
+  toastNotification,
+  qrCodeValue,
+  qrCodeAmount,
+  showQRCode,
+  showToast,
+  showConfirm,
+  resetNotification,
+  formatPrice,
+  formatDate,
+  isValidDiscount,
+  debouncedInvoiceSearch,
+  debouncedProductSearch,
+  debouncedCustomerSearch,
+  fetchPendingInvoices,
+  createNewPendingInvoice,
+  loadPendingInvoice,
+  confirmCancelInvoice,
+  cancelInvoice,
+  fetchProducts,
+  handleScroll,
+  removeItem,
+  showIMEIList,
+  showIMEIModalForItem,
+  closeIMEIModal,
+  closeCartIMEIModal,
+  handleIMEISelection,
+  removeIMEI,
+  addProductWithIMEIs,
+  deleteIMEI,
+  Search,
+  searchCustomers,
+  addBanHang,
+  addNewCustomer,
+  getPhieuGiamGiaByKhachHang,
+  fetchLocations,
+  fetchDistricts,
+  fetchWards,
+  openCustomerModal,
+  handleProvinceChange,
+  handleDistrictChange,
+  handleReceiverProvinceChange,
+  handleReceiverDistrictChange,
+  toggleDelivery,
+  fetchPGG,
+  validateDiscount,
+  applyBestDiscount,
+  selectPayment,
+  generateQRCode,
+  scanQR,
+  ThanhToan,
+  createOrder,
+  // Thêm các biến và hàm mới cho giỏ hàng
+  cartSearchQuery,
+  cartFilterColor,
+  cartFilterRam,
+  cartFilterStorage,
+  uniqueCartColors,
+  uniqueCartRams,
+  uniqueCartStorages,
+  filteredCartItems,
+  debouncedCartSearch,
+  showProductDetails,
+  selectedCartItem,
+  modalPosition,
+  showProductDetailsModal,
+  hideProductDetailsModal,
+};
   },
 };
