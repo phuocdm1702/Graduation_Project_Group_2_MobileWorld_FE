@@ -771,6 +771,7 @@
                   >
                     <i class="bi bi-ticket-perforated-fill text-success"></i>
                     Mã Giảm Giá
+
                   </h6>
 
                   <!-- PGG tốt nhất -->
@@ -1055,7 +1056,7 @@
                         'gradient-custom-teal text-white':
                           paymentMethod === 'both',
                         border: paymentMethod !== 'both',
-                      }"
+                      }"a
                       style="border: 1px solid rgba(52, 211, 153, 0.2)"
                     >
                       Cả hai
