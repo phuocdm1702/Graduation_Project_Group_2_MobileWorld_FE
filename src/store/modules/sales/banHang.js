@@ -101,6 +101,54 @@ export default {
     const router = useRouter();
     const manualDiscountSelected = ref(false); // Cờ để kiểm soát chọn PGG thủ công
 
+    const cartSearchQuery = ref("");
+const cartFilterColor = ref("");
+const cartFilterRam = ref("");
+const cartFilterStorage = ref("");
+const showProductDetails = ref(false);
+const selectedCartItem = ref(null);
+const modalPosition = ref({ top: 0, left: 0 });
+
+const uniqueCartColors = computed(() => [
+  ...new Set(cartItems.value.map((item) => item.color)),
+]);
+const uniqueCartRams = computed(() => [
+  ...new Set(cartItems.value.map((item) => item.ram)),
+]);
+const uniqueCartStorages = computed(() => [
+  ...new Set(cartItems.value.map((item) => item.storage)),
+]);
+
+const filteredCartItems = computed(() => {
+  let filtered = cartItems.value;
+  if (cartSearchQuery.value) {
+    const query = cartSearchQuery.value.toLowerCase();
+    filtered = filtered.filter(
+      (item) =>
+        item.name.toLowerCase().includes(query) ||
+        item.imei.toLowerCase().includes(query) ||
+        item.color.toLowerCase().includes(query)
+    );
+  }
+  if (cartFilterColor.value) {
+    filtered = filtered.filter((item) => item.color === cartFilterColor.value);
+  }
+  if (cartFilterRam.value) {
+    filtered = filtered.filter((item) => item.ram === cartFilterRam.value);
+  }
+  if (cartFilterStorage.value) {
+    filtered = filtered.filter(
+      (item) => item.storage === cartFilterStorage.value
+    );
+  }
+  return filtered;
+});
+
+// Thêm debounced search cho giỏ hàng
+const debouncedCartSearch = debounce((query) => {
+  cartSearchQuery.value = query;
+}, 300);
+
     // DataTable headers
     const cartHeaders = ref([
       { text: "STT", value: "stt" },
@@ -352,6 +400,20 @@ export default {
     const FREE_SHIP_THRESHOLD = 50000000;
 
     // Utility Methods
+    const showProductDetailsModal = (item, event) => {
+  selectedCartItem.value = item;
+  modalPosition.value = {
+    top: event.clientY + 10, // Điều chỉnh vị trí modal theo con trỏ chuột
+    left: event.clientX + 10,
+  };
+  showProductDetails.value = true;
+};
+
+const hideProductDetailsModal = () => {
+  showProductDetails.value = false;
+  selectedCartItem.value = null;
+};
+
     const selectDiscount = async (discount) => {
       try {
         const result = await validateDiscount(
@@ -1527,122 +1589,134 @@ const handleCustomerDistrictChange = () => {
 };
 
     return {
-      handleCustomerProvinceChange,
-      handleCustomerDistrictChange,
-      selectDiscount,
-      suggestedDiscounts,
-      alternativeDiscounts,
-      shippingFee,
-      selectedShippingUnit,
-      shippingUnits,
-      updateShippingFee,
-      // State
-      router,
-      isCreatingInvoice,
-      isCreatingOrder,
-      activeInvoiceId,
-      invoiceSearchQuery,
-      pendingInvoices,
-      filteredPendingInvoices,
-      cartItems,
-      showIMEIModal,
-      showCartIMEIModal,
-      isCustomerModalOpen,
-      isLoadingMore,
-      productSearchQuery,
-      filterColor,
-      filterRam,
-      filterStorage,
-      selectedProduct,
-      selectedIMEIs,
-      searchCustomer,
-      selectedCustomer,
-      customer,
-      receiver,
-      isReceiverEditable,
-      isDelivery,
-      selectedDiscount,
-      discount,
-      privateDiscountCodes,
-      publicDiscountCodes,
-      paymentMethod,
-      tienChuyenKhoan,
-      tienMat,
-      newCustomer,
-      products,
-      filteredProducts,
-      uniqueColors,
-      uniqueRams,
-      uniqueStorages,
-      availableIMEIs,
-      provinces,
-      districts,
-      wards,
-      tongTien,
-      totalPayment,
-      priceChangeInfo,
-      cartHeaders,
-      productHeaders,
-      notificationType,
-      notificationMessage,
-      isNotificationLoading,
-      notificationOnConfirm,
-      notificationOnCancel,
-      notificationModal,
-      toastNotification,
-      qrCodeValue,
-      qrCodeAmount,
-      showQRCode,
-      // Utility Methods
-      showToast,
-      showConfirm,
-      resetNotification,
-      formatPrice,
-      formatDate,
-      isValidDiscount,
-      // Debounced Search
-      debouncedInvoiceSearch,
-      debouncedProductSearch,
-      debouncedCustomerSearch,
-      // Invoice-Related
-      fetchPendingInvoices,
-      createNewPendingInvoice,
-      loadPendingInvoice,
-      confirmCancelInvoice,
-      cancelInvoice,
-      fetchProducts,
-      handleScroll,
-      removeItem,
-      showIMEIList,
-      showIMEIModalForItem,
-      closeIMEIModal,
-      closeCartIMEIModal,
-      handleIMEISelection,
-      removeIMEI,
-      addProductWithIMEIs,
-      deleteIMEI,
-      Search,
-      searchCustomers,
-      addBanHang,
-      addNewCustomer,
-      getPhieuGiamGiaByKhachHang,
-      fetchLocations,
-      fetchDistricts,
-      fetchWards,
-      openCustomerModal,
-      handleProvinceChange,
-      handleDistrictChange,
-      handleReceiverProvinceChange,
-      handleReceiverDistrictChange,
-      toggleDelivery,
-      fetchPGG,
-      validateDiscount,
-      applyBestDiscount,
-      selectPayment,
-      generateQRCode,
-      scanQR,
-      ThanhToan,
-      createOrder,
-    };
+  // Các biến và hàm hiện có
+  handleCustomerProvinceChange,
+  handleCustomerDistrictChange,
+  selectDiscount,
+  suggestedDiscounts,
+  alternativeDiscounts,
+  shippingFee,
+  selectedShippingUnit,
+  shippingUnits,
+  updateShippingFee,
+  router,
+  isCreatingInvoice,
+  isCreatingOrder,
+  activeInvoiceId,
+  invoiceSearchQuery,
+  pendingInvoices,
+  filteredPendingInvoices,
+  cartItems,
+  showIMEIModal,
+  showCartIMEIModal,
+  isCustomerModalOpen,
+  isLoadingMore,
+  productSearchQuery,
+  filterColor,
+  filterRam,
+  filterStorage,
+  selectedProduct,
+  selectedIMEIs,
+  searchCustomer,
+  selectedCustomer,
+  customer,
+  receiver,
+  isReceiverEditable,
+  isDelivery,
+  selectedDiscount,
+  discount,
+  privateDiscountCodes,
+  publicDiscountCodes,
+  paymentMethod,
+  tienChuyenKhoan,
+  tienMat,
+  newCustomer,
+  products,
+  filteredProducts,
+  uniqueColors,
+  uniqueRams,
+  uniqueStorages,
+  availableIMEIs,
+  provinces,
+  districts,
+  wards,
+  tongTien,
+  totalPayment,
+  priceChangeInfo,
+  cartHeaders,
+  productHeaders,
+  notificationType,
+  notificationMessage,
+  isNotificationLoading,
+  notificationOnConfirm,
+  notificationOnCancel,
+  notificationModal,
+  toastNotification,
+  qrCodeValue,
+  qrCodeAmount,
+  showQRCode,
+  showToast,
+  showConfirm,
+  resetNotification,
+  formatPrice,
+  formatDate,
+  isValidDiscount,
+  debouncedInvoiceSearch,
+  debouncedProductSearch,
+  debouncedCustomerSearch,
+  fetchPendingInvoices,
+  createNewPendingInvoice,
+  loadPendingInvoice,
+  confirmCancelInvoice,
+  cancelInvoice,
+  fetchProducts,
+  handleScroll,
+  removeItem,
+  showIMEIList,
+  showIMEIModalForItem,
+  closeIMEIModal,
+  closeCartIMEIModal,
+  handleIMEISelection,
+  removeIMEI,
+  addProductWithIMEIs,
+  deleteIMEI,
+  Search,
+  searchCustomers,
+  addBanHang,
+  addNewCustomer,
+  getPhieuGiamGiaByKhachHang,
+  fetchLocations,
+  fetchDistricts,
+  fetchWards,
+  openCustomerModal,
+  handleProvinceChange,
+  handleDistrictChange,
+  handleReceiverProvinceChange,
+  handleReceiverDistrictChange,
+  toggleDelivery,
+  fetchPGG,
+  validateDiscount,
+  applyBestDiscount,
+  selectPayment,
+  generateQRCode,
+  scanQR,
+  ThanhToan,
+  createOrder,
+  // Thêm các biến và hàm mới cho giỏ hàng
+  cartSearchQuery,
+  cartFilterColor,
+  cartFilterRam,
+  cartFilterStorage,
+  uniqueCartColors,
+  uniqueCartRams,
+  uniqueCartStorages,
+  filteredCartItems,
+  debouncedCartSearch,
+  showProductDetails,
+  selectedCartItem,
+  modalPosition,
+  showProductDetailsModal,
+  hideProductDetailsModal,
+};
   },
 };
