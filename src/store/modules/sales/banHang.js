@@ -102,52 +102,54 @@ export default {
     const manualDiscountSelected = ref(false); // Cờ để kiểm soát chọn PGG thủ công
 
     const cartSearchQuery = ref("");
-const cartFilterColor = ref("");
-const cartFilterRam = ref("");
-const cartFilterStorage = ref("");
-const showProductDetails = ref(false);
-const selectedCartItem = ref(null);
-const modalPosition = ref({ top: 0, left: 0 });
+    const cartFilterColor = ref("");
+    const cartFilterRam = ref("");
+    const cartFilterStorage = ref("");
+    const showProductDetails = ref(false);
+    const selectedCartItem = ref(null);
+    const modalPosition = ref({ top: 0, left: 0 });
 
-const uniqueCartColors = computed(() => [
-  ...new Set(cartItems.value.map((item) => item.color)),
-]);
-const uniqueCartRams = computed(() => [
-  ...new Set(cartItems.value.map((item) => item.ram)),
-]);
-const uniqueCartStorages = computed(() => [
-  ...new Set(cartItems.value.map((item) => item.storage)),
-]);
+    const uniqueCartColors = computed(() => [
+      ...new Set(cartItems.value.map((item) => item.color)),
+    ]);
+    const uniqueCartRams = computed(() => [
+      ...new Set(cartItems.value.map((item) => item.ram)),
+    ]);
+    const uniqueCartStorages = computed(() => [
+      ...new Set(cartItems.value.map((item) => item.storage)),
+    ]);
 
-const filteredCartItems = computed(() => {
-  let filtered = cartItems.value;
-  if (cartSearchQuery.value) {
-    const query = cartSearchQuery.value.toLowerCase();
-    filtered = filtered.filter(
-      (item) =>
-        item.name.toLowerCase().includes(query) ||
-        item.imei.toLowerCase().includes(query) ||
-        item.color.toLowerCase().includes(query)
-    );
-  }
-  if (cartFilterColor.value) {
-    filtered = filtered.filter((item) => item.color === cartFilterColor.value);
-  }
-  if (cartFilterRam.value) {
-    filtered = filtered.filter((item) => item.ram === cartFilterRam.value);
-  }
-  if (cartFilterStorage.value) {
-    filtered = filtered.filter(
-      (item) => item.storage === cartFilterStorage.value
-    );
-  }
-  return filtered;
-});
+    const filteredCartItems = computed(() => {
+      let filtered = cartItems.value;
+      if (cartSearchQuery.value) {
+        const query = cartSearchQuery.value.toLowerCase();
+        filtered = filtered.filter(
+          (item) =>
+            item.name.toLowerCase().includes(query) ||
+            item.imei.toLowerCase().includes(query) ||
+            item.color.toLowerCase().includes(query)
+        );
+      }
+      if (cartFilterColor.value) {
+        filtered = filtered.filter(
+          (item) => item.color === cartFilterColor.value
+        );
+      }
+      if (cartFilterRam.value) {
+        filtered = filtered.filter((item) => item.ram === cartFilterRam.value);
+      }
+      if (cartFilterStorage.value) {
+        filtered = filtered.filter(
+          (item) => item.storage === cartFilterStorage.value
+        );
+      }
+      return filtered;
+    });
 
-// Thêm debounced search cho giỏ hàng
-const debouncedCartSearch = debounce((query) => {
-  cartSearchQuery.value = query;
-}, 300);
+    // Thêm debounced search cho giỏ hàng
+    const debouncedCartSearch = debounce((query) => {
+      cartSearchQuery.value = query;
+    }, 300);
 
     // DataTable headers
     const cartHeaders = ref([
@@ -189,16 +191,14 @@ const debouncedCartSearch = debounce((query) => {
 
     // Computed
     // Thêm computed để đồng bộ discount với selectedDiscount
-    // Thêm computed để đồng bộ discount với selectedDiscount
-    const discount = computed({
-      get: () => (selectedDiscount.value ? selectedDiscount.value.value : 0),
-      set: (newValue) => {
-        // Nếu cần, có thể thêm logic để cập nhật selectedDiscount.value
-        if (selectedDiscount.value) {
-          selectedDiscount.value.value = newValue;
-        }
-      },
-    });
+   const discount = computed({
+  get: () => (selectedDiscount.value ? selectedDiscount.value.value : 0),
+  set: (newValue) => {
+    if (selectedDiscount.value) {
+      selectedDiscount.value.value = newValue;
+    }
+  },
+});
     const suggestedDiscounts = computed(() => {
       return publicDiscountCodes.value
         .filter((discount) => {
@@ -294,12 +294,15 @@ const debouncedCartSearch = debounce((query) => {
     });
 
     const totalPayment = computed(() => {
-      let total = tongTien.value - discount.value;
-      if (isDelivery.value && tongTien.value < FREE_SHIP_THRESHOLD) {
-        total += shippingFee.value;
-      }
-      return total > 0 ? total : 0;
-    });
+  let total = tongTien.value; // Tổng tiền ban đầu
+  total -= discount.value;    // Trừ giảm giá
+  if (isDelivery.value && tongTien.value < FREE_SHIP_THRESHOLD) {
+    total += shippingFee.value; // Cộng phí vận chuyển nếu áp dụng
+  }
+  return total > 0 ? total : 0; // Đảm bảo tổng không âm
+});
+
+    
 
     const priceChangeInfo = computed(() => {
       return cartItems.value.map((item) => {
@@ -401,18 +404,18 @@ const debouncedCartSearch = debounce((query) => {
 
     // Utility Methods
     const showProductDetailsModal = (item, event) => {
-  selectedCartItem.value = item;
-  modalPosition.value = {
-    top: event.clientY + 10, // Điều chỉnh vị trí modal theo con trỏ chuột
-    left: event.clientX + 10,
-  };
-  showProductDetails.value = true;
-};
+      selectedCartItem.value = item;
+      modalPosition.value = {
+        top: event.clientY + 10, // Điều chỉnh vị trí modal theo con trỏ chuột
+        left: event.clientX + 10,
+      };
+      showProductDetails.value = true;
+    };
 
-const hideProductDetailsModal = () => {
-  showProductDetails.value = false;
-  selectedCartItem.value = null;
-};
+    const hideProductDetailsModal = () => {
+      showProductDetails.value = false;
+      selectedCartItem.value = null;
+    };
 
     const selectDiscount = async (discount) => {
       try {
@@ -871,126 +874,126 @@ const hideProductDetailsModal = () => {
     };
 
     const searchCustomers = async () => {
-  if (!searchCustomer.value) {
-    selectedCustomer.value = null;
-    customer.value = {
-      id: null,
-      name: "",
-      phone: "",
-      city: "",
-      district: "",
-      ward: "",
-      address: "",
-    };
-    privateDiscountCodes.value = [];
-    setTimeout(() => {
-      showToast("warning", "Vui lòng nhập thông tin tìm kiếm");
-    }, 3000);
-    return;
-  }
-
-  try {
-    const result = await Search(searchCustomer.value);
-
-    if (result.success && result.data && result.data.length > 0) {
-      const customerData = result.data[0];
-      const customerId =
-        customerData.id ||
-        customerData.idKhachHang ||
-        (customerData.idKhachHang && customerData.idKhachHang.id) ||
-        null;
-
-      selectedCustomer.value = customerData;
-      customer.value = {
-        id: customerId,
-        name: customerData.ten || customerData.idKhachHang?.ten || "",
-        phone:
-          customerData.idTaiKhoan?.soDienThoai ||
-          customerData.idKhachHang?.idTaiKhoan?.soDienThoai ||
-          "",
-        city: customerData.idDiaChiKhachHang?.thanhPho || "",
-        district: customerData.idDiaChiKhachHang?.quan || "",
-        ward: customerData.idDiaChiKhachHang?.phuong || "",
-        address: customerData.idDiaChiKhachHang?.diaChiCuThe || "",
-      };
-
-      // Điền quận và phường nếu có thành phố và quận
-      if (customer.value.city) {
-        await fetchDistricts(customer.value.city);
-        if (customer.value.district) {
-          await fetchWards(customer.value.district);
-        }
-      }
-
-      if (customerId) {
-        const pggResult = await getPhieuGiamGiaByKhachHang(customerId);
-        if (pggResult.success && Array.isArray(pggResult.data)) {
-          privateDiscountCodes.value = pggResult.data
-            .filter(
-              (item) =>
-                item.idPhieuGiamGia?.riengTu === true &&
-                isValidDiscount(item.idPhieuGiamGia?.ngayKetThuc)
-            )
-            .map((item, index) => ({
-              id: item.id || index + 1,
-              code: item.ma || "Unknown",
-              value: item.idPhieuGiamGia?.soTienGiamToiDa || 0,
-              expiry: formatDate(item.idPhieuGiamGia?.ngayKetThuc),
-              rawExpiry: item.idPhieuGiamGia?.ngayKetThuc,
-              type: "private",
-            }));
-          showToast(
-            "success",
-            `Tìm thấy khách hàng: ${customer.value.name} với ${privateDiscountCodes.value.length} mã giảm giá cá nhân`
-          );
-        } else {
-          privateDiscountCodes.value = [];
-          showToast(
-            "warning",
-            `Tìm thấy khách hàng: ${customer.value.name}, nhưng không có mã giảm giá cá nhân`
-          );
-        }
-      } else {
+      if (!searchCustomer.value) {
+        selectedCustomer.value = null;
+        customer.value = {
+          id: null,
+          name: "",
+          phone: "",
+          city: "",
+          district: "",
+          ward: "",
+          address: "",
+        };
         privateDiscountCodes.value = [];
-        showToast(
-          "warning",
-          `Tìm thấy khách hàng: ${customer.value.name}, nhưng không có ID để lấy mã giảm giá`
-        );
+        setTimeout(() => {
+          showToast("warning", "Vui lòng nhập thông tin tìm kiếm");
+        }, 3000);
+        return;
       }
-      await applyBestDiscount();
-    } else {
-      selectedCustomer.value = null;
-      customer.value = {
-        id: null,
-        name: "",
-        phone: "",
-        city: "",
-        district: "",
-        ward: "",
-        address: "",
-      };
-      privateDiscountCodes.value = [];
-      setTimeout(() => {
-        showToast("warning", "Không tìm thấy khách hàng");
-      }, 3000);
-      await applyBestDiscount();
-    }
-  } catch (error) {
-    selectedCustomer.value = null;
-    customer.value = {
-      id: null,
-      name: "",
-      phone: "",
-      city: "",
-      district: "",
-      ward: "",
-      address: "",
+
+      try {
+        const result = await Search(searchCustomer.value);
+
+        if (result.success && result.data && result.data.length > 0) {
+          const customerData = result.data[0];
+          const customerId =
+            customerData.id ||
+            customerData.idKhachHang ||
+            (customerData.idKhachHang && customerData.idKhachHang.id) ||
+            null;
+
+          selectedCustomer.value = customerData;
+          customer.value = {
+            id: customerId,
+            name: customerData.ten || customerData.idKhachHang?.ten || "",
+            phone:
+              customerData.idTaiKhoan?.soDienThoai ||
+              customerData.idKhachHang?.idTaiKhoan?.soDienThoai ||
+              "",
+            city: customerData.idDiaChiKhachHang?.thanhPho || "",
+            district: customerData.idDiaChiKhachHang?.quan || "",
+            ward: customerData.idDiaChiKhachHang?.phuong || "",
+            address: customerData.idDiaChiKhachHang?.diaChiCuThe || "",
+          };
+
+          // Điền quận và phường nếu có thành phố và quận
+          if (customer.value.city) {
+            await fetchDistricts(customer.value.city);
+            if (customer.value.district) {
+              await fetchWards(customer.value.district);
+            }
+          }
+
+          if (customerId) {
+            const pggResult = await getPhieuGiamGiaByKhachHang(customerId);
+            if (pggResult.success && Array.isArray(pggResult.data)) {
+              privateDiscountCodes.value = pggResult.data
+                .filter(
+                  (item) =>
+                    item.idPhieuGiamGia?.riengTu === true &&
+                    isValidDiscount(item.idPhieuGiamGia?.ngayKetThuc)
+                )
+                .map((item, index) => ({
+                  id: item.id || index + 1,
+                  code: item.ma || "Unknown",
+                  value: item.idPhieuGiamGia?.soTienGiamToiDa || 0,
+                  expiry: formatDate(item.idPhieuGiamGia?.ngayKetThuc),
+                  rawExpiry: item.idPhieuGiamGia?.ngayKetThuc,
+                  type: "private",
+                }));
+              showToast(
+                "success",
+                `Tìm thấy khách hàng: ${customer.value.name} với ${privateDiscountCodes.value.length} mã giảm giá cá nhân`
+              );
+            } else {
+              privateDiscountCodes.value = [];
+              showToast(
+                "warning",
+                `Tìm thấy khách hàng: ${customer.value.name}, nhưng không có mã giảm giá cá nhân`
+              );
+            }
+          } else {
+            privateDiscountCodes.value = [];
+            showToast(
+              "warning",
+              `Tìm thấy khách hàng: ${customer.value.name}, nhưng không có ID để lấy mã giảm giá`
+            );
+          }
+          await applyBestDiscount();
+        } else {
+          selectedCustomer.value = null;
+          customer.value = {
+            id: null,
+            name: "",
+            phone: "",
+            city: "",
+            district: "",
+            ward: "",
+            address: "",
+          };
+          privateDiscountCodes.value = [];
+          setTimeout(() => {
+            showToast("warning", "Không tìm thấy khách hàng");
+          }, 3000);
+          await applyBestDiscount();
+        }
+      } catch (error) {
+        selectedCustomer.value = null;
+        customer.value = {
+          id: null,
+          name: "",
+          phone: "",
+          city: "",
+          district: "",
+          ward: "",
+          address: "",
+        };
+        privateDiscountCodes.value = [];
+        showToast("error", "Đã xảy ra lỗi khi tìm kiếm khách hàng");
+        await applyBestDiscount();
+      }
     };
-    privateDiscountCodes.value = [];
-    showToast("error", "Đã xảy ra lỗi khi tìm kiếm khách hàng");
-    await applyBestDiscount();
-  }
-};
 
     const addBanHang = async (customerData) => {
       try {
@@ -1414,106 +1417,113 @@ const hideProductDetailsModal = () => {
     };
 
     const createOrder = async () => {
-      isCreatingOrder.value = true;
-      try {
-        const hinhThucThanhToan = [];
-        if (paymentMethod.value === "cash") {
-          hinhThucThanhToan.push({
-            phuongThucThanhToanId: 1,
-            tienMat: totalPayment.value,
-            tienChuyenKhoan: 0,
-          });
-        } else if (paymentMethod.value === "transfer") {
-          hinhThucThanhToan.push({
-            phuongThucThanhToanId: 2,
-            tienMat: 0,
-            tienChuyenKhoan: totalPayment.value,
-          });
-        } else if (paymentMethod.value === "both") {
-          hinhThucThanhToan.push({
-            phuongThucThanhToanId: 3,
-            tienMat: tienMat.value,
-            tienChuyenKhoan: tienChuyenKhoan.value,
-          });
-        }
+  isCreatingOrder.value = true;
+  try {
+    const hinhThucThanhToan = [];
+    if (paymentMethod.value === "cash") {
+      hinhThucThanhToan.push({
+        phuongThucThanhToanId: 1,
+        tienMat: totalPayment.value,
+        tienChuyenKhoan: 0,
+      });
+    } else if (paymentMethod.value === "transfer") {
+      hinhThucThanhToan.push({
+        phuongThucThanhToanId: 2,
+        tienMat: 0,
+        tienChuyenKhoan: totalPayment.value,
+      });
+    } else if (paymentMethod.value === "both") {
+      hinhThucThanhToan.push({
+        phuongThucThanhToanId: 3,
+        tienMat: tienMat.value,
+        tienChuyenKhoan: tienChuyenKhoan.value,
+      });
+    }
 
-        const hoaDonRequest = {
-          idKhachHang: customer.value?.id || null,
-          tenKhachHang: customer.value?.name || "Khách vãng lai",
-          soDienThoaiKhachHang: customer.value?.phone || null,
-          diaChiKhachHang:
-            customer.value && isDelivery.value
-              ? {
-                  thanhPho: customer.value.city,
-                  quan: customer.value.district,
-                  phuong: customer.value.ward,
-                  diaChiCuThe: customer.value.address,
-                }
-              : null,
-          hinhThucThanhToan,
-          idPhieuGiamGia: selectedDiscount.value?.id || null,
-          giamGia: discount.value,
-          phiVanChuyen: isDelivery.value ? shippingFee.value : 0,
-          loaiDon: isDelivery.value ? "online" : "trực tiếp",
-          tongTien: tongTien.value,
-          chiTietGioHang: cartItems.value.map((item) => ({
-            chiTietSanPhamId: item.id,
-            soLuong: item.quantity,
-            maImel: item.imei,
-            giaBan: item.originalPrice,
-          })),
-        };
-
-        const response = await apiService.post(
-          `/api/thanh-toan/${activeInvoiceId.value}`,
-          hoaDonRequest
-        );
-        const invoiceId = response.data.id || activeInvoiceId.value;
-        pendingInvoices.value = pendingInvoices.value.filter(
-          (inv) => inv.id !== activeInvoiceId.value
-        );
-        cartItems.value = [];
-        activeInvoiceId.value = null;
-        selectedCustomer.value = null;
-        customer.value = {
-          id: null,
-          name: "",
-          phone: "",
-          city: "",
-          district: "",
-          ward: "",
-          address: "",
-        };
-        receiver.value = {
-          name: "",
-          phone: "",
-          city: "",
-          district: "",
-          ward: "",
-          address: "",
-        };
-        discount.value = 0;
-        selectedDiscount.value = null;
-        showToast(
-          "success",
-          "Thanh toán thành công, chuẩn bị hiện hóa đơn chi tiết sau vài giây"
-        );
-        resetNotification();
-
-        setTimeout(() => {
-          router.push(`/hoaDon/${invoiceId}/detail`);
-        }, 8000);
-      } catch (error) {
-        showToast(
-          "error",
-          `Lỗi khi thanh toán: ${
-            error.response?.data?.message || error.message
-          }`
-        );
-      } finally {
-        isCreatingOrder.value = false;
-      }
+    const hoaDonRequest = {
+      idKhachHang: customer.value?.id || null,
+      tenKhachHang: customer.value?.name || "Khách vãng lai",
+      soDienThoaiKhachHang: customer.value?.phone || null,
+      diaChiKhachHang:
+        customer.value && isDelivery.value
+          ? {
+              thanhPho: customer.value.city,
+              quan: customer.value.district,
+              phuong: customer.value.ward,
+              diaChiCuThe: customer.value.address,
+            }
+          : {
+              thanhPho: "",
+              quan: "",
+              phuong: "",
+              diaChiCuThe: "",
+            },
+      hinhThucThanhToan,
+      idPhieuGiamGia: selectedDiscount.value?.id || null,
+      giamGia: selectedDiscount.value?.value || 0,
+      // phiVanChuyen: isDelivery.value ? shippingFee.value : 0,
+      loaiDon: isDelivery.value ? "online" : "trực tiếp",
+      tongTien: tongTien.value,
+      tongTienSauGiam: totalPayment.value, // Thêm trường tongTienSauGiam
+      chiTietGioHang: cartItems.value.map((item) => ({
+        chiTietSanPhamId: item.id,
+        soLuong: item.quantity,
+        maImel: item.imei,
+        giaBan: item.originalPrice,
+      })),
     };
+
+    console.log("hoaDonRequest:", JSON.stringify(hoaDonRequest, null, 2));
+    const response = await apiService.post(
+      `/api/thanh-toan/${activeInvoiceId.value}`,
+      hoaDonRequest
+    );
+    const invoiceId = response.data.id || activeInvoiceId.value;
+    pendingInvoices.value = pendingInvoices.value.filter(
+      (inv) => inv.id !== activeInvoiceId.value
+    );
+    cartItems.value = [];
+    activeInvoiceId.value = null;
+    selectedCustomer.value = null;
+    customer.value = {
+      id: null,
+      name: "",
+      phone: "",
+      city: "",
+      district: "",
+      ward: "",
+      address: "",
+    };
+    receiver.value = {
+      name: "",
+      phone: "",
+      city: "",
+      district: "",
+      ward: "",
+      address: "",
+    };
+    discount.value = 0;
+    selectedDiscount.value = null;
+    showToast(
+      "success",
+      "Thanh toán thành công, chuẩn bị hiện hóa đơn chi tiết sau vài giây"
+    );
+    resetNotification();
+
+    setTimeout(() => {
+      router.push(`/hoaDon/${invoiceId}/detail`);
+    }, 8000);
+  } catch (error) {
+    showToast(
+      "error",
+      `Lỗi khi thanh toán: ${
+        error.response?.data?.message || error.message
+      }`
+    );
+  } finally {
+    isCreatingOrder.value = false;
+  }
+};
 
     // Shipping Fee Method
     const updateShippingFee = async () => {
@@ -1562,161 +1572,161 @@ const hideProductDetailsModal = () => {
     });
 
     // Trong phần setup của component
-const handleCustomerProvinceChange = () => {
-  // Reset các trường liên quan khi thay đổi tỉnh/thành phố
-  customer.value.district = "";
-  customer.value.ward = "";
-  customer.value.address = "";
-  districts.value = [];
-  wards.value = [];
-  
-  // Gọi API để lấy danh sách quận/huyện nếu có tỉnh/thành phố được chọn
-  if (customer.value.city) {
-    fetchDistricts(customer.value.city);
-  }
-};
+    const handleCustomerProvinceChange = () => {
+      // Reset các trường liên quan khi thay đổi tỉnh/thành phố
+      customer.value.district = "";
+      customer.value.ward = "";
+      customer.value.address = "";
+      districts.value = [];
+      wards.value = [];
 
-const handleCustomerDistrictChange = () => {
-  // Reset các trường liên quan khi thay đổi quận/huyện
-  customer.value.ward = "";
-  customer.value.address = "";
-  wards.value = [];
-  
-  // Gọi API để lấy danh sách phường/xã nếu có quận/huyện được chọn
-  if (customer.value.district) {
-    fetchWards(customer.value.district);
-  }
-};
+      // Gọi API để lấy danh sách quận/huyện nếu có tỉnh/thành phố được chọn
+      if (customer.value.city) {
+        fetchDistricts(customer.value.city);
+      }
+    };
+
+    const handleCustomerDistrictChange = () => {
+      // Reset các trường liên quan khi thay đổi quận/huyện
+      customer.value.ward = "";
+      customer.value.address = "";
+      wards.value = [];
+
+      // Gọi API để lấy danh sách phường/xã nếu có quận/huyện được chọn
+      if (customer.value.district) {
+        fetchWards(customer.value.district);
+      }
+    };
 
     return {
-  // Các biến và hàm hiện có
-  handleCustomerProvinceChange,
-  handleCustomerDistrictChange,
-  selectDiscount,
-  suggestedDiscounts,
-  alternativeDiscounts,
-  shippingFee,
-  selectedShippingUnit,
-  shippingUnits,
-  updateShippingFee,
-  router,
-  isCreatingInvoice,
-  isCreatingOrder,
-  activeInvoiceId,
-  invoiceSearchQuery,
-  pendingInvoices,
-  filteredPendingInvoices,
-  cartItems,
-  showIMEIModal,
-  showCartIMEIModal,
-  isCustomerModalOpen,
-  isLoadingMore,
-  productSearchQuery,
-  filterColor,
-  filterRam,
-  filterStorage,
-  selectedProduct,
-  selectedIMEIs,
-  searchCustomer,
-  selectedCustomer,
-  customer,
-  receiver,
-  isReceiverEditable,
-  isDelivery,
-  selectedDiscount,
-  discount,
-  privateDiscountCodes,
-  publicDiscountCodes,
-  paymentMethod,
-  tienChuyenKhoan,
-  tienMat,
-  newCustomer,
-  products,
-  filteredProducts,
-  uniqueColors,
-  uniqueRams,
-  uniqueStorages,
-  availableIMEIs,
-  provinces,
-  districts,
-  wards,
-  tongTien,
-  totalPayment,
-  priceChangeInfo,
-  cartHeaders,
-  productHeaders,
-  notificationType,
-  notificationMessage,
-  isNotificationLoading,
-  notificationOnConfirm,
-  notificationOnCancel,
-  notificationModal,
-  toastNotification,
-  qrCodeValue,
-  qrCodeAmount,
-  showQRCode,
-  showToast,
-  showConfirm,
-  resetNotification,
-  formatPrice,
-  formatDate,
-  isValidDiscount,
-  debouncedInvoiceSearch,
-  debouncedProductSearch,
-  debouncedCustomerSearch,
-  fetchPendingInvoices,
-  createNewPendingInvoice,
-  loadPendingInvoice,
-  confirmCancelInvoice,
-  cancelInvoice,
-  fetchProducts,
-  handleScroll,
-  removeItem,
-  showIMEIList,
-  showIMEIModalForItem,
-  closeIMEIModal,
-  closeCartIMEIModal,
-  handleIMEISelection,
-  removeIMEI,
-  addProductWithIMEIs,
-  deleteIMEI,
-  Search,
-  searchCustomers,
-  addBanHang,
-  addNewCustomer,
-  getPhieuGiamGiaByKhachHang,
-  fetchLocations,
-  fetchDistricts,
-  fetchWards,
-  openCustomerModal,
-  handleProvinceChange,
-  handleDistrictChange,
-  handleReceiverProvinceChange,
-  handleReceiverDistrictChange,
-  toggleDelivery,
-  fetchPGG,
-  validateDiscount,
-  applyBestDiscount,
-  selectPayment,
-  generateQRCode,
-  scanQR,
-  ThanhToan,
-  createOrder,
-  // Thêm các biến và hàm mới cho giỏ hàng
-  cartSearchQuery,
-  cartFilterColor,
-  cartFilterRam,
-  cartFilterStorage,
-  uniqueCartColors,
-  uniqueCartRams,
-  uniqueCartStorages,
-  filteredCartItems,
-  debouncedCartSearch,
-  showProductDetails,
-  selectedCartItem,
-  modalPosition,
-  showProductDetailsModal,
-  hideProductDetailsModal,
-};
+      // Các biến và hàm hiện có
+      handleCustomerProvinceChange,
+      handleCustomerDistrictChange,
+      selectDiscount,
+      suggestedDiscounts,
+      alternativeDiscounts,
+      shippingFee,
+      selectedShippingUnit,
+      shippingUnits,
+      updateShippingFee,
+      router,
+      isCreatingInvoice,
+      isCreatingOrder,
+      activeInvoiceId,
+      invoiceSearchQuery,
+      pendingInvoices,
+      filteredPendingInvoices,
+      cartItems,
+      showIMEIModal,
+      showCartIMEIModal,
+      isCustomerModalOpen,
+      isLoadingMore,
+      productSearchQuery,
+      filterColor,
+      filterRam,
+      filterStorage,
+      selectedProduct,
+      selectedIMEIs,
+      searchCustomer,
+      selectedCustomer,
+      customer,
+      receiver,
+      isReceiverEditable,
+      isDelivery,
+      selectedDiscount,
+      discount,
+      privateDiscountCodes,
+      publicDiscountCodes,
+      paymentMethod,
+      tienChuyenKhoan,
+      tienMat,
+      newCustomer,
+      products,
+      filteredProducts,
+      uniqueColors,
+      uniqueRams,
+      uniqueStorages,
+      availableIMEIs,
+      provinces,
+      districts,
+      wards,
+      tongTien,
+      totalPayment,
+      priceChangeInfo,
+      cartHeaders,
+      productHeaders,
+      notificationType,
+      notificationMessage,
+      isNotificationLoading,
+      notificationOnConfirm,
+      notificationOnCancel,
+      notificationModal,
+      toastNotification,
+      qrCodeValue,
+      qrCodeAmount,
+      showQRCode,
+      showToast,
+      showConfirm,
+      resetNotification,
+      formatPrice,
+      formatDate,
+      isValidDiscount,
+      debouncedInvoiceSearch,
+      debouncedProductSearch,
+      debouncedCustomerSearch,
+      fetchPendingInvoices,
+      createNewPendingInvoice,
+      loadPendingInvoice,
+      confirmCancelInvoice,
+      cancelInvoice,
+      fetchProducts,
+      handleScroll,
+      removeItem,
+      showIMEIList,
+      showIMEIModalForItem,
+      closeIMEIModal,
+      closeCartIMEIModal,
+      handleIMEISelection,
+      removeIMEI,
+      addProductWithIMEIs,
+      deleteIMEI,
+      Search,
+      searchCustomers,
+      addBanHang,
+      addNewCustomer,
+      getPhieuGiamGiaByKhachHang,
+      fetchLocations,
+      fetchDistricts,
+      fetchWards,
+      openCustomerModal,
+      handleProvinceChange,
+      handleDistrictChange,
+      handleReceiverProvinceChange,
+      handleReceiverDistrictChange,
+      toggleDelivery,
+      fetchPGG,
+      validateDiscount,
+      applyBestDiscount,
+      selectPayment,
+      generateQRCode,
+      scanQR,
+      ThanhToan,
+      createOrder,
+      // Thêm các biến và hàm mới cho giỏ hàng
+      cartSearchQuery,
+      cartFilterColor,
+      cartFilterRam,
+      cartFilterStorage,
+      uniqueCartColors,
+      uniqueCartRams,
+      uniqueCartStorages,
+      filteredCartItems,
+      debouncedCartSearch,
+      showProductDetails,
+      selectedCartItem,
+      modalPosition,
+      showProductDetailsModal,
+      hideProductDetailsModal,
+    };
   },
 };
