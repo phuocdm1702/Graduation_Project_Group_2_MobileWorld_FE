@@ -87,7 +87,7 @@ export default {
           products.value = hoaDonStore.getInvoiceDetail.products;
           payments.value = hoaDonStore.getInvoiceDetail.payments;
           history.value = hoaDonStore.getInvoiceDetail.history;
-          discount.value = invoice.value.tongTienSauGiam - totalPrice.value;
+          discount.value = totalPrice.value - invoice.value.tongTienSauGiam; 
           console.log('Invoice status:', invoice.value.trangThai);
           updateTimelineStatuses();
           console.log('Timeline statuses:', timelineStatuses.value);
