@@ -604,7 +604,6 @@
                   <h6 class="fw-bold text-dark mb-3 d-flex align-items-center gap-2"
                     style="font-size: 1.3rem; letter-spacing: 0.5px">
                     Mã Giảm Giá
-
                   </h6>
                   <!-- PGG tốt nhất -->
                   <div class="position-relative p-4 rounded-4 shadow-sm animate__animated animate__fadeIn mb-4"
@@ -773,16 +772,6 @@
                     }" style="border: 1px solid rgba(52, 211, 153, 0.2)">
                       Tiền mặt
                     </button>
-                    <button
-                      class="btn px-4 py-2 select-btn"
-                      @click="selectPayment('both')"
-                      :class="{
-                        'gradient-custom-teal text-white':
-                          paymentMethod === 'both',
-                        border: paymentMethod !== 'both',
-                      }"a
-                      style="border: 1px solid rgba(52, 211, 153, 0.2)"
-                    >
                     <button class="btn px-4 py-2 select-btn" @click="selectPayment('both')" :class="{
                       'teal text-white':
                         paymentMethod === 'both',
