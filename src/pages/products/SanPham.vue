@@ -1,5 +1,5 @@
 <template>
-  <div class="container-fluid py-4 product-management">
+  <div class="py-4 product-management">
     <!-- Header -->
     <HeaderCard title="Quản Lý Sản Phẩm" badgeText="Hệ Thống POS" badgeClass="gradient-custom-teal"
       :backgroundOpacity="0.95" />
