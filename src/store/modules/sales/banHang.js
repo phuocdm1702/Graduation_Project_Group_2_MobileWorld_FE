@@ -401,6 +401,7 @@ export default {
     // Shipping Fee
     const shippingFee = ref(0);
     const selectedShippingUnit = ref(null);
+    const isHomeDelivery = ref(false);
     const shippingUnits = ref([
       { id: 1, name: "Giao Hàng Nhanh", logo: "/src/assets/Logo/logoGHN.png" },
       {
@@ -1218,6 +1219,7 @@ export default {
     };
 
     const toggleDelivery = () => {
+      isHomeDelivery.value = false; // Reset khi thay đổi chế độ giao hàng
       if (isDelivery.value && selectedCustomer.value) {
         receiver.value = {
           ...customer.value,
@@ -1606,7 +1608,7 @@ export default {
           hinhThucThanhToan,
           idPhieuGiamGia: selectedDiscount.value?.id || null,
           giamGia: selectedDiscount.value?.value || 0,
-          // phiVanChuyen: isDelivery.value ? shippingFee.value : 0,
+          phiVanChuyen: isDelivery.value ? shippingFee.value : 0,
           loaiDon: isDelivery.value ? "online" : "trực tiếp",
           tongTien: tongTien.value,
           tongTienSauGiam: totalPayment.value, // Thêm trường tongTienSauGiam
@@ -1670,9 +1672,9 @@ export default {
       }
     };
 
-    // Shipping Fee Method
+    // Trong phần updateShippingFee (thay thế hàm hiện có)
     const updateShippingFee = async () => {
-      if (!isDelivery.value || !selectedShippingUnit.value) {
+      if (!isDelivery.value || !isHomeDelivery.value) {
         shippingFee.value = 0;
         return;
       }
@@ -1685,20 +1687,14 @@ export default {
         return;
       }
       try {
-        if (selectedShippingUnit.value.name === "Giao Hàng Nhanh") {
-          shippingFee.value = 100000;
-        } else if (selectedShippingUnit.value.name === "Giao Hàng Tiết Kiệm") {
-          shippingFee.value = 30000;
-        } else {
-          shippingFee.value = 30000;
-        }
+        // Giữ giá trị phí vận chuyển từ input
         showToast(
           "success",
-          `Đã cập nhật phí vận chuyển cho ${selectedShippingUnit.value.name}`
+          `Đã cập nhật phí vận chuyển: ${formatPrice(shippingFee.value)}`
         );
       } catch (error) {
         console.error("Lỗi khi tính phí vận chuyển:", error);
-        shippingFee.value = 30000;
+        shippingFee.value = 0;
         showToast("error", "Lỗi khi tính phí vận chuyển");
       }
     };
@@ -1872,6 +1868,7 @@ export default {
       modalPosition,
       showProductDetailsModal,
       hideProductDetailsModal,
+      isHomeDelivery,
     };
   },
 };

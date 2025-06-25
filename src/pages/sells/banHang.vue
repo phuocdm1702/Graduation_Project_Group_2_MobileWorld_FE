@@ -825,73 +825,26 @@
                           />
                         </div>
                       </div>
-
-                      <!-- Chọn đơn vị vận chuyển -->
-                      <div class="col-12">
+                      <div class="d-flex align-items-center gap-2 mt-2">
                         <label
                           class="form-label fw-medium text-dark mb-2"
-                          style="font-size: 0.95rem"
+                          style="font-size: 0.95rem; margin-top: 10px"
                         >
-                          Đơn vị vận chuyển <span class="text-danger">*</span>
+                          Giao hàng tận nhà <span class="text-danger"></span>
                         </label>
-                        <div class="input-group">
-                          <span class="input-group-text bg-light border-end-0">
-                            <i class="bi bi-truck text-teal"></i>
-                          </span>
-                          <select
-                            v-model="selectedShippingUnit"
-                            class="form-select shadow-none border-start-0"
-                            @change="updateShippingFee"
-                            style="
-                              border-radius: 0 8px 8px 0;
-                              transition: all 0.3s ease;
-                            "
-                          >
-                            <option value="" disabled>
-                              Chọn đơn vị vận chuyển
-                            </option>
-                            <option
-                              v-for="unit in shippingUnits"
-                              :key="unit.id"
-                              :value="unit"
-                            >
-                              {{ unit.name }}
-                            </option>
-                          </select>
-                        </div>
-                        <!-- Hiển thị logo đơn vị vận chuyển -->
-                        <div
-                          v-if="selectedShippingUnit"
-                          class="mt-3 d-flex justify-content-center"
-                        >
-                          <div
-                            class="p-3 border rounded shadow-sm bg-white"
-                            style="
-                              max-width: 200px;
-                              width: 100%;
-                              text-align: center;
-                            "
-                          >
-                            <img
-                              :src="selectedShippingUnit.logo"
-                              :alt="selectedShippingUnit.name"
-                              style="
-                                max-height: 90px;
-                                object-fit: contain;
-                                width: 100%;
-                              "
-                            />
-                            <p
-                              class="mt-2 mb-0 fw-semibold text-dark"
-                              style="font-size: 0.9rem"
-                            >
-                              {{ selectedShippingUnit.name }}
-                            </p>
-                          </div>
-                        </div>
+                        <input
+                          type="checkbox"
+                          class="form-check-input"
+                          v-model="isHomeDelivery"
+                          :disabled="!isReceiverEditable"
+                          style="
+                            margin-top: 10px;
+                            border-color: #34d399;
+                            margin-left: auto;
+                          "
+                        />
                       </div>
-                      <!-- Ô input phí vận chuyển -->
-                      <div class="col-12">
+                      <div v-if="isHomeDelivery" class="mt-2">
                         <label
                           class="form-label fw-medium text-dark mb-2"
                           style="font-size: 0.95rem"
@@ -900,27 +853,20 @@
                         </label>
                         <div class="input-group">
                           <span class="input-group-text bg-light border-end-0">
-                            <i class="bi bi-currency-dollar text-teal"></i>
+                            <i class="bi bi-truck text-teal"></i>
                           </span>
                           <input
                             v-model.number="shippingFee"
                             type="number"
                             class="form-control shadow-none border-start-0"
-                            placeholder="Nhập phí vận chuyển"
-                            :disabled="totalPrice >= FREE_SHIP_THRESHOLD"
+                            placeholder="Nhập phí vận chuyển (VND)"
                             min="0"
+                            :disabled="!isReceiverEditable"
                             style="
                               border-radius: 0 8px 8px 0;
                               transition: all 0.3s ease;
                             "
                           />
-                        </div>
-                        <div
-                          v-if="totalPrice >= FREE_SHIP_THRESHOLD"
-                          class="text-success mt-2"
-                        >
-                          Miễn phí vận chuyển cho đơn hàng từ 50,000,000 VNĐ trở
-                          lên
                         </div>
                       </div>
 
