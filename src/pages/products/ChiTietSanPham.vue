@@ -104,7 +104,10 @@
             </div>
           </div>
           <div class="action-buttons">
-            <button class="btn btn-reset" @click="resetAllFilters">
+            <button class="btn btn-action" @click="downloadSelectedBarcodes" :disabled="selectedImeis.length === 0" title="Tải ảnh barcode đã chọn">
+              Tải Barcode
+            </button>
+            <button class="btn btn-action" @click="resetAllFilters">
               Đặt lại bộ lọc
             </button>
             <button class="btn btn-action" @click="goBack">
@@ -147,6 +150,9 @@
           <DataTable title="" :headers="headers" :data="paginatedProductDetails"
             :pageSizeOptions="[5, 10, 15, 20, 30, 40, 50]" @page-changed="goToPage"
             @items-per-page-changed="handleItemsPerPageChange">
+            <template #checkbox="{ item }">
+              <input type="checkbox" v-model="selectedImeis" :value="item.imei" />
+            </template>
             <template #stt="{ item, index }">
               {{ (currentPage - 1) * pageSize + index + 1 }}
             </template>
@@ -178,10 +184,15 @@
               </span>
             </template>
             <template #actions="{ item }">
-              <button class="btn btn-sm btn-action" @click="editProductDetail(item)" :disabled="item.deleted"
-                title="Chỉnh sửa chi tiết sản phẩm">
-                <i class="bi bi-pencil-square"></i>
-              </button>
+              <div class="action-buttons d-flex justify-content-center">
+                <button class="btn btn-sm btn-action" @click="editProductDetail(item)" :disabled="item.deleted"
+                  title="Chỉnh sửa chi tiết sản phẩm">
+                  <i class="bi bi-pencil-square"></i>
+                </button>
+                <button class="btn btn-sm btn-action" @click="showBarcode(item.imei)" title="Hiển thị mã barcode">
+                  <i class="bi bi-upc-scan"></i>
+                </button>
+              </div>
             </template>
           </DataTable>
         </div>
@@ -221,6 +232,11 @@
               <div class="product-amounts">
                 <div class="total-amount">{{ formatPrice(detail.donGia) }}</div>
               </div>
+              <div class="action-buttons mt-2 d-flex justify-content-center">
+                <button class="btn btn-sm btn-action" @click="showBarcode(detail.imei)" title="Hiển thị mã barcode">
+                  <i class="bi bi-upc-scan"></i> Barcode
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -244,15 +260,20 @@
             <table class="table table-hover">
               <thead>
                 <tr>
+                  <th scope="col" style="width: 5%;"></th>
                   <th scope="col" style="width: 5%;">STT</th>
                   <th scope="col" style="width: 15%;">Mã Sản Phẩm</th>
-                  <th scope="col" style="width: 25%;">Tên Sản Phẩm</th>
-                  <th scope="col" style="width: 25%;">IMEI</th>
-                  <th scope="col" style="width: 20%;">Trạng Thái</th>
+                  <th scope="col" style="width: 20%;">Tên Sản Phẩm</th>
+                  <th scope="col" style="width: 20%;">IMEI</th>
+                  <th scope="col" style="width: 15%;">Trạng Thái</th>
+                  <th scope="col" style="width: 25%;">Hành Động</th>
                 </tr>
               </thead>
               <tbody>
                 <tr v-for="(item, index) in paginatedImeiList" :key="item.imei">
+                  <td>
+                    <input type="checkbox" v-model="selectedImeis" :value="item.imei" />
+                  </td>
                   <td>{{ (imeiCurrentPage - 1) * imeiPageSize + index + 1 }}</td>
                   <td class="product-name">{{ item.maSanPham || 'N/A' }}</td>
                   <td class="product-name">{{ item.tenSanPham || 'N/A' }}</td>
@@ -263,9 +284,16 @@
                       {{ item.deleted ? 'Đã đóng' : 'Hoạt động' }}
                     </span>
                   </td>
+                  <td>
+                    <div class="action-buttons d-flex justify-content-center">
+                      <button class="btn btn-sm btn-action" @click="showBarcode(item.imei)" title="Hiển thị mã barcode">
+                        <i class="bi bi-upc-scan"></i>
+                      </button>
+                    </div>
+                  </td>
                 </tr>
                 <tr v-if="paginatedImeiList.length === 0">
-                  <td colspan="5" class="text-center">Không tìm thấy IMEI nào</td>
+                  <td colspan="7" class="text-center">Không tìm thấy IMEI nào</td>
                 </tr>
               </tbody>
             </table>
@@ -316,6 +344,30 @@
       </div>
     </FilterTableSection>
 
+    <!-- Barcode Modal -->
+    <div class="modal fade" id="barcodeModal" tabindex="-1" aria-labelledby="barcodeModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content barcode-modal-content">
+          <div class="modal-header barcode-modal-header">
+            <h5 class="modal-title" id="barcodeModalLabel">Mã Barcode IMEI</h5>
+          </div>
+          <div class="modal-body text-center barcode-modal-body">
+            <div class="barcode-container">
+              <canvas id="barcodeCanvas" class="barcode-canvas"></canvas>
+            </div>
+            <div class="action-buttons mt-3 d-flex justify-content-center gap-3">
+              <button class="btn btn-action" @click="copyImei(selectedImei)" title="Sao chép IMEI">
+                <i class="bi bi-clipboard"></i> Sao chép IMEI
+              </button>
+              <button class="btn btn-action" @click="downloadBarcodeImage(selectedImei)" title="Tải ảnh barcode">
+                <i class="bi bi-download"></i> Tải Barcode
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Modals -->
     <ToastNotification ref="toast" />
   </div>
@@ -330,6 +382,10 @@ import DataTable from '@/components/common/DataTable.vue';
 import ToastNotification from '@/components/common/ToastNotification.vue';
 import debounce from 'lodash/debounce';
 import { getChiTietSanPhamBySanPhamId, getMauSac, getRam, getBoNhoTrong } from '@/store/modules/products/chiTietSanPham';
+import JsBarcode from 'jsbarcode';
+import * as bootstrap from 'bootstrap';
+import JSZip from 'jszip';
+import { saveAs } from 'file-saver';
 
 export default {
   name: 'ProductDetail',
@@ -365,8 +421,11 @@ export default {
     const ramOptions = ref([]);
     const viewMode = ref('table');
     const isLoading = ref(false);
+    const selectedImei = ref('');
+    const selectedImeis = ref([]);
 
     const headers = ref([
+      { text: '', value: 'checkbox' },
       { text: 'STT', value: 'stt' },
       { text: 'Mã Sản Phẩm', value: 'maSanPham' },
       { text: 'Tên Sản Phẩm', value: 'tenSanPham' },
@@ -582,6 +641,7 @@ export default {
         maxPrice: maxPrice.value,
       };
       priceRange.value = [minPrice.value, maxPrice.value];
+      selectedImeis.value = [];
       currentPage.value = 1;
       imeiCurrentPage.value = 1;
       toast.value?.addToast({
@@ -645,6 +705,112 @@ export default {
       });
     };
 
+    const showBarcode = (imei) => {
+      selectedImei.value = imei;
+      const modal = new bootstrap.Modal(document.getElementById('barcodeModal'));
+      modal.show();
+      setTimeout(() => {
+        JsBarcode("#barcodeCanvas", imei, {
+          format: "CODE128",
+          displayValue: true,
+          fontSize: 18,
+          height: 100,
+          width: 3,
+          margin: 10,
+          background: "#ffffff",
+          lineColor: "#1f3a44",
+        });
+      }, 0);
+    };
+
+    const copyImei = async (imei) => {
+      try {
+        await navigator.clipboard.writeText(imei);
+        toast.value?.addToast({
+          type: 'success',
+          message: `Đã sao chép IMEI: ${imei}`,
+          duration: 2000,
+        });
+      } catch (error) {
+        toast.value?.addToast({
+          type: 'error',
+          message: 'Lỗi khi sao chép IMEI: ' + error.message,
+          duration: 3000,
+        });
+      }
+    };
+
+    const downloadBarcodeImage = (imei) => {
+      const canvas = document.createElement('canvas');
+      JsBarcode(canvas, imei, {
+        format: "CODE128",
+        displayValue: true,
+        fontSize: 18,
+        height: 100,
+        width: 3,
+        margin: 10,
+        background: "#ffffff",
+        lineColor: "#1f3a44",
+      });
+      const link = document.createElement('a');
+      const url = canvas.toDataURL('image/png');
+      link.setAttribute('href', url);
+      link.setAttribute('download', `barcode_${imei}.png`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      toast.value?.addToast({
+        type: 'success',
+        message: `Đã tải xuống ảnh barcode cho IMEI: ${imei}`,
+        duration: 2000,
+      });
+    };
+
+    const downloadSelectedBarcodes = async () => {
+      if (selectedImeis.value.length === 0) {
+        toast.value?.addToast({
+          type: 'warning',
+          message: 'Vui lòng chọn ít nhất một IMEI để tải barcode',
+          duration: 2000,
+        });
+        return;
+      }
+
+      const zip = new JSZip();
+      for (const imei of selectedImeis.value) {
+        const canvas = document.createElement('canvas');
+        JsBarcode(canvas, imei, {
+          format: "CODE128",
+          displayValue: true,
+          fontSize: 18,
+          height: 100,
+          width: 3,
+          margin: 10,
+          background: "#ffffff",
+          lineColor: "#1f3a44",
+        });
+        const dataUrl = canvas.toDataURL('image/png');
+        const base64Data = dataUrl.replace(/^data:image\/png;base64,/, "");
+        zip.file(`barcode_${imei}.png`, base64Data, { base64: true });
+      }
+
+      try {
+        const content = await zip.generateAsync({ type: 'blob' });
+        saveAs(content, 'barcodes.zip');
+        toast.value?.addToast({
+          type: 'success',
+          message: `Đã tải xuống ${selectedImeis.value.length} ảnh barcode`,
+          duration: 2000,
+        });
+      } catch (error) {
+        toast.value?.addToast({
+          type: 'error',
+          message: 'Lỗi khi tải xuống barcodes: ' + error.message,
+          duration: 3000,
+        });
+      }
+    };
+
     const goBack = () => {
       router.push('/SanPham');
     };
@@ -699,7 +865,13 @@ export default {
       getStatusBadgeClass,
       getStatusIcon,
       editProductDetail,
-      goBack, // Return goBack function
+      showBarcode,
+      copyImei,
+      downloadBarcodeImage,
+      downloadSelectedBarcodes,
+      selectedImei,
+      selectedImeis,
+      goBack,
     };
   },
 };
@@ -711,7 +883,6 @@ export default {
     opacity: 0;
     transform: translateY(15px);
   }
-
   to {
     opacity: 1;
     transform: translateY(0);
@@ -721,9 +892,8 @@ export default {
 @keyframes zoomIn {
   from {
     opacity: 0;
-    transform: scale(0.97);
+    transform: scale(0.95);
   }
-
   to {
     opacity: 1;
     transform: scale(1);
@@ -731,12 +901,9 @@ export default {
 }
 
 @keyframes gentleGlow {
-
-  0%,
-  100% {
+  0%, 100% {
     box-shadow: 0 0 5px rgba(52, 211, 153, 0.3);
   }
-
   50% {
     box-shadow: 0 0 12px rgba(52, 211, 153, 0.5);
   }
@@ -818,37 +985,28 @@ export default {
 
 .action-buttons {
   display: flex;
-  gap: 0.75rem;
-}
-
-.btn-reset,
-.btn-action {
-  padding: 0.5rem 1rem;
-  font-size: 0.9rem;
-  border-radius: 8px;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.btn-reset {
-  background: #6c757d;
-  color: white;
-  border: none;
-}
-
-.btn-reset:hover {
-  background: #5c636a;
-  box-shadow: 0 0 15px rgba(108, 117, 125, 0.3);
+  gap: 0.5rem;
 }
 
 .btn-action {
   background: #34d399;
   color: white;
   border: none;
+  padding: 0.4rem 0.8rem;
+  font-size: 0.85rem;
+  border-radius: 6px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .btn-action:hover {
   background: #16a34a;
-  box-shadow: 0 0 15px rgba(52, 211, 153, 0.3);
+  box-shadow: 0 0 10px rgba(52, 211, 153, 0.3);
+  transform: translateY(-2px);
+}
+
+.btn-action:disabled {
+  background: #6c757d;
+  cursor: not-allowed;
 }
 
 .table-header {
@@ -1139,7 +1297,6 @@ export default {
 .imei-list-container td {
   padding: 1.2rem 1rem;
   vertical-align: middle;
-  text-align: left;
   text-align: center;
   font-size: 0.95rem;
 }
@@ -1196,24 +1353,68 @@ export default {
   background: #16a34a;
 }
 
-/* Add styles for the action button */
-.btn-action {
+/* Barcode Modal Styles */
+.barcode-modal-content {
+  border: none;
+  border-radius: 16px;
+  box-shadow: 0 12px 32px rgba(52, 211, 153, 0.25);
+  background: linear-gradient(145deg, #ffffff, #f4f7fa);
+  animation: zoomIn 0.3s ease-out;
+  overflow: hidden;
+}
+
+.barcode-modal-header {
   background: #34d399;
   color: white;
-  border: none;
-  padding: 0.4rem 0.8rem;
-  border-radius: 6px;
-  transition: all 0.2s ease;
+  border-bottom: none;
+  padding: 1.5rem;
+  border-top-left-radius: 16px;
+  border-top-right-radius: 16px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
-.btn-action:hover {
-  background: #16a34a;
-  box-shadow: 0 0 10px rgba(52, 211, 153, 0.3);
+.barcode-modal-header .modal-title {
+  font-weight: 700;
+  font-size: 1.5rem;
+  letter-spacing: 0.5px;
 }
 
-.btn-action:disabled {
-  background: #6c757d;
-  cursor: not-allowed;
+.barcode-modal-body {
+  padding: 2.5rem;
+  background: white;
+  border-radius: 12px;
+  margin: 1.5rem;
+  box-shadow: inset 0 0 12px rgba(52, 211, 153, 0.1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.barcode-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+  width: 100%;
+}
+
+.imei-text {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #1f3a44;
+  margin-bottom: 0.75rem;
+  letter-spacing: 0.5px;
+}
+
+.barcode-canvas {
+  max-width: 100%;
+  border: 3px solid #34d399;
+  border-radius: 12px;
+  padding: 15px;
+  background: white;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 @media (max-width: 768px) {
@@ -1243,6 +1444,10 @@ export default {
     font-size: 0.85rem;
     padding: 0.8rem;
   }
+
+  .barcode-modal-body {
+    padding: 1.5rem;
+  }
 }
 
 @media (max-width: 576px) {
@@ -1263,6 +1468,22 @@ export default {
   .imei-list-container td {
     font-size: 0.8rem;
     padding: 0.6rem;
+  }
+
+  .barcode-modal-content {
+    margin: 1rem;
+  }
+
+  .barcode-modal-header {
+    padding: 1rem;
+  }
+
+  .barcode-modal-body {
+    padding: 1rem;
+  }
+
+  .imei-text {
+    font-size: 1rem;
   }
 }
 
