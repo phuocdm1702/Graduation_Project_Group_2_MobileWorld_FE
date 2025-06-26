@@ -1070,6 +1070,7 @@ export default {
 .status-badge {
   padding: 0.4rem 0.9rem;
   border-radius: 1.5rem;
+  width: 120px;
   display: inline-flex;
   justify-content: center;
   align-items: center;
