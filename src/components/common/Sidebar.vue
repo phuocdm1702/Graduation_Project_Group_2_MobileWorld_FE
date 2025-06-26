@@ -293,14 +293,30 @@ const toggleSidebar = () => {
 };
 
 const toggleSubmenu = (item) => {
-  if (isSidebarOpen.value) {
-    menuItems.value.forEach(menuItem => {
-      if (menuItem !== item && menuItem.children) {
-        menuItem.isOpen = false;
-      }
-    });
-    item.isOpen = !item.isOpen;
+  // Nếu sidebar đang đóng, mở sidebar và mở luôn submenu
+  if (!isSidebarOpen.value) {
+    uiStore.toggleSidebar();
+    // Đợi một chút để sidebar mở xong rồi mới mở submenu
+    setTimeout(() => {
+      // Đóng tất cả submenu khác
+      menuItems.value.forEach(menuItem => {
+        if (menuItem !== item && menuItem.children) {
+          menuItem.isOpen = false;
+        }
+      });
+      // Mở submenu được click
+      item.isOpen = true;
+    }, 100); // Delay 100ms để sidebar mở mượt
+    return;
   }
+  
+  // Nếu sidebar đã mở, thì toggle submenu bình thường
+  menuItems.value.forEach(menuItem => {
+    if (menuItem !== item && menuItem.children) {
+      menuItem.isOpen = false;
+    }
+  });
+  item.isOpen = !item.isOpen;
 };
 
 const handleImageError = (event) => {
