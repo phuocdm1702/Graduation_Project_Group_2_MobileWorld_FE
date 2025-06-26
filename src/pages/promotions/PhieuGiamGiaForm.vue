@@ -365,7 +365,9 @@ export default {
           formData.value.soLuongDung = selectedCustomers.length;
           formData.value.customerIds = selectedCustomers;
         } else {
-          formData.value.soLuongDung = -1;
+          if (formData.value.soLuongDung === selectedCustomers.length) {
+            formData.value.soLuongDung = -1;
+          }
           formData.value.customerIds = [];
           selectedCustomers.value = [];
         }
