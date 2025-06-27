@@ -1,4 +1,4 @@
-import { ref, computed, onMounted, nextTick } from "vue";
+import { ref, computed, onMounted, nextTick, onUnmounted } from "vue";
 import apiService from "../../../services/api";
 import HeaderCard from "@/components/common/HeaderCard.vue";
 import DataTable from "@/components/common/DataTable.vue";
@@ -8,6 +8,7 @@ import FilterTableSection from "@/components/common/FilterTableSection.vue";
 import QrcodeVue from "qrcode.vue";
 import axios from "axios";
 import { useRouter } from "vue-router";
+import { BrowserMultiFormatReader } from '@zxing/library';
 
 // Debounce utility function
 const debounce = (func, delay) => {
@@ -28,6 +29,12 @@ export default {
     QrcodeVue,
   },
   setup() {
+    const codeReader = ref(null);
+    const isCameraActive = ref(false);
+    const showScanModal = ref(false);
+    const scannedCode = ref("");
+    const isScanning = ref(false);
+    const scanError = ref("");
     // State
     const isCreatingInvoice = ref(false);
     const isCreatingOrder = ref(false);
@@ -84,8 +91,8 @@ export default {
     const notificationType = ref("confirm");
     const notificationMessage = ref("");
     const isNotificationLoading = ref(false);
-    const notificationOnConfirm = ref(() => {});
-    const notificationOnCancel = ref(() => {});
+    const notificationOnConfirm = ref(() => { });
+    const notificationOnCancel = ref(() => { });
     const notificationModal = ref(null);
     const toastNotification = ref(null);
     const qrCodeValue = ref("");
@@ -198,9 +205,9 @@ export default {
         const fixedDiscount = selectedDiscount.value.value || 0;
         const percentDiscount = selectedDiscount.value.percent
           ? Math.min(
-              (selectedDiscount.value.percent / 100) * tongTien.value,
-              selectedDiscount.value.value || Infinity
-            )
+            (selectedDiscount.value.percent / 100) * tongTien.value,
+            selectedDiscount.value.value || Infinity
+          )
           : 0;
         return Math.max(fixedDiscount, percentDiscount);
       },
@@ -329,8 +336,8 @@ export default {
           priceChangeText:
             currentPrice !== item.originalPrice
               ? `Tăng từ ${formatPrice(item.originalPrice)} lên ${formatPrice(
-                  currentPrice
-                )}`
+                currentPrice
+              )}`
               : null,
         };
       });
@@ -367,9 +374,8 @@ export default {
 
       if (tongTien.value >= bestDiscount.minOrder) {
         return {
-          message: `Bạn có thể áp dụng mã ${
-            bestDiscount.code
-          } để được giảm ${formatPrice(bestDiscount.value)}.`,
+          message: `Bạn có thể áp dụng mã ${bestDiscount.code
+            } để được giảm ${formatPrice(bestDiscount.value)}.`,
           additionalAmount: 0,
           bestDiscount,
         };
@@ -377,9 +383,8 @@ export default {
 
       const additionalAmount = bestDiscount.minOrder - tongTien.value;
       return {
-        message: `Mua thêm ${formatPrice(additionalAmount)} để sử dụng mã ${
-          bestDiscount.code
-        } và được giảm ${formatPrice(bestDiscount.value)}.`,
+        message: `Mua thêm ${formatPrice(additionalAmount)} để sử dụng mã ${bestDiscount.code
+          } và được giảm ${formatPrice(bestDiscount.value)}.`,
         additionalAmount,
         bestDiscount,
       };
@@ -466,7 +471,7 @@ export default {
       toastNotification.value.addToast({ type, message, isLoading, duration });
     };
 
-    const showConfirm = (message, onConfirm, onCancel = () => {}) => {
+    const showConfirm = (message, onConfirm, onCancel = () => { }) => {
       notificationType.value = "confirm";
       notificationMessage.value = message;
       notificationOnConfirm.value = onConfirm;
@@ -484,8 +489,8 @@ export default {
       notificationType.value = "confirm";
       notificationMessage.value = "";
       isNotificationLoading.value = false;
-      notificationOnConfirm.value = () => {};
-      notificationOnCancel.value = () => {};
+      notificationOnConfirm.value = () => { };
+      notificationOnCancel.value = () => { };
     };
 
     const formatPrice = (price) => {
@@ -600,7 +605,7 @@ export default {
       showConfirm(
         `Bạn có chắc chắn muốn hủy hóa đơn ${invoice.ma}?`,
         () => cancelInvoice(invoice),
-        () => {}
+        () => { }
       );
     };
 
@@ -772,8 +777,7 @@ export default {
 
       try {
         const response = await apiService.get(
-          `/api/chi-tiet-san-pham/id?sanPhamId=${
-            selectedProduct.value.sanPhamId
+          `/api/chi-tiet-san-pham/id?sanPhamId=${selectedProduct.value.sanPhamId
           }&mauSac=${encodeURIComponent(
             selectedProduct.value.mauSac
           )}&dungLuongRam=${encodeURIComponent(
@@ -1103,8 +1107,7 @@ export default {
       } catch (error) {
         showToast(
           "error",
-          `Lỗi khi thêm khách hàng: ${
-            error.response?.data?.message || error.message
+          `Lỗi khi thêm khách hàng: ${error.response?.data?.message || error.message
           }`
         );
       }
@@ -1367,9 +1370,9 @@ export default {
             const fixedDiscount = code.value || 0;
             const percentDiscount = code.percent
               ? Math.min(
-                  (code.percent / 100) * tongTien.value,
-                  code.value || Infinity
-                )
+                (code.percent / 100) * tongTien.value,
+                code.value || Infinity
+              )
               : 0;
             const actualDiscount = Math.max(fixedDiscount, percentDiscount);
 
@@ -1391,8 +1394,7 @@ export default {
             : formatPrice(bestDiscount.value);
           showToast(
             "success",
-            `Đã áp dụng mã giảm giá ${
-              bestDiscount.tenPhieuGiamGia || bestDiscount.code
+            `Đã áp dụng mã giảm giá ${bestDiscount.tenPhieuGiamGia || bestDiscount.code
             } (-${discountText})`
           );
         } else {
@@ -1427,7 +1429,151 @@ export default {
     };
 
     const scanQR = () => {
-      showToast("warning", "Chức năng quét QR đang được phát triển");
+      if (!activeInvoiceId.value) {
+        showToast("error", "Vui lòng chọn hoặc tạo một hóa đơn trước khi quét!");
+        return;
+      }
+      showScanModal.value = true;
+      scanError.value = "";
+      nextTick(() => {
+        if (!isCameraActive.value) {
+          startZXingScan();
+        }
+      });
+    };
+
+    const startZXingScan = async () => {
+      const videoElement = document.querySelector("#barcode-scanner-video");
+      if (!videoElement) {
+        console.error("Phần tử video không tồn tại!");
+        showToast("error", "Không tìm thấy phần tử video để quét. Vui lòng làm mới trang.");
+        return;
+      }
+
+      codeReader.value = new BrowserMultiFormatReader();
+      try {
+        const constraints = {
+          video: { facingMode: "environment", width: { min: 640 }, height: { min: 480 } },
+        };
+        const stream = await navigator.mediaDevices.getUserMedia(constraints);
+        videoElement.srcObject = stream;
+        videoElement.play();
+
+        isCameraActive.value = true;
+        showToast("info", "Camera đã sẵn sàng, hãy quét mã...");
+
+        codeReader.value.decodeFromVideoDevice(undefined, videoElement, (result, error) => {
+          if (result) {
+            scannedCode.value = result.getText();
+            console.log("Mã quét thành công:", scannedCode.value);
+            handleScan(scannedCode.value);
+            cleanupZXing();
+          }
+          if (error && !(error instanceof zxing.NotFoundException)) {
+            console.error("Lỗi quét:", error);
+            showToast("error", `Lỗi quét: ${error.message}`);
+            cleanupZXing();
+          }
+        });
+      } catch (err) {
+        console.error("Lỗi khi truy cập camera:", err);
+        scanError.value = err.message || "Không thể truy cập camera";
+        showToast("error", scanError.value);
+        cleanupZXing();
+      }
+    };
+
+    const closeScanModal = () => {
+      showScanModal.value = false;
+      cleanupZXing();
+    };
+
+    const cleanupZXing = () => {
+      if (isCameraActive.value && codeReader.value) {
+        console.log("Dừng quét và giải phóng camera...");
+        codeReader.value.reset();
+        isCameraActive.value = false;
+        const videoElement = document.querySelector("#barcode-scanner-video");
+        if (videoElement && videoElement.srcObject) {
+          const stream = videoElement.srcObject;
+          const tracks = stream.getTracks();
+          tracks.forEach((track) => track.stop());
+          videoElement.srcObject = null;
+        }
+      }
+    };
+
+    const handleScan = async (code) => {
+      if (!code || isScanning.value) {
+        console.warn("Mã không hợp lệ hoặc đang quét:", code);
+        return;
+      }
+
+      isScanning.value = true;
+      scanError.value = "";
+      try {
+        console.log("Gửi yêu cầu API với mã:", code);
+        const response = await apiService.get(
+          `/api/products/by-barcode-or-imei?code=${encodeURIComponent(code)}`
+        );
+        console.log("API Response:", response.data);
+        const product = response.data;
+
+        if (!product || !product.chiTietSanPhamId) {
+          throw new Error("Dữ liệu từ API không hợp lệ hoặc thiếu chiTietSanPhamId");
+        }
+
+        const productResponse = await apiService.get(
+          `/api/chi-tiet-san-pham/id?sanPhamId=${product.chiTietSanPhamId}&mauSac=${encodeURIComponent(
+            product.mauSac || ""
+          )}&dungLuongRam=${encodeURIComponent(
+            product.ram || ""
+          )}&dungLuongBoNhoTrong=${encodeURIComponent(product.boNhoTrong || "")}`
+        );
+        const chiTietSanPhamId = productResponse.data;
+
+        const chiTietGioHangDTO = {
+          chiTietSanPhamId: chiTietSanPhamId,
+          soLuong: 1,
+          maImel: product.maImel,
+          idPhieuGiamGia: selectedDiscount.value?.id || null,
+        };
+
+        const postResponse = await apiService.post(
+          `/api/add/gio-hang?idHD=${activeInvoiceId.value}`,
+          chiTietGioHangDTO
+        );
+
+        cartItems.value = postResponse.data.chiTietGioHangDTOS.map((item) => ({
+          id: item.chiTietSanPhamId,
+          name: item.tenSanPham,
+          color: item.mauSac,
+          ram: item.ram,
+          storage: item.boNhoTrong,
+          imei: item.maImel,
+          originalPrice: Number(item.giaBan),
+          currentPrice: Number(item.giaBan),
+          quantity: item.soLuong,
+        }));
+
+        const invoice = pendingInvoices.value.find(
+          (inv) => inv.id === activeInvoiceId.value
+        );
+        if (invoice) invoice.items = cartItems.value;
+
+        showToast(
+          "success",
+          `Đã thêm sản phẩm ${product.tenSanPham} (IMEI: ${product.maImel}) vào giỏ hàng`
+        );
+        await applyBestDiscount();
+      } catch (error) {
+        console.error("Lỗi khi xử lý mã quét:", error);
+        scanError.value = error.response?.data?.message || "Lỗi khi quét barcode/IMEI";
+        showToast("error", scanError.value);
+      } finally {
+        isScanning.value = false;
+        closeScanModal();
+      }
     };
 
     const ThanhToan = async () => {
@@ -1538,8 +1684,7 @@ export default {
         ) {
           showToast(
             "info",
-            `Phát hiện mã giảm giá "${
-              bestDiscount.code
+            `Phát hiện mã giảm giá "${bestDiscount.code
             }" ưu đãi hơn (giảm ${formatPrice(
               bestDiscount.value
             )}) so với mã hiện tại (giảm ${formatPrice(
@@ -1594,17 +1739,17 @@ export default {
           diaChiKhachHang:
             customer.value && isDelivery.value
               ? {
-                  thanhPho: customer.value.city,
-                  quan: customer.value.district,
-                  phuong: customer.value.ward,
-                  diaChiCuThe: customer.value.address,
-                }
+                thanhPho: customer.value.city,
+                quan: customer.value.district,
+                phuong: customer.value.ward,
+                diaChiCuThe: customer.value.address,
+              }
               : {
-                  thanhPho: "",
-                  quan: "",
-                  phuong: "",
-                  diaChiCuThe: "",
-                },
+                thanhPho: "",
+                quan: "",
+                phuong: "",
+                diaChiCuThe: "",
+              },
           hinhThucThanhToan,
           idPhieuGiamGia: selectedDiscount.value?.id || null,
           giamGia: selectedDiscount.value?.value || 0,
@@ -1663,8 +1808,7 @@ export default {
       } catch (error) {
         showToast(
           "error",
-          `Lỗi khi thanh toán: ${
-            error.response?.data?.message || error.message
+          `Lỗi khi thanh toán: ${error.response?.data?.message || error.message
           }`
         );
       } finally {
@@ -1869,6 +2013,14 @@ export default {
       showProductDetailsModal,
       hideProductDetailsModal,
       isHomeDelivery,
+      showScanModal,
+      scannedCode,
+      isScanning,
+      scanError,
+      startZXingScan,
+      closeScanModal,
+      cleanupZXing,
+      isCameraActive,
     };
   },
 };
