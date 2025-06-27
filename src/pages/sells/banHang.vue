@@ -852,6 +852,14 @@
                   " @click="ThanhToan">
                   <span class="fw-semibold">Thanh toán</span>
                 </button>
+                <!-- Customer Payment Button -->
+                <button class="btn w-100 py-3 mt-2" style="background: linear-gradient(135deg, #facc15, #f97316); color: white;" :disabled="!activeInvoiceId ||
+                  !cartItems ||
+                  cartItems.length === 0 ||
+                  isCreatingOrder
+                  " @click="goToCustomerPayment">
+                  <span class="fw-semibold">Thanh toán tại quầy (Khách hàng)</span>
+                </button>
               </div>
             </div>
           </div>
@@ -1100,6 +1108,21 @@ import banHang from "../../store/modules/sales/banHang";
 export default defineComponent({
   name: "BanHang",
   ...banHang,
+  methods: {
+    goToCustomerPayment() {
+      this.router.push({
+        name: 'ThanhToanQuay',
+        params: {
+          invoiceId: this.activeInvoiceId,
+        },
+        query: {
+          totalAmount: this.tongTien,
+          discount: this.discount,
+          shippingFee: this.shippingFee,
+        }
+      });
+    }
+  }
 });
 </script>
 
