@@ -228,6 +228,57 @@
 
     <!-- Cart and Product List Cluster -->
     <div class="row">
+      <!-- Modal quét mã -->
+      <div
+        v-if="showScannerModal"
+        class="modal fade modal-scanner"
+        id="scannerModal"
+        tabindex="-1"
+        aria-labelledby="scannerModalLabel"
+        aria-hidden="true"
+        data-bs-backdrop="static"
+        data-bs-keyboard="false"
+      >
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="scannerModalLabel">Quét mã vạch</h5>
+              <button
+                type="button"
+                class="btn-close"
+                @click="stopScanning"
+                aria-label="Close"
+              ></button>
+            </div>
+            <div class="modal-body">
+              <div class="scanner-container">
+                <div v-show="isScanning" class="text-center">
+                  <p>Đang khởi động camera...</p>
+                </div>
+                <video
+                  id="reader"
+                  poster="data:image/gif,AAAA"
+                  autoplay
+                  muted
+                  playsinline
+                  style="width: 100%; height: 100%; object-fit: cover"
+                ></video>
+                <div class="overlay-element"></div>
+                <div class="laser"></div>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button
+                type="button"
+                class="btn btn-secondary"
+                @click="stopScanning"
+              >
+                Đóng
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
       <div class="col-lg-8">
         <!-- Cart Section -->
         <FilterTableSection title="Sản Phẩm Trong Giỏ hàng" icon="bi bi-basket">
@@ -825,26 +876,73 @@
                           />
                         </div>
                       </div>
-                      <div class="d-flex align-items-center gap-2 mt-2">
+
+                      <!-- Chọn đơn vị vận chuyển -->
+                      <div class="col-12">
                         <label
                           class="form-label fw-medium text-dark mb-2"
-                          style="font-size: 0.95rem; margin-top: 10px"
+                          style="font-size: 0.95rem"
                         >
-                          Giao hàng tận nhà <span class="text-danger"></span>
+                          Đơn vị vận chuyển <span class="text-danger">*</span>
                         </label>
-                        <input
-                          type="checkbox"
-                          class="form-check-input"
-                          v-model="isHomeDelivery"
-                          :disabled="!isReceiverEditable"
-                          style="
-                            margin-top: 10px;
-                            border-color: #34d399;
-                            margin-left: auto;
-                          "
-                        />
+                        <div class="input-group">
+                          <span class="input-group-text bg-light border-end-0">
+                            <i class="bi bi-truck text-teal"></i>
+                          </span>
+                          <select
+                            v-model="selectedShippingUnit"
+                            class="form-select shadow-none border-start-0"
+                            @change="updateShippingFee"
+                            style="
+                              border-radius: 0 8px 8px 0;
+                              transition: all 0.3s ease;
+                            "
+                          >
+                            <option value="" disabled>
+                              Chọn đơn vị vận chuyển
+                            </option>
+                            <option
+                              v-for="unit in shippingUnits"
+                              :key="unit.id"
+                              :value="unit"
+                            >
+                              {{ unit.name }}
+                            </option>
+                          </select>
+                        </div>
+                        <!-- Hiển thị logo đơn vị vận chuyển -->
+                        <div
+                          v-if="selectedShippingUnit"
+                          class="mt-3 d-flex justify-content-center"
+                        >
+                          <div
+                            class="p-3 border rounded shadow-sm bg-white"
+                            style="
+                              max-width: 200px;
+                              width: 100%;
+                              text-align: center;
+                            "
+                          >
+                            <img
+                              :src="selectedShippingUnit.logo"
+                              :alt="selectedShippingUnit.name"
+                              style="
+                                max-height: 90px;
+                                object-fit: contain;
+                                width: 100%;
+                              "
+                            />
+                            <p
+                              class="mt-2 mb-0 fw-semibold text-dark"
+                              style="font-size: 0.9rem"
+                            >
+                              {{ selectedShippingUnit.name }}
+                            </p>
+                          </div>
+                        </div>
                       </div>
-                      <div v-if="isHomeDelivery" class="mt-2">
+                      <!-- Ô input phí vận chuyển -->
+                      <div class="col-12">
                         <label
                           class="form-label fw-medium text-dark mb-2"
                           style="font-size: 0.95rem"
@@ -853,20 +951,27 @@
                         </label>
                         <div class="input-group">
                           <span class="input-group-text bg-light border-end-0">
-                            <i class="bi bi-truck text-teal"></i>
+                            <i class="bi bi-currency-dollar text-teal"></i>
                           </span>
                           <input
                             v-model.number="shippingFee"
                             type="number"
                             class="form-control shadow-none border-start-0"
-                            placeholder="Nhập phí vận chuyển (VND)"
+                            placeholder="Nhập phí vận chuyển"
+                            :disabled="totalPrice >= FREE_SHIP_THRESHOLD"
                             min="0"
-                            :disabled="!isReceiverEditable"
                             style="
                               border-radius: 0 8px 8px 0;
                               transition: all 0.3s ease;
                             "
                           />
+                        </div>
+                        <div
+                          v-if="totalPrice >= FREE_SHIP_THRESHOLD"
+                          class="text-success mt-2"
+                        >
+                          Miễn phí vận chuyển cho đơn hàng từ 50,000,000 VNĐ trở
+                          lên
                         </div>
                       </div>
 
@@ -929,13 +1034,7 @@
                         </div>
                       </div>
                       <div class="text-danger fw-bold fs-4">
-                        −{{
-                          selectedDiscount.percent
-                            ? `${selectedDiscount.percent}% (${formatPrice(
-                                discount
-                              )})`
-                            : formatPrice(discount)
-                        }}
+                        −{{ formatPrice(selectedDiscount.value) }}
                       </div>
                     </div>
 
@@ -999,14 +1098,8 @@
                           style="font-size: 0.95rem"
                         >
                           Giảm:
-                          <strong>{{
-                            discount.percent
-                              ? `${discount.percent}% (ước tính ${formatPrice(
-                                  (discount.percent / 100) * tongTien
-                                )})`
-                              : formatPrice(discount.value)
-                          }}</strong>
-                          || Đơn tối thiểu: {{ formatPrice(discount.minOrder) }}
+                          <strong>{{ formatPrice(discount.value) }}</strong> ||
+                          Đơn tối thiểu: {{ formatPrice(discount.minOrder) }}
                         </div>
                         <div class="text-secondary" style="font-size: 0.95rem">
                           Hết hạn: {{ discount.expiry }}
@@ -1057,16 +1150,9 @@
                         </div>
                         <div class="text-secondary" style="font-size: 0.95rem">
                           Giảm:
-                          <strong>{{
-                            discount.percent
-                              ? `${discount.percent}% (ước tính ${formatPrice(
-                                  (discount.percent / 100) * tongTien
-                                )})`
-                              : formatPrice(discount.value)
-                          }}</strong>
-                          | Đơn tối thiểu:
-                          {{ formatPrice(discount.minOrder) }} | Hết hạn:
-                          {{ discount.expiry }}
+                          <strong>{{ formatPrice(discount.value) }}</strong> |
+                          Đơn tối thiểu: {{ formatPrice(discount.minOrder) }} |
+                          Hết hạn: {{ discount.expiry }}
                         </div>
                         <div
                           class="text-warning fw-semibold mt-1"
@@ -1773,5 +1859,58 @@ export default defineComponent({
 .info-icon:hover {
   transform: scale(1.2);
   color: #34d399 !important;
+}
+
+.scanner-container {
+  position: relative;
+  width: 100%;
+  height: 300px;
+  overflow: hidden;
+}
+
+video {
+  max-width: 100%;
+  max-height: 100%;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.overlay-element {
+  position: absolute;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(30, 30, 30, 0.5);
+  clip-path: polygon(
+    0% 0%,
+    0% 100%,
+    20% 100%,
+    20% 20%,
+    80% 20%,
+    80% 80%,
+    20% 80%,
+    20% 100%,
+    100% 100%,
+    100% 0%
+  );
+}
+
+.laser {
+  width: 60%;
+  margin-left: 20%;
+  background-color: tomato;
+  height: 1px;
+  position: absolute;
+  top: 40%;
+  z-index: 2;
+  box-shadow: 0 0 4px red;
+  animation: scanning 2s infinite;
+}
+
+@keyframes scanning {
+  50% {
+    transform: translateY(75px);
+  }
 }
 </style>
