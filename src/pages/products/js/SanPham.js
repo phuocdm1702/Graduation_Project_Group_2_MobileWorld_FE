@@ -1,4 +1,3 @@
-// SanPham.js
 import { defineComponent, ref, computed, onMounted, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import DataTable from "@/components/common/DataTable.vue";
@@ -42,7 +41,9 @@ export default defineComponent({
     const notificationModal = ref(null);
     const viewMode = ref("table");
     const currentPage = ref(1);
-    const itemsPerPage = ref(99999); // Giảm số lượng mặc định để phù hợp với phân trang thực tế
+    const sharedCurrentPage = ref(1); // For card view pagination
+    const itemsPerPage = ref(99999); // For DataTable
+    const sharedPageSize = ref(10); // For card view, updated to 12 items per page
     const isLoading = ref(false);
     const totalElements = ref(0);
 
@@ -105,8 +106,8 @@ export default defineComponent({
           }
         }
 
-        const page = currentPage.value - 1;
-        const size = itemsPerPage.value;
+        const page = viewMode.value === 'table' ? currentPage.value - 1 : sharedCurrentPage.value - 1;
+        const size = viewMode.value === 'table' ? itemsPerPage.value : sharedPageSize.value;
 
         let response;
         const hasFilters = keyword.value || Object.values(filters.value).some((v) => v);
@@ -190,18 +191,33 @@ export default defineComponent({
     };
 
     // Computed properties
-    const filteredProducts = computed(() => {
+    const sharedFilteredItems = computed(() => {
       return products.value || [];
     });
 
-    const totalPages = computed(() => {
-      return Math.ceil(totalElements.value / itemsPerPage.value);
+    const sharedPaginatedItems = computed(() => {
+      const start = (sharedCurrentPage.value - 1) * sharedPageSize.value;
+      const end = start + sharedPageSize.value;
+      return sharedFilteredItems.value.slice(start, end).map((product, index) => ({
+        ...product,
+        stt: start + index + 1,
+        stockStatus: product.imeiCount > 0 ? "Còn hàng" : "Hết hàng",
+        priceRange: product.minPrice && product.maxPrice
+          ? `${formatPrice(product.minPrice)} - ${formatPrice(product.maxPrice)}`
+          : "Chưa có giá",
+      }));
     });
 
+    const sharedTotalPages = computed(() =>
+      Math.ceil(sharedFilteredItems.value.length / sharedPageSize.value)
+    );
+
     const paginatedProducts = computed(() => {
-      return (products.value || []).map((product, index) => ({
+      const start = (currentPage.value - 1) * itemsPerPage.value;
+      const end = start + itemsPerPage.value;
+      return (products.value || []).slice(start, end).map((product, index) => ({
         ...product,
-        stt: (currentPage.value - 1) * itemsPerPage.value + index + 1,
+        stt: start + index + 1,
         stockStatus: product.imeiCount > 0 ? "Còn hàng" : "Hết hàng",
         priceRange: product.minPrice && product.maxPrice
           ? `${formatPrice(product.minPrice)} - ${formatPrice(product.maxPrice)}`
@@ -220,11 +236,13 @@ export default defineComponent({
 
     const debouncedSearch = debounce(() => {
       currentPage.value = 1;
+      sharedCurrentPage.value = 1;
       loadProducts();
     }, 500);
 
     const searchProductsHandler = () => {
       currentPage.value = 1;
+      sharedCurrentPage.value = 1;
       loadProducts();
     };
 
@@ -238,6 +256,7 @@ export default defineComponent({
         stockStatus: "",
       };
       currentPage.value = 1;
+      sharedCurrentPage.value = 1;
       loadProducts();
 
       toastNotification.value?.addToast({
@@ -303,10 +322,15 @@ export default defineComponent({
       filters,
       () => {
         currentPage.value = 1;
+        sharedCurrentPage.value = 1;
         loadProducts();
       },
       { deep: true }
     );
+
+    watch(() => viewMode.value, () => {
+      sharedCurrentPage.value = 1; // Reset shared pagination when view mode changes
+    });
 
     // Lifecycle
     onMounted(async () => {
@@ -326,11 +350,14 @@ export default defineComponent({
       headers,
       viewMode,
       currentPage,
+      sharedCurrentPage,
       itemsPerPage,
+      sharedPageSize,
       isLoading,
       totalElements,
-      filteredProducts,
-      totalPages,
+      sharedFilteredItems,
+      sharedPaginatedItems,
+      sharedTotalPages,
       paginatedProducts,
       formatPrice,
       debouncedSearch,

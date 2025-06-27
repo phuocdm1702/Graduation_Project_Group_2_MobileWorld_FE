@@ -1,3 +1,4 @@
+<!-- SanPham.vue -->
 <template>
   <div class="py-4 product-management">
     <!-- Header -->
@@ -77,13 +78,24 @@
           <!-- Filter for Stock Status -->
           <div class="col-lg-4 col-md-6">
             <div class="filter-group">
-              <label class="filter-label">Trạng thái tồn kho</label>
-              <select v-model="filters.stockStatus" @change="searchProducts" class="form-control search-input">
-                <option value="">Tất cả</option>
-                <option value="inStock">Còn hàng</option>
-                <option value="outOfStock">Hết hàng</option>
-                <option value="inactive">Ngừng bán</option>
-              </select>
+              <label class="filter-label">Trạng Thái Tồn Kho</label>
+              <div class="status-radio-group">
+                <div class="form-check form-check-inline">
+                  <input class="form-check-input" type="radio" v-model="filters.stockStatus" value="" id="statusAll"
+                    @change="searchProducts">
+                  <label class="form-check-label" for="statusAll">Tất cả</label>
+                </div>
+                <div class="form-check form-check-inline">
+                  <input class="form-check-input" type="radio" v-model="filters.stockStatus" value="inStock"
+                    id="statusInStock" @change="searchProducts">
+                  <label class="form-check-label" for="statusInStock">Còn hàng</label>
+                </div>
+                <div class="form-check form-check-inline">
+                  <input class="form-check-input" type="radio" v-model="filters.stockStatus" value="outOfStock"
+                    id="statusOutOfStock" @change="searchProducts">
+                  <label class="form-check-label" for="statusOutOfStock">Hết hàng</label>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -95,7 +107,7 @@
               <div class="filter-stats d-flex">
                 <div class="stat-item me-4">
                   <span class="stat-label">Tổng số sản phẩm:</span>
-                  <span class="stat-value">{{ filteredProducts.length }}</span>
+                  <span class="stat-value">{{ sharedFilteredItems.length }}</span>
                 </div>
               </div>
             </div>
@@ -118,7 +130,7 @@
       <!-- Table/Card View Toggle -->
       <div class="table-header">
         <div class="table-title-wrapper">
-          <span class="table-count">{{ filteredProducts.length }} sản phẩm</span>
+          <span class="table-count">{{ sharedFilteredItems.length }} sản phẩm</span>
         </div>
         <div class="table-controls">
           <div class="view-toggle">
@@ -191,7 +203,7 @@
 
         <!-- Card View -->
         <div v-else class="card-grid">
-          <div v-for="product in paginatedProducts" :key="product.id" class="product-card">
+          <div v-for="product in sharedPaginatedItems" :key="product.id" class="product-card">
             <div class="product-card-header">
               <div class="product-code">{{ product.tenSanPham }}</div>
               <span class="status-badge" :class="getStatusBadgeClass(product.stockStatus)">
@@ -235,31 +247,31 @@
 
             <div class="product-card-actions">
               <button class="btn btn-sm btn-table" @click="viewProduct(product)">
-                <i class="bi bi-eye me-1"></i> Xem
+                <i class="bi bi-eye-fill"></i> Xem
               </button>
               <button class="btn btn-sm btn-table" @click="editProduct(product)">
-                <i class="bi bi-edit-fill"></i> Sửa
+                <i class="bi bi-pencil-fill"></i> Sửa
               </button>
             </div>
           </div>
         </div>
 
         <!-- Pagination for Card View -->
-        <div v-if="viewMode === 'card'" class="card-pagination">
-          <nav aria-label="Page navigation">
+        <div v-if="viewMode === 'card'" class="shared-pagination">
+          <nav aria-label="Shared Page navigation">
             <ul class="pagination justify-content-center">
-              <li class="page-item" :class="{ disabled: currentPage === 1 }">
-                <button class="page-link" @click="currentPage--" :disabled="currentPage === 1">
+              <li class="page-item" :class="{ disabled: sharedCurrentPage === 1 }">
+                <button class="page-link" @click="sharedCurrentPage--" :disabled="sharedCurrentPage === 1">
                   <i class="bi bi-chevron-left"></i>
                 </button>
               </li>
-              <li v-for="page in totalPages" :key="page" class="page-item" :class="{ active: currentPage === page }">
-                <button class="page-link" @click="currentPage = page">
-                  {{ page }}
-                </button>
+              <li v-for="page in sharedTotalPages" :key="page" class="page-item"
+                :class="{ active: sharedCurrentPage === page }">
+                <button class="page-link" @click="sharedCurrentPage = page">{{ page }}</button>
               </li>
-              <li class="page-item" :class="{ disabled: currentPage === totalPages }">
-                <button class="page-link" @click="currentPage++" :disabled="currentPage === totalPages">
+              <li class="page-item" :class="{ disabled: sharedCurrentPage === sharedTotalPages }">
+                <button class="page-link" @click="sharedCurrentPage++"
+                  :disabled="sharedCurrentPage === sharedTotalPages">
                   <i class="bi bi-chevron-right"></i>
                 </button>
               </li>
@@ -372,6 +384,27 @@ export default {
 .search-input:focus {
   border-color: #34d399;
   box-shadow: 0 0 10px rgba(52, 211, 153, 0.2);
+}
+
+.status-radio-group {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.form-check-input {
+  cursor: pointer;
+}
+
+.form-check-label {
+  font-size: 0.9rem;
+  color: #1f3a44;
+  cursor: pointer;
+}
+
+.form-check-input:checked {
+  background-color: #34d399;
+  border-color: #34d399;
 }
 
 .filter-actions {
@@ -523,7 +556,6 @@ export default {
 
 .badge-primary {
   background: #6c757d;
-  /* Màu cho trạng thái Ngừng bán */
   color: white;
 }
 
@@ -648,8 +680,8 @@ export default {
   align-items: center;
 }
 
-.card-pagination {
-  padding: 1.5rem;
+.shared-pagination {
+  padding: 1rem;
 }
 
 .pagination {
@@ -720,6 +752,12 @@ export default {
   .product-card-actions {
     flex-direction: row;
     gap: 0.3rem;
+  }
+
+  .status-radio-group {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
   }
 }
 

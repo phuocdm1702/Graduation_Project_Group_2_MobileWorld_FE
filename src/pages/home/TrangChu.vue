@@ -69,18 +69,18 @@
             <h5 class="mb-0 fw-bold">
               Hoạt động gần đây
             </h5>
-            <button class="btn btn-link text-decoration-none p-0 fw-medium text-primary">
+            <router-link to="/hoaDon" class="btn btn-link text-decoration-none p-0 fw-medium text-primary">
               Xem tất cả
               <i class="bi bi-arrow-right ms-1"></i>
-            </button>
+            </router-link>
           </div>
           <div class="card-body">
             <div class="activity-timeline">
-              <div 
-                v-for="(activity, index) in recentActivities" 
-                :key="activity.id"
-                class="timeline-item"
-                :style="{ animationDelay: `${index * 0.1}s` }"
+              <div
+                  v-for="(activity, index) in recentActivities"
+                  :key="activity.id"
+                  class="timeline-item"
+                  :style="{ animationDelay: `${index * 0.1}s` }"
               >
                 <div class="timeline-dot" :class="{ 'completed': activity.completed }"></div>
                 <div class="timeline-content">
@@ -114,19 +114,19 @@
           </div>
           <div class="card-body">
             <div class="d-grid gap-3">
-              <button 
-                v-for="(action, index) in quickActions" 
-                :key="action.name"
-                class="quick-action btn d-flex align-items-center p-3"
-                :style="{ animationDelay: `${index * 0.1}s` }"
-                @click="handleQuickAction(action)"
+              <router-link
+                  v-for="(action, index) in quickActions"
+                  :key="action.name"
+                  :to="action.link || '#'"
+              class="quick-action btn d-flex align-items-center p-3"
+              :style="{ animationDelay: `${index * 0.1}s` }"
               >
-                <div class="action-icon me-3" :class="action.bgClass">
-                  <i :class="action.icon"></i>
-                </div>
-                <span class="fw-medium">{{ action.name }}</span>
-                <i class="bi bi-chevron-right ms-auto"></i>
-              </button>
+              <div class="action-icon me-3" :class="action.bgClass">
+                <i :class="action.icon"></i>
+              </div>
+              <span class="fw-medium">{{ action.name }}</span>
+              <i class="bi bi-chevron-right ms-auto"></i>
+              </router-link>
             </div>
           </div>
         </div>
@@ -140,11 +140,11 @@
           </div>
           <div class="card-body">
             <div class="system-status">
-              <div 
-                v-for="(status, index) in systemStatus" 
-                :key="status.name"
-                class="status-item d-flex justify-content-between align-items-center mb-3"
-                :style="{ animationDelay: `${index * 0.1}s` }"
+              <div
+                  v-for="(status, index) in systemStatus"
+                  :key="status.name"
+                  class="status-item d-flex justify-content-between align-items-center mb-3"
+                  :style="{ animationDelay: `${index * 0.1}s` }"
               >
                 <div class="d-flex align-items-center">
                   <div class="status-icon me-3" :class="status.iconClass">
@@ -166,171 +166,23 @@
 </template>
 
 <script>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import useDashboard from '@/store/modules/home/trangChu.js'
 
 export default {
   name: 'Dashboard',
   setup() {
-    const username = ref('Admin')
-    const role = ref('Quản trị viên')
-    const currentTime = ref(new Date())
-
-    const userInitial = computed(() => username.value.charAt(0).toUpperCase())
-    const currentDate = computed(() => {
-      return currentTime.value.toLocaleDateString('vi-VN', {
-        weekday: 'long',
-        year: 'numeric',
-        month: 'long', 
-        day: 'numeric'
-      })
-    })
-
-    const stats = ref([
-      {
-        title: 'Tổng đơn hàng',
-        value: '156',
-        change: '+12%',
-        subtitle: 'Hôm nay',
-        icon: 'bi bi-bag-check',
-        iconClass: 'bg-mint',
-        changeClass: 'text-success',
-        trendIcon: 'bi bi-trending-up'
-      },
-      {
-        title: 'Doanh thu',
-        value: '2.5M',
-        change: '+18%',
-        subtitle: 'Tháng này',
-        icon: 'bi bi-currency-dollar',
-        iconClass: 'bg-mint',
-        changeClass: 'text-success',
-        trendIcon: 'bi bi-trending-up'
-      },
-      {
-        title: 'Khách hàng',
-        value: '1,234',
-        change: '+5%',
-        subtitle: 'Tổng số',
-        icon: 'bi bi-people',
-        iconClass: 'bg-mint',
-        changeClass: 'text-success',
-        trendIcon: 'bi bi-trending-up'
-      },
-      {
-        title: 'Sản phẩm',
-        value: '89',
-        change: '-2%',
-        subtitle: 'Trong kho',
-        icon: 'bi bi-box-seam',
-        iconClass: 'bg-mint',
-        changeClass: 'text-muted',
-        trendIcon: 'bi bi-trending-down'
-      }
-    ])
-
-    const recentActivities = ref([
-      {
-        id: 1,
-        title: 'Đơn hàng mới #12345',
-        description: 'Khách hàng Nguyễn Văn A đã đặt hàng',
-        time: '5 phút trước',
-        completed: false,
-      },
-      {
-        id: 2,
-        title: 'Thanh toán thành công',
-        description: 'Đơn hàng #12344 đã được thanh toán',
-        time: '10 phút trước',
-        completed: true,
-      },
-      {
-        id: 3,
-        title: 'Sản phẩm mới',
-        description: 'Đã thêm 5 sản phẩm vào kho',
-        time: '1 giờ trước',
-        completed: true,
-      },
-      {
-        id: 4,
-        title: 'Khách hàng mới',
-        description: 'Trần Thị B đã đăng ký tài khoản',
-        time: '2 giờ trước',
-        completed: true,
-      }
-      
-    ])
-
-    const quickActions = ref([
-      {
-        name: 'Tạo đơn hàng',
-        icon: 'bi bi-plus-circle',
-        bgClass: 'bg-mint'
-      },
-      {
-        name: 'Quản lý sản phẩm',
-        icon: 'bi bi-boxes',
-        bgClass: 'bg-mint'
-      },
-      {
-        name: 'Thống kê',
-        icon: 'bi bi-bar-chart',
-        bgClass: 'bg-mint'
-      },
-      {
-        name: 'Cài đặt',
-        icon: 'bi bi-gear',
-        bgClass: 'bg-gray'
-      }
-    ])
-
-    const systemStatus = ref([
-      {
-        name: 'Server',
-        status: 'Hoạt động',
-        icon: 'bi bi-server',
-        iconClass: 'text-primary',
-        dotClass: 'bg-success pulse',
-        textClass: 'text-success fw-medium'
-      },
-      {
-        name: 'Database',
-        status: 'Bình thường',
-        icon: 'bi bi-database',
-        iconClass: 'text-info',
-        dotClass: 'bg-success pulse',
-        textClass: 'text-success fw-medium'
-      },
-      {
-        name: 'Backup',
-        status: 'Đang xử lý',
-        icon: 'bi bi-cloud-upload',
-        iconClass: 'text-warning',
-        dotClass: 'bg-warning pulse',
-        textClass: 'text-warning fw-medium'
-      }
-    ])
-
-    const handleStatClick = (stat) => {
-      console.log('Clicked stat:', stat.title)
-    }
-
-    const handleQuickAction = (action) => {
-      console.log('Quick action:', action.name)
-    }
-
-    let timeInterval
-
-    onMounted(() => {
-      timeInterval = setInterval(() => {
-        currentTime.value = new Date()
-      }, 60000) // Update every minute
-    })
-
-    onUnmounted(() => {
-      if (timeInterval) {
-        clearInterval(timeInterval)
-      }
-    })
+    const {
+      username,
+      role,
+      userInitial,
+      currentDate,
+      stats,
+      recentActivities,
+      quickActions,
+      systemStatus,
+      handleStatClick,
+      handleQuickAction,
+    } = useDashboard()
 
     return {
       username,
@@ -342,12 +194,11 @@ export default {
       quickActions,
       systemStatus,
       handleStatClick,
-      handleQuickAction
+      handleQuickAction,
     }
   }
 }
 </script>
-
 <style scoped>
 .dashboard-container {
   padding: 20px;
@@ -428,6 +279,10 @@ export default {
 
 .text-success {
   color: #15803d !important;
+}
+
+.text-danger {
+  color: #dc2626 !important;
 }
 
 .text-mint {
@@ -619,7 +474,7 @@ export default {
   .dashboard-container {
     padding: 15px;
   }
-  
+
   .stat-value {
     font-size: 1.5rem;
   }
