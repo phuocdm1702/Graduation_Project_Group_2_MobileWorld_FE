@@ -606,6 +606,8 @@ const handleExcelUpload = async (event) => {
   try {
     const fileInput = event.target;
     const file = fileInput.files[0];
+
+    // Kiểm tra xem có file được chọn hay không
     if (!file) {
       toastNotification.value.addToast({
         type: "error",
@@ -614,6 +616,7 @@ const handleExcelUpload = async (event) => {
       return;
     }
 
+    // Kiểm tra định dạng file
     if (!file.name.endsWith(".xlsx") && !file.name.endsWith(".xls")) {
       toastNotification.value.addToast({
         type: "error",
@@ -625,36 +628,62 @@ const handleExcelUpload = async (event) => {
     const reader = new FileReader();
     reader.onload = async (e) => {
       try {
+        // Đọc dữ liệu từ file Excel
         const data = new Uint8Array(e.target.result);
         const workbook = XLSX.read(data, { type: "array", cellDates: true, dateNF: "dd/mm/yyyy" });
         const sheetName = workbook.SheetNames[0];
         const worksheet = workbook.Sheets[sheetName];
         const jsonData = XLSX.utils.sheet_to_json(worksheet, { raw: false, dateNF: "dd/mm/yyyy" });
 
-        // Log dữ liệu thô từ Excel để kiểm tra
+        // Log dữ liệu thô để kiểm tra
         console.log("Dữ liệu thô từ Excel:", jsonData);
 
-        // Xử lý dữ liệu từ Excel
+        // Ánh xạ dữ liệu từ Excel sang định dạng KhachHang
         const khachHangs = jsonData.map((row, index) => {
+          // Xác thực các trường bắt buộc
           if (!row["Mã Khách Hàng"] || !row["Tên Khách Hàng"]) {
             throw new Error(`Dòng ${index + 2}: Thiếu Mã Khách Hàng hoặc Tên Khách Hàng`);
           }
-          if (row["Trạng Thái"] && !["Kích Hoạt", "Đã Hủy"].includes(row["Trạng Thái"].toString().trim())) {
+
+          // Xác thực trạng thái
+          const trangThai = row["Trạng Thái"]?.toString().trim();
+          if (trangThai && !["Kích Hoạt", "Đã Hủy"].includes(trangThai)) {
             throw new Error(`Dòng ${index + 2}: Trạng Thái phải là "Kích Hoạt" hoặc "Đã Hủy"`);
           }
-          if (row["Giới Tính"] && !["Nam", "Nữ"].includes(row["Giới Tính"].toString().trim())) {
+
+          // Xác thực giới tính
+          const gioiTinh = row["Giới Tính"]?.toString().trim();
+          if (gioiTinh && !["Nam", "Nữ"].includes(gioiTinh)) {
             throw new Error(`Dòng ${index + 2}: Giới Tính phải là "Nam" hoặc "Nữ"`);
           }
 
+          // Xử lý ngày sinh
+          let ngaySinh = null;
+          if (row["Ngày Sinh"]) {
+            try {
+              const parsedDate = new Date(row["Ngày Sinh"]);
+              if (isNaN(parsedDate.getTime())) {
+                throw new Error(`Dòng ${index + 2}: Ngày Sinh không hợp lệ`);
+              }
+              ngaySinh = parsedDate;
+            } catch (error) {
+              throw new Error(`Dòng ${index + 2}: Ngày Sinh không hợp lệ`);
+            }
+          }
+
+          // Tạo đối tượng KhachHang
           const customerData = {
             ma: row["Mã Khách Hàng"]?.toString().trim() || "",
             ten: row["Tên Khách Hàng"]?.toString().trim() || "",
+            gioiTinh: gioiTinh === "Nam" ? false : gioiTinh === "Nữ" ? true : null,
+            ngaySinh: ngaySinh,
+            cccd: row["CCCD"]?.toString().trim() || null,
+            anhKhachHang: row["Ảnh Khách Hàng"]?.toString().trim() || null,
             idTaiKhoan: {
               email: row["Email"]?.toString().trim() || "",
               soDienThoai: row["Số Điện Thoại"]?.toString().trim() || "",
-              deleted: row["Trạng Thái"]?.toString().trim() === "Kích Hoạt",
+              deleted: trangThai === "Kích Hoạt" ? false : true,
             },
-            gioiTinh: row["Giới Tính"]?.toString().trim() || null,
             idDiaChiKhachHang: row["Địa Chỉ Cụ Thể"] || row["Phường"] || row["Quận"] || row["Thành Phố"]
               ? {
                   macDinh: true,
@@ -664,7 +693,11 @@ const handleExcelUpload = async (event) => {
                   thanhPho: row["Thành Phố"]?.toString().trim() || "",
                 }
               : null,
-            trangThai: row["Trạng Thái"]?.toString().trim() === "Kích Hoạt" ? "Kích Hoạt" : "Đã Hủy",
+            deleted: trangThai === "Kích Hoạt" ? false : true,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            createdBy: 1, // Giả sử ID người dùng hiện tại, cần thay đổi theo logic thực tế
+            updatedBy: 1, // Giả sử ID người dùng hiện tại
           };
 
           console.log(`Dòng ${index + 2} - Dữ liệu khách hàng:`, customerData);
@@ -680,10 +713,8 @@ const handleExcelUpload = async (event) => {
         if (result.success) {
           console.log("Dữ liệu trả về từ server:", result.data);
 
-          // Cập nhật customers.value
-          customers.value = result.data;
-
-          console.log("Dữ liệu customers.value sau khi cập nhật:", customers.value);
+          // Cập nhật danh sách khách hàng
+          customers.value = [...customers.value, ...result.data];
 
           toastNotification.value.addToast({
             type: "success",
@@ -699,7 +730,7 @@ const handleExcelUpload = async (event) => {
         });
         console.error("Lỗi khi xử lý file Excel:", error);
       } finally {
-        fileInput.value = "";
+        fileInput.value = ""; // Reset input file
       }
     };
 
