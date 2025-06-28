@@ -13,7 +13,6 @@ import {
 } from "@zxing/library";
 import axios from "axios";
 import { useRouter } from "vue-router";
-import { BrowserMultiFormatReader } from '@zxing/library';
 
 // Debounce utility function
 const debounce = (func, delay) => {
