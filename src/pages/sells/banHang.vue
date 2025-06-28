@@ -150,7 +150,9 @@
       </div>
     </div>
 
-    <!-- Scan QR Modal -->
+    <NotificationModal ref="notificationModal" />
+    <ToastNotification ref="toastNotification" />
+    <!-- Scan Barcode Modal -->
     <div v-if="showScanModal" class="modal fade show d-block" tabindex="-1" style="background: rgba(0, 0, 0, 0.5)">
       <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content shadow-lg p-3 gradient-modal animate__animated animate__zoomIn" style="
@@ -159,14 +161,17 @@
             border-radius: 16px;
           ">
           <div class="modal-header border-0 d-flex justify-content-between align-items-center">
-            <h5 class="modal-title fw-bold text-dark">Quét Barcode/QR</h5>
+            <h5 class="modal-title fw-bold text-dark">Quét Barcode</h5>
             <button class="btn btn-outline-secondary btn-close-custom" @click="closeScanModal">
               <i class="bi bi-x-lg"></i>
             </button>
           </div>
           <div class="modal-body p-4">
             <div id="barcode-scanner" style="position: relative;">
-              <video id="barcode-scanner-video" style="width: 100%; height: auto;"></video>
+              <video id="barcode-scanner-video" ref="videoElement" style="width: 100%; height: auto;" autoplay></video>
+              <div id="scan-region" ref="scanRegion" class="scan-region">
+                <div class="scan-border"></div>
+              </div>
               <div v-if="isScanning" class="text-center mt-2">
                 <span class="spinner-border spinner-border-sm text-teal" role="status"></span>
                 <span class="text-muted ms-2">Đang quét...</span>
@@ -176,7 +181,7 @@
           </div>
           <div class="modal-footer border-0">
             <button @click="closeScanModal" class="btn btn-secondary me-2">Đóng</button>
-            <button @click="startQuagga" class="btn btn-success" :disabled="isCameraActive">Bắt đầu quét</button>
+            <button @click="startZXingScan" class="btn btn-success" :disabled="isCameraActive">Bắt đầu quét</button>
           </div>
         </div>
       </div>
@@ -853,11 +858,12 @@
                   <span class="fw-semibold">Thanh toán</span>
                 </button>
                 <!-- Customer Payment Button -->
-                <button class="btn w-100 py-3 mt-2" style="background: linear-gradient(135deg, #facc15, #f97316); color: white;" :disabled="!activeInvoiceId ||
-                  !cartItems ||
-                  cartItems.length === 0 ||
-                  isCreatingOrder
-                  " @click="goToCustomerPayment">
+                <button class="btn w-100 py-3 mt-2"
+                  style="background: linear-gradient(135deg, #facc15, #f97316); color: white;" :disabled="!activeInvoiceId ||
+                    !cartItems ||
+                    cartItems.length === 0 ||
+                    isCreatingOrder
+                    " @click="goToCustomerPayment">
                   <span class="fw-semibold">Thanh toán tại quầy (Khách hàng)</span>
                 </button>
               </div>
@@ -1273,5 +1279,28 @@ export default defineComponent({
 .info-icon:hover {
   transform: scale(1.2);
   color: #34d399 !important;
+}
+/* Vùng quét barcode */
+.scan-region {
+  position: absolute;
+  top: 25%;
+  left: 25%;
+  width: 50%;
+  height: 50%;
+  border: 2px dashed #00ff00;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: rgba(0, 255, 0, 0.1);
+}
+
+.scan-border {
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  width: calc(100% + 4px);
+  height: calc(100% + 4px);
+  border: 2px solid #00ff00;
+  pointer-events: none;
 }
 </style>
