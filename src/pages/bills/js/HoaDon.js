@@ -210,6 +210,32 @@ export const invoiceManagementLogic = {
       }, {});
     });
 
+    // Hàm confirm dùng chung
+    const showConfirm = (message, onConfirm, onCancel = () => { }) => {
+      notificationType.value = 'confirm';
+      notificationMessage.value = message;
+      notificationOnConfirm.value = async () => {
+        isNotificationLoading.value = true;
+        try {
+          await onConfirm();
+        } catch (error) {
+          toastNotification.value?.addToast({
+            type: 'error',
+            message: error.message || 'Đã có lỗi xảy ra',
+            duration: 3000,
+          });
+        } finally {
+          isNotificationLoading.value = false;
+          resetNotification();
+        }
+      };
+      notificationOnCancel.value = () => {
+        onCancel();
+        resetNotification();
+      };
+      notificationModal.value?.openModal();
+    };
+
     // Methods
     const formatPrice = (price) => {
       if (price === null || price === undefined) return '0 ₫';
@@ -270,78 +296,64 @@ export const invoiceManagementLogic = {
     };
 
     const exportExcel = async () => {
-      try {
-        // Hiển thị thông báo đang xử lý
-        toastNotification.value?.addToast({
-          type: 'info',
-          message: 'Đang xuất danh sách hóa đơn ra Excel...',
-          duration: 0,
-        });
+      showConfirm(
+        'Bạn có chắc chắn muốn xuất danh sách hóa đơn ra Excel?',
+        async () => {
+          toastNotification.value?.addToast({
+            type: 'info',
+            message: 'Đang xuất danh sách hóa đơn ra Excel...',
+            duration: 0,
+          });
 
-        // Gọi action exportExcel từ store
-        const result = await hoaDonStore.exportExcel();
+          const result = await hoaDonStore.exportExcel();
 
-        // Hiển thị thông báo kết quả
-        toastNotification.value?.addToast({
-          type: result.success ? 'success' : 'error',
-          message: result.success
-            ? `Đã xuất ${filteredInvoices.value.length} hóa đơn ra Excel`
-            : result.message,
-          duration: 3000,
-        });
-      } catch (error) {
-        console.error('Lỗi khi xuất Excel:', error);
-        toastNotification.value?.addToast({
-          type: 'error',
-          message: error.message || 'Lỗi khi xuất danh sách hóa đơn ra Excel',
-          duration: 3000,
-        });
-      }
+          toastNotification.value?.addToast({
+            type: result.success ? 'success' : 'error',
+            message: result.success
+              ? `Đã xuất ${filteredInvoices.value.length} hóa đơn ra Excel`
+              : result.message,
+            duration: 3000,
+          });
+        }
+      );
     };
 
     const scanQR = async () => {
-      try {
-        qrError.value = '';
-        qrMessage.value = 'Đang khởi động camera...';
-        scanning = true;
+      showConfirm(
+        'Bạn có muốn khởi động camera để quét mã QR?',
+        async () => {
+          qrError.value = '';
+          qrMessage.value = 'Đang khởi động camera...';
+          scanning = true;
 
-        const modalElement = document.getElementById('qrScannerModal');
-        modalElement.classList.add('show');
-        modalElement.style.display = 'block';
-        document.body.classList.add('modal-open');
-        const backdrop = document.createElement('div');
-        backdrop.className = 'modal-backdrop fade show';
-        document.body.appendChild(backdrop);
+          const modalElement = document.getElementById('qrScannerModal');
+          modalElement.classList.add('show');
+          modalElement.style.display = 'block';
+          document.body.classList.add('modal-open');
+          const backdrop = document.createElement('div');
+          backdrop.className = 'modal-backdrop fade show';
+          document.body.appendChild(backdrop);
 
-        videoElement.value = document.getElementById('qr-video');
-        canvasElement.value = document.getElementById('qr-canvas');
+          videoElement.value = document.getElementById('qr-video');
+          canvasElement.value = document.getElementById('qr-canvas');
 
-        stream.value = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: 'environment' },
-        });
+          stream.value = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: 'environment' },
+          });
 
-        videoElement.value.srcObject = stream.value;
+          videoElement.value.srcObject = stream.value;
 
-        await new Promise((resolve) => {
-          videoElement.value.onloadedmetadata = () => {
-            videoElement.value.play();
-            qrMessage.value = 'Đặt mã QR trước camera để quét';
-            resolve();
-          };
-        });
+          await new Promise((resolve) => {
+            videoElement.value.onloadedmetadata = () => {
+              videoElement.value.play();
+              qrMessage.value = 'Đặt mã QR trước camera để quét';
+              resolve();
+            };
+          });
 
-        // Bắt đầu quét với interval kiểm soát
-        startSmartScanning();
-      } catch (err) {
-        qrError.value = 'Không thể truy cập camera. Vui lòng kiểm tra quyền truy cập.';
-        qrMessage.value = '';
-        stopCamera();
-        toastNotification.value?.addToast({
-          type: 'error',
-          message: 'Lỗi khi truy cập camera: ' + err.message,
-          duration: 3000,
-        });
-      }
+          startSmartScanning();
+        }
+      );
     };
 
     const startSmartScanning = () => {
@@ -466,34 +478,36 @@ export const invoiceManagementLogic = {
     };
 
     const printInvoice = async (invoice) => {
-      const result = await hoaDonStore.printInvoice(invoice.id);
-      toastNotification.value?.addToast({
-        type: result.success ? 'success' : 'error',
-        message: result.message,
-        duration: 3000,
-      });
+      showConfirm(
+        `Bạn có chắc chắn muốn in hóa đơn ${invoice.ma}?`,
+        async () => {
+          const result = await hoaDonStore.printInvoice(invoice.id);
+          toastNotification.value?.addToast({
+            type: result.success ? 'success' : 'error',
+            message: result.message,
+            duration: 3000,
+          });
+        }
+      );
     };
 
     const downloadQrCode = async (invoice) => {
-      try {
-        const qrData = invoice.ma; // Sử dụng ma thay vì id
-        const qrUrl = await QRCode.toDataURL(qrData);
-        const link = document.createElement('a');
-        link.href = qrUrl;
-        link.download = `QR_HoaDon_${invoice.ma}.png`;
-        link.click();
-        toastNotification.value?.addToast({
-          type: 'success',
-          message: `Đã tải QR code cho hóa đơn ${invoice.ma}`,
-          duration: 3000,
-        });
-      } catch (err) {
-        toastNotification.value?.addToast({
-          type: 'error',
-          message: `Lỗi khi tạo QR code: ${err.message}`,
-          duration: 3000,
-        });
-      }
+      showConfirm(
+        `Bạn có chắc chắn muốn tải QR code cho hóa đơn ${invoice.ma}?`,
+        async () => {
+          const qrData = invoice.ma;
+          const qrUrl = await QRCode.toDataURL(qrData);
+          const link = document.createElement('a');
+          link.href = qrUrl;
+          link.download = `QR_HoaDon_${invoice.ma}.png`;
+          link.click();
+          toastNotification.value?.addToast({
+            type: 'success',
+            message: `Đã tải QR code cho hóa đơn ${invoice.ma}`,
+            duration: 3000,
+          });
+        }
+      );
     };
 
     const confirmDeleteInvoice = (invoice) => {
