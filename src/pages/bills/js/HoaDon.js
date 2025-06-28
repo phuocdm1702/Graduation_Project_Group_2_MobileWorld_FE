@@ -239,6 +239,7 @@ export const invoiceManagementLogic = {
         startDate: null,
         endDate: null,
         trangThai: null,
+        loaiDon: null, // Reset loaiDon
       });
 
       toastNotification.value?.addToast({
@@ -268,12 +269,34 @@ export const invoiceManagementLogic = {
       });
     };
 
-    const exportExcel = () => {
-      toastNotification.value?.addToast({
-        type: 'success',
-        message: `Đã xuất ${filteredInvoices.value.length} hóa đơn ra Excel`,
-        duration: 3000,
-      });
+    const exportExcel = async () => {
+      try {
+        // Hiển thị thông báo đang xử lý
+        toastNotification.value?.addToast({
+          type: 'info',
+          message: 'Đang xuất danh sách hóa đơn ra Excel...',
+          duration: 0,
+        });
+
+        // Gọi action exportExcel từ store
+        const result = await hoaDonStore.exportExcel();
+
+        // Hiển thị thông báo kết quả
+        toastNotification.value?.addToast({
+          type: result.success ? 'success' : 'error',
+          message: result.success
+            ? `Đã xuất ${filteredInvoices.value.length} hóa đơn ra Excel`
+            : result.message,
+          duration: 3000,
+        });
+      } catch (error) {
+        console.error('Lỗi khi xuất Excel:', error);
+        toastNotification.value?.addToast({
+          type: 'error',
+          message: error.message || 'Lỗi khi xuất danh sách hóa đơn ra Excel',
+          duration: 3000,
+        });
+      }
     };
 
     const scanQR = async () => {
@@ -505,20 +528,44 @@ export const invoiceManagementLogic = {
       notificationOnCancel.value = () => { };
     };
 
+    // const setActiveTab = (tab) => {
+    //   activeTab.value = tab;
+    //   currentPage.value = 1;
+    //   highlightedInvoiceId.value = null;
+    //   toastNotification.value?.addToast({
+    //     type: 'info',
+    //     message: `Đã chuyển sang tab ${tab === 'all' ? 'Tất cả hóa đơn' : tab === 'in-store' ? 'Hóa đơn tại quầy' : 'Hóa đơn online'
+    //       }`,
+    //     duration: 2000,
+    //   });
+    // };
+
+
+    // Cập nhật hàm setActiveTab
     const setActiveTab = (tab) => {
       activeTab.value = tab;
       currentPage.value = 1;
       highlightedInvoiceId.value = null;
+
+      let loaiDon = null;
+      if (tab === 'in-store') {
+        loaiDon = 'trực tiếp';
+      } else if (tab === 'online') {
+        loaiDon = 'online';
+      }
+
+      hoaDonStore.updateFilters({ loaiDon });
+
       toastNotification.value?.addToast({
         type: 'info',
-        message: `Đã chuyển sang tab ${tab === 'all' ? 'Tất cả hóa đơn' : tab === 'in-store' ? 'Hóa đơn tại quầy' : 'Hóa đơn online'
-          }`,
+        message: `Đã chuyển sang tab ${tab === 'all' ? 'Tất cả hóa đơn' : tab === 'in-store' ? 'Hóa đơn tại quầy' : 'Hóa đơn online'}`,
         duration: 2000,
       });
     };
 
     const setActiveTabByStatus = (status) => {
-      hoaDonStore.updateFilters({ trangThai: status });
+      const trangThaiNumber = hoaDonStore.mapStatusToNumber(status);
+      hoaDonStore.updateFilters({ trangThai: trangThaiNumber });
       const statusInvoices = filteredInvoices.value.filter((inv) => inv.trangThaiFormatted === status);
       if (statusInvoices.length > 0) {
         const firstType = (statusInvoices[0].loaiDon || '').toLowerCase();

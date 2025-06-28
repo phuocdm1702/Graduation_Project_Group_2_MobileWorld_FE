@@ -184,6 +184,34 @@
 
     <!-- Cart and Product List Cluster -->
     <div class="row">
+      <!-- Modal quét mã -->
+      <div v-if="showScannerModal" class="modal fade modal-scanner" id="scannerModal" tabindex="-1"
+        aria-labelledby="scannerModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="scannerModalLabel">Quét mã vạch</h5>
+              <button type="button" class="btn-close" @click="stopScanning" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <div class="scanner-container">
+                <div v-show="isScanning" class="text-center">
+                  <p>Đang khởi động camera...</p>
+                </div>
+                <video id="reader" poster="data:image/gif,AAAA" autoplay muted playsinline
+                  style="width: 100%; height: 100%; object-fit: cover"></video>
+                <div class="overlay-element"></div>
+                <div class="laser"></div>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" @click="stopScanning">
+                Đóng
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
       <div class="col-lg-8">
         <!-- Cart Section -->
         <FilterTableSection title="Sản Phẩm Trong Giỏ hàng" icon="bi bi-basket">
@@ -299,8 +327,8 @@
                           <span class="text-muted">Số lượng:</span>
                           <span class="fw-semibold">{{ item.quantity }}</span>
                         </div>
-                        <div v-if="item.priceChangeText" class="text-muted small mb-2">
-                          {{ item.priceChangeText }}
+                        <div v-if="item.ghiChuGia" class="text-warning small mb-2">
+                          {{ item.ghiChuGia }}
                         </div>
                         <div v-if="selectedDiscount" class="d-flex align-items-center gap-2">
                           <span class="text-muted">Mã giảm giá:</span>
@@ -365,6 +393,10 @@
                 <p>
                   <strong>Thương hiệu:</strong>
                   {{ selectedCartItem?.brand || "N/A" }}
+                </p>
+                <!-- Thêm hiển thị ghiChuGia -->
+                <p v-if="selectedCartItem?.ghiChuGia" class="text-warning">
+                  <strong>Thông báo giá:</strong> {{ selectedCartItem?.ghiChuGia }}
                 </p>
               </div>
             </div>
@@ -588,281 +620,337 @@
                             " />
                         </div>
                       </div>
-                      <div class="d-flex align-items-center gap-2 mt-2">
-                        <label class="form-label fw-medium text-dark mb-2" style="font-size: 0.95rem; margin-top: 10px">
-                          Giao hàng tận nhà <span class="text-danger"></span>
-                        </label>
-                        <input type="checkbox" class="form-check-input" v-model="isHomeDelivery"
-                          :disabled="!isReceiverEditable" style="
-                            margin-top: 10px;
-                            border-color: #34d399;
-                            margin-left: auto;
-                          " />
-                      </div>
-                      <div v-if="isHomeDelivery" class="mt-2">
+
+                      <!-- Chọn đơn vị vận chuyển -->
+                      <div class="col-12">
                         <label class="form-label fw-medium text-dark mb-2" style="font-size: 0.95rem">
-                          Phí vận chuyển <span class="text-danger">*</span>
+                          Đơn vị vận chuyển <span class="text-danger">*</span>
                         </label>
                         <div class="input-group">
                           <span class="input-group-text bg-light border-end-0">
                             <i class="bi bi-truck text-teal"></i>
                           </span>
-                          <input v-model.number="shippingFee" type="number"
-                            class="form-control shadow-none border-start-0" placeholder="Nhập phí vận chuyển (VND)"
-                            min="0" :disabled="!isReceiverEditable" style="
+                          <select v-model="selectedShippingUnit" class="form-select shadow-none border-start-0"
+                            @change="updateShippingFee" style="
                               border-radius: 0 8px 8px 0;
                               transition: all 0.3s ease;
-                            " />
+                            ">
+                            <option value="" disabled>
+                              Chọn đơn vị vận chuyển
+                            </option>
+                            <option v-for="unit in shippingUnits" :key="unit.id" :value="unit">
+                              {{ unit.name }}
+                            </option>
+                          </select>
+                        </div>
+                        <!-- Hiển thị logo đơn vị vận chuyển -->
+                        <div v-if="selectedShippingUnit" class="mt-3 d-flex justify-content-center">
+                          <div class="p-3 border rounded shadow-sm bg-white" style="
+                              max-width: 200px;
+                              width: 100%;
+                              text-align: center;
+                            ">
+                            <img :src="selectedShippingUnit.logo" :alt="selectedShippingUnit.name" style="
+                                max-height: 90px;
+                                object-fit: contain;
+                                width: 100%;
+                              " />
+                            <p class="mt-2 mb-0 fw-semibold text-dark" style="font-size: 0.9rem">
+                              {{ selectedShippingUnit.name }}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                      <!-- Ô input phí vận chuyển -->
+                      <div class="col-12">
+                        <div class="form-label fw-medium text-dark mb-2" style="font-size: 0.95rem">
+                          <div class="d-flex align-items-center gap-2 mt-2">
+                            <label class="form-label fw-medium text-dark mb-2"
+                              style="font-size: 0.95rem; margin-top: 10px">
+                              Giao hàng tận nhà <span class="text-danger"></span>
+                            </label>
+                            <input type="checkbox" class="form-check-input" v-model="isHomeDelivery"
+                              :disabled="!isReceiverEditable" style="
+                            margin-top: 10px;
+                            border-color: #34d399;
+                            margin-left: auto;
+                          " />
+                          </div>
+                          <div v-if="isHomeDelivery" class="mt-2">
+                            <label class="form-label fw-medium text-dark mb-2" style="font-size: 0.95rem">
+                              Phí vận chuyển <span class="text-danger">*</span>
+                            </label>
+                            <div class="input-group">
+                              <span class="input-group-text bg-light border-end-0">
+                                <i class="bi bi-currency-dollar text-teal"></i>
+                              </span>
+                              <input v-model.number="shippingFee" type="number"
+                                class="form-control shadow-none border-start-0" placeholder="Nhập phí vận chuyển"
+                                :disabled="totalPrice >= FREE_SHIP_THRESHOLD" min="0" style="border-radius: 0 8px 8px 0;
+                              transition: all 0.3s ease;" </div>
+                              <div v-if="totalPrice >= FREE_SHIP_THRESHOLD" class="text-success mt-2">
+                                Miễn phí vận chuyển cho đơn hàng từ 50,000,000 VNĐ trở
+                                lên
+                              </div>
+                            </div>
+
+                            <div class="mt-4 text-end" v-if="!isReceiverEditable">
+                              <button class="btn btn-outline-teal btn-sm px-4 py-2" @click="isReceiverEditable = true"
+                                style="border-radius: 8px; transition: all 0.3s ease">
+                                <i class="bi bi-pencil-square me-2"></i>Chỉnh sửa
+                              </button>
+                            </div>
+                          </div>
                         </div>
                       </div>
 
-                      <div class="mt-4 text-end" v-if="!isReceiverEditable">
-                        <button class="btn btn-outline-teal btn-sm px-4 py-2" @click="isReceiverEditable = true"
-                          style="border-radius: 8px; transition: all 0.3s ease">
-                          <i class="bi bi-pencil-square me-2"></i>Chỉnh sửa
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Voucher Section -->
-                <div style="margin-top: 20px" class="voucher-section mb-5">
-                  <h6 class="fw-bold text-dark mb-3 d-flex align-items-center gap-2"
-                    style="font-size: 1.3rem; letter-spacing: 0.5px">
-                    Mã Giảm Giá
-                  </h6>
-                  <!-- PGG tốt nhất -->
-                  <div class="position-relative p-4 rounded-4 shadow-sm animate__animated animate__fadeIn mb-4"
-                    style="border: 2px solid #34d399; background-color: #ecfdf5">
-                    <!-- Ribbon -->
-                    <div class="position-absolute top-0 end-0 bg-success text-white px-3 py-1" style="
+                      <!-- Voucher Section -->
+                      <div style="margin-top: 20px" class="voucher-section mb-5">
+                        <h6 class="fw-bold text-dark mb-3 d-flex align-items-center gap-2"
+                          style="font-size: 1.3rem; letter-spacing: 0.5px">
+                          Mã Giảm Giá
+                        </h6>
+                        <!-- PGG tốt nhất -->
+                        <div class="position-relative p-4 rounded-4 shadow-sm animate__animated animate__fadeIn mb-4"
+                          style="border: 2px solid #34d399; background-color: #ecfdf5">
+                          <!-- Ribbon -->
+                          <div class="position-absolute top-0 end-0 bg-success text-white px-3 py-1" style="
                         font-size: 0.8rem;
                         font-weight: bold;
                         border-bottom-left-radius: 1rem 0.5rem;
                         transform: translate(10%, -10%);
                         box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
                       ">
-                      PGG tốt nhất
-                    </div>
+                            PGG tốt nhất
+                          </div>
 
-                    <div v-if="selectedDiscount" class="d-flex justify-content-between align-items-center">
-                      <div class="text-dark">
-                        <div class="fw-semibold mb-2 d-flex align-items-center gap-2" style="font-size: 1rem">
-                          Mã giảm giá tự động:
+                          <div v-if="selectedDiscount" class="d-flex justify-content-between align-items-center">
+                            <div class="text-dark">
+                              <div class="fw-semibold mb-2 d-flex align-items-center gap-2" style="font-size: 1rem">
+                                Mã giảm giá tự động:
+                              </div>
+                              <div class="badge bg-success text-white px-3 py-2 fs-5" style="letter-spacing: 0.5px">
+                                {{ selectedDiscount.code }}
+                              </div>
+                            </div>
+                            <div class="text-danger fw-bold fs-4">
+                              −{{ formatPrice(selectedDiscount.value) }}
+                              −{{
+                                selectedDiscount.percent
+                                  ? `${selectedDiscount.percent}% (${formatPrice(
+                                    discount
+                                  )})`
+                                  : formatPrice(discount)
+                              }}
+                            </div>
+                          </div>
+
+                          <div v-else
+                            class="text-secondary text-center d-flex align-items-center justify-content-center gap-2 py-2 fs-5">
+                            Không có mã giảm giá khả dụng
+                          </div>
                         </div>
-                        <div class="badge bg-success text-white px-3 py-2 fs-5" style="letter-spacing: 0.5px">
-                          {{ selectedDiscount.code }}
+
+                        <!-- Tiêu đề -->
+                        <h6 class="fw-semibold text-dark mb-2 d-flex align-items-center gap-2 fs-5">
+                          Mã giảm giá thay thế
+                        </h6>
+
+                        <!-- Mã giảm giá thay thế -->
+                        <div class="position-relative p-4 rounded-3 shadow-sm animate__animated animate__fadeIn"
+                          style="border: 2px solid #a7f3d0; background-color: #ecfdf5">
+                          <div v-if="alternativeDiscounts.length > 0" class="d-flex flex-column gap-3"
+                            style="max-height: 220px; overflow-y: auto">
+                            <div v-for="discount in alternativeDiscounts" :key="discount.id"
+                              @click="selectDiscount(discount)" class="p-3 rounded-3 shadow-sm" :style="{
+                                backgroundColor: 'transparent',
+                                border:
+                                  selectedDiscount &&
+                                    selectedDiscount.id === discount.id
+                                    ? '2px solid #34d399'
+                                    : '1px solid #a7f3d0',
+                                cursor: 'pointer',
+                                transition: 'all 0.3s ease',
+                              }">
+                              <div class="fw-bold d-flex align-items-center gap-1 mb-2" style="font-size: 1rem">
+                                {{ discount.code }}
+                                <span v-if="
+                                  selectedDiscount &&
+                                  selectedDiscount.id === discount.id
+                                " class="badge bg-success ms-2">Đã chọn</span>
+                              </div>
+                              <div class="text-secondary mb-1" style="font-size: 0.95rem">
+                                Giảm:
+                                <strong>{{ formatPrice(discount.value) }}</strong> ||
+                                Đơn tối thiểu: {{ formatPrice(discount.minOrder) }}
+                                <strong>{{
+                                  discount.percent
+                                    ? `${discount.percent}% (ước tính ${formatPrice(
+                                      (discount.percent / 100) * tongTien
+                                    )})`
+                                    : formatPrice(discount.value)
+                                }}</strong>
+                                || Đơn tối thiểu: {{ formatPrice(discount.minOrder) }}
+                              </div>
+                              <div class="text-secondary" style="font-size: 0.95rem">
+                                Hết hạn: {{ discount.expiry }}
+                              </div>
+                            </div>
+                          </div>
+
+                          <div v-else
+                            class="text-secondary text-center d-flex align-items-center justify-content-center gap-2 mt-3 fs-5">
+                            Không có mã giảm giá thay thế khả dụng
+                          </div>
                         </div>
-                      </div>
-                      <div class="text-danger fw-bold fs-4">
-                        −{{
-                          selectedDiscount.percent
-                            ? `${selectedDiscount.percent}% (${formatPrice(
-                              discount
-                            )})`
-                            : formatPrice(discount)
-                        }}
-                      </div>
-                    </div>
 
-                    <div v-else
-                      class="text-secondary text-center d-flex align-items-center justify-content-center gap-2 py-2 fs-5">
-                      Không có mã giảm giá khả dụng
-                    </div>
-                  </div>
+                        <!-- Tiêu đề -->
+                        <h6 style="margin-top: 20px"
+                          class="fw-semibold text-dark mb-2 d-flex align-items-center gap-2 fs-5">
+                          Gợi ý
+                        </h6>
 
-                  <!-- Tiêu đề -->
-                  <h6 class="fw-semibold text-dark mb-2 d-flex align-items-center gap-2 fs-5">
-                    Mã giảm giá thay thế
-                  </h6>
-
-                  <!-- Mã giảm giá thay thế -->
-                  <div class="position-relative p-4 rounded-3 shadow-sm animate__animated animate__fadeIn"
-                    style="border: 2px solid #a7f3d0; background-color: #ecfdf5">
-                    <div v-if="alternativeDiscounts.length > 0" class="d-flex flex-column gap-3"
-                      style="max-height: 220px; overflow-y: auto">
-                      <div v-for="discount in alternativeDiscounts" :key="discount.id" @click="selectDiscount(discount)"
-                        class="p-3 rounded-3 shadow-sm" :style="{
-                          backgroundColor: 'transparent',
-                          border:
-                            selectedDiscount &&
-                              selectedDiscount.id === discount.id
-                              ? '2px solid #34d399'
-                              : '1px solid #a7f3d0',
-                          cursor: 'pointer',
-                          transition: 'all 0.3s ease',
-                        }">
-                        <div class="fw-bold d-flex align-items-center gap-1 mb-2" style="font-size: 1rem">
-                          {{ discount.code }}
-                          <span v-if="
-                            selectedDiscount &&
-                            selectedDiscount.id === discount.id
-                          " class="badge bg-success ms-2">Đã chọn</span>
-                        </div>
-                        <div class="text-secondary mb-1" style="font-size: 0.95rem">
-                          Giảm:
-                          <strong>{{
-                            discount.percent
-                              ? `${discount.percent}% (ước tính ${formatPrice(
-                                (discount.percent / 100) * tongTien
-                              )})`
-                              : formatPrice(discount.value)
-                          }}</strong>
-                          || Đơn tối thiểu: {{ formatPrice(discount.minOrder) }}
-                        </div>
-                        <div class="text-secondary" style="font-size: 0.95rem">
-                          Hết hạn: {{ discount.expiry }}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div v-else
-                      class="text-secondary text-center d-flex align-items-center justify-content-center gap-2 mt-3 fs-5">
-                      Không có mã giảm giá thay thế khả dụng
-                    </div>
-                  </div>
-
-                  <!-- Tiêu đề -->
-                  <h6 style="margin-top: 20px" class="fw-semibold text-dark mb-2 d-flex align-items-center gap-2 fs-5">
-                    Gợi ý
-                  </h6>
-
-                  <!-- Mã giảm giá gợi ý -->
-                  <div class="position-relative p-4 rounded-3 shadow-sm animate__animated animate__fadeIn"
-                    style="border: 2px solid #ffe58f; background-color: #fffbe6">
-                    <div v-if="suggestedDiscounts.length > 0" class="d-flex flex-column gap-3"
-                      style="max-height: 200px; overflow-y: auto">
-                      <div v-for="discount in suggestedDiscounts" :key="discount.id" class="p-3 rounded-3 shadow-sm"
-                        style="
+                        <!-- Mã giảm giá gợi ý -->
+                        <div class="position-relative p-4 rounded-3 shadow-sm animate__animated animate__fadeIn"
+                          style="border: 2px solid #ffe58f; background-color: #fffbe6">
+                          <div v-if="suggestedDiscounts.length > 0" class="d-flex flex-column gap-3"
+                            style="max-height: 200px; overflow-y: auto">
+                            <div v-for="discount in suggestedDiscounts" :key="discount.id"
+                              class="p-3 rounded-3 shadow-sm" style="
                           background-color: transparent;
                           border: 1px solid #ffe58f;
                         ">
-                        <div class="fw-bold mb-1 d-flex align-items-center gap-1" style="font-size: 1rem">
-                          {{ discount.code }}
+                              <div class="fw-bold mb-1 d-flex align-items-center gap-1" style="font-size: 1rem">
+                                {{ discount.code }}
+                              </div>
+                              <div class="text-secondary" style="font-size: 0.95rem">
+                                Giảm:
+                                <strong>{{ formatPrice(discount.value) }}</strong> |
+                                Đơn tối thiểu: {{ formatPrice(discount.minOrder) }} |
+                                Hết hạn: {{ discount.expiry }}
+                                <strong>{{
+                                  discount.percent
+                                    ? `${discount.percent}% (ước tính ${formatPrice(
+                                      (discount.percent / 100) * tongTien
+                                    )})`
+                                    : formatPrice(discount.value)
+                                }}</strong>
+                                | Đơn tối thiểu:
+                                {{ formatPrice(discount.minOrder) }} | Hết hạn:
+                                {{ discount.expiry }}
+                              </div>
+                              <div class="text-warning fw-semibold mt-1" style="font-size: 0.95rem">
+                                Còn thiếu:
+                                {{ formatPrice(discount.missingAmount) }} để áp dụng
+                              </div>
+                            </div>
+                          </div>
+
+                          <div v-else
+                            class="text-secondary text-center d-flex align-items-center justify-content-center gap-2 mt-3 fs-5">
+                            Không có mã giảm giá gợi ý khả dụng
+                          </div>
                         </div>
-                        <div class="text-secondary" style="font-size: 0.95rem">
-                          Giảm:
-                          <strong>{{
-                            discount.percent
-                              ? `${discount.percent}% (ước tính ${formatPrice(
-                                (discount.percent / 100) * tongTien
-                              )})`
-                              : formatPrice(discount.value)
-                          }}</strong>
-                          | Đơn tối thiểu:
-                          {{ formatPrice(discount.minOrder) }} | Hết hạn:
-                          {{ discount.expiry }}
-                        </div>
-                        <div class="text-warning fw-semibold mt-1" style="font-size: 0.95rem">
-                          Còn thiếu:
-                          {{ formatPrice(discount.missingAmount) }} để áp dụng
+
+                        <!-- Thông tin thanh toán -->
+                        <div class="price-info p-4 rounded-3 bg-light shadow-sm animate__animated animate__fadeInUp"
+                          style="border-left: 5px solid #34d399; margin-top: 20px">
+                          <div class="d-flex justify-content-between align-items-center mb-3">
+                            <span class="fw-medium text-dark" style="font-size: 0.95rem">Tổng tiền hàng:</span>
+                            <span class="fw-bold text-dark">{{
+                              formatPrice(tongTien)
+                            }}</span>
+                          </div>
+                          <div class="d-flex justify-content-between align-items-center mb-3">
+                            <span class="fw-medium text-dark" style="font-size: 0.95rem">Giảm giá:</span>
+                            <span class="fw-bold text-danger">−{{ formatPrice(discount) }}</span>
+                          </div>
+                          <div v-if="isDelivery" class="d-flex justify-content-between align-items-center mb-3">
+                            <span class="fw-medium text-dark" style="font-size: 0.95rem">Phí vận chuyển:</span>
+                            <span class="fw-bold text-dark">
+                              {{
+                                tongTien >= FREE_SHIP_THRESHOLD
+                                  ? "Miễn phí"
+                                  : formatPrice(shippingFee)
+                              }}
+                            </span>
+                          </div>
+                          <hr class="my-3" style="border-color: rgba(52, 211, 153, 0.2)" />
+                          <div class="d-flex justify-content-between align-items-center">
+                            <span class="fw-bold text-dark" style="font-size: 1.1rem">Tổng thanh toán:</span>
+                            <span class="fw-bold fs-4 text-success">{{
+                              formatPrice(totalPayment)
+                            }}</span>
+                          </div>
                         </div>
                       </div>
-                    </div>
 
-                    <div v-else
-                      class="text-secondary text-center d-flex align-items-center justify-content-center gap-2 mt-3 fs-5">
-                      Không có mã giảm giá gợi ý khả dụng
-                    </div>
-                  </div>
+                      <!-- Payment Methods -->
+                      <div>
+                        <h6 class="fw-semibold text-dark">Phương thức thanh toán</h6>
+                        <div class="d-flex flex-wrap gap-2 mb-3">
+                          <button class="btn px-4 py-2 select-btn" @click="selectPayment('transfer')" :class="{
+                            'teal text-white': paymentMethod === 'transfer',
+                            border: paymentMethod !== 'transfer',
+                          }" style="border: 1px solid rgba(52, 211, 153, 0.2)">
+                            Chuyển khoản
+                          </button>
+                          <button class="btn px-4 py-2 select-btn" @click="selectPayment('cash')" :class="{
+                            'teal text-white': paymentMethod === 'cash',
+                            border: paymentMethod !== 'cash',
+                          }" style="border: 1px solid rgba(52, 211, 153, 0.2)">
+                            Tiền mặt
+                          </button>
+                          <button class="btn px-4 py-2 select-btn" @click="selectPayment('both')" :class="{
+                            'teal text-white': paymentMethod === 'both',
+                            border: paymentMethod !== 'both',
+                          }" style="border: 1px solid rgba(52, 211, 153, 0.2)">
+                            Cả hai
+                          </button>
+                        </div>
+                        <div v-if="paymentMethod === 'both'" class="row g-3 mt-3">
+                          <div class="col-md-6">
+                            <label class="form-label fw-medium text-dark">Tiền chuyển khoản</label>
+                            <input v-model.number="tienChuyenKhoan" type="number" class="form-control shadow-none"
+                              placeholder="Nhập số tiền chuyển khoản" min="0" />
+                          </div>
+                          <div class="col-md-6">
+                            <label class="form-label fw-medium text-dark">Tiền mặt</label>
+                            <input v-model.number="tienMat" type="number" class="form-control shadow-none"
+                              placeholder="Nhập số tiền mặt" min="0" />
+                          </div>
+                        </div>
+                        <div v-if="showQRCode" class="mt-3 text-center qr-code-container">
+                          <h6 class="fw-bold text-dark">Quét mã QR để thanh toán</h6>
+                          <qrcode :value="qrCodeValue" :size="200" level="H" />
+                          <p class="text-muted mt-2">
+                            Số tiền: {{ formatPrice(qrCodeAmount) }}
+                          </p>
+                        </div>
+                      </div>
 
-                  <!-- Thông tin thanh toán -->
-                  <div class="price-info p-4 rounded-3 bg-light shadow-sm animate__animated animate__fadeInUp"
-                    style="border-left: 5px solid #34d399; margin-top: 20px">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                      <span class="fw-medium text-dark" style="font-size: 0.95rem">Tổng tiền hàng:</span>
-                      <span class="fw-bold text-dark">{{
-                        formatPrice(tongTien)
-                      }}</span>
-                    </div>
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                      <span class="fw-medium text-dark" style="font-size: 0.95rem">Giảm giá:</span>
-                      <span class="fw-bold text-danger">−{{ formatPrice(discount) }}</span>
-                    </div>
-                    <div v-if="isDelivery" class="d-flex justify-content-between align-items-center mb-3">
-                      <span class="fw-medium text-dark" style="font-size: 0.95rem">Phí vận chuyển:</span>
-                      <span class="fw-bold text-dark">
-                        {{
-                          tongTien >= FREE_SHIP_THRESHOLD
-                            ? "Miễn phí"
-                            : formatPrice(shippingFee)
-                        }}
-                      </span>
-                    </div>
-                    <hr class="my-3" style="border-color: rgba(52, 211, 153, 0.2)" />
-                    <div class="d-flex justify-content-between align-items-center">
-                      <span class="fw-bold text-dark" style="font-size: 1.1rem">Tổng thanh toán:</span>
-                      <span class="fw-bold fs-4 text-success">{{
-                        formatPrice(totalPayment)
-                      }}</span>
+                      <!-- Pay Button -->
+                      <button class="btn w-100 py-3 pay-btn gradient-custom-green text-white mt-3" :disabled="!activeInvoiceId ||
+                        !cartItems ||
+                        cartItems.length === 0 ||
+                        isCreatingOrder
+                        " @click="ThanhToan">
+                        <span class="fw-semibold">Thanh toán</span>
+                      </button>
+                      <!-- Customer Payment Button -->
+                      <button class="btn w-100 py-3 mt-2"
+                        style="background: linear-gradient(135deg, #facc15, #f97316); color: white;" :disabled="!activeInvoiceId ||
+                          !cartItems ||
+                          cartItems.length === 0 ||
+                          isCreatingOrder
+                          " @click="goToCustomerPayment">
+                        <span class="fw-semibold">Thanh toán tại quầy (Khách hàng)</span>
+                      </button>
                     </div>
                   </div>
                 </div>
-
-                <!-- Payment Methods -->
-                <div>
-                  <h6 class="fw-semibold text-dark">Phương thức thanh toán</h6>
-                  <div class="d-flex flex-wrap gap-2 mb-3">
-                    <button class="btn px-4 py-2 select-btn" @click="selectPayment('transfer')" :class="{
-                      'teal text-white': paymentMethod === 'transfer',
-                      border: paymentMethod !== 'transfer',
-                    }" style="border: 1px solid rgba(52, 211, 153, 0.2)">
-                      Chuyển khoản
-                    </button>
-                    <button class="btn px-4 py-2 select-btn" @click="selectPayment('cash')" :class="{
-                      'teal text-white': paymentMethod === 'cash',
-                      border: paymentMethod !== 'cash',
-                    }" style="border: 1px solid rgba(52, 211, 153, 0.2)">
-                      Tiền mặt
-                    </button>
-                    <button class="btn px-4 py-2 select-btn" @click="selectPayment('both')" :class="{
-                      'teal text-white': paymentMethod === 'both',
-                      border: paymentMethod !== 'both',
-                    }" style="border: 1px solid rgba(52, 211, 153, 0.2)">
-                      Cả hai
-                    </button>
-                  </div>
-                  <div v-if="paymentMethod === 'both'" class="row g-3 mt-3">
-                    <div class="col-md-6">
-                      <label class="form-label fw-medium text-dark">Tiền chuyển khoản</label>
-                      <input v-model.number="tienChuyenKhoan" type="number" class="form-control shadow-none"
-                        placeholder="Nhập số tiền chuyển khoản" min="0" />
-                    </div>
-                    <div class="col-md-6">
-                      <label class="form-label fw-medium text-dark">Tiền mặt</label>
-                      <input v-model.number="tienMat" type="number" class="form-control shadow-none"
-                        placeholder="Nhập số tiền mặt" min="0" />
-                    </div>
-                  </div>
-                  <div v-if="showQRCode" class="mt-3 text-center qr-code-container">
-                    <h6 class="fw-bold text-dark">Quét mã QR để thanh toán</h6>
-                    <qrcode :value="qrCodeValue" :size="200" level="H" />
-                    <p class="text-muted mt-2">
-                      Số tiền: {{ formatPrice(qrCodeAmount) }}
-                    </p>
-                  </div>
-                </div>
-
-                <!-- Pay Button -->
-                <button class="btn w-100 py-3 pay-btn gradient-custom-green text-white mt-3" :disabled="!activeInvoiceId ||
-                  !cartItems ||
-                  cartItems.length === 0 ||
-                  isCreatingOrder
-                  " @click="ThanhToan">
-                  <span class="fw-semibold">Thanh toán</span>
-                </button>
-                <!-- Customer Payment Button -->
-                <button class="btn w-100 py-3 mt-2" style="background: linear-gradient(135deg, #facc15, #f97316); color: white;" :disabled="!activeInvoiceId ||
-                  !cartItems ||
-                  cartItems.length === 0 ||
-                  isCreatingOrder
-                  " @click="goToCustomerPayment">
-                  <span class="fw-semibold">Thanh toán tại quầy (Khách hàng)</span>
-                </button>
               </div>
             </div>
-          </div>
         </FilterTableSection>
       </div>
 
@@ -891,11 +979,10 @@
                     <img :src="selectedCartItem?.image ||
                       'https://bachlongstore.vn/vnt_upload/product/04_2024/Untitled_2.png'
                       " class="phone-img img-fluid rounded" :alt="selectedCartItem?.name" style="
-                        max-height: 150px;
-                        object-fit: contain;
-                        transition: transform 0.3s ease;
-                      " @mouseover="this.style.transform = 'scale(1.05)'"
-                      @mouseout="this.style.transform = 'scale(1)'" />
+          max-height: 150px;
+          object-fit: contain;
+          transition: transform 0.3s ease;
+        " @mouseover="this.style.transform = 'scale(1.05)'" @mouseout="this.style.transform = 'scale(1)'" />
                   </div>
                   <div class="col-md-8">
                     <h4 class="fw-bold text-dark mb-2">
@@ -908,10 +995,13 @@
                         selectedCartItem?.ram }}</span>
                       <span class="badge text-white px-3 py-1" style="background-color: #1f3a44">{{
                         selectedCartItem?.storage }}</span>
-                      <span class="badge teal text-white px-3 py-1">{{
-                        formatPrice(selectedCartItem?.currentPrice)
+                      <span class="badge teal text-white px-3 py-1">{{ formatPrice(selectedCartItem?.currentPrice)
                       }}</span>
                     </div>
+                    <!-- Thêm hiển thị ghiChuGia -->
+                    <p v-if="selectedCartItem?.ghiChuGia" class="text-warning mt-2">
+                      <strong>Thông báo giá:</strong> {{ selectedCartItem?.ghiChuGia }}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -1273,5 +1363,56 @@ export default defineComponent({
 .info-icon:hover {
   transform: scale(1.2);
   color: #34d399 !important;
+}
+
+.scanner-container {
+  position: relative;
+  width: 100%;
+  height: 300px;
+  overflow: hidden;
+}
+
+video {
+  max-width: 100%;
+  max-height: 100%;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.overlay-element {
+  position: absolute;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(30, 30, 30, 0.5);
+  clip-path: polygon(0% 0%,
+      0% 100%,
+      20% 100%,
+      20% 20%,
+      80% 20%,
+      80% 80%,
+      20% 80%,
+      20% 100%,
+      100% 100%,
+      100% 0%);
+}
+
+.laser {
+  width: 60%;
+  margin-left: 20%;
+  background-color: tomato;
+  height: 1px;
+  position: absolute;
+  top: 40%;
+  z-index: 2;
+  box-shadow: 0 0 4px red;
+  animation: scanning 2s infinite;
+}
+
+@keyframes scanning {
+  50% {
+    transform: translateY(75px);
+  }
 }
 </style>
