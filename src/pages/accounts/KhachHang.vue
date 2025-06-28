@@ -497,66 +497,60 @@ const resetNotification = () => {
 
 
 const exportExcel = () => {
-  if (filteredCustomers.value.length === 0) {
+  if (!customers.value.length) {
     toastNotification.value.addToast({
       type: "warning",
-      message: "Không có dữ liệu để xuất!",
+      message: "Không có dữ liệu khách hàng để xuất!",
     });
     return;
   }
 
   try {
-    const exportData = filteredCustomers.value.map((customer, index) => ({
+    const exportData = customers.value.map((customer, index) => ({
       STT: index + 1,
-      "Mã Khách Hàng": customer.ma,
-      "Tên Khách Hàng": customer.ten,
-      Email: customer.idTaiKhoan?.email || "Chưa có dữ liệu",
-      "Số Điện Thoại": customer.idTaiKhoan?.soDienThoai || "Chưa có dữ liệu",
-      "Giới Tính": customer.gioiTinh === 0 ? "Nam" : 
-                    customer.gioiTinh === 1 ? "Nữ" : 
-                    customer.gioiTinh || "Chưa có dữ liệu",
-      "Địa Chỉ Cụ Thể":
-        customer.idDiaChiKhachHang?.macDinh === true
-          ? customer.idDiaChiKhachHang.diaChiCuThe || "Chưa có dữ liệu"
-          : "Chưa có dữ liệu",
-      Phường:
-        customer.idDiaChiKhachHang?.macDinh === true
-          ? customer.idDiaChiKhachHang.phuong || "Chưa có dữ liệu"
-          : "Chưa có dữ liệu",
-      Quận:
-        customer.idDiaChiKhachHang?.macDinh === true
-          ? customer.idDiaChiKhachHang.quan || "Chưa có dữ liệu"
-          : "Chưa có dữ liệu",
-      "Thành Phố":
-        customer.idDiaChiKhachHang?.macDinh === true
-          ? customer.idDiaChiKhachHang.thanhPho || "Chưa có dữ liệu"
-          : "Chưa có dữ liệu",
-      "Trạng Thái": customer.idTaiKhoan?.deleted ? "Kích Hoạt" : "Đã Hủy",
+      "Mã Khách Hàng": customer.ma || "N/A",
+      "Tên Khách Hàng": customer.ten || "N/A",
+      "Email": customer.idTaiKhoan?.email || "N/A",
+      "Số Điện Thoại": customer.idTaiKhoan?.soDienThoai || "N/A",
+      "Giới Tính": customer.gioiTinh === false ? "Nam" : 
+                    customer.gioiTinh === true ? "Nữ" : "N/A",
+      "Ngày Sinh": customer.ngaySinh ? 
+        new Date(customer.ngaySinh).toLocaleDateString("vi-VN") : "N/A",
+      "CCCD": customer.cccd || "N/A",
+      "Địa Chỉ Cụ Thể": customer.idDiaChiKhachHang?.macDinh ? 
+        customer.idDiaChiKhachHang.diaChiCuThe || "N/A" : "N/A",
+      "Phường": customer.idDiaChiKhachHang?.macDinh ? 
+        customer.idDiaChiKhachHang.phuong || "N/A" : "N/A",
+      "Quận": customer.idDiaChiKhachHang?.macDinh ? 
+        customer.idDiaChiKhachHang.quan || "N/A" : "N/A",
+      "Thành Phố": customer.idDiaChiKhachHang?.macDinh ? 
+        customer.idDiaChiKhachHang.thanhPho || "N/A" : "N/A",
+      "Trạng Thái": customer.idTaiKhoan?.deleted === false ? "Kích Hoạt" : "Đã Hủy",
+      "Ảnh Khách Hàng": customer.anhKhachHang || "N/A",
     }));
-
-    // Log dữ liệu xuất để kiểm tra
-    console.log("Dữ liệu xuất Excel:", exportData);
 
     const worksheet = XLSX.utils.json_to_sheet(exportData);
     const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Danh Sách Khách Hàng");
-
+    
     // Đặt độ rộng cột
     worksheet["!cols"] = [
-      { wch: 5 }, // STT
+      { wch: 5 },  // STT
       { wch: 15 }, // Mã Khách Hàng
       { wch: 20 }, // Tên Khách Hàng
       { wch: 25 }, // Email
       { wch: 15 }, // Số Điện Thoại
       { wch: 10 }, // Giới Tính
+      { wch: 15 }, // Ngày Sinh
+      { wch: 15 }, // CCCD
       { wch: 30 }, // Địa Chỉ Cụ Thể
       { wch: 20 }, // Phường
       { wch: 20 }, // Quận
       { wch: 20 }, // Thành Phố
       { wch: 15 }, // Trạng Thái
+      { wch: 30 }, // Ảnh Khách Hàng
     ];
 
-    // Định dạng tiêu đề và ô
+    // Áp dụng định dạng cho tiêu đề và ô
     const range = XLSX.utils.decode_range(worksheet["!ref"]);
     for (let R = range.s.r; R <= range.e.r; ++R) {
       for (let C = range.s.c; C <= range.e.c; ++C) {
@@ -575,22 +569,21 @@ const exportExcel = () => {
       }
     }
 
+    XLSX.utils.book_append_sheet(workbook, worksheet, "KhachHang");
     const excelBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
-    const timestamp = new Date()
-      .toLocaleString("vi-VN")
-      .replace(/[:/,\s]/g, "-");
+    const timestamp = new Date().toLocaleString("vi-VN").replace(/[:/,\s]/g, "-");
     const data = new Blob([excelBuffer], { type: "application/octet-stream" });
     saveAs(data, `Danh_Sach_Khach_Hang_${timestamp}.xlsx`);
 
     toastNotification.value.addToast({
       type: "success",
-      message: "Xuất Excel thành công!",
+      message: "Xuất file Excel thành công!",
     });
   } catch (error) {
     console.error("Lỗi khi xuất Excel:", error);
     toastNotification.value.addToast({
       type: "error",
-      message: "Đã xảy ra lỗi khi xuất Excel",
+      message: `Lỗi khi xuất file Excel: ${error.message}`,
     });
   }
 };
@@ -604,20 +597,19 @@ const downloadTemplate = () => {
 
 const handleExcelUpload = async (event) => {
   try {
-    const fileInput = event.target;
-    const file = fileInput.files[0];
+    const file = event.target.files[0];
     if (!file) {
       toastNotification.value.addToast({
         type: "error",
-        message: "Vui lòng chọn file Excel để nhập!",
+        message: "Vui lòng chọn file Excel!",
       });
       return;
     }
 
-    if (!file.name.endsWith(".xlsx") && !file.name.endsWith(".xls")) {
+    if (!file.name.match(/\.(xlsx|xls)$/)) {
       toastNotification.value.addToast({
         type: "error",
-        message: "Vui lòng chọn file Excel (.xlsx hoặc .xls)!",
+        message: "Chỉ hỗ trợ file Excel (.xlsx hoặc .xls)!",
       });
       return;
     }
@@ -627,64 +619,78 @@ const handleExcelUpload = async (event) => {
       try {
         const data = new Uint8Array(e.target.result);
         const workbook = XLSX.read(data, { type: "array", cellDates: true, dateNF: "dd/mm/yyyy" });
-        const sheetName = workbook.SheetNames[0];
-        const worksheet = workbook.Sheets[sheetName];
+        const worksheet = workbook.Sheets[workbook.SheetNames[0]];
         const jsonData = XLSX.utils.sheet_to_json(worksheet, { raw: false, dateNF: "dd/mm/yyyy" });
 
-        // Log dữ liệu thô từ Excel để kiểm tra
-        console.log("Dữ liệu thô từ Excel:", jsonData);
-
-        // Xử lý dữ liệu từ Excel
         const khachHangs = jsonData.map((row, index) => {
-          if (!row["Mã Khách Hàng"] || !row["Tên Khách Hàng"]) {
-            throw new Error(`Dòng ${index + 2}: Thiếu Mã Khách Hàng hoặc Tên Khách Hàng`);
-          }
-          if (row["Trạng Thái"] && !["Kích Hoạt", "Đã Hủy"].includes(row["Trạng Thái"].toString().trim())) {
-            throw new Error(`Dòng ${index + 2}: Trạng Thái phải là "Kích Hoạt" hoặc "Đã Hủy"`);
-          }
-          if (row["Giới Tính"] && !["Nam", "Nữ"].includes(row["Giới Tính"].toString().trim())) {
-            throw new Error(`Dòng ${index + 2}: Giới Tính phải là "Nam" hoặc "Nữ"`);
+          // Xác thực các trường bắt buộc
+          if (!row["Mã Khách Hàng"] || !row["Tên Khách Hàng"] || !row["Email"]) {
+            throw new Error(`Dòng ${index + 2}: Thiếu Mã Khách Hàng, Tên Khách Hàng hoặc Email`);
           }
 
-          const customerData = {
-            ma: row["Mã Khách Hàng"]?.toString().trim() || "",
-            ten: row["Tên Khách Hàng"]?.toString().trim() || "",
-            idTaiKhoan: {
-              email: row["Email"]?.toString().trim() || "",
-              soDienThoai: row["Số Điện Thoại"]?.toString().trim() || "",
-              deleted: row["Trạng Thái"]?.toString().trim() === "Kích Hoạt",
-            },
-            gioiTinh: row["Giới Tính"]?.toString().trim() || null,
-            idDiaChiKhachHang: row["Địa Chỉ Cụ Thể"] || row["Phường"] || row["Quận"] || row["Thành Phố"]
-              ? {
-                  macDinh: true,
-                  diaChiCuThe: row["Địa Chỉ Cụ Thể"]?.toString().trim() || "",
-                  phuong: row["Phường"]?.toString().trim() || "",
-                  quan: row["Quận"]?.toString().trim() || "",
-                  thanhPho: row["Thành Phố"]?.toString().trim() || "",
-                }
-              : null,
-            trangThai: row["Trạng Thái"]?.toString().trim() === "Kích Hoạt" ? "Kích Hoạt" : "Đã Hủy",
+          // Xác thực trạng thái
+          const trangThai = row["Trạng Thái"]?.toString().trim();
+          if (trangThai && !["Kích Hoạt", "Đã Hủy"].includes(trangThai)) {
+            throw new Error(`Dòng ${index + 2}: Trạng Thái phải là 'Kích Hoạt' hoặc 'Đã Hủy'`);
+          }
+
+          // Xác thực giới tính
+          const gioiTinh = row["Giới Tính"]?.toString().trim();
+          if (gioiTinh && !["Nam", "Nữ"].includes(gioiTinh)) {
+            throw new Error(`Dòng ${index + 2}: Giới Tính phải là 'Nam' hoặc 'Nữ'`);
+          }
+
+          // Xử lý ngày sinh
+          let ngaySinh = null;
+          if (row["Ngày Sinh"]) {
+            const parsedDate = new Date(row["Ngày Sinh"]);
+            if (isNaN(parsedDate.getTime())) {
+              throw new Error(`Dòng ${index + 2}: Ngày Sinh không hợp lệ`);
+            }
+            ngaySinh = parsedDate.toISOString();
+          }
+
+          // Xác thực CCCD
+          const cccd = row["CCCD"]?.toString().trim();
+          if (cccd && !/^\d{12}$/.test(cccd)) {
+            throw new Error(`Dòng ${index + 2}: CCCD phải là 12 chữ số`);
+          }
+
+          // Xác thực email
+          const email = row["Email"]?.toString().trim();
+          if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+            throw new Error(`Dòng ${index + 2}: Email không hợp lệ`);
+          }
+
+          // Xác thực số điện thoại
+          const soDienThoai = row["Số Điện Thoại"]?.toString().trim();
+          if (soDienThoai && !/^\d{10}$/.test(soDienThoai)) {
+            throw new Error(`Dòng ${index + 2}: Số điện thoại phải là 10 chữ số`);
+          }
+
+          return {
+            ma: row["Mã Khách Hàng"].toString().trim(),
+            tenKH: row["Tên Khách Hàng"].toString().trim(),
+            email: email || "",
+            soDienThoai: soDienThoai || "",
+            userName: row["Tên Đăng Nhập"]?.toString().trim() || email,
+            gioiTinh: gioiTinh === "Nam" ? false : gioiTinh === "Nữ" ? true : null,
+            ngaySinh: ngaySinh,
+            cccd: cccd || null,
+            diaChiCuThe: row["Địa Chỉ Cụ Thể"]?.toString().trim() || "",
+            phuong: row["Phường"]?.toString().trim() || "",
+            quan: row["Quận"]?.toString().trim() || "",
+            thanhPho: row["Thành Phố"]?.toString().trim() || "",
+            createdAt: row["Ngày Tạo"] ? new Date(row["Ngày Tạo"]).toISOString() : new Date().toISOString(),
+            deleted: trangThai === "Kích Hoạt" ? false : true,
           };
-
-          console.log(`Dòng ${index + 2} - Dữ liệu khách hàng:`, customerData);
-          return customerData;
         });
 
-        // Log dữ liệu trước khi gửi lên server
-        console.log("Dữ liệu khách hàng trước khi gửi:", khachHangs);
-
-        // Gửi dữ liệu lên server
         const result = await importKhachHang(khachHangs);
-
         if (result.success) {
-          console.log("Dữ liệu trả về từ server:", result.data);
-
-          // Cập nhật customers.value
-          customers.value = result.data;
-
-          console.log("Dữ liệu customers.value sau khi cập nhật:", customers.value);
-
+          // Cập nhật danh sách khách hàng
+          const data = await fetchKhachHang();
+          customers.value = data;
           toastNotification.value.addToast({
             type: "success",
             message: `Nhập thành công ${khachHangs.length} khách hàng từ Excel!`,
@@ -693,13 +699,13 @@ const handleExcelUpload = async (event) => {
           throw new Error(result.message || "Lỗi khi nhập dữ liệu từ Excel");
         }
       } catch (error) {
+        console.error("Lỗi khi xử lý file Excel:", error);
         toastNotification.value.addToast({
           type: "error",
-          message: error.message || "Đã xảy ra lỗi khi xử lý file Excel",
+          message: `Lỗi khi xử lý file Excel: ${error.message}`,
         });
-        console.error("Lỗi khi xử lý file Excel:", error);
       } finally {
-        fileInput.value = "";
+        event.target.value = ""; // Reset input file
       }
     };
 
@@ -708,17 +714,17 @@ const handleExcelUpload = async (event) => {
         type: "error",
         message: "Lỗi khi đọc file Excel",
       });
-      fileInput.value = "";
+      event.target.value = "";
     };
 
     reader.readAsArrayBuffer(file);
   } catch (error) {
+    console.error("Lỗi khi nhập Excel:", error);
     toastNotification.value.addToast({
       type: "error",
-      message: "Đã xảy ra lỗi khi nhập dữ liệu từ Excel",
+      message: `Lỗi khi nhập dữ liệu từ Excel: ${error.message}`,
     });
-    console.error("Lỗi khi nhập Excel:", error);
-    fileInput.value = "";
+    event.target.value = "";
   }
 };
 
