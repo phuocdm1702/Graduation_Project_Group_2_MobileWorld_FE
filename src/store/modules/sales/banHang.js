@@ -625,7 +625,6 @@ export default {
       }
     };
 
-    // Product-Related Methods
     const fetchProducts = async () => {
       try {
         const response = await apiService.get(
@@ -639,7 +638,7 @@ export default {
           mauSac: sp.mauSac || "N/A",
           dungLuongRam: sp.dungLuongRam || "N/A",
           dungLuongBoNhoTrong: sp.dungLuongBoNhoTrong || "N/A",
-          soLuong: sp.soLuong || 0,
+          soLuong: sp.soLuong || 0, // Số lượng từ API
           giaBan: sp.giaBan || 0,
         }));
       } catch (error) {
@@ -817,7 +816,7 @@ export default {
           soLuong: selectedIMEIs.value.length,
           maImel: selectedIMEIs.value.join(", "),
           idPhieuGiamGia: selectedDiscount.value?.id || null,
-          giaBan: latestPrice, // Gửi giá mới nhất
+          giaBan: latestPrice,
         };
 
         const postResponse = await apiService.post(
@@ -849,7 +848,7 @@ export default {
             originalPrice: Number(item.giaBanGoc) || Number(item.giaBan) || 0,
             currentPrice: Number(item.giaBan) || 0,
             quantity: Number(item.soLuong) || 1,
-            ghiChuGia: item.ghiChuGia || "", // Thêm ghiChuGia từ response
+            ghiChuGia: item.ghiChuGia || "",
           }));
 
         cartItems.value = [...existingItems, ...newItems];
@@ -863,7 +862,6 @@ export default {
         }
         activeInvoiceId.value = invoiceId;
 
-        // Hiển thị thông báo giá thay đổi
         newItems.forEach((item) => {
           if (item.ghiChuGia) {
             showToast("warning", item.ghiChuGia);
@@ -889,7 +887,8 @@ export default {
           "success",
           `Đã thêm sản phẩm ${selectedProduct.value.tenSanPham} vào giỏ hàng`
         );
-        await applyBestDiscount(); // Áp dụng PGG tốt nhất
+        await applyBestDiscount();
+        await fetchProducts(); // Làm mới danh sách sản phẩm
       } catch (error) {
         showToast(
           "error",
@@ -923,7 +922,7 @@ export default {
           originalPrice: Number(item.giaBanGoc) || Number(item.giaBan) || 0,
           currentPrice: Number(item.giaBan) || 0,
           quantity: item.soLuong,
-          ghiChuGia: item.ghiChuGia || "", // Thêm ghiChuGia
+          ghiChuGia: item.ghiChuGia || "",
         }));
         const invoice = pendingInvoices.value.find(
           (inv) => inv.id === activeInvoiceId.value
@@ -932,14 +931,14 @@ export default {
         if (imeiArray.length === 0) {
           closeCartIMEIModal();
         }
-        // Hiển thị thông báo giá thay đổi nếu có
         cartItems.value.forEach((item) => {
           if (item.ghiChuGia) {
             showToast("warning", item.ghiChuGia);
           }
         });
         showToast("success", `Đã xóa IMEI ${imei}`);
-        await applyBestDiscount(); // Áp dụng PGG tốt nhất
+        await applyBestDiscount();
+        await fetchProducts(); // Làm mới danh sách sản phẩm
       } catch (error) {
         showToast("error", error.response?.data?.message || "Lỗi khi xóa IMEI");
       }
