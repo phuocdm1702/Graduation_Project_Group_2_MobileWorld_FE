@@ -38,6 +38,7 @@ export default {
     // Thêm biến để lưu trữ phần tử video và canvas cho vùng quét
     const videoElement = ref(null);
     const scanRegion = ref(null);
+
     // State
     const isCreatingInvoice = ref(false);
     const isCreatingOrder = ref(false);
@@ -49,6 +50,8 @@ export default {
     const showCartIMEIModal = ref(false);
     const isCustomerModalOpen = ref(false);
     const isLoadingMore = ref(false);
+    const showPaymentProviderModal = ref(false);
+    const selectedPaymentProvider = ref(null);
     const productSearchQuery = ref("");
     const filterColor = ref("");
     const filterRam = ref("");
@@ -94,8 +97,8 @@ export default {
     const notificationType = ref("confirm");
     const notificationMessage = ref("");
     const isNotificationLoading = ref(false);
-    const notificationOnConfirm = ref(() => { });
-    const notificationOnCancel = ref(() => { });
+    const notificationOnConfirm = ref(() => {});
+    const notificationOnCancel = ref(() => {});
     const notificationModal = ref(null);
     const toastNotification = ref(null);
     const qrCodeValue = ref("");
@@ -208,9 +211,9 @@ export default {
         const fixedDiscount = selectedDiscount.value.value || 0;
         const percentDiscount = selectedDiscount.value.percent
           ? Math.min(
-            (selectedDiscount.value.percent / 100) * tongTien.value,
-            selectedDiscount.value.value || Infinity
-          )
+              (selectedDiscount.value.percent / 100) * tongTien.value,
+              selectedDiscount.value.value || Infinity
+            )
           : 0;
         return Math.max(fixedDiscount, percentDiscount);
       },
@@ -361,8 +364,9 @@ export default {
 
       if (tongTien.value >= bestDiscount.minOrder) {
         return {
-          message: `Bạn có thể áp dụng mã ${bestDiscount.code
-            } để được giảm ${formatPrice(bestDiscount.value)}.`,
+          message: `Bạn có thể áp dụng mã ${
+            bestDiscount.code
+          } để được giảm ${formatPrice(bestDiscount.value)}.`,
           additionalAmount: 0,
           bestDiscount,
         };
@@ -370,24 +374,12 @@ export default {
 
       const additionalAmount = bestDiscount.minOrder - tongTien.value;
       return {
-        message: `Mua thêm ${formatPrice(additionalAmount)} để sử dụng mã ${bestDiscount.code
-          } và được giảm ${formatPrice(bestDiscount.value)}.`,
+        message: `Mua thêm ${formatPrice(additionalAmount)} để sử dụng mã ${
+          bestDiscount.code
+        } và được giảm ${formatPrice(bestDiscount.value)}.`,
         additionalAmount,
         bestDiscount,
       };
-    });
-
-    const showQRCode = computed(() => {
-      if (paymentMethod.value === "transfer") {
-        qrCodeAmount.value = totalPayment.value;
-        generateQRCode(qrCodeAmount.value);
-        return true;
-      } else if (paymentMethod.value === "both" && tienChuyenKhoan.value > 0) {
-        qrCodeAmount.value = tienChuyenKhoan.value;
-        generateQRCode(tienChuyenKhoan.value);
-        return true;
-      }
-      return false;
     });
 
     // Shipping Fee
@@ -458,7 +450,7 @@ export default {
       toastNotification.value.addToast({ type, message, isLoading, duration });
     };
 
-    const showConfirm = (message, onConfirm, onCancel = () => { }) => {
+    const showConfirm = (message, onConfirm, onCancel = () => {}) => {
       notificationType.value = "confirm";
       notificationMessage.value = message;
       notificationOnConfirm.value = onConfirm;
@@ -476,8 +468,8 @@ export default {
       notificationType.value = "confirm";
       notificationMessage.value = "";
       isNotificationLoading.value = false;
-      notificationOnConfirm.value = () => { };
-      notificationOnCancel.value = () => { };
+      notificationOnConfirm.value = () => {};
+      notificationOnCancel.value = () => {};
     };
 
     const formatPrice = (price) => {
@@ -599,7 +591,7 @@ export default {
       showConfirm(
         `Bạn có chắc chắn muốn hủy hóa đơn ${invoice.ma}?`,
         () => cancelInvoice(invoice),
-        () => { }
+        () => {}
       );
     };
 
@@ -780,7 +772,8 @@ export default {
 
       try {
         const response = await apiService.get(
-          `/api/chi-tiet-san-pham/id?sanPhamId=${selectedProduct.value.sanPhamId
+          `/api/chi-tiet-san-pham/id?sanPhamId=${
+            selectedProduct.value.sanPhamId
           }&mauSac=${encodeURIComponent(
             selectedProduct.value.mauSac
           )}&dungLuongRam=${encodeURIComponent(
@@ -1169,7 +1162,8 @@ export default {
       } catch (error) {
         showToast(
           "error",
-          `Lỗi khi thêm khách hàng: ${error.response?.data?.message || error.message
+          `Lỗi khi thêm khách hàng: ${
+            error.response?.data?.message || error.message
           }`
         );
       }
@@ -1432,9 +1426,9 @@ export default {
             const fixedDiscount = code.value || 0;
             const percentDiscount = code.percent
               ? Math.min(
-                (code.percent / 100) * tongTien.value,
-                code.value || Infinity
-              )
+                  (code.percent / 100) * tongTien.value,
+                  code.value || Infinity
+                )
               : 0;
             const actualDiscount = Math.max(fixedDiscount, percentDiscount);
 
@@ -1456,7 +1450,8 @@ export default {
             : formatPrice(bestDiscount.value);
           showToast(
             "success",
-            `Đã áp dụng mã giảm giá ${bestDiscount.tenPhieuGiamGia || bestDiscount.code
+            `Đã áp dụng mã giảm giá ${
+              bestDiscount.tenPhieuGiamGia || bestDiscount.code
             } (-${discountText})`
           );
         } else {
@@ -1471,13 +1466,76 @@ export default {
       }
     };
 
+    const bankInfo = ref({
+      description: `Thanh toán hóa đơn ${
+        activeInvoiceId.value || "HDXXX"
+      } qua VietQR`,
+    });
+
     // Payment-Related Methods
     const selectPayment = (method) => {
       paymentMethod.value = method;
       tienChuyenKhoan.value = 0;
       tienMat.value = 0;
-      qrCodeValue.value = "";
+
+      if (method === "transfer" || method === "both") {
+        showPaymentProviderModal.value = true;
+      } else {
+        showPaymentProviderModal.value = false;
+        qrCodeValue.value = ""; // Reset QR if not transfer
+      }
+
+      console.log("Payment Method:", paymentMethod.value);
+      console.log("Selected Provider:", selectedPaymentProvider.value);
+      console.log("QR Value:", qrCodeValue.value);
     };
+
+    const selectPaymentProvider = (provider) => {
+      selectedPaymentProvider.value = provider; // Set the selected provider
+      showPaymentProviderModal.value = false; // Close the modal
+
+      const amount =
+        paymentMethod.value === "transfer"
+          ? totalPayment.value
+          : tienChuyenKhoan.value || 0; // Use totalPayment or tienChuyenKhoan
+      qrCodeAmount.value = amount;
+
+      if (provider === "vietqr") {
+        bankInfo.value = {
+          bankName: "VietQR",
+          accountNumber: "1234567890",
+          accountHolder: "Your Company Name",
+          amount: amount,
+          description: `Thanh toán hóa đơn ${
+            activeInvoiceId.value || "HDXXX"
+          } qua VietQR`,
+        };
+        qrCodeValue.value = `vietqr://pay?account=${
+          bankInfo.value.accountNumber
+        }&amount=${bankInfo.value.amount}&desc=${encodeURIComponent(
+          bankInfo.value.description
+        )}`;
+        console.log("Generated QR Value:", qrCodeValue.value); // Debug log
+      } else {
+        qrCodeValue.value = ""; // Reset for other providers
+      }
+    };
+
+    const closePaymentProviderModal = () => {
+      showPaymentProviderModal.value = false;
+    };
+
+    const showQRCode = computed(() => {
+      if (
+        (paymentMethod.value === "transfer" ||
+          paymentMethod.value === "both") &&
+        selectedPaymentProvider.value &&
+        qrCodeValue.value
+      ) {
+        return true;
+      }
+      return false;
+    });
 
     const generateQRCode = (amount) => {
       const bankInfo = {
@@ -1541,7 +1599,10 @@ export default {
         videoElement.value.play();
 
         isCameraActive.value = true;
-        showToast("info", "Camera đã sẵn sàng, hãy đặt barcode vào vùng quét...");
+        showToast(
+          "info",
+          "Camera đã sẵn sàng, hãy đặt barcode vào vùng quét..."
+        );
 
         codeReader.value.decodeFromVideoDevice(
           undefined,
@@ -1554,8 +1615,12 @@ export default {
 
               // Kiểm tra xem barcode có nằm trong vùng quét không
               const isInScanRegion = resultPoints.some((point) => {
-                const x = (point.getX() / videoRect.width) * videoRect.width + videoRect.left;
-                const y = (point.getY() / videoRect.height) * videoRect.height + videoRect.top;
+                const x =
+                  (point.getX() / videoRect.width) * videoRect.width +
+                  videoRect.left;
+                const y =
+                  (point.getY() / videoRect.height) * videoRect.height +
+                  videoRect.top;
                 return (
                   x >= scanRect.left &&
                   x <= scanRect.right &&
@@ -1628,7 +1693,8 @@ export default {
         }
 
         const productResponse = await apiService.get(
-          `/api/chi-tiet-san-pham/id?sanPhamId=${product.chiTietSanPhamId
+          `/api/chi-tiet-san-pham/id?sanPhamId=${
+            product.chiTietSanPhamId
           }&mauSac=${encodeURIComponent(
             product.mauSac || ""
           )}&dungLuongRam=${encodeURIComponent(
@@ -1733,10 +1799,11 @@ export default {
           if (productResponse.data.content[0]) {
             const latestPrice = Number(productResponse.data.content[0].giaBan);
             if (latestPrice !== item.currentPrice) {
-              item.ghiChuGia = `Giá sản phẩm ${item.name
-                } đã thay đổi từ ${formatPrice(
-                  item.currentPrice
-                )} lên ${formatPrice(latestPrice)}`;
+              item.ghiChuGia = `Giá sản phẩm ${
+                item.name
+              } đã thay đổi từ ${formatPrice(
+                item.currentPrice
+              )} lên ${formatPrice(latestPrice)}`;
               item.currentPrice = latestPrice;
               showToast("warning", item.ghiChuGia);
             }
@@ -1874,17 +1941,17 @@ export default {
           diaChiKhachHang:
             customer.value && isDelivery.value
               ? {
-                thanhPho: customer.value.city,
-                quan: customer.value.district,
-                phuong: customer.value.ward,
-                diaChiCuThe: customer.value.address,
-              }
+                  thanhPho: customer.value.city,
+                  quan: customer.value.district,
+                  phuong: customer.value.ward,
+                  diaChiCuThe: customer.value.address,
+                }
               : {
-                thanhPho: "",
-                quan: "",
-                phuong: "",
-                diaChiCuThe: "",
-              },
+                  thanhPho: "",
+                  quan: "",
+                  phuong: "",
+                  diaChiCuThe: "",
+                },
           hinhThucThanhToan,
           idPhieuGiamGia: selectedDiscount.value?.id || null,
           giamGia: selectedDiscount.value?.value || 0,
@@ -1944,7 +2011,8 @@ export default {
       } catch (error) {
         showToast(
           "error",
-          `Lỗi khi thanh toán: ${error.response?.data?.message || error.message
+          `Lỗi khi thanh toán: ${
+            error.response?.data?.message || error.message
           }`
         );
       } finally {
@@ -2128,7 +2196,6 @@ export default {
       fetchPGG,
       validateDiscount,
       applyBestDiscount,
-      selectPayment,
       generateQRCode,
       scanQR,
       ThanhToan,
@@ -2157,6 +2224,11 @@ export default {
       closeScanModal,
       cleanupZXing,
       isCameraActive,
+      selectPayment,
+      showPaymentProviderModal,
+      selectedPaymentProvider,
+      selectPaymentProvider,
+      closePaymentProviderModal,
     };
   },
 };
