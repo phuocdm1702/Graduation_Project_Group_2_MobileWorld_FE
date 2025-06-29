@@ -850,7 +850,7 @@ export default {
           postResponse.data.gioHangId.replace("GH_", "")
         );
         if (isNaN(invoiceId)) {
-          showToast("error", "ID hóa đơn không hợp lệ từ server!");
+          // showToast("error", "ID hóa đơn không hợp lệ từ server!");
           return;
         }
         activeInvoiceId.value = invoiceId;
