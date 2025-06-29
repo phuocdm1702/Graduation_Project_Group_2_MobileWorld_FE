@@ -86,7 +86,7 @@
               <i class="bi bi-qr-code me-2"></i>
               Quét QR
             </button>
-            <router-link to="/create-hoa-don" class="btn btn-action">
+            <router-link to="/banHang" class="btn btn-action">
               <i class="bi bi-plus-circle me-2"></i>
               Tạo Hóa Đơn
             </router-link>
