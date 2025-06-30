@@ -53,6 +53,7 @@ export const useHoaDonStore = defineStore('hoaDon', {
                     soDienThoaiKhachHang: item.soDienThoaiKhachHang,
                     tongTienSauGiam: item.tongTienSauGiam,
                     phiVanChuyen: item.phiVanChuyen,
+                    giamGia: item.soTienGiamToiDa,
                     ngayTao: this.formatDate(item.ngayTao),
                     loaiDon: item.loaiDon,
                     trangThaiFormatted: this.mapStatus(item.trangThai), // Sử dụng mapStatus
@@ -98,9 +99,12 @@ export const useHoaDonStore = defineStore('hoaDon', {
                         id: product.maSanPham,
                         name: product.tenSanPham,
                         imei: product.imel,
+                        ram: product.dungLuongRam,
+                        capacity: product.dungLuongBoNhoTrong,
+                        color: product.mauSac,
                         price: product.giaBan,
                         quantity: 1,
-                        image: '/assets/placeholder-product.png',
+                        image: product.duongDan,
                     })),
                     payments: response.data.thanhToanInfos.map(payment => ({
                         id: payment.maHinhThucThanhToan,
