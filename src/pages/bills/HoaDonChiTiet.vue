@@ -86,10 +86,10 @@
             style="--animate-delay: 0.4s;">
             <div class="product-card-content">
               <div class="product-image">
-                <img :src="product.img || '/assets/placeholder-product.png'" alt="Product Image" class="product-img" />
+                <img :src="product.image || '/assets/placeholder-product.png'" alt="Product Image" class="product-img" />
               </div>
               <div class="product-details">
-                <h6 class="product-name">{{ product.name }}</h6>
+                <h6 class="product-name">{{ product.name }} {{ product.color }} {{ product.ram }} {{ product.capacity }}</h6>
                 <div class="product-price">
                   <span class="price-amount">{{ formatPrice(product.price) }}</span>
                   <span class="quantity">x{{ product.quantity || 1 }}</span>
@@ -673,7 +673,7 @@ export default HoaDonChiTiet;
 
 .products-list {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(auto, 1fr));
   gap: 1.5rem;
   padding: 1rem;
 }
