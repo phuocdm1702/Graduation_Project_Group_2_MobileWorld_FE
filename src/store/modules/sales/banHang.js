@@ -1824,7 +1824,6 @@ export default {
         showToast("error", "Giỏ hàng trống");
         return;
       }
-
       // Kiểm tra số tiền thanh toán
       const totalPaymentValue = totalPayment.value;
       if (paymentMethod.value === "both") {
@@ -1981,6 +1980,22 @@ export default {
               selectedDiscount.value = null;
               manualDiscountSelected.value = false;
               return;
+=======
+          const productResponse = await apiService.get(
+            `/api/san-pham?page=0&size=1&keyword=${encodeURIComponent(
+              item.name
+            )}`
+          );
+          if (productResponse.data.content[0]) {
+            const latestPrice = Number(productResponse.data.content[0].giaBan);
+            if (latestPrice !== item.currentPrice) {
+              item.ghiChuGia = `Giá sản phẩm ${
+                item.name
+              } đã thay đổi từ ${formatPrice(
+                item.currentPrice
+              )} lên ${formatPrice(latestPrice)}`;
+              item.currentPrice = latestPrice;
+              showToast("warning", item.ghiChuGia);
             }
           }
         }
@@ -2019,13 +2034,68 @@ export default {
               fixedDiscount,
               percentDiscount
             );
+        await fetchPGG();
+        if (customer.value?.id) {
+          const pggResult = await getPhieuGiamGiaByKhachHang(customer.value.id);
+          if (pggResult.success && Array.isArray(pggResult.data)) {
+            privateDiscountCodes.value = pggResult.data
+              .filter(
+                (item) =>
+                  item.idPhieuGiamGia?.riengTu === true &&
+                  isValidDiscount(item.idPhieuGiamGia?.ngayKetThuc)
+              )
+              .map((item, index) => ({
+                id: item.id || index + 1,
+                code: item.ma || "Unknown",
+                value: item.idPhieuGiamGia?.soTienGiamToiDa || 0,
+                expiry: formatDate(item.idPhieuGiamGia?.ngayKetThuc),
+                rawExpiry: item.idPhieuGiamGia?.ngayKetThuc,
+                type: "private",
+              }));
+          }
+        }
 
+        // Kiểm tra tính hợp lệ của PGG đang chọn
+        if (selectedDiscount.value) {
+          const result = await validateDiscount(
+            selectedDiscount.value.code,
+            customer.value?.id || null
+          );
+          if (!result.success || !result.data) {
+            showToast(
+              "error",
+              `Mã giảm giá ${selectedDiscount.value.code} không còn hợp lệ, thanh toán đã bị hủy`
+            );
+            await applyBestDiscount();
+            return; // Hủy thanh toán
+          }
+        }
+
+        // Kiểm tra PGG tốt hơn
+        const allDiscounts = [
+          ...publicDiscountCodes.value.map((code) => ({
+            ...code,
+            type: "public",
+          })),
+          ...privateDiscountCodes.value,
+        ];
+
+        let bestDiscount = null;
+        for (const code of allDiscounts) {
+          const result = await validateDiscount(
+            code.code,
+            customer.value?.id || null
+          );
+          if (result.success && result.data) {
+            const discountValue = code.value;
             if (
               (code.type === "public" && tongTien.value >= code.minOrder) ||
               code.type === "private"
             ) {
               if (!bestDiscount || actualDiscountValue > bestDiscount.value) {
                 bestDiscount = { ...code, value: actualDiscountValue };
+              if (!bestDiscount || discountValue > bestDiscount.value) {
+                bestDiscount = code;
               }
             }
           }
@@ -2047,6 +2117,15 @@ export default {
             )} so với mã hiện tại giảm ${formatPrice(
               currentDiscountValue
             )}). Bạn có muốn áp dụng mã này không?`,
+            bestDiscount.value > selectedDiscount.value?.value) &&
+          bestDiscount.id !== selectedDiscount.value?.id
+        ) {
+          showConfirm(
+            `Bạn có muốn áp dụng mã ${bestDiscount.code} giảm ${formatPrice(
+              bestDiscount.value
+            )} thay vì mã hiện tại giảm ${formatPrice(
+              selectedDiscount.value?.value || 0
+            )}?`,
             async () => {
               await selectDiscount(bestDiscount);
               await createOrder();
