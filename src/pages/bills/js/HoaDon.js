@@ -91,7 +91,7 @@ export const invoiceManagementLogic = {
       },
       {
         value: 'ngayTao',
-        text: 'TG tạo',
+        text: 'Thời gian tạo',
         formatter: (value) => (value ? new Date(value).toLocaleDateString('vi-VN') : 'N/A'),
       },
       { value: 'loaiDon', text: 'Loại Đơn' },

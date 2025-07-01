@@ -250,8 +250,8 @@
             <template #tongTienSauGiam="{ item }">
               <div class="amount-cell">
                 <div class="total-amount">{{ formatPrice(item.tongTienSauGiam) }}</div>
-                <div class="discount-info" v-if="item.discount > 0">
-                  <small class="text-muted">Giảm: {{ formatPrice(item.discount) }}</small>
+                <div class="discount-info" v-if="item.soTienGiamToiDa > 0">
+                  <small class="text-muted">Giảm: {{ formatPrice(item.soTienGiamToiDa) }}</small>
                 </div>
               </div>
             </template>
