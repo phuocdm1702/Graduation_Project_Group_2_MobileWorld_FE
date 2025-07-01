@@ -336,7 +336,6 @@
                   class="btn btn-light p-3 d-flex align-items-center gap-3"
                   @click="selectPaymentProvider('vnpay')"
                   style="border: 1px solid #34d399; border-radius: 10px"
-                  disabled
               >
                 <i class="bi bi-credit-card"></i>
                 <span class="fw-semibold">VNPAY</span>
