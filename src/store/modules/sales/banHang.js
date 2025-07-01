@@ -1819,11 +1819,12 @@ export default {
     };
 
     const ThanhToan = async () => {
+      // Kiểm tra giỏ hàng rỗng
       if (cartItems.value.length === 0) {
         showToast("error", "Giỏ hàng trống");
         return;
       }
-
+      // Kiểm tra số tiền thanh toán
       const totalPaymentValue = totalPayment.value;
       if (paymentMethod.value === "both") {
         const totalInput = (tienChuyenKhoan.value || 0) + (tienMat.value || 0);
@@ -1853,8 +1854,133 @@ export default {
       }
 
       try {
+        // Thu thập các thông báo cảnh báo về giá sản phẩm
+        const priceChangeMessages = [];
+        const priceCheckErrors = [];
+
         // Kiểm tra giá sản phẩm trước khi thanh toán
         for (const item of cartItems.value) {
+          try {
+            const productResponse = await apiService.get(
+              `/api/san-pham?page=0&size=1&keyword=${encodeURIComponent(
+                item.name
+              )}`
+            );
+            if (productResponse.data.content[0]) {
+              const latestPrice = Number(
+                productResponse.data.content[0].giaBan
+              );
+              if (latestPrice !== item.currentPrice) {
+                item.ghiChuGia = `Giá sản phẩm ${
+                  item.name
+                } đã thay đổi từ ${formatPrice(
+                  item.currentPrice
+                )} lên ${formatPrice(latestPrice)}`;
+                item.currentPrice = latestPrice;
+                priceChangeMessages.push(item.ghiChuGia);
+              }
+            } else {
+              priceCheckErrors.push(
+                `Không tìm thấy thông tin sản phẩm ${item.name}`
+              );
+            }
+          } catch (error) {
+            priceCheckErrors.push(
+              `Lỗi khi kiểm tra giá sản phẩm ${item.name}: ${error.message}`
+            );
+          }
+        }
+
+        // Hiển thị tất cả cảnh báo giá sản phẩm cùng lúc
+        if (priceChangeMessages.length > 0) {
+          showToast("warning", priceChangeMessages.join("; "));
+        }
+        if (priceCheckErrors.length > 0) {
+          showToast("error", priceCheckErrors.join("; "));
+          return; // Dừng thanh toán nếu có lỗi kiểm tra giá
+        }
+
+        // Làm mới danh sách PGG
+        await fetchPGG();
+        if (customer.value?.id) {
+          const pggResult = await getPhieuGiamGiaByKhachHang(customer.value.id);
+          if (pggResult.success && Array.isArray(pggResult.data)) {
+            privateDiscountCodes.value = pggResult.data
+              .filter(
+                (item) =>
+                  item.idPhieuGiamGia?.riengTu === true &&
+                  item.idPhieuGiamGia?.trangThai === true &&
+                  isValidDiscount(item.idPhieuGiamGia?.ngayKetThuc)
+              )
+              .map((item, index) => ({
+                id: item.id || index + 1,
+                code: item.ma || "Unknown",
+                value: item.idPhieuGiamGia?.soTienGiamToiDa || 0,
+                percent: item.idPhieuGiamGia?.phanTramGiamGia || 0,
+                expiry: formatDate(item.idPhieuGiamGia?.ngayKetThuc),
+                rawExpiry: item.idPhieuGiamGia?.ngayKetThuc,
+                minOrder: item.idPhieuGiamGia?.hoaDonToiThieu || 0,
+                type: "private",
+              }));
+          }
+        }
+
+        // Kiểm tra tính hợp lệ của PGG đã chọn
+        if (selectedDiscount.value) {
+          const result = await validateDiscount(
+            selectedDiscount.value.code,
+            customer.value?.id || null
+          );
+          if (
+            !result.success ||
+            !result.data ||
+            !isValidDiscount(result.data.ngayKetThuc) ||
+            result.data.trangThai === false
+          ) {
+            showToast(
+              "error",
+              `Mã giảm giá ${selectedDiscount.value.code} đã hết hiệu lực hoặc không còn hoạt động. Vui lòng chọn mã khác hoặc tiếp tục thanh toán mà không sử dụng mã giảm giá.`
+            );
+            selectedDiscount.value = null;
+            manualDiscountSelected.value = false;
+            return;
+          } else {
+            // Cập nhật thông tin PGG từ server
+            const updatedDiscount = result.data;
+            selectedDiscount.value = {
+              ...selectedDiscount.value,
+              minOrder:
+                updatedDiscount.hoaDonToiThieu ||
+                selectedDiscount.value.minOrder,
+              value:
+                updatedDiscount.soTienGiamToiDa || selectedDiscount.value.value,
+              percent:
+                updatedDiscount.phanTramGiamGia ||
+                selectedDiscount.value.percent,
+              rawExpiry:
+                updatedDiscount.ngayKetThuc || selectedDiscount.value.rawExpiry,
+              expiry: formatDate(updatedDiscount.ngayKetThuc),
+            };
+
+            // Kiểm tra điều kiện đơn tối thiểu cho PGG công khai
+            if (
+              selectedDiscount.value.type === "public" &&
+              tongTien.value < selectedDiscount.value.minOrder
+            ) {
+              showToast(
+                "error",
+                `Tổng tiền đơn hàng (${formatPrice(
+                  tongTien.value
+                )}) nhỏ hơn giá trị đơn tối thiểu yêu cầu (${formatPrice(
+                  selectedDiscount.value.minOrder
+                )}) của mã giảm giá ${
+                  selectedDiscount.value.code
+                }. Vui lòng chọn mã khác hoặc tiếp tục thanh toán mà không sử dụng mã giảm giá.`
+              );
+              selectedDiscount.value = null;
+              manualDiscountSelected.value = false;
+              return;
+=======
           const productResponse = await apiService.get(
             `/api/san-pham?page=0&size=1&keyword=${encodeURIComponent(
               item.name
@@ -1875,6 +2001,39 @@ export default {
         }
 
         // Kiểm tra PGG tốt hơn
+        const allDiscounts = [
+          ...publicDiscountCodes.value.map((code) => ({
+            ...code,
+            type: "public",
+          })),
+          ...privateDiscountCodes.value,
+        ];
+
+        let bestDiscount = null;
+        let currentDiscountValue = selectedDiscount.value ? discount.value : 0;
+
+        for (const code of allDiscounts) {
+          const result = await validateDiscount(
+            code.code,
+            customer.value?.id || null
+          );
+          if (
+            result.success &&
+            result.data &&
+            result.data.trangThai === true &&
+            isValidDiscount(result.data.ngayKetThuc)
+          ) {
+            const fixedDiscount = code.value || 0;
+            const percentDiscount = code.percent
+              ? Math.min(
+                  (code.percent / 100) * tongTien.value,
+                  code.value || Infinity
+                )
+              : 0;
+            const actualDiscountValue = Math.max(
+              fixedDiscount,
+              percentDiscount
+            );
         await fetchPGG();
         if (customer.value?.id) {
           const pggResult = await getPhieuGiamGiaByKhachHang(customer.value.id);
@@ -1933,6 +2092,8 @@ export default {
               (code.type === "public" && tongTien.value >= code.minOrder) ||
               code.type === "private"
             ) {
+              if (!bestDiscount || actualDiscountValue > bestDiscount.value) {
+                bestDiscount = { ...code, value: actualDiscountValue };
               if (!bestDiscount || discountValue > bestDiscount.value) {
                 bestDiscount = code;
               }
@@ -1940,9 +2101,22 @@ export default {
           }
         }
 
+        // Nếu có PGG tốt hơn, đề xuất áp dụng
         if (
           bestDiscount &&
           (!selectedDiscount.value ||
+            bestDiscount.value > currentDiscountValue) &&
+          bestDiscount.id !== selectedDiscount.value?.id
+        ) {
+          const savingsDifference = bestDiscount.value - currentDiscountValue;
+          showConfirm(
+            `Có mã giảm giá tốt hơn: ${bestDiscount.code} giảm ${formatPrice(
+              bestDiscount.value
+            )} (tiết kiệm thêm ${formatPrice(
+              savingsDifference
+            )} so với mã hiện tại giảm ${formatPrice(
+              currentDiscountValue
+            )}). Bạn có muốn áp dụng mã này không?`,
             bestDiscount.value > selectedDiscount.value?.value) &&
           bestDiscount.id !== selectedDiscount.value?.id
         ) {
@@ -1963,14 +2137,41 @@ export default {
           return;
         }
 
-        // Nếu không phải VNPay, tiếp tục xử lý thanh toán bình thường
-        if (selectedPaymentProvider.value !== "vnpay") {
-          await createOrder();
+        // Nếu sử dụng VNPay, không gọi createOrder trực tiếp
+        if (selectedPaymentProvider.value === "vnpay") {
+          try {
+            const orderInfo = `Thanh toán hóa đơn ${
+              activeInvoiceId.value || "HDXXX"
+            }`;
+            const formData = new FormData();
+            formData.append("amount", totalPayment.value);
+            formData.append("orderInfo", orderInfo);
+
+            const response = await apiService.post(
+              "/api/payment/create",
+              formData,
+              {
+                headers: { "Content-Type": "multipart/form-data" },
+              }
+            );
+            window.location.href = response.data; // Chuyển hướng đến URL thanh toán VNPay
+          } catch (error) {
+            showToast(
+              "error",
+              `Lỗi khi tạo thanh toán VNPay: ${error.message}`
+            );
+          }
+        } else {
+          await createOrder(); // Tiếp tục thanh toán bình thường
         }
       } catch (error) {
         console.error("Lỗi khi kiểm tra mã giảm giá hoặc giá sản phẩm:", error);
-        showToast("error", "gram hoặc giá sản phẩm, thanh toán đã bị hủy");
-        await applyBestDiscount();
+        showToast(
+          "error",
+          `Lỗi khi xử lý thanh toán: ${
+            error.response?.data?.message || error.message
+          }`
+        );
       }
     };
 
