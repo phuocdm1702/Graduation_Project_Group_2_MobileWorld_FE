@@ -1490,7 +1490,7 @@ export default {
       console.log("QR Value:", qrCodeValue.value);
     };
 
-    const selectPaymentProvider = (provider) => {
+    const selectPaymentProvider = async (provider) => {
       selectedPaymentProvider.value = provider; // Set the selected provider
       showPaymentProviderModal.value = false; // Close the modal
 
@@ -1516,9 +1516,70 @@ export default {
           bankInfo.value.description
         )}`;
         console.log("Generated QR Value:", qrCodeValue.value); // Debug log
+      } else if (provider === "vnpay") {
+        try {
+          const orderInfo = `Thanh toán hóa đơn ${
+            activeInvoiceId.value || "HDXXX"
+          }`;
+          // Send as form data
+          const formData = new FormData();
+          formData.append("amount", 100000000);
+          formData.append("orderInfo", orderInfo);
+
+          const response = await apiService.post(
+            "/api/payment/create",
+            formData,
+            {
+              headers: {
+                "Content-Type": "multipart/form-data",
+              },
+            }
+          );
+          // Redirect to VNPay payment URL
+          window.location.href = response.data;
+        } catch (error) {
+          showToast("error", `Lỗi khi tạo thanh toán VNPay: ${error.message}`);
+        }
       } else {
         qrCodeValue.value = ""; // Reset for other providers
       }
+    };
+
+    const confirmPayment = () => {
+      if (cartItems.value.length === 0) {
+        showToast("error", "Giỏ hàng trống");
+        return;
+      }
+
+      const totalPaymentValue = totalPayment.value;
+      if (paymentMethod.value === "both") {
+        const totalInput = (tienChuyenKhoan.value || 0) + (tienMat.value || 0);
+        if (totalInput !== totalPaymentValue) {
+          showToast(
+            "error",
+            `Số tiền thanh toán (${formatPrice(
+              totalInput
+            )}) không khớp với tổng thanh toán (${formatPrice(
+              totalPaymentValue
+            )})`
+          );
+          return;
+        }
+        if (tienChuyenKhoan.value < 0 || tienMat.value < 0) {
+          showToast("error", "Số tiền thanh toán không được âm");
+          return;
+        }
+      } else if (
+        paymentMethod.value === "transfer" &&
+        selectedPaymentProvider.value !== "vnpay" &&
+        !qrCodeValue.value
+      ) {
+        showToast("error", "Không thể tạo mã QR. Vui lòng thử lại.");
+        return;
+      }
+
+      // Trực tiếp gọi ThanhToan mà không hiển thị modal xác nhận
+      ThanhToan();
     };
 
     const closePaymentProviderModal = () => {
@@ -1856,6 +1917,29 @@ export default {
               selectedDiscount.value.minOrder
             )}) của mã giảm giá ${selectedDiscount.value.code}`
           );
+          return;
+        }
+        if (tienChuyenKhoan.value < 0 || tienMat.value < 0) {
+          showToast("error", "Số tiền thanh toán không được âm");
+          return;
+        }
+      } else if (
+        paymentMethod.value === "transfer" &&
+        selectedPaymentProvider.value !== "vnpay"
+      ) {
+        if (!qrCodeValue.value) {
+          showToast("error", "Không thể tạo mã QR. Vui lòng thử lại.");
+          return;
+        }
+      }
+
+      try {
+        // Kiểm tra giá sản phẩm trước khi thanh toán
+        for (const item of cartItems.value) {
+          const productResponse = await apiService.get(
+            `/api/san-pham?page=0&size=1&keyword=${encodeURIComponent(
+              item.name
+            )}`
           selectedDiscount.value = null;
           manualDiscountSelected.value = false;
           showToast(
@@ -1932,6 +2016,15 @@ export default {
             bestDiscount = { ...code, value: actualDiscountValue };
           }
         }
+
+        // Nếu không phải VNPay, tiếp tục xử lý thanh toán bình thường
+        if (selectedPaymentProvider.value !== "vnpay") {
+          await createOrder();
+        }
+      } catch (error) {
+        console.error("Lỗi khi kiểm tra mã giảm giá hoặc giá sản phẩm:", error);
+        showToast("error", "gram hoặc giá sản phẩm, thanh toán đã bị hủy");
+        await applyBestDiscount();
       }
     }
 
