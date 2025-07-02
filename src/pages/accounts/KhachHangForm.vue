@@ -436,6 +436,7 @@ import {
   GetKhachHangDiaChiList,
   DeleteKhachHangDiaChi,
   SetMacDinhDiaChi,
+  addDiaChi,
 } from "../../store/modules/customers/khachHang";
 
 import axios from "axios";
@@ -572,14 +573,16 @@ const loadCustomerData = async () => {
         // Lấy danh sách địa chỉ
         const addressResponse = await GetKhachHangDiaChiList(customerId);
         if (addressResponse.success && addressResponse.data) {
-          addresses.value = addressResponse.data.filter((addr) => addr.deleted === true).map((addr) => ({
-            id: addr.id,
-            diaChiCuThe: addr.diaChiCuThe || "",
-            thanhPho: addr.thanhPho || "",
-            quan: addr.quan || "",
-            phuong: addr.phuong || "",
-            isDefault: addr.macDinh || false,
-          }));
+          addresses.value = addressResponse.data
+            .filter((addr) => addr.deleted === true)   
+            .map((addr) => ({
+              id: addr.id,
+              diaChiCuThe: addr.diaChiCuThe || "",
+              thanhPho: addr.thanhPho || "",
+              quan: addr.quan || "",
+              phuong: addr.phuong || "",
+              isDefault: addr.macDinh || false,
+            }));
           if (addresses.value.length > 0) {
             newAddress.value.thanhPho = addresses.value[0].thanhPho;
             await fetchDistricts();
@@ -636,6 +639,7 @@ const removeImage = () => {
   }
 };
 const addAddress = async () => {
+  // Kiểm tra dữ liệu đầu vào
   if (!newAddress.value.diaChiCuThe.trim()) {
     toastNotification.value.addToast({
       type: "error",
@@ -665,8 +669,9 @@ const addAddress = async () => {
     return;
   }
 
-  // Chuẩn bị dữ liệu địa chỉ để gửi API
+  // Chuẩn bị dữ liệu địa chỉ
   const diaChiData = {
+    idKhachHang: customer.value.id, // Bắt buộc trong chế độ chỉnh sửa
     diaChiCuThe: newAddress.value.diaChiCuThe,
     thanhPho: newAddress.value.thanhPho,
     quan: newAddress.value.quan,
@@ -675,15 +680,10 @@ const addAddress = async () => {
   };
 
   try {
-    // Nếu ở chế độ chỉnh sửa, gửi yêu cầu cập nhật địa chỉ
-    if (isEditMode.value) {
-      const response = await UpdateKhachHangDiaChi(
-        customer.value.id,
-        diaChiData
-      );
-      if (!response.success) {
-        throw new Error(response.message || "Lỗi khi lưu địa chỉ!");
-      }
+    // Gọi API addDiaChi
+    const response = await addDiaChi(diaChiData);
+    if (!response.success) {
+      throw new Error(response.message || "Lỗi khi lưu địa chỉ!");
     }
 
     // Nếu đặt làm địa chỉ mặc định, bỏ chọn các địa chỉ khác
@@ -691,8 +691,11 @@ const addAddress = async () => {
       addresses.value.forEach((addr) => (addr.isDefault = false));
     }
 
-    // Thêm địa chỉ vào mảng addresses.value
-    addresses.value.push({ ...newAddress.value });
+    // Thêm địa chỉ mới vào danh sách
+    addresses.value.push({
+      id: response.data.id, // Giả sử backend trả về ID
+      ...newAddress.value,
+    });
 
     // Reset form
     newAddress.value = {
@@ -703,6 +706,10 @@ const addAddress = async () => {
       isDefault: false,
     };
     showAddAddress.value = false;
+
+    // Reset danh sách quận/huyện/xã
+    districts.value = [];
+    wards.value = [];
 
     toastNotification.value.addToast({
       type: "success",
@@ -765,40 +772,27 @@ const deleteAddress = async (index) => {
   }
 };
 
-const setDefaultAddress = async (address, index) => {
+const setDefaultAddress = async (index) => {
+  const address = addresses.value[index];
   try {
+    // Gọi API để đặt địa chỉ mặc định
     const response = await SetMacDinhDiaChi(address.id, true);
     if (!response.success) {
       throw new Error(response.message || "Lỗi khi đặt địa chỉ mặc định!");
     }
-    // Cập nhật macDinh cho tất cả địa chỉ của khách hàng
-    addresses.value = addresses.value.map((addr) => ({
-      ...addr,
-      macDinh: addr.idKhachHang === address.idKhachHang ? addr.id === address.id : addr.macDinh,
-    }));
-    // Cập nhật idDiaChiKhachHang trong customers cho khách hàng tương ứng
-    customers.value = customers.value.map((customer) => {
-      if (customer.id === address.idKhachHang) {
-        return {
-          ...customer,
-          idDiaChiKhachHang: {
-            id: address.id,
-            diaChiCuThe: address.diaChiCuThe,
-            thanhPho: address.thanhPho,
-            quan: address.quan,
-            phuong: address.phuong,
-            deleted: address.deleted,
-            macDinh: true,
-          },
-        };
-      }
-      return customer;
+
+    // Bỏ chọn tất cả các địa chỉ mặc định cũ và chỉ giữ checkbox mới
+    addresses.value.forEach((addr, i) => {
+      addr.isDefault = i === index; // Chỉ giữ checkbox tại index được tích
     });
+
     toastNotification.value.addToast({
       type: "success",
       message: "Đã đặt làm địa chỉ mặc định!",
     });
   } catch (error) {
+    // Hoàn tác thay đổi nếu có lỗi
+    address.isDefault = false;
     toastNotification.value.addToast({
       type: "error",
       message: error.message || "Không thể đặt địa chỉ mặc định!",
@@ -1776,3 +1770,5 @@ onMounted(async () => {
   }
 }
 </style>
+
+
