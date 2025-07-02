@@ -282,7 +282,7 @@ export default {
           (decodedText, decodedResult) => {
             // Xử lý dữ liệu mã QR
             handleQrCodeResult(decodedText);
-          },
+          }
         )
         .catch((err) => {
           console.error("Lỗi khởi động quét mã QR:", err);
@@ -310,99 +310,105 @@ export default {
 
     // Xử lý dữ liệu từ mã QR
     const handleQrCodeResult = async (decodedText) => {
-  try {
-    console.log("Dữ liệu mã QR:", decodedText);
-    const qrData = decodedText.split("|");
-    if (qrData.length < 6) {
-      throw new Error(
-        `Dữ liệu mã QR không đủ trường: ${qrData.length} trường, yêu cầu tối thiểu 6 trường`
-      );
-    }
+      try {
+        console.log("Dữ liệu mã QR:", decodedText);
+        const qrData = decodedText.split("|");
+        if (qrData.length < 6) {
+          throw new Error(
+            `Dữ liệu mã QR không đủ trường: ${qrData.length} trường, yêu cầu tối thiểu 6 trường`
+          );
+        }
 
-    const [cccd, , hoTen, ngaySinh, gioiTinh, diaChi] = qrData;
+        const [cccd, , hoTen, ngaySinh, gioiTinh, diaChi] = qrData;
 
-    if (!cccd || cccd.length !== 12 || isNaN(cccd)) {
-      throw new Error("Số CCCD không hợp lệ (phải có 12 chữ số)");
-    }
-    if (!hoTen) {
-      throw new Error("Họ tên không được để trống");
-    }
-    if (!diaChi) {
-      throw new Error("Địa chỉ không được để trống");
-    }
+        if (!cccd || cccd.length !== 12 || isNaN(cccd)) {
+          throw new Error("Số CCCD không hợp lệ (phải có 12 chữ số)");
+        }
+        if (!hoTen) {
+          throw new Error("Họ tên không được để trống");
+        }
+        if (!diaChi) {
+          throw new Error("Địa chỉ không được để trống");
+        }
 
-    employee.value.cccd = cccd;
-    employee.value.tenNhanVien = hoTen;
-    employee.value.ngaySinh = formatDate(ngaySinh);
-    employee.value.gioiTinh = gioiTinh === "Nam" ? "False" : "True";
+        employee.value.cccd = cccd;
+        employee.value.tenNhanVien = hoTen;
+        employee.value.ngaySinh = formatDate(ngaySinh);
+        employee.value.gioiTinh = gioiTinh === "Nam" ? "False" : "True";
 
-    const addressParts = parseAddress(diaChi);
-    console.log("Địa chỉ phân tích:", addressParts);
-    if (!addressParts.thanhPho) {
-      console.error("Tỉnh/thành phố rỗng. Địa chỉ gốc:", diaChi);
-      throw new Error("Không thể xác định tỉnh/thành phố từ địa chỉ");
-    }
+        const addressParts = parseAddress(diaChi);
+        console.log("Địa chỉ phân tích:", addressParts);
+        if (!addressParts.thanhPho) {
+          console.error("Tỉnh/thành phố rỗng. Địa chỉ gốc:", diaChi);
+          throw new Error("Không thể xác định tỉnh/thành phố từ địa chỉ");
+        }
 
-    // Chuẩn hóa và gán tỉnh/thành phố
-    const normalizedThanhPho = normalizeName(addressParts.thanhPho);
-    const matchedProvince = provinces.value.find(
-      (p) => normalizeName(p.name) === normalizedThanhPho
-    );
-    employee.value.thanhPho = matchedProvince ? matchedProvince.name : addressParts.thanhPho;
-    employee.value.diaChiCuThe = addressParts.diaChiCuThe;
+        // Chuẩn hóa và gán tỉnh/thành phố
+        const normalizedThanhPho = normalizeName(addressParts.thanhPho);
+        const matchedProvince = provinces.value.find(
+          (p) => normalizeName(p.name) === normalizedThanhPho
+        );
+        employee.value.thanhPho = matchedProvince
+          ? matchedProvince.name
+          : addressParts.thanhPho;
+        employee.value.diaChiCuThe = addressParts.diaChiCuThe;
 
-    // Tải và gán quận/huyện
-    await fetchDistricts();
-    if (addressParts.quan) {
-      const normalizedQuan = normalizeName(addressParts.quan);
-      const matchedDistrict = districts.value.find(
-        (d) => normalizeName(d.name) === normalizedQuan
-      );
-      if (matchedDistrict) {
-        employee.value.quan = matchedDistrict.name;
-      } else {
-        console.warn(`Quận/Huyện "${addressParts.quan}" không tìm thấy trong danh sách`);
-        employee.value.quan = addressParts.quan;
+        // Tải và gán quận/huyện
+        await fetchDistricts();
+        if (addressParts.quan) {
+          const normalizedQuan = normalizeName(addressParts.quan);
+          const matchedDistrict = districts.value.find(
+            (d) => normalizeName(d.name) === normalizedQuan
+          );
+          if (matchedDistrict) {
+            employee.value.quan = matchedDistrict.name;
+          } else {
+            console.warn(
+              `Quận/Huyện "${addressParts.quan}" không tìm thấy trong danh sách`
+            );
+            employee.value.quan = addressParts.quan;
+            toastNotification.value.addToast({
+              type: "warning",
+              message: `Quận/Huyện "${addressParts.quan}" không tìm thấy. Vui lòng kiểm tra và chọn lại.`,
+            });
+          }
+        }
+
+        // Tải và gán xã/phường
+        await fetchWards();
+        if (addressParts.phuong) {
+          const normalizedPhuong = normalizeName(addressParts.phuong);
+          const matchedWard = wards.value.find(
+            (w) => normalizeName(w.name) === normalizedPhuong
+          );
+          if (matchedWard) {
+            employee.value.phuong = matchedWard.name;
+          } else {
+            console.warn(
+              `Xã/Phường "${addressParts.phuong}" không tìm thấy trong danh sách`
+            );
+            employee.value.phuong = addressParts.phuong;
+            toastNotification.value.addToast({
+              type: "warning",
+              message: `Xã/Phường "${addressParts.phuong}" không tìm thấy. Vui lòng kiểm tra và chọn lại.`,
+            });
+          }
+        }
+
         toastNotification.value.addToast({
-          type: "warning",
-          message: `Quận/Huyện "${addressParts.quan}" không tìm thấy. Vui lòng kiểm tra và chọn lại.`,
+          type: "success",
+          message: "Quét mã QR thành công! Dữ liệu đã được điền vào form.",
+        });
+
+        stopQrScanner();
+      } catch (error) {
+        console.error("Lỗi quét mã QR:", error);
+        toastNotification.value.addToast({
+          type: "error",
+          message: `Lỗi khi xử lý dữ liệu mã QR: ${error.message}`,
         });
       }
-    }
-
-    // Tải và gán xã/phường
-    await fetchWards();
-    if (addressParts.phuong) {
-      const normalizedPhuong = normalizeName(addressParts.phuong);
-      const matchedWard = wards.value.find(
-        (w) => normalizeName(w.name) === normalizedPhuong
-      );
-      if (matchedWard) {
-        employee.value.phuong = matchedWard.name;
-      } else {
-        console.warn(`Xã/Phường "${addressParts.phuong}" không tìm thấy trong danh sách`);
-        employee.value.phuong = addressParts.phuong;
-        toastNotification.value.addToast({
-          type: "warning",
-          message: `Xã/Phường "${addressParts.phuong}" không tìm thấy. Vui lòng kiểm tra và chọn lại.`,
-        });
-      }
-    }
-
-    toastNotification.value.addToast({
-      type: "success",
-      message: "Quét mã QR thành công! Dữ liệu đã được điền vào form.",
-    });
-
-    stopQrScanner();
-  } catch (error) {
-    console.error("Lỗi quét mã QR:", error);
-    toastNotification.value.addToast({
-      type: "error",
-      message: `Lỗi khi xử lý dữ liệu mã QR: ${error.message}`,
-    });
-  }
-};
+    };
 
     // Hàm định dạng ngày sinh
     const formatDate = (dateString) => {
@@ -659,10 +665,38 @@ export default {
         });
         return;
       }
+
+      const nameRegex = /^[a-zA-ZÀ-ỹ\s]+$/;
+      if (!nameRegex.test(employee.value.tenNhanVien.trim())) {
+        toastNotification.value.addToast({
+          type: "error",
+          message: "Tên nhân viên chỉ được chứa chữ cái và khoảng trắng!",
+        });
+        return;
+      }
+      if (
+        employee.value.tenNhanVien.trim().length < 2 ||
+        employee.value.tenNhanVien.trim().length > 30
+      ) {
+        toastNotification.value.addToast({
+          type: "error",
+          message: "Tên nhân viên phải từ 2 đến 50 ký tự!",
+        });
+        return;
+      }
       if (!employee.value.soDienThoai || !employee.value.soDienThoai.trim()) {
         toastNotification.value.addToast({
           type: "error",
           message: "Vui lòng nhập số điện thoại!",
+        });
+        return;
+      }
+      const phoneRegex = /^(03|05|07|08|09)\d{8}$/;
+      if (!phoneRegex.test(employee.value.soDienThoai.trim())) {
+        toastNotification.value.addToast({
+          type: "error",
+          message:
+            "Số điện thoại không hợp lệ! Vui lòng nhập số điện thoại Việt Nam hợp lệ (10 chữ số).",
         });
         return;
       }
@@ -673,6 +707,69 @@ export default {
         });
         return;
       }
+
+      if (!employee.value.email || !employee.value.email.trim()) {
+        toastNotification.value.addToast({
+          type: "error",
+          message: "Vui lòng nhập diaChiCuThe!",
+        });
+        return;
+      }
+
+      if (!employee.value.diaChiCuThe || !employee.value.diaChiCuThe.trim()) {
+        toastNotification.value.addToast({
+          type: "error",
+          message: "Vui lòng nhập diaChiCuThe!",
+        });
+        return;
+      }
+      const cccdRegex = /^\d{12}$/;
+      if (!cccdRegex.test(employee.value.cccd.trim())) {
+        toastNotification.value.addToast({
+          type: "error",
+          message: "CCCD phải là 12 chữ số!",
+        });
+        return;
+      }
+
+     if (!employee.value.gioiTinh || employee.value.gioiTinh === "") {
+    toastNotification.value.addToast({
+      type: "error",
+      message: "Vui lòng chọn giới tính!",
+    });
+    return;
+  }
+  if (!employee.value.ngaySinh || !employee.value.ngaySinh.trim()) {
+    toastNotification.value.addToast({
+      type: "error",
+      message: "Vui lòng nhập ngày sinh!",
+    });
+    return;
+  }
+
+  const [year, month, day] = employee.value.ngaySinh.trim().split("-").map(Number);
+  const inputDate = new Date(year, month - 1, day);
+  if (
+    inputDate.getDate() !== day ||
+    inputDate.getMonth() + 1 !== month ||
+    inputDate.getFullYear() !== year
+  ) {
+    toastNotification.value.addToast({
+      type: "error",
+      message: "Ngày sinh không hợp lệ!",
+    });
+    return;
+  }
+  const today = new Date(2025, 6, 2); 
+  if (inputDate > today) {
+    toastNotification.value.addToast({
+      type: "error",
+      message: "Ngày sinh không được vượt quá ngày hiện tại!",
+    });
+    return;
+  }
+
+      
 
       // Chuẩn bị dữ liệu
       const file = fileInput.value?.files[0]; // Lấy file ảnh từ input
