@@ -233,7 +233,6 @@
     <!-- Detailed Statistics Table -->
     <FilterTableSection title="Bảng Thống Kê Chi Tiết" icon="bi bi-table">
       <DataTable
-          title="Thống Kê Chi Tiết"
           :headers="detailedStatsHeaders"
           :data="detailedStats"
           :pageSizeOptions="[5, 10, 15]"
@@ -259,13 +258,12 @@
     </FilterTableSection>
 
     <!-- Top Products Table -->
-    <FilterTableSection title="Sản Phẩm Bán Chạy" icon="bi bi-trophy">
+    <FilterTableSection title="Top sản phẩm bán chạy nhất của cửa hàng" icon="bi bi-trophy">
       <div v-if="topProducts.length === 0" class="text-center text-gray-500 py-4">
         Không có dữ liệu sản phẩm bán chạy.
       </div>
       <DataTable
           v-else
-          title="Sản Phẩm Bán Chạy"
           :headers="[{value: 'index', text: '#'}, {value: 'imageUrl', text: 'Ảnh'}, {value: 'productName', text: 'Tên Sản Phẩm'}, {value: 'price', text: 'Giá Bán'}, {value: 'soldQuantity', text: 'Số Lượng Đã Bán'}]"
           :data="topProducts"
           :pageSizeOptions="[5, 10, 15]"
@@ -298,7 +296,6 @@
       </div>
       <DataTable
           v-else
-          title="Sản Phẩm Sắp Hết Hàng"
           :headers="[{value: 'index', text: '#'}, {value: 'tenSanPham', text: 'Tên Sản Phẩm'}, {value: 'soLuong', text: 'Số Lượng'}]"
           :data="sanPhamHetHang"
           :pageSizeOptions="[5, 8, 10]"
