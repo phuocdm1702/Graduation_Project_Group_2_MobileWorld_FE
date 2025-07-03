@@ -853,7 +853,7 @@
                   <span class="fw-semibold">Thanh toán</span>
                 </button>
                 <!-- Customer Payment Button -->
-                <button class="btn w-100 py-3 mt-2" style="background: linear-gradient(135deg, #facc15, #f97316); color: white;" :disabled="!activeInvoiceId ||
+                <button class="btn w-100 py-2 mt-2" style="color: white; background-color: #6c757d;" :disabled="!activeInvoiceId ||
                   !cartItems ||
                   cartItems.length === 0 ||
                   isCreatingOrder

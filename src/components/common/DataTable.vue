@@ -21,7 +21,7 @@
                 :style="`animation-delay: ${index * 0.1}s;`"
               >
                 <td v-for="(header, hIndex) in headers" :key="hIndex" class="p-3">
-                  <slot :name="header.value" :item="item" :index="index">
+                  <slot :name="header.value" :item="item" :index="index" :globalIndex="(internalCurrentPage - 1) * internalItemsPerPage + index">
                     {{ item[header.value] }}
                   </slot>
                 </td>
@@ -35,27 +35,27 @@
         <div class="d-flex align-items-center gap-2">
           <span class="text-muted small">Hiển thị</span>
           <select
-            v-model="itemsPerPage"
+            :value="internalItemsPerPage"
             class="form-select form-select-sm"
             style="width: 80px; background: rgba(248, 249, 250, 0.5);"
-            @change="currentPage = 1"
+            @change="handleItemsPerPageChange($event)"
           >
             <option v-for="option in pageSizeOptions" :key="option" :value="option">{{ option }}</option>
           </select>
           <span class="text-muted small">mục / trang</span>
         </div>
         <div class="text-muted small">
-          Hiển thị {{ ((currentPage - 1) * itemsPerPage + 1) }} - {{ Math.min(currentPage * itemsPerPage, data.length) }} / {{ data.length }} mục
+          Hiển thị {{ (internalCurrentPage - 1) * internalItemsPerPage + 1 }} - {{ Math.min(internalCurrentPage * internalItemsPerPage, data.length) }} / {{ data.length }} mục
         </div>
         <nav>
           <ul class="pagination pagination-sm mb-0">
-            <li class="page-item" :class="{ disabled: currentPage === 1 }">
-              <button class="page-link" @click="currentPage = 1">
+            <li class="page-item" :class="{ disabled: internalCurrentPage === 1 }">
+              <button class="page-link" @click="updateCurrentPage(1)">
                 <i class="bi bi-chevron-double-left"></i>
               </button>
             </li>
-            <li class="page-item" :class="{ disabled: currentPage === 1 }">
-              <button class="page-link" @click="currentPage--">
+            <li class="page-item" :class="{ disabled: internalCurrentPage === 1 }">
+              <button class="page-link" @click="updateCurrentPage(internalCurrentPage - 1)">
                 <i class="bi bi-chevron-left"></i>
               </button>
             </li>
@@ -63,17 +63,17 @@
               v-for="page in displayedPages"
               :key="page"
               class="page-item"
-              :class="{ active: page === currentPage }"
+              :class="{ active: page === internalCurrentPage }"
             >
-              <button class="page-link" @click="currentPage = page">{{ page }}</button>
+              <button class="page-link" @click="updateCurrentPage(page)">{{ page }}</button>
             </li>
-            <li class="page-item" :class="{ disabled: currentPage === totalPages }">
-              <button class="page-link" @click="currentPage++">
+            <li class="page-item" :class="{ disabled: internalCurrentPage === totalPages }">
+              <button class="page-link" @click="updateCurrentPage(internalCurrentPage + 1)">
                 <i class="bi bi-chevron-right"></i>
               </button>
             </li>
-            <li class="page-item" :class="{ disabled: currentPage === totalPages }">
-              <button class="page-link" @click="currentPage = totalPages">
+            <li class="page-item" :class="{ disabled: internalCurrentPage === totalPages }">
+              <button class="page-link" @click="updateCurrentPage(totalPages)">
                 <i class="bi bi-chevron-double-right"></i>
               </button>
             </li>
@@ -89,64 +89,95 @@ export default {
   name: 'DataTable',
   props: {
     title: {
-      type: String
+      type: String,
+      default: ''
     },
     headers: {
       type: Array,
-      required: true
+      required: true,
+      validator: (headers) => headers.every(h => h.text && h.value)
     },
     data: {
       type: Array,
-      required: true
+      required: true,
+      validator: (data) => Array.isArray(data)
     },
     pageSizeOptions: {
       type: Array,
       default: () => [5, 10, 15]
+    },
+    currentPage: {
+      type: Number,
+      default: 1
+    },
+    itemsPerPage: {
+      type: Number,
+      default: 5
     }
   },
   data() {
     return {
-      currentPage: 1,
-      itemsPerPage: 5
+      internalCurrentPage: this.currentPage,
+      internalItemsPerPage: this.itemsPerPage
     };
   },
   computed: {
     totalPages() {
-      return Math.ceil(this.data.length / this.itemsPerPage);
+      return Math.ceil(this.data.length / this.internalItemsPerPage);
     },
     paginatedData() {
-      const start = (this.currentPage - 1) * this.itemsPerPage;
-      const end = start + this.itemsPerPage;
+      const start = (this.internalCurrentPage - 1) * this.internalItemsPerPage;
+      const end = start + this.internalItemsPerPage;
       return this.data.slice(start, end);
     },
     displayedPages() {
       const maxPagesToShow = 5;
-      const pages = [];
-      let startPage = Math.max(1, this.currentPage - Math.floor(maxPagesToShow / 2));
+      let startPage = Math.max(1, this.internalCurrentPage - Math.floor(maxPagesToShow / 2));
       let endPage = Math.min(this.totalPages, startPage + maxPagesToShow - 1);
 
       if (endPage - startPage + 1 < maxPagesToShow) {
         startPage = Math.max(1, endPage - maxPagesToShow + 1);
       }
 
+      const pages = [];
       for (let i = startPage; i <= endPage; i++) {
         pages.push(i);
       }
       return pages;
     }
   },
+  methods: {
+    handleItemsPerPageChange(event) {
+      const newValue = Number(event.target.value);
+      this.internalItemsPerPage = newValue;
+      this.internalCurrentPage = 1; // Reset to first page
+      this.$emit('update:itemsPerPage', newValue);
+      this.$emit('update:currentPage', 1);
+    },
+    updateCurrentPage(page) {
+      if (page >= 1 && page <= this.totalPages) {
+        this.internalCurrentPage = page;
+        this.$emit('update:currentPage', page);
+      }
+    }
+  },
   watch: {
     data() {
-      this.currentPage = 1;
+      this.internalCurrentPage = 1;
+      this.$emit('update:currentPage', 1);
     },
-    itemsPerPage() {
-      this.currentPage = 1;
+    currentPage(newVal) {
+      this.internalCurrentPage = newVal;
+    },
+    itemsPerPage(newVal) {
+      this.internalItemsPerPage = newVal;
     }
   }
 };
 </script>
 
 <style scoped>
+/* Existing styles remain unchanged */
 @keyframes fadeInUp {
   from {
     opacity: 0;
@@ -210,12 +241,6 @@ export default {
   animation: slideInLeft 0.6s ease-out;
   transition: all 0.3s ease;
 }
-
-/* .p-3 {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-} */
 
 .table-row:hover {
   background: rgba(52, 211, 153, 0.05) !important;
