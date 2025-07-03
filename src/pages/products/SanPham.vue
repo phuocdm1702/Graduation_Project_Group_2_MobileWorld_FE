@@ -151,8 +151,8 @@
         <div v-if="viewMode === 'table'">
           <DataTable title="" :headers="headers" :data="paginatedProducts"
             :pageSizeOptions="[5, 10, 15, 20, 30, 40, 50]">
-            <template #stt="{ item, index }">
-              {{ (currentPage - 1) * itemsPerPage + index + 1 }}
+            <template #stt="{ globalIndex }">
+              {{ globalIndex + 1 }}
             </template>
             <template #tenSanPham="{ item }">
               <div class="code-text">{{ item.tenSanPham }}</div>
