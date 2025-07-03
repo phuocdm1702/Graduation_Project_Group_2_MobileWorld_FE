@@ -86,7 +86,7 @@
               <i class="bi bi-qr-code me-2"></i>
               Quét QR
             </button>
-            <router-link to="/create-hoa-don" class="btn btn-action">
+            <router-link to="/banHang" class="btn btn-action">
               <i class="bi bi-plus-circle me-2"></i>
               Tạo Hóa Đơn
             </router-link>
@@ -250,8 +250,8 @@
             <template #tongTienSauGiam="{ item }">
               <div class="amount-cell">
                 <div class="total-amount">{{ formatPrice(item.tongTienSauGiam) }}</div>
-                <div class="discount-info" v-if="item.discount > 0">
-                  <small class="text-muted">Giảm: {{ formatPrice(item.discount) }}</small>
+                <div class="discount-info" v-if="item.soTienGiamToiDa > 0">
+                  <small class="text-muted">Giảm: {{ formatPrice(item.soTienGiamToiDa) }}</small>
                 </div>
               </div>
             </template>

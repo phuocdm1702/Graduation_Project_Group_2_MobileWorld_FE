@@ -19,7 +19,7 @@ export const trangThai = async (id) => {
     console.log('Phản hồi từ server:', error.response?.data);
     return {
       success: false,
-      message: error.response?.data || 'Không tìm thấy nhân viên',
+      message: error.response?.data || 'Không tìm thấy Khach',
     };
   }
 };
@@ -33,7 +33,21 @@ export const addKhanhHang = async (KhachHangData) => {
     console.log('Phản hồi từ server:', error.response?.data);
     return {
       success: false,
-      message: error.response?.data || 'Lỗi khi thêm nhân viên',
+      message: error.response?.data || 'Lỗi khi thêm Khach Hang',
+    };
+  }
+};
+
+export const addDiaChi = async (KhachHangData) => {
+  try {
+    const response = await apiService.post('/khach-hang/addDchiKhachHang', KhachHangData);
+    return { success: true, data: response.data };
+  } catch (error) {
+    console.error('Lỗi khi thêm khach hang:', error);
+    console.log('Phản hồi từ server:', error.response?.data);
+    return {
+      success: false,
+      message: error.response?.data || 'Lỗi khi thêm khach Hang dia Chi',
     };
   }
 };

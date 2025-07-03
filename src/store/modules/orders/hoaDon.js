@@ -18,6 +18,7 @@ export const useHoaDonStore = defineStore('hoaDon', {
             startDate: null,
             endDate: null,
             trangThai: null,
+            loaiDon: null, // Thêm loaiDon vào filters
         },
     }),
 
@@ -38,6 +39,7 @@ export const useHoaDonStore = defineStore('hoaDon', {
                     startDate: this.filters.startDate ? new Date(this.filters.startDate).toISOString() : undefined,
                     endDate: this.filters.endDate ? new Date(this.filters.endDate).toISOString() : undefined,
                     trangThai: this.filters.trangThai ?? undefined,
+                    loaiDon: this.filters.loaiDon || undefined,
                 };
 
                 const response = await apiService.get('/api/hoa-don/home', { params });
@@ -51,9 +53,10 @@ export const useHoaDonStore = defineStore('hoaDon', {
                     soDienThoaiKhachHang: item.soDienThoaiKhachHang,
                     tongTienSauGiam: item.tongTienSauGiam,
                     phiVanChuyen: item.phiVanChuyen,
+                    giamGia: item.soTienGiamToiDa,
                     ngayTao: this.formatDate(item.ngayTao),
                     loaiDon: item.loaiDon,
-                    trangThaiFormatted: this.mapStatus(item.trangThai),
+                    trangThaiFormatted: this.mapStatus(item.trangThai), // Sử dụng mapStatus
                 }));
                 this.totalElements = totalElements;
             } catch (error) {
@@ -62,6 +65,11 @@ export const useHoaDonStore = defineStore('hoaDon', {
             } finally {
                 this.isLoading = false;
             }
+        },
+
+        updateFilters(filters) {
+            this.filters = { ...this.filters, ...filters };
+            this.fetchInvoices();
         },
 
         // GET API Detail
@@ -74,7 +82,7 @@ export const useHoaDonStore = defineStore('hoaDon', {
                 this.invoiceDetail = {
                     ma: response.data.maHoaDon,
                     loaiDon: response.data.loaiDon,
-                    trangThai: this.mapStatus(response.data.trangThai),
+                    trangThai: this.mapStatus(response.data.trangThai), // Sử dụng mapStatus
                     idPhieuGiamGia: { ma: response.data.maGiamGia || 'Không có' },
                     ngayTao: this.formatDate(response.data.ngayTao),
                     idKhachHang: {
@@ -91,9 +99,12 @@ export const useHoaDonStore = defineStore('hoaDon', {
                         id: product.maSanPham,
                         name: product.tenSanPham,
                         imei: product.imel,
+                        ram: product.dungLuongRam,
+                        capacity: product.dungLuongBoNhoTrong,
+                        color: product.mauSac,
                         price: product.giaBan,
                         quantity: 1,
-                        image: '/assets/placeholder-product.png',
+                        image: product.duongDan,
                     })),
                     payments: response.data.thanhToanInfos.map(payment => ({
                         id: payment.maHinhThucThanhToan,
@@ -139,7 +150,7 @@ export const useHoaDonStore = defineStore('hoaDon', {
                     phiVanChuyen: response.data.phiVanChuyen,
                     ngayTao: this.formatDate(response.data.ngayTao),
                     loaiDon: response.data.loaiDon,
-                    trangThaiFormatted: this.mapStatus(response.data.trangThai),
+                    trangThaiFormatted: this.mapStatus(response.data.trangThai), // Sử dụng mapStatus
                 };
                 this.invoices = [invoice, ...this.invoices.filter((inv) => inv.ma !== ma)];
                 this.totalElements = this.invoices.length;
@@ -181,6 +192,47 @@ export const useHoaDonStore = defineStore('hoaDon', {
             }
         },
 
+        // GET API export Excel
+        async exportExcel() {
+            this.isLoading = true;
+            this.error = null;
+
+            try {
+                const params = {
+                    keyword: this.filters.keyword || undefined,
+                    minAmount: this.filters.minAmount ?? undefined,
+                    maxAmount: this.filters.maxAmount ?? undefined,
+                    startDate: this.filters.startDate ? new Date(this.filters.startDate).toISOString() : undefined,
+                    endDate: this.filters.endDate ? new Date(this.filters.endDate).toISOString() : undefined,
+                    trangThai: this.filters.trangThai ?? undefined,
+                    loaiDon: this.filters.loaiDon || undefined,
+                };
+
+                const response = await apiService.get('/api/hoa-don/export-excel', {
+                    params,
+                    responseType: 'blob',
+                });
+
+                const url = window.URL.createObjectURL(new Blob([response.data]));
+                const link = document.createElement('a');
+                link.href = url;
+                const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+                link.setAttribute('download', `DanhSachHoaDon_${timestamp}.xlsx`);
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                window.URL.revokeObjectURL(url);
+
+                return { success: true, message: `Đã xuất danh sách hóa đơn thành công` };
+            } catch (error) {
+                this.error = error.message || 'Không thể xuất danh sách hóa đơn ra Excel';
+                console.error('Lỗi khi gọi API xuất Excel:', error);
+                return { success: false, message: this.error };
+            } finally {
+                this.isLoading = false;
+            }
+        },
+
         formatDate(dateString) {
             const date = new Date(dateString);
             const time = date.toLocaleTimeString('en-GB', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
@@ -199,6 +251,17 @@ export const useHoaDonStore = defineStore('hoaDon', {
                 4: 'Đã hủy',
             };
             return statusMap[statusNumber] || 'N/A';
+        },
+
+        mapStatusToNumber(statusString) {
+            const statusMap = {
+                'Chờ xác nhận': 0,
+                'Chờ giao hàng': 1,
+                'Đang giao': 2,
+                'Hoàn thành': 3,
+                'Đã hủy': 4,
+            };
+            return statusMap[statusString] || null;
         },
     },
 

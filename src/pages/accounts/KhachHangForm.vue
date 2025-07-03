@@ -151,106 +151,119 @@
 
         <!-- Add Address Form -->
         <div
-          v-if="showAddAddress"
-          class="add-address-form animate__animated animate__slideInDown"
+  v-if="showAddAddress"
+  class="add-address-form animate__animated animate__slideInDown"
+>
+  <div class="form-header">
+    <h3 class="form-title">Thêm địa chỉ mới</h3>
+    <button class="btn-close-form" @click="cancelAddAddress">
+      <i class="bi bi-x-lg"></i>
+    </button>
+  </div>
+
+  <div class="form-body">
+    <div class="row g-3">
+      <div class="col-12">
+        <label class="form-label"> Địa chỉ cụ thể </label>
+        <input
+          type="text"
+          class="form-control modern-input"
+          placeholder="Nhập số nhà, tên đường..."
+          v-model="newAddress.diaChiCuThe"
+        />
+      </div>
+
+      <div class="col-md-4">
+        <label class="form-label"> Tỉnh/Thành phố </label>
+        <select
+          class="form-select modern-select"
+          v-model="newAddress.thanhPho"
+          @change="fetchDistricts"
         >
-          <div class="form-header">
-            <h3 class="form-title">Thêm địa chỉ mới</h3>
-            <button class="btn-close-form" @click="cancelAddAddress">
-              <i class="bi bi-x-lg"></i>
-            </button>
-          </div>
+          <option value="" disabled>Chọn tỉnh/thành phố</option>
+          <option
+            v-for="province in provinces"
+            :key="province.code"
+            :value="province.name"
+          >
+            {{ province.name }}
+          </option>
+        </select>
+      </div>
 
-          <div class="form-body">
-            <div class="row g-3">
-              <div class="col-12">
-                <label class="form-label"> Địa chỉ cụ thể </label>
-                <input
-                  type="text"
-                  class="form-control modern-input"
-                  placeholder="Nhập số nhà, tên đường..."
-                  v-model="newAddress.diaChiCuThe"
-                />
-              </div>
+      <div class="col-md-4">
+        <label class="form-label"> Quận/Huyện </label>
+        <select
+          class="form-select modern-select"
+          v-model="newAddress.quan"
+          @change="fetchWards"
+        >
+          <option value="" disabled>Chọn quận/huyện</option>
+          <option
+            v-for="district in districts"
+            :key="district.code"
+            :value="district.name"
+          >
+            {{ district.name }}
+          </option>
+        </select>
+      </div>
 
-              <div class="col-md-4">
-                <label class="form-label"> Tỉnh/Thành phố </label>
-                <select
-                  class="form-select modern-select"
-                  v-model="newAddress.thanhPho"
-                  @change="fetchDistricts"
-                >
-                  <option value="" disabled>Chọn tỉnh/thành phố</option>
-                  <option
-                    v-for="province in provinces"
-                    :key="province.code"
-                    :value="province.name"
-                  >
-                    {{ province.name }}
-                  </option>
-                </select>
-              </div>
+      <div class="col-md-4">
+        <label class="form-label"> Xã/Phường </label>
+        <select
+          class="form-select modern-select"
+          v-model="newAddress.phuong"
+        >
+          <option value="" disabled>Chọn xã/phường</option>
+          <option
+            v-for="ward in wards"
+            :key="ward.code"
+            :value="ward.name"
+          >
+            {{ ward.name }}
+          </option>
+        </select>
+      </div>
 
-              <div class="col-md-4">
-                <label class="form-label"> Quận/Huyện </label>
-                <select
-                  class="form-select modern-select"
-                  v-model="newAddress.quan"
-                  @change="fetchWards"
-                >
-                  <option value="" disabled>Chọn quận/huyện</option>
-                  <option
-                    v-for="district in districts"
-                    :key="district.code"
-                    :value="district.name"
-                  >
-                    {{ district.name }}
-                  </option>
-                </select>
-              </div>
-
-              <div class="col-md-4">
-                <label class="form-label"> Xã/Phường </label>
-                <select
-                  class="form-select modern-select"
-                  v-model="newAddress.phuong"
-                >
-                  <option value="" disabled>Chọn xã/phường</option>
-                  <option
-                    v-for="ward in wards"
-                    :key="ward.code"
-                    :value="ward.name"
-                  >
-                    {{ ward.name }}
-                  </option>
-                </select>
-              </div>
-
-              <div class="col-12">
-                <div class="form-check-wrapper">
-                  <input
-                    class="form-check-input modern-checkbox"
-                    type="checkbox"
-                    id="defaultAddress"
-                    v-model="newAddress.isDefault"
-                  />
-                  <label class="form-check-label" for="defaultAddress">
-                    Đặt làm địa chỉ mặc định
-                  </label>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="form-actions">
-            <button class="btn btn-save" @click="addAddress">
-              Lưu địa chỉ
-            </button>
-            <button class="btn btn-cancel" @click="cancelAddAddress">
-              Hủy bỏ
-            </button>
-          </div>
+      <div class="col-12">
+        <div class="form-check-wrapper">
+          <input
+            class="form-check-input modern-checkbox"
+            type="checkbox"
+            id="defaultAddress"
+            v-model="newAddress.isDefault"
+          />
+          <label class="form-check-label" for="defaultAddress">
+            Đặt làm địa chỉ mặc định
+          </label>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="form-actions">
+    <!-- Nút Lưu địa chỉ (thêm mới) -->
+    <button
+      v-if="!editingAddressIndex"
+      class="btn btn-save"
+      @click="addAddress"
+    >
+      Lưu địa chỉ
+    </button>
+    <!-- Nút Cập nhật (chỉ hiển thị khi chỉnh sửa) -->
+    <button
+      v-if="editingAddressIndex !== null"
+      class="btn btn-save"
+      @click="updateAddress"
+    >
+      Cập nhật
+    </button>
+    <button class="btn btn-cancel" @click="cancelAddAddress">
+      Hủy bỏ
+    </button>
+  </div>
+</div>
 
         <!-- Address List -->
         <div class="address-list">
@@ -436,8 +449,8 @@ import {
   GetKhachHangDiaChiList,
   DeleteKhachHangDiaChi,
   SetMacDinhDiaChi,
+  addDiaChi,
 } from "../../store/modules/customers/khachHang";
-
 import axios from "axios";
 
 const router = useRouter();
@@ -468,6 +481,7 @@ const newAddress = ref({
   isDefault: false,
 });
 const addresses = ref([]);
+const editingAddressIndex = ref(null); // Thêm biến để theo dõi địa chỉ đang chỉnh sửa
 const notificationType = ref("");
 const notificationMessage = ref("");
 const isNotificationLoading = ref(false);
@@ -481,7 +495,7 @@ const wards = ref([]);
 const selectedProvinceCode = ref("");
 const selectedDistrictCode = ref("");
 
-//thanh pho
+// Load provinces
 const fetchProvinces = async () => {
   try {
     const response = await axios.get("https://provinces.open-api.vn/api/p/");
@@ -495,14 +509,13 @@ const fetchProvinces = async () => {
   }
 };
 
-//quan
+// Load districts
 const fetchDistricts = async () => {
   districts.value = [];
   wards.value = [];
   newAddress.value.quan = "";
   newAddress.value.phuong = "";
 
-  // Tìm mã tỉnh theo tên
   const selectedProvince = provinces.value.find(
     (p) => p.name === newAddress.value.thanhPho
   );
@@ -523,12 +536,11 @@ const fetchDistricts = async () => {
   }
 };
 
-//xa
+// Load wards
 const fetchWards = async () => {
   wards.value = [];
   newAddress.value.phuong = "";
 
-  // Tìm mã quận theo tên
   const selectedDistrict = districts.value.find(
     (d) => d.name === newAddress.value.quan
   );
@@ -545,61 +557,6 @@ const fetchWards = async () => {
         type: "error",
         message: "Không thể tải danh sách xã/phường!",
       });
-    }
-  }
-};
-
-const loadCustomerData = async () => {
-  if (isEditMode.value) {
-    const customerId = parseInt(route.params.id);
-    try {
-      const response = await getKhachHangDetail(customerId);
-      if (response.success && response.data) {
-        const customerData = response.data;
-        const ngaySinh = customerData.ngaySinh
-          ? new Date(customerData.ngaySinh).toISOString().split("T")[0]
-          : "";
-        customer.value = {
-          id: customerData.id || null,
-          tenKH: customerData.ten || "",
-          soDienThoai: customerData.idTaiKhoan?.soDienThoai || "",
-          email: customerData.idTaiKhoan?.email || "",
-          ngaySinh: ngaySinh,
-          gioiTinh: customerData.gioiTinh ? "True" : "False",
-        };
-        customerImage.value = customerData.anhKhachHang || null;
-
-        // Lấy danh sách địa chỉ
-        const addressResponse = await GetKhachHangDiaChiList(customerId);
-        if (addressResponse.success && addressResponse.data) {
-          addresses.value = addressResponse.data.filter((addr) => addr.deleted === true).map((addr) => ({
-            id: addr.id,
-            diaChiCuThe: addr.diaChiCuThe || "",
-            thanhPho: addr.thanhPho || "",
-            quan: addr.quan || "",
-            phuong: addr.phuong || "",
-            isDefault: addr.macDinh || false,
-          }));
-          if (addresses.value.length > 0) {
-            newAddress.value.thanhPho = addresses.value[0].thanhPho;
-            await fetchDistricts();
-            newAddress.value.quan = addresses.value[0].quan;
-            await fetchWards();
-          }
-        }
-      } else {
-        toastNotification.value.addToast({
-          type: "error",
-          message: response.message || "Không tìm thấy khách hàng!",
-        });
-        router.push("/khachHang");
-      }
-    } catch (error) {
-      toastNotification.value.addToast({
-        type: "error",
-        message: "Lỗi khi tải dữ liệu khách hàng!",
-      });
-      router.push("/khachHang");
     }
   }
 };
@@ -625,16 +582,82 @@ const handleImageUpload = (event) => {
       });
       return;
     }
+    customer.value.imageFile = file;
     customerImage.value = URL.createObjectURL(file);
   }
 };
 
 const removeImage = () => {
   customerImage.value = null;
-  if (fileInput.value) {
-    fileInput.value.value = "";
+  customer.value.imageFile = null;
+  if (fileInput.value) fileInput.value.value = "";
+};
+
+const convertToBase64 = (file) => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = (error) => reject(error);
+  });
+};
+
+const loadCustomerData = async () => {
+  if (isEditMode.value) {
+    const customerId = parseInt(route.params.id);
+    try {
+      const response = await getKhachHangDetail(customerId);
+      if (response.success && response.data) {
+        const customerData = response.data;
+        const ngaySinh = customerData.ngaySinh
+          ? new Date(customerData.ngaySinh).toISOString().split("T")[0]
+          : "";
+        customer.value = {
+          id: customerData.id,
+          tenKH: customerData.ten || "",
+          soDienThoai: customerData.idTaiKhoan?.soDienThoai || "",
+          email: customerData.idTaiKhoan?.email || "",
+          ngaySinh: ngaySinh,
+          gioiTinh: customerData.gioiTinh ? "True" : "False",
+        };
+        customerImage.value = customerData.anhKhachHang || null;
+
+        const addressResponse = await GetKhachHangDiaChiList(customerId);
+        if (addressResponse.success && addressResponse.data) {
+          addresses.value = addressResponse.data
+            .filter((addr) => addr.deleted !== false)
+            .map((addr) => ({
+              id: addr.id,
+              diaChiCuThe: addr.diaChiCuThe || "",
+              thanhPho: addr.thanhPho || "",
+              quan: addr.quan || "",
+              phuong: addr.phuong || "",
+              isDefault: addr.macDinh || false,
+            }));
+          if (addresses.value.length > 0) {
+            newAddress.value.thanhPho = addresses.value[0].thanhPho;
+            await fetchDistricts();
+            newAddress.value.quan = addresses.value[0].quan;
+            await fetchWards();
+          }
+        }
+      } else {
+        toastNotification.value.addToast({
+          type: "error",
+          message: response.message || "Không tìm thấy khách hàng!",
+        });
+        router.push("/khachHang");
+      }
+    } catch (error) {
+      toastNotification.value.addToast({
+        type: "error",
+        message: "Lỗi khi tải dữ liệu khách hàng!",
+      });
+      router.push("/khachHang");
+    }
   }
 };
+
 const addAddress = async () => {
   if (!newAddress.value.diaChiCuThe.trim()) {
     toastNotification.value.addToast({
@@ -665,8 +688,8 @@ const addAddress = async () => {
     return;
   }
 
-  // Chuẩn bị dữ liệu địa chỉ để gửi API
   const diaChiData = {
+    idKhachHang: customer.value.id,
     diaChiCuThe: newAddress.value.diaChiCuThe,
     thanhPho: newAddress.value.thanhPho,
     quan: newAddress.value.quan,
@@ -675,26 +698,20 @@ const addAddress = async () => {
   };
 
   try {
-    // Nếu ở chế độ chỉnh sửa, gửi yêu cầu cập nhật địa chỉ
-    if (isEditMode.value) {
-      const response = await UpdateKhachHangDiaChi(
-        customer.value.id,
-        diaChiData
-      );
-      if (!response.success) {
-        throw new Error(response.message || "Lỗi khi lưu địa chỉ!");
-      }
+    const response = await addDiaChi(diaChiData);
+    if (!response.success) {
+      throw new Error(response.message || "Lỗi khi lưu địa chỉ!");
     }
 
-    // Nếu đặt làm địa chỉ mặc định, bỏ chọn các địa chỉ khác
     if (newAddress.value.isDefault) {
       addresses.value.forEach((addr) => (addr.isDefault = false));
     }
 
-    // Thêm địa chỉ vào mảng addresses.value
-    addresses.value.push({ ...newAddress.value });
+    addresses.value.push({
+      id: response.data.id,
+      ...newAddress.value,
+    });
 
-    // Reset form
     newAddress.value = {
       diaChiCuThe: "",
       thanhPho: "",
@@ -703,6 +720,8 @@ const addAddress = async () => {
       isDefault: false,
     };
     showAddAddress.value = false;
+    districts.value = [];
+    wards.value = [];
 
     toastNotification.value.addToast({
       type: "success",
@@ -716,6 +735,99 @@ const addAddress = async () => {
   }
 };
 
+const updateAddress = async () => {
+  if (!newAddress.value.diaChiCuThe.trim()) {
+    toastNotification.value.addToast({
+      type: "error",
+      message: "Vui lòng nhập địa chỉ cụ thể!",
+    });
+    return;
+  }
+  if (!newAddress.value.thanhPho) {
+    toastNotification.value.addToast({
+      type: "error",
+      message: "Vui lòng chọn tỉnh/thành phố!",
+    });
+    return;
+  }
+  if (!newAddress.value.quan) {
+    toastNotification.value.addToast({
+      type: "error",
+      message: "Vui lòng chọn quận/huyện!",
+    });
+    return;
+  }
+  if (!newAddress.value.phuong) {
+    toastNotification.value.addToast({
+      type: "error",
+      message: "Vui lòng chọn xã/phường!",
+    });
+    return;
+  }
+
+  if (editingAddressIndex.value === null) {
+    toastNotification.value.addToast({
+      type: "error",
+      message: "Không tìm thấy địa chỉ để cập nhật!",
+    });
+    return;
+  }
+
+  const addressData = {
+    id: addresses.value[editingAddressIndex.value].id,
+    idKhachHang: customer.value.id,
+    diaChiCuThe: newAddress.value.diaChiCuThe,
+    thanhPho: newAddress.value.thanhPho,
+    quan: newAddress.value.quan,
+    phuong: newAddress.value.phuong,
+    macDinh: newAddress.value.isDefault,
+  };
+
+  try {
+    const response = await UpdateKhachHangDiaChi(
+      addressData.id,
+      addressData
+    );
+    if (!response.success) {
+      throw new Error(response.message || "Lỗi khi cập nhật địa chỉ!");
+    }
+
+    // Cập nhật địa chỉ trong danh sách
+    addresses.value[editingAddressIndex.value] = {
+      ...addressData,
+      id: response.data.id || addressData.id,
+    };
+
+    if (newAddress.value.isDefault) {
+      addresses.value.forEach((addr, i) => {
+        addr.isDefault = i === editingAddressIndex.value;
+      });
+    }
+
+    newAddress.value = {
+      diaChiCuThe: "",
+      thanhPho: "",
+      quan: "",
+      phuong: "",
+      isDefault: false,
+    };
+    editingAddressIndex.value = null;
+    showAddAddress.value = false;
+    districts.value = [];
+    wards.value = [];
+
+    toastNotification.value.addToast({
+      type: "success",
+      message: "Cập nhật địa chỉ thành công!",
+    });
+  } catch (error) {
+    toastNotification.value.addToast({
+      type: "error",
+      message: error.message || "Lỗi khi cập nhật địa chỉ!",
+    });
+  }
+};
+
 const cancelAddAddress = () => {
   newAddress.value = {
     diaChiCuThe: "",
@@ -724,13 +836,15 @@ const cancelAddAddress = () => {
     phuong: "",
     isDefault: false,
   };
+  editingAddressIndex.value = null; // Reset khi hủy
   showAddAddress.value = false;
 };
 
 const editAddress = (index) => {
+  editingAddressIndex.value = index; // Lưu chỉ số địa chỉ đang chỉnh sửa
   newAddress.value = { ...addresses.value[index] };
   showAddAddress.value = true;
-  addresses.value.splice(index, 1);
+  // Không xóa khỏi danh sách ngay, chỉ chỉnh sửa tại chỗ
 };
 
 const confirmDeleteAddress = (index) => {
@@ -765,40 +879,24 @@ const deleteAddress = async (index) => {
   }
 };
 
-const setDefaultAddress = async (address, index) => {
+const setDefaultAddress = async (index) => {
+  const address = addresses.value[index];
   try {
     const response = await SetMacDinhDiaChi(address.id, true);
     if (!response.success) {
       throw new Error(response.message || "Lỗi khi đặt địa chỉ mặc định!");
     }
-    // Cập nhật macDinh cho tất cả địa chỉ của khách hàng
-    addresses.value = addresses.value.map((addr) => ({
-      ...addr,
-      macDinh: addr.idKhachHang === address.idKhachHang ? addr.id === address.id : addr.macDinh,
-    }));
-    // Cập nhật idDiaChiKhachHang trong customers cho khách hàng tương ứng
-    customers.value = customers.value.map((customer) => {
-      if (customer.id === address.idKhachHang) {
-        return {
-          ...customer,
-          idDiaChiKhachHang: {
-            id: address.id,
-            diaChiCuThe: address.diaChiCuThe,
-            thanhPho: address.thanhPho,
-            quan: address.quan,
-            phuong: address.phuong,
-            deleted: address.deleted,
-            macDinh: true,
-          },
-        };
-      }
-      return customer;
+
+    addresses.value.forEach((addr, i) => {
+      addr.isDefault = i === index;
     });
+
     toastNotification.value.addToast({
       type: "success",
       message: "Đã đặt làm địa chỉ mặc định!",
     });
   } catch (error) {
+    address.isDefault = false;
     toastNotification.value.addToast({
       type: "error",
       message: error.message || "Không thể đặt địa chỉ mặc định!",
@@ -842,10 +940,9 @@ const saveCustomer = async () => {
   isNotificationLoading.value = true;
   try {
     const defaultAddress =
-      addresses.value.find((addr) => addr.isDefault) ||
-      addresses.value[0] ||
-      {};
+      addresses.value.find((addr) => addr.isDefault) || addresses.value[0] || {};
     const customerData = {
+      id: customer.value.id,
       tenKH: customer.value.tenKH,
       soDienThoai: customer.value.soDienThoai,
       email: customer.value.email,
@@ -860,18 +957,65 @@ const saveCustomer = async () => {
     };
 
     if (customer.value.imageFile) {
-      customerData.anhKhachHang = await convertToBase64(
-        customer.value.imageFile
-      );
+      customerData.anhKhachHang = await convertToBase64(customer.value.imageFile);
     } else if (customerImage.value === null) {
       customerData.anhKhachHang = null;
     }
 
     let response;
     if (isEditMode.value) {
+      if (!customer.value.id) {
+        throw new Error("ID khách hàng không hợp lệ, không thể cập nhật!");
+      }
       response = await UpdateKhachHang(customer.value.id, customerData);
+      for (const address of addresses.value) {
+        const addressData = {
+          id: address.id,
+          idKhachHang: customer.value.id,
+          diaChiCuThe: address.diaChiCuThe,
+          thanhPho: address.thanhPho,
+          quan: address.quan,
+          phuong: address.phuong,
+          macDinh: address.isDefault,
+        };
+        if (address.id) {
+          const addressResponse = await UpdateKhachHangDiaChi(
+            address.id,
+            addressData
+          );
+          if (!addressResponse.success) {
+            throw new Error(
+              addressResponse.message || "Lỗi khi cập nhật địa chỉ!"
+            );
+          }
+        } else {
+          const addressResponse = await addDiaChi(addressData);
+          if (!addressResponse.success) {
+            throw new Error(addressResponse.message || "Lỗi khi thêm địa chỉ!");
+          }
+          address.id = addressResponse.data.id;
+        }
+      }
     } else {
       response = await addKhanhHang(customerData);
+      if (response.success) {
+        customer.value.id = response.data.id;
+        for (const address of addresses.value) {
+          const addressData = {
+            idKhachHang: customer.value.id,
+            diaChiCuThe: address.diaChiCuThe,
+            thanhPho: address.thanhPho,
+            quan: address.quan,
+            phuong: address.phuong,
+            macDinh: address.isDefault,
+          };
+          const addressResponse = await addDiaChi(addressData);
+          if (!addressResponse.success) {
+            throw new Error(addressResponse.message || "Lỗi khi thêm địa chỉ!");
+          }
+          address.id = addressResponse.data.id;
+        }
+      }
     }
 
     if (response.success) {
@@ -909,6 +1053,7 @@ const resetForm = () => {
     gioiTinh: "",
   };
   customerImage.value = null;
+  customer.value.imageFile = null;
   addresses.value = [];
   if (fileInput.value) fileInput.value.value = "";
 };
@@ -924,7 +1069,6 @@ const resetNotification = () => {
   notificationOnCancel.value = null;
 };
 
-// Lifecycle
 onMounted(async () => {
   await fetchProvinces();
   loadCustomerData();
@@ -1776,3 +1920,4 @@ onMounted(async () => {
   }
 }
 </style>
+

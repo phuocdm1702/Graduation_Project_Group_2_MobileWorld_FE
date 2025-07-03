@@ -91,7 +91,7 @@ export const invoiceManagementLogic = {
       },
       {
         value: 'ngayTao',
-        text: 'TG tạo',
+        text: 'Thời gian tạo',
         formatter: (value) => (value ? new Date(value).toLocaleDateString('vi-VN') : 'N/A'),
       },
       { value: 'loaiDon', text: 'Loại Đơn' },
@@ -210,6 +210,32 @@ export const invoiceManagementLogic = {
       }, {});
     });
 
+    // Hàm confirm dùng chung
+    const showConfirm = (message, onConfirm, onCancel = () => { }) => {
+      notificationType.value = 'confirm';
+      notificationMessage.value = message;
+      notificationOnConfirm.value = async () => {
+        isNotificationLoading.value = true;
+        try {
+          await onConfirm();
+        } catch (error) {
+          toastNotification.value?.addToast({
+            type: 'error',
+            message: error.message || 'Đã có lỗi xảy ra',
+            duration: 3000,
+          });
+        } finally {
+          isNotificationLoading.value = false;
+          resetNotification();
+        }
+      };
+      notificationOnCancel.value = () => {
+        onCancel();
+        resetNotification();
+      };
+      notificationModal.value?.openModal();
+    };
+
     // Methods
     const formatPrice = (price) => {
       if (price === null || price === undefined) return '0 ₫';
@@ -239,6 +265,7 @@ export const invoiceManagementLogic = {
         startDate: null,
         endDate: null,
         trangThai: null,
+        loaiDon: null, // Reset loaiDon
       });
 
       toastNotification.value?.addToast({
@@ -268,57 +295,65 @@ export const invoiceManagementLogic = {
       });
     };
 
-    const exportExcel = () => {
-      toastNotification.value?.addToast({
-        type: 'success',
-        message: `Đã xuất ${filteredInvoices.value.length} hóa đơn ra Excel`,
-        duration: 3000,
-      });
+    const exportExcel = async () => {
+      showConfirm(
+        'Bạn có chắc chắn muốn xuất danh sách hóa đơn ra Excel?',
+        async () => {
+          toastNotification.value?.addToast({
+            type: 'info',
+            message: 'Đang xuất danh sách hóa đơn ra Excel...',
+            duration: 0,
+          });
+
+          const result = await hoaDonStore.exportExcel();
+
+          toastNotification.value?.addToast({
+            type: result.success ? 'success' : 'error',
+            message: result.success
+              ? `Đã xuất ${filteredInvoices.value.length} hóa đơn ra Excel`
+              : result.message,
+            duration: 3000,
+          });
+        }
+      );
     };
 
     const scanQR = async () => {
-      try {
-        qrError.value = '';
-        qrMessage.value = 'Đang khởi động camera...';
-        scanning = true;
+      showConfirm(
+        'Bạn có muốn khởi động camera để quét mã QR?',
+        async () => {
+          qrError.value = '';
+          qrMessage.value = 'Đang khởi động camera...';
+          scanning = true;
 
-        const modalElement = document.getElementById('qrScannerModal');
-        modalElement.classList.add('show');
-        modalElement.style.display = 'block';
-        document.body.classList.add('modal-open');
-        const backdrop = document.createElement('div');
-        backdrop.className = 'modal-backdrop fade show';
-        document.body.appendChild(backdrop);
+          const modalElement = document.getElementById('qrScannerModal');
+          modalElement.classList.add('show');
+          modalElement.style.display = 'block';
+          document.body.classList.add('modal-open');
+          const backdrop = document.createElement('div');
+          backdrop.className = 'modal-backdrop fade show';
+          document.body.appendChild(backdrop);
 
-        videoElement.value = document.getElementById('qr-video');
-        canvasElement.value = document.getElementById('qr-canvas');
+          videoElement.value = document.getElementById('qr-video');
+          canvasElement.value = document.getElementById('qr-canvas');
 
-        stream.value = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: 'environment' },
-        });
+          stream.value = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: 'environment' },
+          });
 
-        videoElement.value.srcObject = stream.value;
+          videoElement.value.srcObject = stream.value;
 
-        await new Promise((resolve) => {
-          videoElement.value.onloadedmetadata = () => {
-            videoElement.value.play();
-            qrMessage.value = 'Đặt mã QR trước camera để quét';
-            resolve();
-          };
-        });
+          await new Promise((resolve) => {
+            videoElement.value.onloadedmetadata = () => {
+              videoElement.value.play();
+              qrMessage.value = 'Đặt mã QR trước camera để quét';
+              resolve();
+            };
+          });
 
-        // Bắt đầu quét với interval kiểm soát
-        startSmartScanning();
-      } catch (err) {
-        qrError.value = 'Không thể truy cập camera. Vui lòng kiểm tra quyền truy cập.';
-        qrMessage.value = '';
-        stopCamera();
-        toastNotification.value?.addToast({
-          type: 'error',
-          message: 'Lỗi khi truy cập camera: ' + err.message,
-          duration: 3000,
-        });
-      }
+          startSmartScanning();
+        }
+      );
     };
 
     const startSmartScanning = () => {
@@ -443,34 +478,36 @@ export const invoiceManagementLogic = {
     };
 
     const printInvoice = async (invoice) => {
-      const result = await hoaDonStore.printInvoice(invoice.id);
-      toastNotification.value?.addToast({
-        type: result.success ? 'success' : 'error',
-        message: result.message,
-        duration: 3000,
-      });
+      showConfirm(
+        `Bạn có chắc chắn muốn in hóa đơn ${invoice.ma}?`,
+        async () => {
+          const result = await hoaDonStore.printInvoice(invoice.id);
+          toastNotification.value?.addToast({
+            type: result.success ? 'success' : 'error',
+            message: result.message,
+            duration: 3000,
+          });
+        }
+      );
     };
 
     const downloadQrCode = async (invoice) => {
-      try {
-        const qrData = invoice.ma; // Sử dụng ma thay vì id
-        const qrUrl = await QRCode.toDataURL(qrData);
-        const link = document.createElement('a');
-        link.href = qrUrl;
-        link.download = `QR_HoaDon_${invoice.ma}.png`;
-        link.click();
-        toastNotification.value?.addToast({
-          type: 'success',
-          message: `Đã tải QR code cho hóa đơn ${invoice.ma}`,
-          duration: 3000,
-        });
-      } catch (err) {
-        toastNotification.value?.addToast({
-          type: 'error',
-          message: `Lỗi khi tạo QR code: ${err.message}`,
-          duration: 3000,
-        });
-      }
+      showConfirm(
+        `Bạn có chắc chắn muốn tải QR code cho hóa đơn ${invoice.ma}?`,
+        async () => {
+          const qrData = invoice.ma;
+          const qrUrl = await QRCode.toDataURL(qrData);
+          const link = document.createElement('a');
+          link.href = qrUrl;
+          link.download = `QR_HoaDon_${invoice.ma}.png`;
+          link.click();
+          toastNotification.value?.addToast({
+            type: 'success',
+            message: `Đã tải QR code cho hóa đơn ${invoice.ma}`,
+            duration: 3000,
+          });
+        }
+      );
     };
 
     const confirmDeleteInvoice = (invoice) => {
@@ -505,20 +542,44 @@ export const invoiceManagementLogic = {
       notificationOnCancel.value = () => { };
     };
 
+    // const setActiveTab = (tab) => {
+    //   activeTab.value = tab;
+    //   currentPage.value = 1;
+    //   highlightedInvoiceId.value = null;
+    //   toastNotification.value?.addToast({
+    //     type: 'info',
+    //     message: `Đã chuyển sang tab ${tab === 'all' ? 'Tất cả hóa đơn' : tab === 'in-store' ? 'Hóa đơn tại quầy' : 'Hóa đơn online'
+    //       }`,
+    //     duration: 2000,
+    //   });
+    // };
+
+
+    // Cập nhật hàm setActiveTab
     const setActiveTab = (tab) => {
       activeTab.value = tab;
       currentPage.value = 1;
       highlightedInvoiceId.value = null;
+
+      let loaiDon = null;
+      if (tab === 'in-store') {
+        loaiDon = 'trực tiếp';
+      } else if (tab === 'online') {
+        loaiDon = 'online';
+      }
+
+      hoaDonStore.updateFilters({ loaiDon });
+
       toastNotification.value?.addToast({
         type: 'info',
-        message: `Đã chuyển sang tab ${tab === 'all' ? 'Tất cả hóa đơn' : tab === 'in-store' ? 'Hóa đơn tại quầy' : 'Hóa đơn online'
-          }`,
+        message: `Đã chuyển sang tab ${tab === 'all' ? 'Tất cả hóa đơn' : tab === 'in-store' ? 'Hóa đơn tại quầy' : 'Hóa đơn online'}`,
         duration: 2000,
       });
     };
 
     const setActiveTabByStatus = (status) => {
-      hoaDonStore.updateFilters({ trangThai: status });
+      const trangThaiNumber = hoaDonStore.mapStatusToNumber(status);
+      hoaDonStore.updateFilters({ trangThai: trangThaiNumber });
       const statusInvoices = filteredInvoices.value.filter((inv) => inv.trangThaiFormatted === status);
       if (statusInvoices.length > 0) {
         const firstType = (statusInvoices[0].loaiDon || '').toLowerCase();
