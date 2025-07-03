@@ -40,7 +40,7 @@ export const addKhanhHang = async (KhachHangData) => {
 
 export const addDiaChi = async (KhachHangData) => {
   try {
-    const response = await apiService.post('/khach-hang/addDchi', KhachHangData);
+    const response = await apiService.post('/khach-hang/addDchiKhachHang', KhachHangData);
     return { success: true, data: response.data };
   } catch (error) {
     console.error('Lỗi khi thêm khach hang:', error);
