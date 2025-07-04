@@ -1,5 +1,4 @@
 <template>
-  <div class="min-h-screen bg-gray-100">
     <div class="container-fluid py-4">
       <HeaderCard
           :title="isEditMode ? 'Cập Nhật Đợt Giảm Giá' : 'Thêm Đợt Giảm Giá'"
@@ -8,7 +7,7 @@
           :backgroundOpacity="0.95"
       />
 
-      <div class="container mx-auto px-4">
+      <div>
         <ToastNotification ref="toastNotification" />
         <NotificationModal
             ref="notificationModal"
@@ -22,7 +21,7 @@
         <div class="row">
           <!-- Form Đợt Giảm Giá -->
           <div class="col-md-6">
-            <div class="bg-white border rounded-lg shadow-md p-4 h-100 d-flex flex-column">
+            <div>
               <FilterTableSection :title="isEditMode ? 'Cập Nhật Đợt Giảm Giá' : 'Thông Tin Đợt Giảm Giá'" icon="pi pi-plus-circle">
                 <form @submit.prevent="showConfirmModal" class="p-3 space-y-4 flex-grow-1">
                   <div class="mb-3">
@@ -112,14 +111,14 @@
 
           <!-- Danh Sách Sản Phẩm -->
           <div class="col-md-6">
-            <div class="bg-white border rounded-lg shadow-md p-4 h-100 d-flex flex-column">
+            <div>
               <FilterTableSection title="Sản Phẩm" icon="pi pi-box">
                 <div class="p-3 flex-grow-1">
                   <div class="row mb-3">
                     <div class="col-md-6">
-                      <label class="filter-label">Tìm kiếm theo tên, mã...</label>
+                      <label class="filter-label">Tìm kiếm</label>
                       <div class="search-input-wrapper">
-                        <i class="pi pi-search search-icon"></i>
+                        <i class="bi bi-search search-icon input"></i>
                         <input
                             v-model="searchKeyword"
                             type="text"
@@ -149,7 +148,7 @@
                     </div>
                   </div>
 
-                  <div class="table-responsive flex-grow-1" style="overflow-y: auto;">
+                  <div class="flex-grow-1" style="overflow-y: auto;">
                     <DataTable
                         :headers="productHeaders"
                         :data="dspList"
@@ -189,7 +188,7 @@
         </div>
 
         <!-- Chi Tiết Sản Phẩm -->
-        <div class="card bg-white border rounded-lg shadow-md p-6 mt-6">
+        <div>
           <FilterTableSection title="Chi Tiết Sản Phẩm" icon="pi pi-list">
             <div class="p-3">
               <div class="row mb-3">
@@ -243,7 +242,7 @@
                 <i class="pi pi-inbox fs-1"></i>
                 <p class="mt-2">{{ isEditMode ? 'Không có dữ liệu chi tiết đợt giảm giá' : 'Không có dữ liệu' }}</p>
               </div>
-              <div v-else class="table-responsive flex-grow-1" style="overflow-y: auto;">
+              <div v-else class="flex-grow-1" style="overflow-y: auto;">
                 <DataTable
                     :headers="detailHeaders"
                     :data="filteredCTSPList"
@@ -288,7 +287,6 @@
         </div>
       </div>
     </div>
-  </div>
 </template>
 
 <script setup>
@@ -508,6 +506,12 @@ onMounted(() => {
   if (isEditMode.value) {
     originalMa.value = dotGiamGia.value.ma;
   }
+  // Đặt giá trị mặc định cho các bộ lọc là "Tất cả"
+  selectedHeDieuHanh.value = '';
+  selectedNhaSanXuat.value = '';
+  selectedDongSanPham.value = '';
+  selectedBoNhoTrong.value = '';
+  selectedMauSac.value = '';
 });
 </script>
 
@@ -525,12 +529,14 @@ onMounted(() => {
 }
 
 .form-control.input {
-  padding: 0.5rem 1rem;
+  padding-left: 2.5rem;
   border: 2px solid rgba(52, 211, 153, 0.1);
   border-radius: 8px;
   transition: all 0.2s ease;
   font-size: 0.9rem;
-  background: #fff;
+  background: #f8f9fa;
+  flex: 1;
+  min-width: 0;
 }
 
 .form-control.input:focus {
@@ -557,7 +563,6 @@ onMounted(() => {
   border-radius: 8px;
   transition: all 0.2s ease;
   font-size: 0.9rem;
-  background: #fff;
 }
 
 .search-input:focus {
@@ -582,7 +587,7 @@ onMounted(() => {
 }
 
 .btn-action:disabled {
-  background: #a3e4d7;
+  background: #6c757d;
   cursor: not-allowed;
 }
 
@@ -605,7 +610,7 @@ onMounted(() => {
 .btn-danger {
   background: #dc3545;
   border: none;
-  padding: 0.4rem 0.8rem;
+  padding: 0.3rem 0.8rem;
   font-size: 0.85rem;
   border-radius: 6px;
   transition: all 0.2s ease;
@@ -619,7 +624,7 @@ onMounted(() => {
 }
 
 .btn-danger:disabled {
-  background: #e57373;
+  background: #6c757d;
   cursor: not-allowed;
 }
 
@@ -636,10 +641,5 @@ onMounted(() => {
 
 .text-muted {
   color: #6c757d !important;
-}
-
-/* Định nghĩa chiều cao cố định cho bảng */
-.table-responsive {
-  border: 1px solid #dee2e6; /* Thêm viền để phân biệt */
 }
 </style>

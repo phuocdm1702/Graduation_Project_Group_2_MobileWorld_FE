@@ -1,5 +1,5 @@
 <template>
-  <div class="container-fluid py-4 customer-form">
+  <div class="container-fluid py-4">
     <HeaderCard
       :title="isEditMode ? 'Cập Nhật Khách Hàng' : 'Thêm Khách Hàng'"
       badgeText="Hệ Thống POS"

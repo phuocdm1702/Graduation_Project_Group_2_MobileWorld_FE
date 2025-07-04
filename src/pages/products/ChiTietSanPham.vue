@@ -1,6 +1,6 @@
 <!-- ChiTietSanPham.vue -->
 <template>
-  <div class="container-fluid py-4 product-detail">
+  <div class="container-fluid py-4">
     <!-- Header -->
     <HeaderCard title="Chi Tiết Sản Phẩm" badgeText="Hệ Thống POS" badgeClass="gradient-custom-teal"
       :backgroundOpacity="0.95" />
@@ -1204,11 +1204,6 @@ export default {
 .product-name {
   font-weight: 600;
   color: #1f3a44;
-}
-
-.product-detail {
-  font-size: 0.875rem;
-  color: #6c757d;
 }
 
 .product-details {

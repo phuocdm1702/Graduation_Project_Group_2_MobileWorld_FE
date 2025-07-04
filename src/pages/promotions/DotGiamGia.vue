@@ -1,5 +1,5 @@
 <template>
-  <div class="container-fluid py-4 sale-management">
+  <div class="container-fluid py-4">
     <HeaderCard title="Quản Lý Đợt Giảm Giá" badgeText="Hệ Thống POS" badgeClass="gradient-custom-teal" :backgroundOpacity="0.95" />
 
     <!-- Filter Section -->
@@ -145,7 +145,6 @@
     <!-- Table Section -->
     <FilterTableSection title="Danh Sách Đợt Giảm Giá" icon="bi bi-table">
       <DataTable
-          :title="'Danh Sách Đợt Giảm Giá'"
           :headers="headers"
           :data="dataTable"
           :page-size-options="[5, 10, 15, 20]"
@@ -170,7 +169,6 @@
         </template>
         <template #trangThaiFormatted="{ item }">
           <span class="status-badge" :class="getStatusBadgeClass(item.trangThaiFormatted)">
-            <i :class="getStatusIcon(item.trangThaiFormatted)" class="me-1"></i>
             {{ item.trangThaiFormatted }}
           </span>
         </template>
@@ -181,12 +179,14 @@
           {{ item.ngayKetThuc }}
         </template>
         <template #actions="{ item }">
-          <div class="action-buttons-cell d-flex gap-2">
-            <button class="btn btn-success btn-sm btn-table" @click="viewUpdate(item)" title="Chỉnh sửa">
+          <div class="action-buttons-cell d-flex justify-content-center gap-2">
+            <button class="btn btn-sm btn-table" 
+            @click="viewUpdate(item)" 
+            title="Chỉnh sửa">
               <i class="bi bi-pencil-fill"></i>
             </button>
             <button
-                class="btn btn-danger btn-sm btn-table"
+                class="btn btn-sm btn-table"
                 @click="showDeleteConfirm(item.id)"
                 title="Xóa"
             >
@@ -390,11 +390,6 @@ watch([searchQuery, filterType, filterStatus, startDate, endDate, saleValue, min
 </script>
 
 <style scoped>
-.sale-management {
-  min-height: 100vh;
-  padding: 1rem;
-}
-
 .filter-label {
   display: block;
   font-weight: 600;
@@ -495,31 +490,36 @@ watch([searchQuery, filterType, filterStatus, startDate, endDate, saleValue, min
   box-shadow: 0 0 15px rgba(52, 211, 153, 0.3);
 }
 
-.badge {
-  display: inline-block;
-  padding: 0.25rem 0.75rem;
+.btn-table {
+  color: #1f3a44;
+  border: none;
+}
+
+.badge, .status-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.35rem 0.75rem;
   border-radius: 12px;
-  font-size: 0.875rem;
+  font-size: 0.85rem;
   font-weight: 500;
+  min-width: 100px;
+  text-align: center;
+  white-space: nowrap;
 }
 
 .badge-cash {
-  background: #34d399;
-  color: white;
+  border: 1px solid #34d399; /* Viền cho Tiền mặt */
+  padding: .5rem 1rem;
+  color: #34d399;
+  background: transparent;
 }
 
 .badge-percent {
-  background: #a3e4db;
-  color: #1f3a44;
-}
-
-.status-badge {
-  display: inline-flex;
-  align-items: center;
-  padding: 0.25rem 0.75rem;
-  border-radius: 12px;
-  font-size: 0.875rem;
-  font-weight: 500;
+  border: 1px solid #059669; /* Viền cho Phần trăm */
+  padding: .45rem 1rem;
+  color: #059669;
+  background: transparent;
 }
 
 .badge-active {
@@ -528,7 +528,7 @@ watch([searchQuery, filterType, filterStatus, startDate, endDate, saleValue, min
 }
 
 .badge-pending {
-  background: #17a2b8;
+  background: #f59e0b;
   color: white;
 }
 
@@ -604,5 +604,12 @@ watch([searchQuery, filterType, filterStatus, startDate, endDate, saleValue, min
   margin-top: 0.5rem;
   font-size: 0.875rem;
   color: #1f3a44;
+}
+
+.action-buttons-cell {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 </style>

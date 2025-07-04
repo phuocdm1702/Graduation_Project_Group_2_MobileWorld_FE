@@ -1,6 +1,6 @@
 <!-- EditChiTietSanPham.vue -->
 <template>
-  <div class="container-fluid py-4 product-detail-management">
+  <div class="container-fluid py-4">
     <!-- Header -->
     <HeaderCard title="Chỉnh Sửa Chi Tiết Sản Phẩm" badgeText="Hệ Thống POS" badgeClass="gradient-custom-teal"
       :backgroundOpacity="0.95" />
