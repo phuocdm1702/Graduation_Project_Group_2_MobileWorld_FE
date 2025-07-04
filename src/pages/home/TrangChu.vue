@@ -1,5 +1,5 @@
 <template>
-  <div class="dashboard-container">
+  <div class="container-fluid py-4">
     <!-- Header Welcome Section -->
     <div class="row mb-4">
       <div class="col-12">
@@ -200,10 +200,6 @@ export default {
 }
 </script>
 <style scoped>
-.dashboard-container {
-  padding: 20px;
-  min-height: 100vh;
-}
 
 .glass-card {
   background: rgba(255, 255, 255, 0.9);
