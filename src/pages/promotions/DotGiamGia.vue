@@ -149,8 +149,8 @@
           :data="dataTable"
           :page-size-options="[5, 10, 15, 20]"
       >
-        <template #stt="{ index }">
-          {{ ((Number(currentPage.value) || 0) * (Number(pageSize.value) || 10)) + index + 1 }}
+        <template #stt="{ globalIndex }">
+          {{ globalIndex + 1 }}
         </template>
         <template #ma="{ item }">
           {{ item.ma }}
@@ -180,8 +180,8 @@
         </template>
         <template #actions="{ item }">
           <div class="action-buttons-cell d-flex justify-content-center gap-2">
-            <button class="btn btn-sm btn-table" 
-            @click="viewUpdate(item)" 
+            <button class="btn btn-sm btn-table"
+            @click="viewUpdate(item)"
             title="Chỉnh sửa">
               <i class="bi bi-pencil-fill"></i>
             </button>
