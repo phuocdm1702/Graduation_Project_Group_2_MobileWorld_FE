@@ -1,5 +1,4 @@
-// File: HoaDonChiTiet.js
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { useHoaDonStore } from '@/store/modules/orders/hoaDon';
 import HeaderCard from '@/components/common/HeaderCard.vue';
@@ -25,12 +24,7 @@ export default {
     const products = ref([]);
     const payments = ref([]);
     const history = ref([]);
-    const timelineStatuses = ref([
-      { title: 'Chờ xác nhận', time: 'Đang chờ', icon: 'bi bi-hourglass-split', completed: false, current: false },
-      { title: 'Chờ giao hàng', time: 'Đang chờ', icon: 'bi bi-box-seam', completed: false, current: false },
-      { title: 'Đang giao', time: 'Đang chờ', icon: 'bi bi-truck', completed: false, current: false },
-      { title: 'Hoàn thành', time: 'Đang chờ', icon: 'bi bi-check-circle', completed: false, current: false }, // Mặc định là Hoàn thành
-    ]);
+    const timelineStatuses = ref([]);
     const totalPrice = computed(() =>
       products.value.reduce((sum, product) => sum + product.price * (product.quantity || 1), 0)
     );
@@ -78,6 +72,77 @@ export default {
       { label: 'Ghi chú:', value: invoice.value.ghiChu || 'Không có', icon: 'bi bi-sticky', key: 'ghiChu' },
     ]);
 
+    // Methods
+    const updateTimelineStatuses = () => {
+      if (invoice.value.loaiDon === 'trực tiếp') {
+        timelineStatuses.value = [
+          { 
+            title: 'Hoàn thành', 
+            time: invoice.value.ngayTao || 'Đang chờ', 
+            icon: 'bi bi-check-circle', 
+            completed: true, 
+            current: true 
+          }
+        ];
+      } else {
+        const status = invoice.value.trangThai;
+        // Update timeline for "Đã hủy" case
+        if (status === 'Đã hủy') {
+          timelineStatuses.value[3] = {
+            title: 'Đã hủy',
+            time: invoice.value.ngayTao || 'Đang chờ',
+            icon: 'bi bi-x-circle',
+            completed: false,
+            current: true
+          };
+        } else {
+          timelineStatuses.value[3] = {
+            title: 'Hoàn thành',
+            time: invoice.value.ngayTao || 'Đang chờ',
+            icon: 'bi bi-check-circle',
+            completed: false,
+            current: false
+          };
+        }
+
+        // Update completed and current status
+        timelineStatuses.value.forEach((item, index) => {
+          item.completed = false;
+          item.current = false;
+          item.time = invoice.value.ngayTao || 'Đang chờ';
+          if (item.title === status) {
+            item.current = true;
+            item.completed = true;
+          } else if (status !== 'Đã hủy' && index < timelineStatuses.value.findIndex(s => s.title === status)) {
+            item.completed = true;
+          }
+        });
+      }
+    };
+
+    // Watch invoice.loaiDon to update timelineStatuses reactively
+    watch(() => invoice.value.loaiDon, (newLoaiDon) => {
+      if (newLoaiDon === 'trực tiếp') {
+        timelineStatuses.value = [
+          { 
+            title: 'Hoàn thành', 
+            time: invoice.value.ngayTao || 'Đang chờ', 
+            icon: 'bi bi-check-circle', 
+            completed: true, 
+            current: true 
+          }
+        ];
+      } else {
+        timelineStatuses.value = [
+          { title: 'Chờ xác nhận', time: 'Đang chờ', icon: 'bi bi-hourglass-split', completed: false, current: false },
+          { title: 'Chờ giao hàng', time: 'Đang chờ', icon: 'bi bi-box-seam', completed: false, current: false },
+          { title: 'Đang giao', time: 'Đang chờ', icon: 'bi bi-truck', completed: false, current: false },
+          { title: 'Hoàn thành', time: 'Đang chờ', icon: 'bi bi-check-circle', completed: false, current: false },
+        ];
+        updateTimelineStatuses();
+      }
+    }, { immediate: true });
+
     // Fetch invoice detail on mount
     onMounted(async () => {
       if (invoiceId.value) {
@@ -87,10 +152,8 @@ export default {
           products.value = hoaDonStore.getInvoiceDetail.products;
           payments.value = hoaDonStore.getInvoiceDetail.payments;
           history.value = hoaDonStore.getInvoiceDetail.history;
-          discount.value = totalPrice.value - invoice.value.tongTienSauGiam; 
-          console.log('Invoice status:', invoice.value.trangThai);
-          updateTimelineStatuses();
-          console.log('Timeline statuses:', timelineStatuses.value);
+          discount.value = totalPrice.value - invoice.value.tongTienSauGiam;
+          // TimelineStatuses will be updated by the watch above
         }
         if (hoaDonStore.getError) {
           toastNotification.value.addToast({
@@ -102,47 +165,6 @@ export default {
       }
     });
 
-    // Update timeline statuses based on invoice status
-    const updateTimelineStatuses = () => {
-      const status = invoice.value.trangThai;
-      console.log('Updating timeline with status:', status);
-
-      // Nếu trạng thái là "Đã hủy", thay trạng thái thứ 4 thành "Đã hủy"
-      if (status === 'Đã hủy') {
-        timelineStatuses.value[3] = {
-          title: 'Đã hủy',
-          time: invoice.value.ngayTao || 'Đang chờ',
-          icon: 'bi bi-x-circle',
-          completed: false,
-          current: false
-        };
-      } else {
-        // Nếu không phải "Đã hủy", đảm bảo trạng thái thứ 4 là "Hoàn thành"
-        timelineStatuses.value[3] = {
-          title: 'Hoàn thành',
-          time: invoice.value.ngayTao || 'Đang chờ',
-          icon: 'bi bi-check-circle',
-          completed: false,
-          current: false
-        };
-      }
-
-      // Cập nhật trạng thái completed và current
-      timelineStatuses.value.forEach((item, index) => {
-        item.completed = false;
-        item.current = false;
-        item.time = invoice.value.ngayTao || 'Đang chờ';
-        if (item.title === status) {
-          item.current = true;
-          item.completed = true;
-        } else if (status !== 'Đã hủy' && index < timelineStatuses.value.findIndex(s => s.title === status)) {
-          item.completed = true;
-        }
-      });
-
-      console.log('Updated timelineStatuses:', timelineStatuses.value);
-    };
-
     // Methods
     const formatPrice = (price) => {
       return new Intl.NumberFormat('vi-VN', {
@@ -152,20 +174,20 @@ export default {
     };
 
     const truncateIMEI = (imei) => {
-      return imei.length > 10 ? `${ imei.slice(0, 10) }...` : imei;
+      return imei.length > 10 ? `${imei.slice(0, 10)}...` : imei;
     };
 
     const getTypeBadgeClass = (type) => {
       return {
         'Online': 'badge-info',
-        'Tại quầy': 'badge-info',
+        'trực tiếp': 'badge-info',
       }[type] || 'badge-secondary';
     };
 
     const getTypeIcon = (type) => {
       return {
         'Online': 'bi bi-globe',
-        'Tại quầy': 'bi bi-shop',
+        'trực tiếp': 'bi bi-shop',
       }[type] || 'bi bi-receipt';
     };
 
@@ -247,7 +269,7 @@ export default {
         selectedProduct.value.imei = currentIMEIs.join(', ');
         toastNotification.value.addToast({
           type: 'success',
-          message: `Đã xóa IMEI ${ imei } `,
+          message: `Đã xóa IMEI ${imei}`,
           duration: 3000,
         });
       }
@@ -270,7 +292,7 @@ export default {
         });
         toastNotification.value.addToast({
           type: 'success',
-          message: `Đã thêm sản phẩm ${ newProduct.value.name } `,
+          message: `Đã thêm sản phẩm ${newProduct.value.name}`,
           duration: 3000,
         });
         closeAddProductModal();
@@ -293,12 +315,26 @@ export default {
     };
 
     const saveUpdateChanges = () => {
+      // Add to history if status changed
+      if (history.value[history.value.length - 1]?.action !== `Cập nhật trạng thái: ${invoice.value.trangThai}`) {
+        history.value.push({
+          id: history.value.length + 1,
+          action: `Cập nhật trạng thái: ${invoice.value.trangThai}`,
+          employee: 'Hệ thống',
+          timestamp: new Date().toLocaleString('vi-VN'),
+          status: 'completed'
+        });
+      }
+      
+      // Update timeline
+      updateTimelineStatuses();
+      
       toastNotification.value.addToast({
         type: 'success',
-        message: 'Đã cập nhật thông tin',
+        message: 'Đã cập nhật thông tin hóa đơn thành công',
         duration: 3000,
       });
-      updateTimelineStatuses(); // Cập nhật timeline sau khi lưu
+      
       closeUpdateModal();
     };
 
@@ -323,7 +359,7 @@ export default {
 
     const removeProduct = (item) => {
       notificationType.value = 'confirm';
-      notificationMessage.value = `Bạn có chắc chắn muốn xóa sản phẩm ${ item.name }?`;
+      notificationMessage.value = `Bạn có chắc chắn muốn xóa sản phẩm ${item.name}?`;
       notificationOnConfirm.value = () => {
         isNotificationLoading.value = true;
         setTimeout(() => {
@@ -331,7 +367,7 @@ export default {
           isNotificationLoading.value = false;
           toastNotification.value.addToast({
             type: 'success',
-            message: `Đã xóa sản phẩm ${ item.name } `,
+            message: `Đã xóa sản phẩm ${item.name}`,
             duration: 3000,
           });
           resetNotification();
@@ -349,6 +385,54 @@ export default {
         message: result.message,
         duration: 3000,
       });
+    };
+
+    const changeStatus = (status) => {
+      if (invoice.value.loaiDon === 'trực tiếp') {
+        toastNotification.value.addToast({
+          type: 'error',
+          message: 'Không thể thay đổi trạng thái cho đơn trực tiếp',
+          duration: 3000,
+        });
+        return;
+      }
+      if (invoice.value.trangThai === 'Hoàn thành' || invoice.value.trangThai === 'Đã hủy') {
+        toastNotification.value.addToast({
+          type: 'error',
+          message: 'Không thể thay đổi trạng thái từ trạng thái hiện tại',
+          duration: 3000,
+        });
+        return;
+      }
+
+      notificationType.value = 'confirm';
+      notificationMessage.value = `Bạn có chắc chắn muốn thay đổi trạng thái thành "${status}"?`;
+      notificationOnConfirm.value = () => {
+        isNotificationLoading.value = true;
+        setTimeout(() => {
+          invoice.value.trangThai = status;
+          updateTimelineStatuses();
+          history.value.push({
+            id: history.value.length + 1,
+            action: `Cập nhật trạng thái: ${status}`,
+            employee: 'Hệ thống',
+            timestamp: new Date().toLocaleString('vi-VN'),
+            status: 'completed'
+          });
+          toastNotification.value.addToast({
+            type: 'success',
+            message: `Cập nhật trạng thái thành công: ${status}`,
+            duration: 3000,
+          });
+          isNotificationLoading.value = false;
+          resetNotification();
+        }, 500);
+      };
+      notificationOnCancel.value = () => {
+        resetNotification();
+      };
+      isNotificationLoading.value = false;
+      notificationModal.value.openModal();
     };
 
     const resetNotification = () => {
@@ -410,6 +494,8 @@ export default {
       removeProduct,
       printInvoice,
       resetNotification,
+      updateTimelineStatuses,
+      changeStatus
     };
   },
 };
