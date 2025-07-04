@@ -283,7 +283,7 @@
             <table class="table table-hover">
               <thead>
                 <tr>
-                  <th scope="col" style="width: 5%;"></th>
+                  <th scope="col" style="width: 5%;">#</th>
                   <th scope="col" style="width: 5%;">STT</th>
                   <th scope="col" style="width: 15%;">Mã Sản Phẩm</th>
                   <th scope="col" style="width: 20%;">Tên Sản Phẩm</th>
@@ -428,7 +428,7 @@ export default {
     const selectedImeis = ref([]);
 
     const headers = ref([
-      { text: '', value: 'checkbox' },
+      { text: '#', value: 'checkbox' },
       { text: 'STT', value: 'stt' },
       { text: 'Mã Sản Phẩm', value: 'maSanPham' },
       { text: 'Tên Sản Phẩm', value: 'tenSanPham' },

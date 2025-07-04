@@ -22,7 +22,7 @@
           <!-- Form Đợt Giảm Giá -->
           <div class="col-md-6">
             <div>
-              <FilterTableSection :title="isEditMode ? 'Cập Nhật Đợt Giảm Giá' : 'Thông Tin Đợt Giảm Giá'" icon="pi pi-plus-circle">
+              <FilterTableSection :title="isEditMode ? 'Cập Nhật Đợt Giảm Giá' : 'Thông Tin Đợt Giảm Giá'" icon="bi bi-info-circle">
                 <form @submit.prevent="showConfirmModal" class="p-3 space-y-4 flex-grow-1">
                   <div class="mb-3">
                     <label class="filter-label">Mã đợt giảm giá</label>
@@ -112,7 +112,7 @@
           <!-- Danh Sách Sản Phẩm -->
           <div class="col-md-6">
             <div>
-              <FilterTableSection title="Sản Phẩm" icon="pi pi-box">
+              <FilterTableSection title="Danh Sách Sản Phẩm" icon="bi bi-table">
                 <div class="p-3 flex-grow-1">
                   <div class="row mb-3">
                     <div class="col-md-6">
@@ -189,7 +189,7 @@
 
         <!-- Chi Tiết Sản Phẩm -->
         <div>
-          <FilterTableSection title="Chi Tiết Sản Phẩm" icon="pi pi-list">
+          <FilterTableSection title="Danh Sách Chi Tiết Sản Phẩm" icon="bi bi-table">
             <div class="p-3">
               <div class="row mb-3">
                 <div class="col-md-4">
