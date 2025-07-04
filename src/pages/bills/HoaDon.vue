@@ -135,7 +135,7 @@
         <li class="nav-item">
           <button class="nav-link" :class="{ 'active': activeTab === 'in-store' }" @click="setActiveTab('in-store')">
             <i class="bi bi-shop me-2"></i>
-            Hóa đơn tại quầy
+            Hóa đơn trực tiếp
           </button>
         </li>
         <li class="nav-item">
@@ -740,6 +740,19 @@ export default {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+}
+
+/* (Tùy chọn) Nếu muốn giữ outline và điều chỉnh text color */
+.btn-outline-primary {
+  border-color: #16a34a !important; /* Giữ đường viền đồng bộ với background */
+  color: #16a34a !important; /* Đổi màu chữ thành trắng để nổi bật trên nền xanh */
+}
+
+/* (Tùy chọn) Hover effect */
+.btn-outline-primary:hover {
+  background: #16a34a !important; /* Màu xanh đậm hơn khi hover */
+  border-color: #16a34a !important;
+  color: #ffffff !important;
 }
 
 .badge-waiting {

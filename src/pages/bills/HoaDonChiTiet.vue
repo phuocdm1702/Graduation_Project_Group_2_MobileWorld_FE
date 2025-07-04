@@ -7,12 +7,12 @@
     <!-- Status Timeline -->
     <FilterTableSection title="Trạng Thái Hóa Đơn" icon="bi bi-clock-history">
       <div class="mx-4 my-5">
-        <div class="timeline-container">
+        <div class="timeline-container" :class="{ 'single-status': invoice.loaiDon === 'trực tiếp' }">
           <div v-for="(status, index) in timelineStatuses" :key="index" class="timeline-step" :class="{
             'completed': status.completed,
             'current': status.current,
             'canceled': status.title === 'Đã hủy'
-          }">
+          }" @click="changeStatus(status.title)">
             <div class="step-circle">
               <i :class="status.icon"></i>
             </div>
@@ -74,10 +74,10 @@
     <FilterTableSection title="Danh Sách Sản Phẩm" icon="bi bi-box-seam">
       <div class="section-body m-3">
         <div class="product-actions mb-3 d-flex justify-content-end gap-2">
-          <button class="btn btn-action" @click="showAddProductModal">
+          <button class="btn btn-action" @click="showAddProductModal" :disabled="isActionButtonsDisabled">
             Thêm Sản Phẩm
           </button>
-          <button class="btn btn-action" @click="showDivinationModal">
+          <button class="btn btn-action" @click="showDivinationModal" :disabled="isActionButtonsDisabled">
             Quét QR
           </button>
         </div>
@@ -141,7 +141,7 @@
         <!-- Lịch sử hóa đơn -->
         <FilterTableSection title="Lịch Sử Hóa Đơn" icon="bi bi-clock-history" class="filter-table-section">
           <div class="section-body m-3">
-            <div class="history-timeline">
+            <div class="history-timeline history-scrollable">
               <div v-for="item in history" :key="item.id" class="history-item"
                 :class="{ 'completed': item.status === 'completed' }">
                 <div class="history-dot"></div>
@@ -275,7 +275,7 @@
         <div class="modal-body imei-container">
           <div class="imei-input mb-3">
             <div class="input-group">
-              <input v-model="newIMEI" type="text" class="form-control" placeholder="Tìm kiếm hoặc thêm imel"
+              <input v-model="newIMEI" type="text" class="form-control" placeholder="Tìm kiếm hoặc thêm imei"
                 @keyup.enter="addIMEI" />
               <button class="btn btn-action" @click="addIMEI">
                 <i class="bi bi-plus-circle me-1"></i>
@@ -343,12 +343,12 @@
               <label class="form-label">Loại đơn</label>
               <select v-model="invoice.loaiDon" class="form-select">
                 <option value="Online">Online</option>
-                <option value="Tại quầy">Tại quầy</option>
+                <option value="trực tiếp">trực tiếp</option>
               </select>
             </div>
             <div class="form-group mb-3">
               <label class="form-label">Trạng thái</label>
-              <select v-model="invoice.trangThai" class="form-select">
+              <select v-model="invoice.trangThai" class="form-select" :disabled="invoice.loaiDon === 'trực tiếp'">
                 <option value="Chờ xác nhận">Chờ xác nhận</option>
                 <option value="Chờ giao hàng">Chờ giao hàng</option>
                 <option value="Đang giao">Đang giao</option>
@@ -425,16 +425,85 @@
 <script>
 import HoaDonChiTiet from './js/HoaDonChiTiet';
 
-export default HoaDonChiTiet;
+export default {
+  ...HoaDonChiTiet,
+  computed: {
+    isActionButtonsDisabled() {
+      return ['Đang giao', 'Hoàn thành', 'Đã hủy'].includes(this.invoice.trangThai);
+    }
+  }
+};
 </script>
+
 <style scoped>
-/* Animations */
+/* Existing styles with added scroll for history timeline */
+.history-timeline.history-scrollable {
+  max-height: 300px;
+  overflow-y: auto;
+  padding-left: 1.5rem;
+}
+
+.history-timeline.history-scrollable::-webkit-scrollbar {
+  width: 6px;
+}
+
+.history-timeline.history-scrollable::-webkit-scrollbar-track {
+  background: rgba(52, 211, 153, 0.1);
+  border-radius: 3px;
+}
+
+.history-timeline.history-scrollable::-webkit-scrollbar-thumb {
+  background: rgba(52, 211, 153, 0.5);
+  border-radius: 3px;
+}
+
+/* Previous scroll styles for products list */
+.products-list {
+  max-height: 500px;
+  overflow-y: auto;
+}
+
+.products-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.products-list::-webkit-scrollbar-track {
+  background: rgba(52, 211, 153, 0.1);
+  border-radius: 3px;
+}
+
+.products-list::-webkit-scrollbar-thumb {
+  background: rgba(52, 211, 153, 0.5);
+  border-radius: 3px;
+}
+
+/* Clickable cursor for timeline steps */
+.timeline-step {
+  cursor: pointer;
+}
+
+/* Disabled button styles */
+.btn-action:disabled {
+  background: #6c757d;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* Single status timeline styling */
+.timeline-container.single-status {
+  justify-content: center;
+}
+
+.timeline-container.single-status::before {
+  display: none;
+}
+
+/* Existing styles... */
 @keyframes fadeInUp {
   from {
     opacity: 0;
     transform: translateY(15px);
   }
-
   to {
     opacity: 1;
     transform: translateY(0);
@@ -446,7 +515,6 @@ export default HoaDonChiTiet;
     opacity: 0;
     transform: scale(0.97);
   }
-
   to {
     opacity: 1;
     transform: scale(1);
@@ -454,12 +522,9 @@ export default HoaDonChiTiet;
 }
 
 @keyframes gentleGlow {
-
-  0%,
-  100% {
+  0%, 100% {
     box-shadow: 0 0 5px rgba(52, 211, 153, 0.3);
   }
-
   50% {
     box-shadow: 0 0 12px rgba(52, 211, 153, 0.5);
   }
@@ -470,30 +535,25 @@ export default HoaDonChiTiet;
     transform: scale(1);
     box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.7);
   }
-
   70% {
     transform: scale(1.05);
     box-shadow: 0 0 0 10px rgba(220, 53, 69, 0);
   }
-
   100% {
     transform: scale(1);
     box-shadow: 0 0 0 0 rgba(220, 53, 69, 0);
   }
 }
 
-/* Gradient Definitions */
 .gradient-custom-teal {
   background: linear-gradient(135deg, #34d399, #16a34a);
   color: white;
 }
 
-/* Base Styles */
 .invoice-detail-management {
   min-height: 100vh;
 }
 
-/* Timeline Styles */
 .timeline-container {
   position: relative;
   display: flex;
@@ -548,21 +608,15 @@ export default HoaDonChiTiet;
   transform: scale(1.1);
 }
 
-/* Thêm vào cuối phần Timeline Styles */
 .timeline-step.canceled .step-circle {
   background: #dc3545 !important;
-  /* Màu đỏ cho trạng thái Đã hủy */
   color: #ffffff !important;
-  /* Màu trắng cho icon */
   transform: scale(1.1);
-  /* Phóng to nhẹ như current */
   animation: subtlePulse 2s infinite;
-  /* Hiệu ứng nhấp nháy */
 }
 
 .timeline-step.canceled .step-circle i {
   color: #ffffff !important;
-  /* Đảm bảo icon trắng trên nền đỏ */
 }
 
 .timeline-step .step-circle {
@@ -570,7 +624,6 @@ export default HoaDonChiTiet;
   color: #e9ecef !important;
   border: 2px solid #e5e7eb;
 }
-
 
 .step-content {
   padding: 0 0.5rem;
@@ -589,7 +642,6 @@ export default HoaDonChiTiet;
   margin-top: 0.25rem;
 }
 
-/* Glass Effects */
 .glass-card {
   background: rgba(255, 255, 255, 0.95);
   border: 1px solid rgba(52, 211, 153, 0.1);
@@ -613,7 +665,6 @@ export default HoaDonChiTiet;
   color: #1f3a44;
 }
 
-/* Info Rows */
 .row.g-4.mb-4 {
   display: flex;
   flex-wrap: wrap;
@@ -666,16 +717,8 @@ export default HoaDonChiTiet;
   flex-direction: column;
 }
 
-/* Product List */
 .product-actions {
   padding: 0.5rem;
-}
-
-.products-list {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(auto, 1fr));
-  gap: 1.5rem;
-  padding: 1rem;
 }
 
 .product-card {
@@ -773,7 +816,6 @@ export default HoaDonChiTiet;
   background: rgba(248, 250, 252, 0.9);
 }
 
-/* History Timeline */
 .history-timeline {
   position: relative;
   padding-left: 1.5rem;
@@ -837,7 +879,6 @@ export default HoaDonChiTiet;
   font-weight: 500;
 }
 
-/* Summary Styles */
 .summary-container {
   padding: 1.5rem;
   display: flex;
@@ -997,7 +1038,6 @@ export default HoaDonChiTiet;
   color: #16a34a;
 }
 
-/* Buttons */
 .btn-reset,
 .btn-action,
 .btn-view,
@@ -1046,7 +1086,6 @@ export default HoaDonChiTiet;
   box-shadow: 0 0 10px rgba(220, 53, 69, 0.3);
 }
 
-/* Badge Styles */
 .type-badge,
 .status-badge {
   padding: 0.25rem 0.75rem;
@@ -1102,7 +1141,6 @@ export default HoaDonChiTiet;
   font-size: 0.875rem;
 }
 
-/* Modal Styles */
 .modal-backdrop-blur {
   position: fixed;
   top: 0;
@@ -1229,7 +1267,6 @@ export default HoaDonChiTiet;
   margin-bottom: 0.5rem;
 }
 
-/* Form Styles */
 .form-control,
 .form-select {
   border: 1px solid rgba(52, 211, 153, 0.2);
@@ -1272,7 +1309,6 @@ export default HoaDonChiTiet;
   background: rgba(52, 211, 153, 0.05);
 }
 
-/* Flex Layout */
 .d-flex.flex-wrap.g-4.mb-4 {
   display: flex;
   flex-wrap: wrap;
@@ -1292,14 +1328,11 @@ export default HoaDonChiTiet;
   flex-direction: column;
 }
 
-/* Responsive Design */
 @media (max-width: 992px) {
-
   .flex-child.flex-history,
   .flex-child.flex-summary {
     flex: 1 1 100%;
   }
-
   .col-lg-6 {
     flex: 1 1 100%;
     max-width: 100%;
@@ -1311,7 +1344,6 @@ export default HoaDonChiTiet;
     flex-direction: column;
     gap: 2rem;
   }
-
   .timeline-container::before {
     top: 0;
     left: 50%;
@@ -1320,83 +1352,66 @@ export default HoaDonChiTiet;
     height: 100%;
     transform: translateX(-50%);
   }
-
   .timeline-step {
     text-align: left;
     margin: 0;
   }
-
   .step-circle {
     margin: 0 0 0.5rem 0;
   }
-
   .step-content {
     padding-left: 1rem;
   }
-
   .info-row {
     flex-direction: column;
     align-items: flex-start;
     gap: 0.25rem;
   }
-
   .info-value {
     text-align: left;
   }
-
   .products-list {
     grid-template-columns: 1fr;
   }
-
   .product-card-content {
     flex-direction: column;
     align-items: flex-start;
   }
-
   .product-image {
     width: 100%;
     height: 150px;
   }
-
   .product-card-actions {
     justify-content: flex-start;
   }
-
   .summary-header {
     flex-direction: column;
     align-items: flex-start;
   }
-
   .detail-item {
     flex-direction: column;
     align-items: flex-start;
     gap: 0.5rem;
   }
-
   .detail-value {
     text-align: left;
   }
-
   .history-timeline {
     padding-left: 1rem;
   }
-
   .history-dot {
     width: 10px;
     height: 10px;
     left: -5px;
   }
-
   .history-content {
     padding-left: 0.75rem;
   }
-
   .glass-modal {
     width: 90%;
   }
 }
 
-/* Reduced Motion */
 @media (prefers-reduced-motion: reduce) {
   * {
     animation-duration: 0.01ms !important;
