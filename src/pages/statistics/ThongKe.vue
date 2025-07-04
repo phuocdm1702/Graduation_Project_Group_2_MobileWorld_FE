@@ -1,5 +1,5 @@
 <template>
-  <div class="container-fluid py-4 statistics-management">
+  <div class="container-fluid py-4">
     <!-- Breadcrumb -->
     <!-- Header Section -->
     <HeaderCard
@@ -170,7 +170,7 @@
       <div class="col-lg-4 col-md-12">
         <FilterTableSection title="Phân Bố Trạng Thái Đơn Hàng" icon="bi bi-pie-chart">
           <div class="chart-container p-4">
-            <div class="d-flex justify-content-center mb-4">
+            <div class="d-flex justify-content-center gap-1 mb-4">
               <button
                   @click="chartFilterType = 'day'; fetchOrderStatusStats()"
                   :class="['btn', chartFilterType === 'day' ? 'btn-primary' : 'btn-outline-secondary']"
@@ -273,7 +273,7 @@
         </template>
         <template v-slot:imageUrl="{ item }">
             <span v-if="item.imageUrl && item.imageUrl.trim() !== ''">
-                <img :src="item.imageUrl" alt="Ảnh" class="w-10 h-10 object-cover rounded"/>
+                <img :src="item.imageUrl" alt="Ảnh"  class="product-image"/>
             </span>
           <span v-else>N/A</span>
         </template>
@@ -526,11 +526,6 @@ export default {
 
 .gradient-custom-teal {
   background: #34d399;
-}
-
-.statistics-management {
-  min-height: 100vh;
-  animation: fadeInUp 0.4s ease-out;
 }
 
 .glass-card {
@@ -828,6 +823,13 @@ export default {
   color: #6b7280;
 }
 
+.product-image {
+  width: 50px; /* Kích thước chiều rộng ảnh */
+  height: 50px; /* Kích thước chiều cao ảnh */
+  object-fit: cover; /* Đảm bảo ảnh không bị méo */
+  border-radius: 4px; /* Bo góc ảnh (tùy chọn) */
+}
+
 .row.align-items-stretch {
   display: flex;
   flex-wrap: wrap;
@@ -946,10 +948,6 @@ export default {
     background: white !important;
     box-shadow: none !important;
     border: 1px solid #ddd !important;
-  }
-
-  .statistics-management {
-    background: white !important;
   }
 
   .stat-card {

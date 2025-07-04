@@ -1,5 +1,5 @@
 <template>
-  <div class="py-4">
+  <div class="container-fluid py-4">
     <!-- Header -->
     <HeaderCard
       title="Quản Lý Bán Hàng"
