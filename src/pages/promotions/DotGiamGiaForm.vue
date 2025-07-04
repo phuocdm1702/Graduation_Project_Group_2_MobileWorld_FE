@@ -261,10 +261,10 @@
                   <template #index="{ index }">
                     {{ index + 1 }}
                   </template>
-                  <template #anh.duongDan="{ item }">
-                    <img v-if="item.anh.duongDan" :src="item.anh.duongDan" alt="Ảnh" class="w-10 h-10 object-cover" />
-                    <span v-else>N/A</span>
-                  </template>
+<template #anh.duongDan="{ item }">
+  <img v-if="item.anh.duongDan" :src="item.anh.duongDan" alt="Ảnh" class="product-image"/>
+  <span v-else>N/A</span>
+</template>
                   <template #soLuongTrongDotGiamGiaKhac="{ item }">
                     <span>{{ item.soLuongTrongDotGiamGiaKhac || '0' }}</span>
                   </template>
@@ -641,5 +641,12 @@ onMounted(() => {
 
 .text-muted {
   color: #6c757d !important;
+}
+
+.product-image {
+  width: 50px; /* Kích thước chiều rộng ảnh */
+  height: 50px; /* Kích thước chiều cao ảnh */
+  object-fit: cover; /* Đảm bảo ảnh không bị méo */
+  border-radius: 4px; /* Bo góc ảnh (tùy chọn) */
 }
 </style>
