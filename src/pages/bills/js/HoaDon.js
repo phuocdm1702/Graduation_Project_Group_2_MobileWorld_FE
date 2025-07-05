@@ -64,14 +64,7 @@ export const invoiceManagementLogic = {
 
     // Headers cho DataTable
     const headers = ref([
-      {
-        value: 'index',
-        text: '#',
-        formatter: (_, __, index) => {
-          const startIndex = (currentPage.value - 1) * itemsPerPage.value;
-          return startIndex + index + 1;
-        },
-      },
+      { text: "STT", value: "stt" },
       { value: 'ma', text: 'Mã' },
       {
         value: 'maNhanVien',

@@ -224,8 +224,8 @@
         <div v-if="viewMode === 'table'">
           <DataTable title="" :headers="headers" :data="filteredInvoices" :pageSizeOptions="[5, 10, 15, 20, 30, 40, 50]"
             :rowClass="getRowClass">
-            <template #index="{ index }">
-              {{ index + 1 }}
+            <template #stt="{ globalIndex }">
+              {{ globalIndex + 1 }}
             </template>
             <template #ma="{ item }">
               <div class="code-cell">
