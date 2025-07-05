@@ -744,13 +744,16 @@ export default {
 
 /* (Tùy chọn) Nếu muốn giữ outline và điều chỉnh text color */
 .btn-outline-primary {
-  border-color: #16a34a !important; /* Giữ đường viền đồng bộ với background */
-  color: #16a34a !important; /* Đổi màu chữ thành trắng để nổi bật trên nền xanh */
+  border-color: #16a34a !important;
+  /* Giữ đường viền đồng bộ với background */
+  color: #16a34a !important;
+  /* Đổi màu chữ thành trắng để nổi bật trên nền xanh */
 }
 
 /* (Tùy chọn) Hover effect */
 .btn-outline-primary:hover {
-  background: #16a34a !important; /* Màu xanh đậm hơn khi hover */
+  background: #16a34a !important;
+  /* Màu xanh đậm hơn khi hover */
   border-color: #16a34a !important;
   color: #ffffff !important;
 }
