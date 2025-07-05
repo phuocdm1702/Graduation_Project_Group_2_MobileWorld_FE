@@ -151,121 +151,108 @@
 
         <!-- Add Address Form -->
         <div
-  v-if="showAddAddress"
-  class="add-address-form animate__animated animate__slideInDown"
->
-  <div class="form-header">
-    <h3 class="form-title">Thêm địa chỉ mới</h3>
-    <button class="btn-close-form" @click="cancelAddAddress">
-      <i class="bi bi-x-lg"></i>
-    </button>
-  </div>
-
-  <div class="form-body">
-    <div class="row g-3">
-      <div class="col-12">
-        <label class="form-label"> Địa chỉ cụ thể </label>
-        <input
-          type="text"
-          class="form-control modern-input"
-          placeholder="Nhập số nhà, tên đường..."
-          v-model="newAddress.diaChiCuThe"
-        />
-      </div>
-
-      <div class="col-md-4">
-        <label class="form-label"> Tỉnh/Thành phố </label>
-        <select
-          class="form-select modern-select"
-          v-model="newAddress.thanhPho"
-          @change="fetchDistricts"
+          v-if="showAddAddress"
+          class="add-address-form animate__animated animate__slideInDown"
         >
-          <option value="" disabled>Chọn tỉnh/thành phố</option>
-          <option
-            v-for="province in provinces"
-            :key="province.code"
-            :value="province.name"
-          >
-            {{ province.name }}
-          </option>
-        </select>
-      </div>
+          <div class="form-header">
+            <h3 class="form-title">Thêm địa chỉ mới</h3>
+            <button class="btn-close-form" @click="cancelAddAddress">
+              <i class="bi bi-x-lg"></i>
+            </button>
+          </div>
 
-      <div class="col-md-4">
-        <label class="form-label"> Quận/Huyện </label>
-        <select
-          class="form-select modern-select"
-          v-model="newAddress.quan"
-          @change="fetchWards"
-        >
-          <option value="" disabled>Chọn quận/huyện</option>
-          <option
-            v-for="district in districts"
-            :key="district.code"
-            :value="district.name"
-          >
-            {{ district.name }}
-          </option>
-        </select>
-      </div>
+          <div class="form-body">
+            <div class="row g-3">
+              <div class="col-12">
+                <label class="form-label"> Địa chỉ cụ thể </label>
+                <input
+                  type="text"
+                  class="form-control modern-input"
+                  placeholder="Nhập số nhà, tên đường..."
+                  v-model="newAddress.diaChiCuThe"
+                />
+              </div>
 
-      <div class="col-md-4">
-        <label class="form-label"> Xã/Phường </label>
-        <select
-          class="form-select modern-select"
-          v-model="newAddress.phuong"
-        >
-          <option value="" disabled>Chọn xã/phường</option>
-          <option
-            v-for="ward in wards"
-            :key="ward.code"
-            :value="ward.name"
-          >
-            {{ ward.name }}
-          </option>
-        </select>
-      </div>
+              <div class="col-md-4">
+                <label class="form-label"> Tỉnh/Thành phố </label>
+                <select
+                  class="form-select modern-select"
+                  v-model="newAddress.thanhPho"
+                  @change="fetchDistricts"
+                >
+                  <option value="" disabled>Chọn tỉnh/thành phố</option>
+                  <option
+                    v-for="(province, index) in provinces"
+                    :key="index"
+                    :value="province.name"
+                  >
+                    {{ province.name }}
+                  </option>
+                </select>
+              </div>
 
-      <div class="col-12">
-        <div class="form-check-wrapper">
-          <input
-            class="form-check-input modern-checkbox"
-            type="checkbox"
-            id="defaultAddress"
-            v-model="newAddress.isDefault"
-          />
-          <label class="form-check-label" for="defaultAddress">
-            Đặt làm địa chỉ mặc định
-          </label>
+              <div class="col-md-4">
+                <label class="form-label"> Quận/Huyện </label>
+                <select
+                  class="form-select modern-select"
+                  v-model="newAddress.quan"
+                  @change="fetchWards"
+                >
+                  <option value="" disabled>Chọn quận/huyện</option>
+                  <option
+                    v-for="(district, index) in districts"
+                    :key="index"
+                    :value="district.name"
+                  >
+                    {{ district.name }}
+                  </option>
+                </select>
+              </div>
+
+              <div class="col-md-4">
+                <label class="form-label"> Xã/Phường </label>
+                <select
+                  class="form-select modern-select"
+                  v-model="newAddress.phuong"
+                >
+                  <option value="" disabled>Chọn xã/phường</option>
+                  <option
+                    v-for="(ward, index) in wards"
+                    :key="index"
+                    :value="ward.name"
+                  >
+                    {{ ward.name }}
+                  </option>
+                </select>
+              </div>
+
+              <div class="col-12">
+                <div class="form-check-wrapper">
+                  <input
+                    class="form-check-input modern-checkbox"
+                    type="checkbox"
+                    id="defaultAddress"
+                    v-model="newAddress.isDefault"
+                  />
+                  <label class="form-check-label" for="defaultAddress">
+                    Đặt làm địa chỉ mặc định
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button class="btn btn-save" @click="addAddress">
+              Lưu địa chỉ
+            </button>
+            <button class="btn btn-cancel" @click="cancelAddAddress">
+              Hủy bỏ
+            </button>
+          </div>
         </div>
-      </div>
-    </div>
-  </div>
 
-  <div class="form-actions">
-    <!-- Nút Lưu địa chỉ (thêm mới) -->
-    <button
-      v-if="!editingAddressIndex"
-      class="btn btn-save"
-      @click="addAddress"
-    >
-      Lưu địa chỉ
-    </button>
-    <!-- Nút Cập nhật (chỉ hiển thị khi chỉnh sửa) -->
-    <button
-      v-if="editingAddressIndex !== null"
-      class="btn btn-save"
-      @click="updateAddress"
-    >
-      Cập nhật
-    </button>
-    <button class="btn btn-cancel" @click="cancelAddAddress">
-      Hủy bỏ
-    </button>
-  </div>
-</div>
-
-        <!-- Address List -->
+        <!-- Address List (Horizontal Slider) -->
         <div class="address-list">
           <div v-if="addresses.length === 0" class="empty-state">
             <div class="empty-icon">
@@ -278,137 +265,176 @@
             </button>
           </div>
 
-          <div v-else class="address-grid">
-            <div
-              v-for="(address, index) in addresses"
-              :key="index"
-              class="address-card animate__animated animate__fadeInUp"
-              :style="{ animationDelay: `${index * 0.1}s` }"
+          <div v-else class="address-slider-wrapper">
+            <button
+              class="slider-nav slider-prev"
+              @click="scrollSlider(-1)"
+              :disabled="sliderPosition <= 0"
             >
-              <div class="card-header">
-                <div class="address-info">
-                  <h5 class="address-title">
-                    <i class="bi bi-geo-alt-fill me-2"></i>
-                    Địa chỉ {{ index + 1 }}
-                  </h5>
-                  <div class="address-badges">
-                    <span v-if="address.isDefault" class="badge badge-default">
-                      <i class="bi bi-star-fill me-1"></i>
-                      Mặc định
-                    </span>
+              <i class="bi bi-chevron-left"></i>
+            </button>
+            <div class="address-slider" ref="addressSlider">
+              <div
+                v-for="(address, index) in addresses"
+                :key="index"
+                class="address-card animate__animated animate__fadeInUp"
+                :style="{ animationDelay: `${index * 0.1}s` }"
+              >
+                <div class="card-header">
+                  <div class="address-info">
+                    <h5 class="address-title">
+                      <i class="bi bi-geo-alt-fill me-2"></i>
+                      Địa chỉ {{ index + 1 }}
+                    </h5>
+                    <div class="address-badges">
+                      <span v-if="address.isDefault" class="badge badge-default">
+                        <i class="bi bi-star-fill me-1"></i>
+                        Mặc định
+                      </span>
+                    </div>
+                  </div>
+                  <div class="card-actions">
+                    <button
+                      class="btn-action btn-edit"
+                      @click="editAddress(index)"
+                      title="Chỉnh sửa"
+                    >
+                      <i class="bi bi-pencil"></i>
+                    </button>
+                    <button
+                      class="btn-action btn-delete"
+                      @click="confirmDeleteAddress(index)"
+                      title="Xóa"
+                    >
+                      <i class="bi bi-trash"></i>
+                    </button>
                   </div>
                 </div>
-                <div class="card-actions">
-                  <button
-                    class="btn-action btn-edit"
-                    @click="editAddress(index)"
-                    title="Chỉnh sửa"
-                  >
-                    <i class="bi bi-pencil"></i>
-                  </button>
-                  <button
-                    class="btn-action btn-delete"
-                    @click="confirmDeleteAddress(index)"
-                    title="Xóa"
-                  >
-                    <i class="bi bi-trash"></i>
-                  </button>
-                </div>
-              </div>
 
-              <div class="card-body">
-                <div class="row g-3">
-                  <div class="col-12">
-                    <label class="form-label">
-                      <i class="bi bi-house-door me-2"></i>
-                      Địa chỉ cụ thể
-                    </label>
+                <div class="card-body">
+                  <div class="row g-3">
+                    <div class="col-12">
+                      <label class="form-label">
+                        <i class="bi bi-house-door me-2"></i>
+                        Địa chỉ cụ thể
+                      </label>
+                      <input
+                        v-if="address.isEditing"
+                        type="text"
+                        class="form-control modern-input"
+                        v-model="address.diaChiCuThe"
+                      />
+                      <p v-else class="form-value">{{ address.diaChiCuThe }}</p>
+                    </div>
+
+                    <div class="col-md-4">
+                      <label class="form-label">
+                        <i class="bi bi-building me-2"></i>
+                        Tỉnh/Thành phố
+                      </label>
+                      <select
+                        v-if="address.isEditing"
+                        class="form-select modern-select"
+                        v-model="address.thanhPho"
+                        @change="fetchDistrictsForEdit(index)"
+                      >
+                        <option value="" disabled>Chọn tỉnh/thành phố</option>
+                        <option
+                          v-for="(province, idx) in provinces"
+                          :key="idx"
+                          :value="province.name"
+                        >
+                          {{ province.name }}
+                        </option>
+                      </select>
+                      <p v-else class="form-value">{{ address.thanhPho }}</p>
+                    </div>
+
+                    <div class="col-md-4">
+                      <label class="form-label">
+                        <i class="bi bi-signpost me-2"></i>
+                        Quận/Huyện
+                      </label>
+                      <select
+                        v-if="address.isEditing"
+                        class="form-select modern-select"
+                        v-model="address.quan"
+                        @change="fetchWardsForEdit(index)"
+                      >
+                        <option value="" disabled>Chọn quận/huyện</option>
+                        <option
+                          v-for="(district, idx) in address.districts"
+                          :key="idx"
+                          :value="district.name"
+                        >
+                          {{ district.name }}
+                        </option>
+                      </select>
+                      <p v-else class="form-value">{{ address.quan }}</p>
+                    </div>
+
+                    <div class="col-md-4">
+                      <label class="form-label">
+                        <i class="bi bi-geo me-2"></i>
+                        Xã/Phường
+                      </label>
+                      <select
+                        v-if="address.isEditing"
+                        class="form-select modern-select"
+                        v-model="address.phuong"
+                      >
+                        <option value="" disabled>Chọn xã/phường</option>
+                        <option
+                          v-for="(ward, idx) in address.wards"
+                          :key="idx"
+                          :value="ward.name"
+                        >
+                          {{ ward.name }}
+                        </option>
+                      </select>
+                      <p v-else class="form-value">{{ address.phuong }}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="card-footer">
+                  <div class="form-check-wrapper">
                     <input
-                      type="text"
-                      class="form-control modern-input"
-                      v-model="address.diaChiCuThe"
+                      class="form-check-input modern-checkbox"
+                      type="checkbox"
+                      :id="`defaultAddr${index}`"
+                      v-model="address.isDefault"
+                      @change="setDefaultAddress(index)"
                     />
-                  </div>
-
-                  <div class="col-md-4">
-                    <label class="form-label">
-                      <i class="bi bi-building me-2"></i>
-                      Tỉnh/Thành phố
+                    <label class="form-check-label" :for="`defaultAddr${index}`">
+                      <i class="bi bi-star-fill me-2"></i>
+                      Địa chỉ mặc định
                     </label>
-                    <select
-                      class="form-select modern-select"
-                      v-model="address.thanhPho"
-                    >
-                      <option value="" disabled>Chọn tỉnh/thành phố</option>
-                      <option
-                        v-for="province in provinces"
-                        :key="province.code"
-                        :value="province.name"
-                      >
-                        {{ province.name }}
-                      </option>
-                    </select>
                   </div>
-
-                  <div class="col-md-4">
-                    <label class="form-label">
-                      <i class="bi bi-signpost me-2"></i>
-                      Quận/Huyện
-                    </label>
-                    <select
-                      class="form-select modern-select"
-                      v-model="address.quan"
+                  <div v-if="address.isEditing" class="edit-actions">
+                    <button
+                      class="btn btn-save"
+                      @click="saveEditedAddress(index)"
                     >
-                      <option value="" disabled>Chọn quận/huyện</option>
-                      <option
-                        v-for="district in districts"
-                        :key="district.code"
-                        :value="district.name"
-                      >
-                        {{ district.name }}
-                      </option>
-                    </select>
-                  </div>
-
-                  <div class="col-md-4">
-                    <label class="form-label">
-                      <i class="bi bi-geo me-2"></i>
-                      Xã/Phường
-                    </label>
-                    <select
-                      class="form-select modern-select"
-                      v-model="address.phuong"
+                      Lưu
+                    </button>
+                    <button
+                      class="btn btn-cancel"
+                      @click="cancelEditAddress(index)"
                     >
-                      <option value="" disabled>Chọn xã/phường</option>
-                      <option value="" disabled>Chọn xã/phường</option>
-                      <option
-                        v-for="ward in wards"
-                        :key="ward.code"
-                        :value="ward.name"
-                      >
-                        {{ ward.name }}
-                      </option>
-                    </select>
+                      Hủy
+                    </button>
                   </div>
-                </div>
-              </div>
-
-              <div class="card-footer">
-                <div class="form-check-wrapper">
-                  <input
-                    class="form-check-input modern-checkbox"
-                    type="checkbox"
-                    :id="`defaultAddr${index}`"
-                    v-model="address.isDefault"
-                    @change="setDefaultAddress(index)"
-                  />
-                  <label class="form-check-label" :for="`defaultAddr${index}`">
-                    <i class="bi bi-star-fill me-2"></i>
-                    Địa chỉ mặc định
-                  </label>
                 </div>
               </div>
             </div>
+            <button
+              class="slider-nav slider-next"
+              @click="scrollSlider(1)"
+              :disabled="sliderPosition >= maxSliderPosition"
+            >
+              <i class="bi bi-chevron-right"></i>
+            </button>
           </div>
         </div>
       </div>
@@ -460,6 +486,7 @@ const isScanning = ref(false);
 const customerImage = ref(null);
 const toastNotification = ref(null);
 const notificationModal = ref(null);
+const addressSlider = ref(null);
 
 const isEditMode = computed(() => !!route.params.id);
 
@@ -481,12 +508,17 @@ const newAddress = ref({
   isDefault: false,
 });
 const addresses = ref([]);
-const editingAddressIndex = ref(null); // Thêm biến để theo dõi địa chỉ đang chỉnh sửa
 const notificationType = ref("");
 const notificationMessage = ref("");
 const isNotificationLoading = ref(false);
 const notificationOnConfirm = ref(null);
 const notificationOnCancel = ref(null);
+
+// Slider state
+const sliderPosition = ref(0);
+const maxSliderPosition = computed(() =>
+  Math.max(0, addresses.value.length - 3)
+); // Show 3 cards at a time
 
 // Mock location data
 const provinces = ref([]);
@@ -561,6 +593,73 @@ const fetchWards = async () => {
   }
 };
 
+// Load districts for editing
+const fetchDistrictsForEdit = async (index) => {
+  const address = addresses.value[index];
+  address.districts = [];
+  address.wards = [];
+  address.quan = "";
+  address.phuong = "";
+
+  const selectedProvince = provinces.value.find(
+    (p) => p.name === address.thanhPho
+  );
+  if (selectedProvince) {
+    try {
+      const response = await axios.get(
+        `https://provinces.open-api.vn/api/p/${selectedProvince.code}?depth=2`
+      );
+      address.districts = response.data.districts;
+    } catch (error) {
+      console.error("Lỗi khi tải danh sách quận/huyện:", error);
+      toastNotification.value.addToast({
+        type: "error",
+        message: "Không thể tải danh sách quận/huyện!",
+      });
+    }
+  }
+};
+
+// Load wards for editing
+const fetchWardsForEdit = async (index) => {
+  const address = addresses.value[index];
+  address.wards = [];
+  address.phuong = "";
+
+  const selectedDistrict = address.districts.find(
+    (d) => d.name === address.quan
+  );
+  if (selectedDistrict) {
+    try {
+      const response = await axios.get(
+        `https://provinces.open-api.vn/api/d/${selectedDistrict.code}?depth=2`
+      );
+      address.wards = response.data.wards;
+    } catch (error) {
+      console.error("Lỗi khi tải danh sách xã/phường:", error);
+      toastNotification.value.addToast({
+        type: "error",
+        message: "Không thể tải danh sách xã/phường!",
+      });
+    }
+  }
+};
+
+const scrollSlider = (direction) => {
+  const slider = addressSlider.value;
+  if (!slider) return;
+
+  const cardWidth = slider.querySelector(".address-card").offsetWidth + 20; // Include gap
+  sliderPosition.value = Math.min(
+    Math.max(0, sliderPosition.value + direction),
+    maxSliderPosition.value
+  );
+  slider.scrollTo({
+    left: sliderPosition.value * cardWidth,
+    behavior: "smooth",
+  });
+};
+
 const triggerFileInput = () => {
   fileInput.value?.click();
 };
@@ -633,6 +732,9 @@ const loadCustomerData = async () => {
               quan: addr.quan || "",
               phuong: addr.phuong || "",
               isDefault: addr.macDinh || false,
+              isEditing: false,
+              districts: [],
+              wards: [],
             }));
           if (addresses.value.length > 0) {
             newAddress.value.thanhPho = addresses.value[0].thanhPho;
@@ -710,6 +812,9 @@ const addAddress = async () => {
     addresses.value.push({
       id: response.data.id,
       ...newAddress.value,
+      isEditing: false,
+      districts: [],
+      wards: [],
     });
 
     newAddress.value = {
@@ -735,29 +840,40 @@ const addAddress = async () => {
   }
 };
 
-const updateAddress = async () => {
-  if (!newAddress.value.diaChiCuThe.trim()) {
+const editAddress = async (index) => {
+  addresses.value.forEach((addr, idx) => {
+    addr.isEditing = idx === index;
+    if (addr.isEditing) {
+      addr.original = { ...addr }; // Save original state for cancel
+      fetchDistrictsForEdit(index); // Load districts for editing
+    }
+  });
+};
+
+const saveEditedAddress = async (index) => {
+  const address = addresses.value[index];
+  if (!address.diaChiCuThe.trim()) {
     toastNotification.value.addToast({
       type: "error",
       message: "Vui lòng nhập địa chỉ cụ thể!",
     });
     return;
   }
-  if (!newAddress.value.thanhPho) {
+  if (!address.thanhPho) {
     toastNotification.value.addToast({
       type: "error",
       message: "Vui lòng chọn tỉnh/thành phố!",
     });
     return;
   }
-  if (!newAddress.value.quan) {
+  if (!address.quan) {
     toastNotification.value.addToast({
       type: "error",
       message: "Vui lòng chọn quận/huyện!",
     });
     return;
   }
-  if (!newAddress.value.phuong) {
+  if (!address.phuong) {
     toastNotification.value.addToast({
       type: "error",
       message: "Vui lòng chọn xã/phường!",
@@ -765,56 +881,32 @@ const updateAddress = async () => {
     return;
   }
 
-  if (editingAddressIndex.value === null) {
-    toastNotification.value.addToast({
-      type: "error",
-      message: "Không tìm thấy địa chỉ để cập nhật!",
-    });
-    return;
-  }
-
   const addressData = {
-    id: addresses.value[editingAddressIndex.value].id,
+    id: address.id,
     idKhachHang: customer.value.id,
-    diaChiCuThe: newAddress.value.diaChiCuThe,
-    thanhPho: newAddress.value.thanhPho,
-    quan: newAddress.value.quan,
-    phuong: newAddress.value.phuong,
-    macDinh: newAddress.value.isDefault,
+    diaChiCuThe: address.diaChiCuThe,
+    thanhPho: address.thanhPho,
+    quan: address.quan,
+    phuong: address.phuong,
+    macDinh: address.isDefault,
   };
 
   try {
-    const response = await UpdateKhachHangDiaChi(
-      addressData.id,
-      addressData
-    );
+    const response = await UpdateKhachHangDiaChi(address.id, addressData);
     if (!response.success) {
       throw new Error(response.message || "Lỗi khi cập nhật địa chỉ!");
     }
 
-    // Cập nhật địa chỉ trong danh sách
-    addresses.value[editingAddressIndex.value] = {
-      ...addressData,
-      id: response.data.id || addressData.id,
-    };
-
-    if (newAddress.value.isDefault) {
+    if (address.isDefault) {
       addresses.value.forEach((addr, i) => {
-        addr.isDefault = i === editingAddressIndex.value;
+        addr.isDefault = i === index;
       });
     }
 
-    newAddress.value = {
-      diaChiCuThe: "",
-      thanhPho: "",
-      quan: "",
-      phuong: "",
-      isDefault: false,
-    };
-    editingAddressIndex.value = null;
-    showAddAddress.value = false;
-    districts.value = [];
-    wards.value = [];
+    address.isEditing = false;
+    address.districts = [];
+    address.wards = [];
+    delete address.original;
 
     toastNotification.value.addToast({
       type: "success",
@@ -828,6 +920,16 @@ const updateAddress = async () => {
   }
 };
 
+const cancelEditAddress = (index) => {
+  const address = addresses.value[index];
+  if (address.original) {
+    addresses.value[index] = { ...address.original, isEditing: false };
+  }
+  address.isEditing = false;
+  address.districts = [];
+  address.wards = [];
+};
+
 const cancelAddAddress = () => {
   newAddress.value = {
     diaChiCuThe: "",
@@ -836,15 +938,7 @@ const cancelAddAddress = () => {
     phuong: "",
     isDefault: false,
   };
-  editingAddressIndex.value = null; // Reset khi hủy
   showAddAddress.value = false;
-};
-
-const editAddress = (index) => {
-  editingAddressIndex.value = index; // Lưu chỉ số địa chỉ đang chỉnh sửa
-  newAddress.value = { ...addresses.value[index] };
-  showAddAddress.value = true;
-  // Không xóa khỏi danh sách ngay, chỉ chỉnh sửa tại chỗ
 };
 
 const confirmDeleteAddress = (index) => {
@@ -1253,7 +1347,9 @@ onMounted(async () => {
 }
 
 .search-input,
-.date-input {
+.date-input,
+.modern-input,
+.modern-select {
   border: 2px solid #e2e8f0;
   border-radius: 12px;
   padding: 12px 16px;
@@ -1263,7 +1359,9 @@ onMounted(async () => {
 }
 
 .search-input:focus,
-.date-input:focus {
+.date-input:focus,
+.modern-input:focus,
+.modern-select:focus {
   border-color: #34d399;
   box-shadow: 0 0 0 4px rgba(52, 211, 153, 0.1);
   outline: none;
@@ -1303,6 +1401,8 @@ onMounted(async () => {
 
 /* Address Management Section */
 .address-management-section {
+  margin: 0 auto;
+max-width: 1700px;
   background: #f8fafc;
   border-radius: 16px;
   padding: 24px;
@@ -1425,22 +1525,13 @@ onMounted(async () => {
   align-items: center;
 }
 
-.modern-input,
-.modern-select {
-  border: 2px solid #e5e7eb;
-  border-radius: 12px;
+.form-value {
+  margin: 0;
   padding: 12px 16px;
+  background: #f9fafb;
+  border-radius: 12px;
+  color: #374151;
   font-size: 0.95rem;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  background: white;
-  width: 100%;
-}
-
-.modern-input:focus,
-.modern-select:focus {
-  border-color: #34d399;
-  box-shadow: 0 0 0 4px rgba(52, 211, 153, 0.1);
-  outline: none;
 }
 
 .form-check-wrapper {
@@ -1476,7 +1567,8 @@ onMounted(async () => {
   margin: 0;
 }
 
-.form-actions {
+.form-actions,
+.edit-actions {
   padding: 20px 24px;
   background: #f9fafb;
   border-top: 1px solid #e5e7eb;
@@ -1518,7 +1610,7 @@ onMounted(async () => {
   border-color: #9ca3af;
 }
 
-/* Address List */
+/* Address Slider */
 .address-list {
   margin-top: 24px;
 }
@@ -1574,12 +1666,27 @@ onMounted(async () => {
   transform: translateY(-2px);
 }
 
-.address-grid {
-  display: grid;
+.address-slider-wrapper {
+  position: relative;
+  padding: 0 40px;
+}
+
+.address-slider {
+  display: flex;
+  overflow-x: auto;
+  scroll-behavior: smooth;
   gap: 20px;
+  padding-bottom: 10px;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.address-slider::-webkit-scrollbar {
+  display: none;
 }
 
 .address-card {
+  flex: 0 0 560px;
   background: white;
   border-radius: 16px;
   border: 1px solid #e5e7eb;
@@ -1592,6 +1699,42 @@ onMounted(async () => {
   transform: translateY(-4px);
   box-shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.15);
   border-color: #34d399;
+}
+
+.slider-nav {
+  position: absolute;
+  top: 50%;
+  margin: 0 -10px;
+  transform: translateY(-50%);
+  width: 40px;
+  height: 40px;
+  background: #34d399;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.slider-nav:disabled {
+  background: #d1d5db;
+  cursor: not-allowed;
+}
+
+.slider-prev {
+  left: 0;
+}
+
+.slider-next {
+  right: 0;
+}
+
+.slider-nav:hover:not(:disabled) {
+  background: #10b981;
+  transform: translateY(-50%) scale(1.1);
 }
 
 .card-header {
@@ -1638,19 +1781,6 @@ onMounted(async () => {
 .card-actions {
   display: flex;
   gap: 8px;
-}
-
-.btn-action {
-  width: 36px;
-  height: 36px;
-  border-radius: 8px;
-  border: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  font-size: 0.9rem;
 }
 
 .btn-edit {
@@ -1714,12 +1844,12 @@ onMounted(async () => {
   background: linear-gradient(135deg, #34d399, #10b981);
   color: white;
   border: none;
-  padding: 14px 32px;
+  box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.25);
+  min-width: 120px;
   border-radius: 12px;
   font-weight: 600;
   font-size: 1rem;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.25);
   min-width: 120px;
 }
 
@@ -1811,7 +1941,8 @@ onMounted(async () => {
     align-items: stretch;
   }
 
-  .form-actions {
+  .form-actions,
+  .edit-actions {
     flex-direction: column;
   }
 
@@ -1820,7 +1951,7 @@ onMounted(async () => {
   }
 
   .address-card {
-    margin-bottom: 16px;
+    flex: 0 0 300px;
   }
 
   .card-header {
@@ -1842,6 +1973,11 @@ onMounted(async () => {
   .gender-options {
     flex-direction: column;
     gap: 12px;
+  }
+
+  .slider-nav {
+    width: 32px;
+    height: 32px;
   }
 }
 
@@ -1892,7 +2028,8 @@ onMounted(async () => {
 .btn-save:focus,
 .btn-cancel:focus,
 .btn-action:focus,
-.btn-reset:focus {
+.btn-reset:focus,
+.slider-nav:focus {
   outline: 2px solid #34d399;
   outline-offset: 2px;
 }
@@ -1909,7 +2046,9 @@ onMounted(async () => {
   .action-buttons,
   .btn-add-address,
   .card-actions,
-  .form-actions {
+  .form-actions,
+  .edit-actions,
+  .slider-nav {
     display: none;
   }
 
@@ -1917,7 +2056,12 @@ onMounted(async () => {
     break-inside: avoid;
     box-shadow: none;
     border: 1px solid #000;
+    flex: 0 0 auto;
+  }
+
+  .address-slider {
+    display: block;
+    overflow: visible;
   }
 }
 </style>
-
