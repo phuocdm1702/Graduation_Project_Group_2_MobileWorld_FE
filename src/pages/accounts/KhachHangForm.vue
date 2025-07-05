@@ -1401,6 +1401,8 @@ onMounted(async () => {
 
 /* Address Management Section */
 .address-management-section {
+  margin: 0 auto;
+max-width: 1700px;
   background: #f8fafc;
   border-radius: 16px;
   padding: 24px;
@@ -1702,6 +1704,7 @@ onMounted(async () => {
 .slider-nav {
   position: absolute;
   top: 50%;
+  margin: 0 -10px;
   transform: translateY(-50%);
   width: 40px;
   height: 40px;
