@@ -1374,14 +1374,14 @@
 
                 <!-- Pay Button -->
                 <button
-                  class="btn w-100 py-3 pay-btn gradient-custom-green text-white mt-3"
-                  :disabled="
+                    class="btn w-100 py-3 pay-btn gradient-custom-green text-white mt-3"
+                    :disabled="
                     !activeInvoiceId ||
                     !cartItems ||
                     cartItems.length === 0 ||
                     isCreatingOrder
                   "
-                  @click="ThanhToan"
+                    @click="confirmPayment"
                 >
                   <span class="fw-semibold">Thanh toán</span>
                 </button>
@@ -1783,7 +1783,7 @@
 </template>
 
 <script>
-import { defineComponent } from "vue";
+import {defineComponent} from "vue";
 import banHang from "../../store/modules/sales/banHang";
 
 export default defineComponent({
@@ -1793,7 +1793,7 @@ export default defineComponent({
     confirmPayment() {
       this.notificationType = "confirm";
       this.notificationMessage = `Bạn có chắc chắn muốn thanh toán ${this.formatPrice(
-        this.totalPayment
+          this.totalPayment
       )} cho hóa đơn này không?`;
       this.notificationOnConfirm = () => {
         this.ThanhToan();

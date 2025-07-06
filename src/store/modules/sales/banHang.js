@@ -1721,7 +1721,7 @@ export default {
       tienMat.value = 0;
 
       if (method === "transfer" || method === "both") {
-        showPaymentProviderModal.value = true;
+        showPaymentProviderModal.value = true; // Hiển thị modal chọn nhà cung cấp (VNPay hoặc custom)
       } else {
         showPaymentProviderModal.value = false;
         selectedPaymentProvider.value = null;
@@ -1990,11 +1990,60 @@ export default {
             const orderInfo = `Thanh toán hóa đơn ${
               activeInvoiceId.value || "HDXXX"
             }`;
-            const amountToSend = Math.round(totalPayment.value) || 100000; // Đảm bảo là số nguyên
-            console.log("Sending amount:", amountToSend); // Debug
+            const amountToSend = Math.round(totalPayment.value) || 100000;
+
+            // Tạo hoaDonRequest để lưu trữ tạm thời
+            const hoaDonRequest = {
+              idKhachHang: customer.value?.id || null,
+              tenKhachHang: customer.value?.name || "Khách vãng lai",
+              soDienThoaiKhachHang: customer.value?.phone || null,
+              diaChiKhachHang:
+                customer.value && isDelivery.value
+                  ? {
+                      thanhPho: customer.value.city,
+                      quan: customer.value.district,
+                      phuong: customer.value.ward,
+                      diaChiCuThe: customer.value.address,
+                    }
+                  : {
+                      thanhPho: "",
+                      quan: "",
+                      phuong: "",
+                      diaChiCuThe: "",
+                    },
+              hinhThucThanhToan: [
+                {
+                  phuongThucThanhToanId: 2,
+                  tienMat: 0,
+                  tienChuyenKhoan: totalPayment.value,
+                },
+              ],
+              idPhieuGiamGia: selectedDiscount.value?.id || null,
+              giamGia: selectedDiscount.value?.value || 0,
+              phiVanChuyen: isDelivery.value ? shippingFee.value : 0,
+              loaiDon: isDelivery.value ? "online" : "trực tiếp",
+              tongTien: tongTien.value,
+              tongTienSauGiam: totalPayment.value,
+              chiTietGioHang: cartItems.value.map((item) => ({
+                chiTietSanPhamId: item.id,
+                soLuong: item.quantity,
+                maImel: item.imei,
+                giaBan: item.currentPrice,
+                ghiChuGia: item.ghiChuGia || "",
+              })),
+            };
+
+            // Lưu hoaDonRequest và idHD vào localStorage
+            localStorage.setItem(
+              "hoaDonRequest",
+              JSON.stringify(hoaDonRequest)
+            );
+            localStorage.setItem("idHD", activeInvoiceId.value);
+
             const params = new URLSearchParams();
-            params.append("amount", amountToSend.toString());
+            params.append("amount", amountToSend);
             params.append("orderInfo", orderInfo);
+            params.append("idHD", activeInvoiceId.value); // Gửi idHD để BE lưu trữ
 
             const response = await apiService.post(
               "/api/payment/create",
@@ -2011,10 +2060,10 @@ export default {
               "error",
               `Lỗi khi tạo thanh toán VNPay: ${error.message}`
             );
-            console.error("Error details:", error); // Debug lỗi chi tiết
+            console.error("Error details:", error);
           }
         } else {
-          await createOrder(); // Tiếp tục thanh toán bình thường
+          await createOrder(); // Thanh toán bình thường cho các phương thức khác
         }
       } catch (error) {
         showToast(
@@ -2023,9 +2072,94 @@ export default {
             error.response?.data?.message || error.message
           }`
         );
-        console.error("Error details:", error); // Debug lỗi chi tiết
+        console.error("Error details:", error);
       }
     };
+
+    // Xử lý phản hồi từ VNPay trong router
+    router.beforeEach(async (to, from, next) => {
+      if (to.query.vnp_ResponseCode) {
+        try {
+          const response = await apiService.get("/api/payment/vnpay-payment", {
+            params: to.query,
+          });
+          if (response.data.status === "success") {
+            showToast(
+              "success",
+              "Thanh toán VNPay thành công, đang xử lý hóa đơn..."
+            );
+            const hoaDonRequest = JSON.parse(
+              localStorage.getItem("hoaDonRequest")
+            );
+            const idHD = localStorage.getItem("idHD");
+
+            if (hoaDonRequest && idHD) {
+              try {
+                // Gọi endpoint thanh toán để cập nhật hóa đơn
+                await apiService.post(`/api/thanh-toan/${idHD}`, hoaDonRequest);
+                localStorage.removeItem("hoaDonRequest");
+                localStorage.removeItem("idHD");
+
+                // Reset trạng thái giống như createOrder
+                pendingInvoices.value = pendingInvoices.value.filter(
+                  (inv) => inv.id !== idHD
+                );
+                cartItems.value = [];
+                activeInvoiceId.value = null;
+                selectedCustomer.value = null;
+                customer.value = {
+                  id: null,
+                  name: "",
+                  phone: "",
+                  city: "",
+                  district: "",
+                  ward: "",
+                  address: "",
+                };
+                receiver.value = {
+                  name: "",
+                  phone: "",
+                  city: "",
+                  district: "",
+                  ward: "",
+                  address: "",
+                };
+                discount.value = 0;
+                selectedDiscount.value = null;
+                showToast(
+                  "success",
+                  "Thanh toán thành công, chuẩn bị hiện hóa đơn chi tiết sau vài giây"
+                );
+                resetNotification();
+
+                setTimeout(() => {
+                  router.push(`/hoaDon/${idHD}/detail`);
+                }, 1000);
+              } catch (error) {
+                showToast(
+                  "error",
+                  `Lỗi khi cập nhật hóa đơn: ${
+                    error.response?.data?.message || error.message
+                  }`
+                );
+                console.error("Error details:", error);
+              }
+            } else {
+              showToast("error", "Không tìm thấy thông tin hóa đơn để xử lý");
+            }
+          } else {
+            showToast("error", response.data.message);
+          }
+        } catch (error) {
+          showToast(
+            "error",
+            `Lỗi khi xử lý thanh toán VNPay: ${error.message}`
+          );
+          console.error("Error details:", error);
+        }
+      }
+      next();
+    });
 
     const createOrder = async () => {
       isCreatingOrder.value = true;
