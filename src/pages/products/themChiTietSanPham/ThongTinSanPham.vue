@@ -1,12 +1,8 @@
 <template>
   <div class="container-fluid">
     <!-- Header -->
-    <HeaderCard
-      title="Thêm Chi Tiết Sản Phẩm"
-      badgeText="Hệ Thống POS"
-      badgeClass="gradient-custom-teal"
-      :backgroundOpacity="0.95"
-    />
+    <HeaderCard title="Thêm Chi Tiết Sản Phẩm" badgeText="Hệ Thống POS" badgeClass="gradient-custom-teal"
+      :backgroundOpacity="0.95" />
 
     <!-- Main Form Section -->
     <FilterTableSection title="Thông Tin Sản Phẩm" icon="bi bi-box-seam">
@@ -17,311 +13,299 @@
             <div class="search-group">
               <label class="filter-label">Tên Sản Phẩm</label>
               <div class="search-input-wrapper">
-                <i class="bi bi-search search-icon"></i>
-                <input
-                  v-model.trim="productData.tenSanPham"
-                  type="text"
-                  placeholder="Nhập tên sản phẩm (mới hoặc chọn)"
-                  class="form-control search-input"
-                  @focus="showProductDropdown = true"
-                  @blur="delayHideProductDropdown"
-                  @input="filterProducts"
-                />
-                <div
-                  v-if="showProductDropdown && filteredProductNameOptions.length > 0"
-                  class="dropdown-menu show"
-                >
-                  <div
-                    v-for="product in filteredProductNameOptions"
-                    :key="product.id"
-                    class="dropdown-item"
-                    @mousedown="selectProduct(product)"
-                  >
+                <input v-model.trim="searchTerms.tenSanPham" type="text" placeholder="Nhập hoặc chọn tên sản phẩm"
+                  class="form-control search-input" @focus="showDropdown('tenSanPham')"
+                  @blur="delayHideDropdown('tenSanPham')" @input="filterOptions('tenSanPham')" />
+                <div v-if="dropdownState.tenSanPham && filteredOptions.tenSanPham.length > 0"
+                  class="dropdown-menu show">
+                  <div v-for="product in filteredOptions.tenSanPham" :key="product.id" class="dropdown-item"
+                    @mousedown="selectProduct(product)">
                     {{ product.tenSanPham }}
                   </div>
                 </div>
               </div>
-              <div v-if="isProductSelected" class="mt-2">
-                <span class="text-success">Sản phẩm đã chọn: {{ productData.tenSanPham }}</span>
-                <button
-                  @click="clearProductSelection"
-                  class="btn btn-reset btn-sm ms-2"
-                >
-                  <i class="bi bi-x-circle"></i> Hủy chọn
-                </button>
-              </div>
-              <div v-else-if="productData.tenSanPham && filteredProductNameOptions.length === 0" class="mt-2 text-info">
-                Sẽ thêm sản phẩm mới: {{ productData.tenSanPham }}
-              </div>
             </div>
           </div>
 
-          <!-- Hệ Điều Hành, Màn Hình, Nhà Sản Xuất -->
+          <!-- Hệ Điều Hành -->
           <div class="col-lg-4 col-md-6">
             <div class="filter-group">
               <label class="filter-label">Hệ Điều Hành</label>
               <div class="input-group">
-                <select
-                  v-model="productData.idHeDieuHanh"
-                  class="form-control search-input"
-                >
-                  <option value="">Chọn Hệ Điều Hành</option>
-                  <option v-for="option in heDieuHanhOptions" :key="option.id" :value="option.id">
-                    {{ option.heDieuHanh }} {{ option.phienBan }}
-                  </option>
-                </select>
-                <button
-                  @click="openAddModal('heDieuHanh')"
-                  class="btn btn-action"
-                >
+                <div class="search-input-wrapper">
+                  <input v-model="searchTerms.heDieuHanh" type="text" :placeholder="getPlaceholder('heDieuHanh')"
+                    :disabled="!isNewProduct" class="form-control search-input" @focus="showDropdown('heDieuHanh')"
+                    @blur="delayHideDropdown('heDieuHanh')" @input="filterOptions('heDieuHanh')" />
+                  <div v-if="dropdownState.heDieuHanh && filteredOptions.heDieuHanh.length > 0"
+                    class="dropdown-menu show">
+                    <div v-for="option in filteredOptions.heDieuHanh" :key="option.id" class="dropdown-item"
+                      @mousedown="selectOption('heDieuHanh', option)">
+                      {{ option.heDieuHanh }} {{ option.phienBan }}
+                    </div>
+                  </div>
+                </div>
+                <button v-if="isNewProduct" @click="openAddModal('heDieuHanh')" class="btn btn-action">
                   <i class="bi bi-plus-circle"></i>
                 </button>
               </div>
             </div>
           </div>
+
+          <!-- Công Nghệ Màn Hình -->
           <div class="col-lg-4 col-md-6">
             <div class="filter-group">
               <label class="filter-label">Công Nghệ Màn Hình</label>
               <div class="input-group">
-                <select
-                  v-model="productData.idCongNgheManHinh"
-                  class="form-control search-input"
-                >
-                  <option value="">Chọn Công Nghệ Màn Hình</option>
-                  <option v-for="option in congNgheManHinhOptions" :key="option.id" :value="option.id">
-                    {{ option.congNgheManHinh }} {{ option.chuanManHinh }} {{ option.kichThuoc }} {{ option.doPhanGiai }} {{ option.tanSoQuet }}
-                  </option>
-                </select>
-                <button
-                  @click="openAddModal('congNgheManHinh')"
-                  class="btn btn-action"
-                >
+                <div class="search-input-wrapper">
+                  <input v-model="searchTerms.congNgheManHinh" type="text" :placeholder="getPlaceholder('congNgheManHinh')"
+                    :disabled="!isNewProduct" class="form-control search-input" @focus="showDropdown('congNgheManHinh')"
+                    @blur="delayHideDropdown('congNgheManHinh')" @input="filterOptions('congNgheManHinh')" />
+                  <div v-if="dropdownState.congNgheManHinh && filteredOptions.congNgheManHinh.length > 0"
+                    class="dropdown-menu show">
+                    <div v-for="option in filteredOptions.congNgheManHinh" :key="option.id" class="dropdown-item"
+                      @mousedown="selectOption('congNgheManHinh', option)">
+                      {{ option.congNgheManHinh }} {{ option.chuanManHinh }} {{ option.kichThuoc }} {{ option.doPhanGiai }}
+                      {{ option.tanSoQuet }}
+                    </div>
+                  </div>
+                </div>
+                <button v-if="isNewProduct" @click="openAddModal('congNgheManHinh')" class="btn btn-action">
                   <i class="bi bi-plus-circle"></i>
                 </button>
               </div>
             </div>
           </div>
+
+          <!-- Nhà Sản Xuất -->
           <div class="col-lg-4 col-md-6">
             <div class="filter-group">
               <label class="filter-label">Nhà Sản Xuất</label>
               <div class="input-group">
-                <select
-                  v-model="productData.idNhaSanXuat"
-                  class="form-control search-input"
-                >
-                  <option value="">Chọn Nhà Sản Xuất</option>
-                  <option v-for="option in nhaSanXuatOptions" :key="option.id" :value="option.id">
-                    {{ option.nhaSanXuat }}
-                  </option>
-                </select>
-                <button
-                  @click="openAddModal('nhaSanXuat')"
-                  class="btn btn-action"
-                >
+                <div class="search-input-wrapper">
+                  <input v-model="searchTerms.nhaSanXuat" type="text" :placeholder="getPlaceholder('nhaSanXuat')"
+                    :disabled="!isNewProduct" class="form-control search-input" @focus="showDropdown('nhaSanXuat')"
+                    @blur="delayHideDropdown('nhaSanXuat')" @input="filterOptions('nhaSanXuat')" />
+                  <div v-if="dropdownState.nhaSanXuat && filteredOptions.nhaSanXuat.length > 0"
+                    class="dropdown-menu show">
+                    <div v-for="option in filteredOptions.nhaSanXuat" :key="option.id" class="dropdown-item"
+                      @mousedown="selectOption('nhaSanXuat', option)">
+                      {{ option.nhaSanXuat }}
+                    </div>
+                  </div>
+                </div>
+                <button v-if="isNewProduct" @click="openAddModal('nhaSanXuat')" class="btn btn-action">
                   <i class="bi bi-plus-circle"></i>
                 </button>
               </div>
             </div>
           </div>
 
-          <!-- Camera, Sim, Thiết Kế -->
+          <!-- Cụm Camera -->
           <div class="col-lg-4 col-md-6">
             <div class="filter-group">
               <label class="filter-label">Cụm Camera</label>
               <div class="input-group">
-                <select
-                  v-model="productData.idCumCamera"
-                  class="form-control search-input"
-                >
-                  <option value="">Chọn Cụm Camera</option>
-                  <option v-for="option in cumCameraOptions" :key="option.id" :value="option.id">
-                    {{ option.thongSoCameraSau }} {{ option.thongSoCameraTruoc }}
-                  </option>
-                </select>
-                <button
-                  @click="openAddModal('cumCamera')"
-                  class="btn btn-action"
-                >
+                <div class="search-input-wrapper">
+                  <input v-model="searchTerms.cumCamera" type="text" :placeholder="getPlaceholder('cumCamera')"
+                    :disabled="!isNewProduct" class="form-control search-input" @focus="showDropdown('cumCamera')"
+                    @blur="delayHideDropdown('cumCamera')" @input="filterOptions('cumCamera')" />
+                  <div v-if="dropdownState.cumCamera && filteredOptions.cumCamera.length > 0" class="dropdown-menu show">
+                    <div v-for="option in filteredOptions.cumCamera" :key="option.id" class="dropdown-item"
+                      @mousedown="selectOption('cumCamera', option)">
+                      {{ option.thongSoCameraSau }} {{ option.thongSoCameraTruoc }}
+                    </div>
+                  </div>
+                </div>
+                <button v-if="isNewProduct" @click="openAddModal('cumCamera')" class="btn btn-action">
                   <i class="bi bi-plus-circle"></i>
                 </button>
               </div>
             </div>
           </div>
+
+          <!-- Sim -->
           <div class="col-lg-4 col-md-6">
             <div class="filter-group">
               <label class="filter-label">Sim</label>
               <div class="input-group">
-                <select
-                  v-model="productData.idSim"
-                  class="form-control search-input"
-                >
-                  <option value="">Chọn Sim</option>
-                  <option v-for="option in simOptions" :key="option.id" :value="option.id">
-                    {{ option.soLuongSimHoTro }} {{ option.cacLoaiSimHoTro }}
-                  </option>
-                </select>
-                <button
-                  @click="openAddModal('sim')"
-                  class="btn btn-action"
-                >
+                <div class="search-input-wrapper">
+                  <input v-model="searchTerms.sim" type="text" :placeholder="getPlaceholder('sim')"
+                    :disabled="!isNewProduct" class="form-control search-input" @focus="showDropdown('sim')"
+                    @blur="delayHideDropdown('sim')" @input="filterOptions('sim')" />
+                  <div v-if="dropdownState.sim && filteredOptions.sim.length > 0" class="dropdown-menu show">
+                    <div v-for="option in filteredOptions.sim" :key="option.id" class="dropdown-item"
+                      @mousedown="selectOption('sim', option)">
+                      {{ option.soLuongSimHoTro }} {{ option.cacLoaiSimHoTro }}
+                    </div>
+                  </div>
+                </div>
+                <button v-if="isNewProduct" @click="openAddModal('sim')" class="btn btn-action">
                   <i class="bi bi-plus-circle"></i>
                 </button>
               </div>
             </div>
           </div>
+
+          <!-- Thiết Kế -->
           <div class="col-lg-4 col-md-6">
             <div class="filter-group">
               <label class="filter-label">Thiết Kế</label>
               <div class="input-group">
-                <select
-                  v-model="productData.idThietKe"
-                  class="form-control search-input"
-                >
-                  <option value="">Chọn Thiết Kế</option>
-                  <option v-for="option in thietKeOptions" :key="option.id" :value="option.id">
-                    {{ option.chatLieuKhung }} {{ option.chatLieuMatLung }}
-                  </option>
-                </select>
-                <button
-                  @click="openAddModal('thietKe')"
-                  class="btn btn-action"
-                >
+                <div class="search-input-wrapper">
+                  <input v-model="searchTerms.thietKe" type="text" :placeholder="getPlaceholder('thietKe')"
+                    :disabled="!isNewProduct" class="form-control search-input" @focus="showDropdown('thietKe')"
+                    @blur="delayHideDropdown('thietKe')" @input="filterOptions('thietKe')" />
+                  <div v-if="dropdownState.thietKe && filteredOptions.thietKe.length > 0" class="dropdown-menu show">
+                    <div v-for="option in filteredOptions.thietKe" :key="option.id" class="dropdown-item"
+                      @mousedown="selectOption('thietKe', option)">
+                      {{ option.chatLieuKhung }} {{ option.chatLieuMatLung }}
+                    </div>
+                  </div>
+                </div>
+                <button v-if="isNewProduct" @click="openAddModal('thietKe')" class="btn btn-action">
                   <i class="bi bi-plus-circle"></i>
                 </button>
               </div>
             </div>
           </div>
 
-          <!-- Pin, CPU, GPU -->
+          <!-- Pin -->
           <div class="col-lg-4 col-md-6">
             <div class="filter-group">
               <label class="filter-label">Pin</label>
               <div class="input-group">
-                <select
-                  v-model="productData.idPin"
-                  class="form-control search-input"
-                >
-                  <option value="">Chọn Pin</option>
-                  <option v-for="option in pinOptions" :key="option.id" :value="option.id">
-                    {{ option.loaiPin }} {{ option.dungLuongPin }}
-                  </option>
-                </select>
-                <button
-                  @click="openAddModal('pin')"
-                  class="btn btn-action"
-                >
-                  <i class="bi bi-plus-circle"></i>
-                </button>
-              </div>
-            </div>
-          </div>
-          <div class="col-lg-4 col-md-6">
-            <div class="filter-group">
-              <label class="filter-label">CPU</label>
-              <div class="input-group">
-                <select
-                  v-model="productData.idCpu"
-                  class="form-control search-input"
-                >
-                  <option value="">Chọn CPU</option>
-                  <option v-for="option in cpuOptions" :key="option.id" :value="option.id">
-                    {{ option.tenCpu }}
-                  </option>
-                </select>
-                <button
-                  @click="openAddModal('cpu')"
-                  class="btn btn-action"
-                >
-                  <i class="bi bi-plus-circle"></i>
-                </button>
-              </div>
-            </div>
-          </div>
-          <div class="col-lg-4 col-md-6">
-            <div class="filter-group">
-              <label class="filter-label">GPU</label>
-              <div class="input-group">
-                <select
-                  v-model="productData.idGpu"
-                  class="form-control search-input"
-                >
-                  <option value="">Chọn GPU</option>
-                  <option v-for="option in gpuOptions" :key="option.id" :value="option.id">
-                    {{ option.tenGpu }}
-                  </option>
-                </select>
-                <button
-                  @click="openAddModal('gpu')"
-                  class="btn btn-action"
-                >
+                <div class="search-input-wrapper">
+                  <input v-model="searchTerms.pin" type="text" :placeholder="getPlaceholder('pin')"
+                    :disabled="!isNewProduct" class="form-control search-input" @focus="showDropdown('pin')"
+                    @blur="delayHideDropdown('pin')" @input="filterOptions('pin')" />
+                  <div v-if="dropdownState.pin && filteredOptions.pin.length > 0" class="dropdown-menu show">
+                    <div v-for="option in filteredOptions.pin" :key="option.id" class="dropdown-item"
+                      @mousedown="selectOption('pin', option)">
+                      {{ option.loaiPin }} {{ option.dungLuongPin }}
+                    </div>
+                  </div>
+                </div>
+                <button v-if="isNewProduct" @click="openAddModal('pin')" class="btn btn-action">
                   <i class="bi bi-plus-circle"></i>
                 </button>
               </div>
             </div>
           </div>
 
-          <!-- Công Nghệ Mạng, Hỗ Trợ Công Nghệ Sạc, Chỉ Số Kháng Bụi Nước -->
+          <!-- CPU -->
+          <div class="col-lg-4 col-md-6">
+            <div class="filter-group">
+              <label class="filter-label">CPU</label>
+              <div class="input-group">
+                <div class="search-input-wrapper">
+                  <input v-model="searchTerms.cpu" type="text" :placeholder="getPlaceholder('cpu')"
+                    :disabled="!isNewProduct" class="form-control search-input" @focus="showDropdown('cpu')"
+                    @blur="delayHideDropdown('cpu')" @input="filterOptions('cpu')" />
+                  <div v-if="dropdownState.cpu && filteredOptions.cpu.length > 0" class="dropdown-menu show">
+                    <div v-for="option in filteredOptions.cpu" :key="option.id" class="dropdown-item"
+                      @mousedown="selectOption('cpu', option)">
+                      {{ option.tenCpu }}
+                    </div>
+                  </div>
+                </div>
+                <button v-if="isNewProduct" @click="openAddModal('cpu')" class="btn btn-action">
+                  <i class="bi bi-plus-circle"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- GPU -->
+          <div class="col-lg-4 col-md-6">
+            <div class="filter-group">
+              <label class="filter-label">GPU</label>
+              <div class="input-group">
+                <div class="search-input-wrapper">
+                  <input v-model="searchTerms.gpu" type="text" :placeholder="getPlaceholder('gpu')"
+                    :disabled="!isNewProduct" class="form-control search-input" @focus="showDropdown('gpu')"
+                    @blur="delayHideDropdown('gpu')" @input="filterOptions('gpu')" />
+                  <div v-if="dropdownState.gpu && filteredOptions.gpu.length > 0" class="dropdown-menu show">
+                    <div v-for="option in filteredOptions.gpu" :key="option.id" class="dropdown-item"
+                      @mousedown="selectOption('gpu', option)">
+                      {{ option.tenGpu }}
+                    </div>
+                  </div>
+                </div>
+                <button v-if="isNewProduct" @click="openAddModal('gpu')" class="btn btn-action">
+                  <i class="bi bi-plus-circle"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Công Nghệ Mạng -->
           <div class="col-lg-4 col-md-6">
             <div class="filter-group">
               <label class="filter-label">Công Nghệ Mạng</label>
               <div class="input-group">
-                <select
-                  v-model="productData.idCongNgheMang"
-                  class="form-control search-input"
-                >
-                  <option value="">Chọn Công Nghệ Mạng</option>
-                  <option v-for="option in congNgheMangOptions" :key="option.id" :value="option.id">
-                    {{ option.tenCongNgheMang }}
-                  </option>
-                </select>
-                <button
-                  @click="openAddModal('congNgheMang')"
-                  class="btn btn-action"
-                >
+                <div class="search-input-wrapper">
+                  <input v-model="searchTerms.congNgheMang" type="text" :placeholder="getPlaceholder('congNgheMang')"
+                    :disabled="!isNewProduct" class="form-control search-input" @focus="showDropdown('congNgheMang')"
+                    @blur="delayHideDropdown('congNgheMang')" @input="filterOptions('congNgheMang')" />
+                  <div v-if="dropdownState.congNgheMang && filteredOptions.congNgheMang.length > 0"
+                    class="dropdown-menu show">
+                    <div v-for="option in filteredOptions.congNgheMang" :key="option.id" class="dropdown-item"
+                      @mousedown="selectOption('congNgheMang', option)">
+                      {{ option.tenCongNgheMang }}
+                    </div>
+                  </div>
+                </div>
+                <button v-if="isNewProduct" @click="openAddModal('congNgheMang')" class="btn btn-action">
                   <i class="bi bi-plus-circle"></i>
                 </button>
               </div>
             </div>
           </div>
+
+          <!-- Hỗ Trợ Công Nghệ Sạc -->
           <div class="col-lg-4 col-md-6">
             <div class="filter-group">
               <label class="filter-label">Hỗ Trợ Công Nghệ Sạc</label>
               <div class="input-group">
-                <select
-                  v-model="productData.idHoTroCongNgheSac"
-                  class="form-control search-input"
-                >
-                  <option value="">Chọn Hỗ Trợ Công Nghệ Sạc</option>
-                  <option v-for="option in hoTroCongNgheSacOptions" :key="option.id" :value="option.id">
-                    {{ option.congSac }} {{ option.congNgheHoTro }}
-                  </option>
-                </select>
-                <button
-                  @click="openAddModal('hoTroCongNgheSac')"
-                  class="btn btn-action"
-                >
+                <div class="search-input-wrapper">
+                  <input v-model="searchTerms.hoTroCongNgheSac" type="text"
+                    :placeholder="getPlaceholder('hoTroCongNgheSac')" :disabled="!isNewProduct"
+                    class="form-control search-input" @focus="showDropdown('hoTroCongNgheSac')"
+                    @blur="delayHideDropdown('hoTroCongNgheSac')" @input="filterOptions('hoTroCongNgheSac')" />
+                  <div v-if="dropdownState.hoTroCongNgheSac && filteredOptions.hoTroCongNgheSac.length > 0"
+                    class="dropdown-menu show">
+                    <div v-for="option in filteredOptions.hoTroCongNgheSac" :key="option.id" class="dropdown-item"
+                      @mousedown="selectOption('hoTroCongNgheSac', option)">
+                      {{ option.congSac }} {{ option.congNgheHoTro }}
+                    </div>
+                  </div>
+                </div>
+                <button v-if="isNewProduct" @click="openAddModal('hoTroCongNgheSac')" class="btn btn-action">
                   <i class="bi bi-plus-circle"></i>
                 </button>
               </div>
             </div>
           </div>
+
+          <!-- Kháng Bụi Nước -->
           <div class="col-lg-4 col-md-6">
             <div class="filter-group">
               <label class="filter-label">Kháng Bụi Nước</label>
               <div class="input-group">
-                <select
-                  v-model="productData.idChiSoKhangBuiVaNuoc"
-                  class="form-control search-input"
-                >
-                  <option value="">Chọn Chỉ Số Kháng Bụi Nước</option>
-                  <option v-for="option in chiSoKhangBuiVaNuocOptions" :key="option.id" :value="option.id">
-                    {{ option.tenChiSo }}
-                  </option>
-                </select>
-                <button
-                  @click="openAddModal('chiSoKhangBuiVaNuoc')"
-                  class="btn btn-action"
-                >
+                <div class="search-input-wrapper">
+                  <input v-model="searchTerms.chiSoKhangBuiVaNuoc" type="text"
+                    :placeholder="getPlaceholder('chiSoKhangBuiVaNuoc')" :disabled="!isNewProduct"
+                    class="form-control search-input" @focus="showDropdown('chiSoKhangBuiVaNuoc')"
+                    @blur="delayHideDropdown('chiSoKhangBuiVaNuoc')" @input="filterOptions('chiSoKhangBuiVaNuoc')" />
+                  <div v-if="dropdownState.chiSoKhangBuiVaNuoc && filteredOptions.chiSoKhangBuiVaNuoc.length > 0"
+                    class="dropdown-menu show">
+                    <div v-for="option in filteredOptions.chiSoKhangBuiVaNuoc" :key="option.id" class="dropdown-item"
+                      @mousedown="selectOption('chiSoKhangBuiVaNuoc', option)">
+                      {{ option.tenChiSo }}
+                    </div>
+                  </div>
+                </div>
+                <button v-if="isNewProduct" @click="openAddModal('chiSoKhangBuiVaNuoc')" class="btn btn-action">
                   <i class="bi bi-plus-circle"></i>
                 </button>
               </div>
@@ -333,19 +317,19 @@
             <div class="filter-group">
               <label class="filter-label">Hỗ Trợ Bộ Nhớ Ngoài</label>
               <div class="input-group">
-                <select
-                  v-model="productData.idHoTroBoNhoNgoai"
-                  class="form-control search-input"
-                >
-                  <option value="">Chọn Hỗ Trợ Bộ Nhớ Ngoài</option>
-                  <option v-for="option in hoTroBoNhoNgoaiOptions" :key="option.id" :value="option.id">
-                    {{ option.hoTroBoNhoNgoai }}
-                  </option>
-                </select>
-                <button
-                  @click="openAddModal('hoTroBoNhoNgoai')"
-                  class="btn btn-action"
-                >
+                <div class="search-input-wrapper">
+                  <input v-model="searchTerms.hoTroBoNhoNgoai" type="text" :placeholder="getPlaceholder('hoTroBoNhoNgoai')"
+                    :disabled="!isNewProduct" class="form-control search-input" @focus="showDropdown('hoTroBoNhoNgoai')"
+                    @blur="delayHideDropdown('hoTroBoNhoNgoai')" @input="filterOptions('hoTroBoNhoNgoai')" />
+                  <div v-if="dropdownState.hoTroBoNhoNgoai && filteredOptions.hoTroBoNhoNgoai.length > 0"
+                    class="dropdown-menu show">
+                    <div v-for="option in filteredOptions.hoTroBoNhoNgoai" :key="option.id" class="dropdown-item"
+                      @mousedown="selectOption('hoTroBoNhoNgoai', option)">
+                      {{ option.hoTroBoNhoNgoai }}
+                    </div>
+                  </div>
+                </div>
+                <button v-if="isNewProduct" @click="openAddModal('hoTroBoNhoNgoai')" class="btn btn-action">
                   <i class="bi bi-plus-circle"></i>
                 </button>
               </div>
@@ -356,12 +340,8 @@
           <div class="col-lg-12">
             <div class="filter-group">
               <label class="filter-label">Ghi Chú</label>
-              <textarea
-                v-model="productData.ghiChu"
-                class="form-control search-input"
-                placeholder="Nhập ghi chú"
-                rows="3"
-              ></textarea>
+              <textarea v-model="productData.ghiChu" class="form-control search-input" placeholder="Nhập ghi chú"
+                rows="3"></textarea>
             </div>
           </div>
         </div>
@@ -374,251 +354,151 @@
         <div class="modal-content">
           <div class="modal-header">
             <h5 class="modal-title">Thêm {{ currentAttributeLabel }}</h5>
-            <button
-              type="button"
-              class="btn-close"
-              @click="closeFormModal"
-            ></button>
+            <button type="button" class="btn-close" @click="closeFormModal"></button>
           </div>
           <div class="modal-body">
             <div v-if="currentAttribute === 'heDieuHanh'" class="row g-3">
               <div class="col-12">
                 <label class="filter-label">Tên Hệ Điều Hành</label>
-                <input
-                  v-model="entityData.heDieuHanh"
-                  type="text"
-                  class="form-control search-input"
-                  placeholder="Nhập tên hệ điều hành"
-                />
+                <input v-model="entityData.heDieuHanh" type="text" class="form-control search-input"
+                  placeholder="Nhập tên hệ điều hành" />
               </div>
               <div class="col-12">
                 <label class="filter-label">Phiên Bản</label>
-                <input
-                  v-model="entityData.phienBan"
-                  type="text"
-                  class="form-control search-input"
-                  placeholder="Nhập phiên bản"
-                />
+                <input v-model="entityData.phienBan" type="text" class="form-control search-input"
+                  placeholder="Nhập phiên bản" />
               </div>
             </div>
             <div v-if="currentAttribute === 'congNgheManHinh'" class="row g-3">
               <div class="col-12">
                 <label class="filter-label">Công Nghệ Màn Hình</label>
-                <input
-                  v-model="entityData.congNgheManHinh"
-                  type="text"
-                  class="form-control search-input"
-                  placeholder="Nhập công nghệ màn hình"
-                />
+                <input v-model="entityData.congNgheManHinh" type="text" class="form-control search-input"
+                  placeholder="Nhập công nghệ màn hình" />
               </div>
               <div class="col-12">
                 <label class="filter-label">Kích Thước</label>
-                <input
-                  v-model="entityData.kichThuoc"
-                  type="text"
-                  class="form-control search-input"
-                  placeholder="Nhập kích thước màn hình"
-                />
+                <input v-model="entityData.kichThuoc" type="text" class="form-control search-input"
+                  placeholder="Nhập kích thước màn hình" />
               </div>
               <div class="col-12">
                 <label class="filter-label">Độ Phân Giải</label>
-                <input
-                  v-model="entityData.doPhanGiai"
-                  type="text"
-                  class="form-control search-input"
-                  placeholder="Nhập độ phân giải"
-                />
+                <input v-model="entityData.doPhanGiai" type="text" class="form-control search-input"
+                  placeholder="Nhập độ phân giải" />
               </div>
               <div class="col-12">
                 <label class="filter-label">Tần Số Quét</label>
-                <input
-                  v-model="entityData.tanSoQuet"
-                  type="text"
-                  class="form-control search-input"
-                  placeholder="Nhập tần số quét"
-                />
+                <input v-model="entityData.tanSoQuet" type="text" class="form-control search-input"
+                  placeholder="Nhập tần số quét" />
               </div>
             </div>
             <div v-if="currentAttribute === 'nhaSanXuat'" class="row g-3">
               <div class="col-12">
                 <label class="filter-label">Tên Nhà Sản Xuất</label>
-                <input
-                  v-model="entityData.nhaSanXuat"
-                  type="text"
-                  class="form-control search-input"
-                  placeholder="Nhập tên nhà sản xuất"
-                />
+                <input v-model="entityData.nhaSanXuat" type="text" class="form-control search-input"
+                  placeholder="Nhập tên nhà sản xuất" />
               </div>
             </div>
             <div v-if="currentAttribute === 'cumCamera'" class="row g-3">
               <div class="col-12">
                 <label class="filter-label">Thông Số Camera Sau</label>
-                <input
-                  v-model="entityData.thongSoCameraSau"
-                  type="text"
-                  class="form-control search-input"
-                  placeholder="Nhập thông số camera sau"
-                />
+                <input v-model="entityData.thongSoCameraSau" type="text" class="form-control search-input"
+                  placeholder="Nhập thông số camera sau" />
               </div>
               <div class="col-12">
                 <label class="filter-label">Thông Số Camera Trước</label>
-                <input
-                  v-model="entityData.thongSoCameraTruoc"
-                  type="text"
-                  class="form-control search-input"
-                  placeholder="Nhập thông số camera trước"
-                />
+                <input v-model="entityData.thongSoCameraTruoc" type="text" class="form-control search-input"
+                  placeholder="Nhập thông số camera trước" />
               </div>
             </div>
             <div v-if="currentAttribute === 'sim'" class="row g-3">
               <div class="col-12">
                 <label class="filter-label">Loại Sim</label>
-                <input
-                  v-model="entityData.cacLoaiSimHoTro"
-                  type="text"
-                  class="form-control search-input"
-                  placeholder="Nhập loại sim"
-                />
+                <input v-model="entityData.cacLoaiSimHoTro" type="text" class="form-control search-input"
+                  placeholder="Nhập loại sim" />
               </div>
               <div class="col-12">
                 <label class="filter-label">Số Lượng Sim</label>
-                <input
-                  v-model="entityData.soLuongSimHoTro"
-                  type="text"
-                  class="form-control search-input"
-                  placeholder="Nhập số lượng sim hỗ trợ"
-                />
+                <input v-model="entityData.soLuongSimHoTro" type="text" class="form-control search-input"
+                  placeholder="Nhập số lượng sim hỗ trợ" />
               </div>
             </div>
             <div v-if="currentAttribute === 'thietKe'" class="row g-3">
               <div class="col-12">
                 <label class="filter-label">Chất Liệu Khung</label>
-                <input
-                  v-model="entityData.chatLieuKhung"
-                  type="text"
-                  class="form-control search-input"
-                  placeholder="Nhập chất liệu khung"
-                />
+                <input v-model="entityData.chatLieuKhung" type="text" class="form-control search-input"
+                  placeholder="Nhập chất liệu khung" />
               </div>
               <div class="col-12">
                 <label class="filter-label">Chất Liệu Mặt Lưng</label>
-                <input
-                  v-model="entityData.chatLieuMatLung"
-                  type="text"
-                  class="form-control search-input"
-                  placeholder="Nhập chất liệu mặt lưng"
-                />
+                <input v-model="entityData.chatLieuMatLung" type="text" class="form-control search-input"
+                  placeholder="Nhập chất liệu mặt lưng" />
               </div>
             </div>
             <div v-if="currentAttribute === 'pin'" class="row g-3">
               <div class="col-12">
                 <label class="filter-label">Loại Pin</label>
-                <input
-                  v-model="entityData.loaiPin"
-                  type="text"
-                  class="form-control search-input"
-                  placeholder="Nhập loại pin"
-                />
+                <input v-model="entityData.loaiPin" type="text" class="form-control search-input"
+                  placeholder="Nhập loại pin" />
               </div>
               <div class="col-12">
                 <label class="filter-label">Dung Lượng Pin</label>
-                <input
-                  v-model="entityData.dungLuongPin"
-                  type="text"
-                  class="form-control search-input"
-                  placeholder="Nhập dung lượng pin"
-                />
+                <input v-model="entityData.dungLuongPin" type="text" class="form-control search-input"
+                  placeholder="Nhập dung lượng pin" />
               </div>
             </div>
             <div v-if="currentAttribute === 'cpu'" class="row g-3">
               <div class="col-12">
                 <label class="filter-label">Tên CPU</label>
-                <input
-                  v-model="entityData.tenCpu"
-                  type="text"
-                  class="form-control search-input"
-                  placeholder="Nhập tên CPU"
-                />
+                <input v-model="entityData.tenCpu" type="text" class="form-control search-input"
+                  placeholder="Nhập tên CPU" />
               </div>
             </div>
             <div v-if="currentAttribute === 'gpu'" class="row g-3">
               <div class="col-12">
                 <label class="filter-label">Tên GPU</label>
-                <input
-                  v-model="entityData.tenGpu"
-                  type="text"
-                  class="form-control search-input"
-                  placeholder="Nhập tên GPU"
-                />
+                <input v-model="entityData.tenGpu" type="text" class="form-control search-input"
+                  placeholder="Nhập tên GPU" />
               </div>
             </div>
             <div v-if="currentAttribute === 'congNgheMang'" class="row g-3">
               <div class="col-12">
                 <label class="filter-label">Tên Công Nghệ Mạng</label>
-                <input
-                  v-model="entityData.tenCongNgheMang"
-                  type="text"
-                  class="form-control search-input"
-                  placeholder="Nhập tên công nghệ mạng"
-                />
+                <input v-model="entityData.tenCongNgheMang" type="text" class="form-control search-input"
+                  placeholder="Nhập tên công nghệ mạng" />
               </div>
             </div>
             <div v-if="currentAttribute === 'hoTroCongNgheSac'" class="row g-3">
               <div class="col-12">
                 <label class="filter-label">Cổng Sạc</label>
-                <input
-                  v-model="entityData.congSac"
-                  type="text"
-                  class="form-control search-input"
-                  placeholder="Nhập cổng sạc"
-                />
+                <input v-model="entityData.congSac" type="text" class="form-control search-input"
+                  placeholder="Nhập cổng sạc" />
               </div>
               <div class="col-12">
                 <label class="filter-label">Công Nghệ Sạc</label>
-                <input
-                  v-model="entityData.congNgheHoTro"
-                  type="text"
-                  class="form-control search-input"
-                  placeholder="Nhập công nghệ sạc"
-                />
+                <input v-model="entityData.congNgheHoTro" type="text" class="form-control search-input"
+                  placeholder="Nhập công nghệ sạc" />
               </div>
             </div>
             <div v-if="currentAttribute === 'chiSoKhangBuiVaNuoc'" class="row g-3">
               <div class="col-12">
                 <label class="filter-label">Chỉ Số Kháng Bụi Nước</label>
-                <input
-                  v-model="entityData.tenChiSo"
-                  type="text"
-                  class="form-control search-input"
-                  placeholder="Nhập chỉ số kháng bụi nước"
-                />
+                <input v-model="entityData.tenChiSo" type="text" class="form-control search-input"
+                  placeholder="Nhập chỉ số kháng bụi nước" />
               </div>
             </div>
             <div v-if="currentAttribute === 'hoTroBoNhoNgoai'" class="row g-3">
               <div class="col-12">
                 <label class="filter-label">Hỗ Trợ Bộ Nhớ Ngoài</label>
-                <input
-                  v-model="entityData.hoTroBoNhoNgoai"
-                  type="text"
-                  class="form-control search-input"
-                  placeholder="Nhập hỗ trợ bộ nhớ ngoài"
-                />
+                <input v-model="entityData.hoTroBoNhoNgoai" type="text" class="form-control search-input"
+                  placeholder="Nhập hỗ trợ bộ nhớ ngoài" />
               </div>
             </div>
           </div>
           <div class="modal-footer">
-            <button
-              type="button"
-              class="btn btn-reset"
-              @click="closeFormModal"
-            >
+            <button type="button" class="btn btn-reset" @click="closeFormModal">
               Đóng
             </button>
-            <button
-              type="button"
-              class="btn btn-action"
-              @click="handleAddAttribute"
-            >
+            <button v-if="isNewProduct" type="button" class="btn btn-action" @click="handleAddAttribute">
               Thêm
             </button>
           </div>
@@ -629,7 +509,7 @@
 </template>
 
 <script>
-import { defineComponent, ref, computed, watch } from 'vue';
+import { defineComponent, ref, computed, watch, onMounted } from 'vue';
 import HeaderCard from '@/components/common/HeaderCard.vue';
 import FilterTableSection from '@/components/common/FilterTableSection.vue';
 import ToastNotification from '@/components/common/ToastNotification.vue';
@@ -659,7 +539,7 @@ export default defineComponent({
   emits: ['update:productData', 'reset-form'],
   setup(props, { emit }) {
     const toastNotification = ref(null);
-    const isLoading = ref(false); // Đặt mặc định là false để không hiển thị loading
+    const isLoading = ref(false);
     const localProductData = ref({ ...props.productData });
     const heDieuHanhOptions = ref([]);
     const congNgheManHinhOptions = ref([]);
@@ -675,10 +555,59 @@ export default defineComponent({
     const chiSoKhangBuiVaNuocOptions = ref([]);
     const hoTroBoNhoNgoaiOptions = ref([]);
     const productNameOptions = ref([]);
-    const filteredProductNameOptions = ref([]);
-    const showProductDropdown = ref(false);
-    const isProductSelected = ref(false);
-    const isNewProduct = ref(false);
+
+    const searchTerms = ref({
+      tenSanPham: '',
+      heDieuHanh: '',
+      congNgheManHinh: '',
+      nhaSanXuat: '',
+      cumCamera: '',
+      sim: '',
+      thietKe: '',
+      pin: '',
+      cpu: '',
+      gpu: '',
+      congNgheMang: '',
+      hoTroCongNgheSac: '',
+      chiSoKhangBuiVaNuoc: '',
+      hoTroBoNhoNgoai: '',
+    });
+
+    const dropdownState = ref({
+      tenSanPham: false,
+      heDieuHanh: false,
+      congNgheManHinh: false,
+      nhaSanXuat: false,
+      cumCamera: false,
+      sim: false,
+      thietKe: false,
+      pin: false,
+      cpu: false,
+      gpu: false,
+      congNgheMang: false,
+      hoTroCongNgheSac: false,
+      chiSoKhangBuiVaNuoc: false,
+      hoTroBoNhoNgoai: false,
+    });
+
+    const filteredOptions = ref({
+      tenSanPham: [],
+      heDieuHanh: [],
+      congNgheManHinh: [],
+      nhaSanXuat: [],
+      cumCamera: [],
+      sim: [],
+      thietKe: [],
+      pin: [],
+      cpu: [],
+      gpu: [],
+      congNgheMang: [],
+      hoTroCongNgheSac: [],
+      chiSoKhangBuiVaNuoc: [],
+      hoTroBoNhoNgoai: [],
+    });
+
+    const isNewProduct = ref(true); // Default to true to allow editing for new products
     const showFormModal = ref(false);
     const currentAttribute = ref('');
     const entityData = ref({});
@@ -702,16 +631,57 @@ export default defineComponent({
       return labels[currentAttribute.value] || currentAttribute.value;
     });
 
+    // Watch for changes in productData prop
     watch(() => props.productData, (newData) => {
+      if (newData.tenSanPham === localProductData.value.tenSanPham) return;
       localProductData.value = { ...newData };
-      isProductSelected.value = false;
-      isNewProduct.value = false;
-      showProductDropdown.value = false;
-      filteredProductNameOptions.value = productNameOptions.value;
+      searchTerms.value.tenSanPham = newData.tenSanPham || '';
+      updateSearchTerms();
+      if (productNameOptions.value.some(p => p.tenSanPham === newData.tenSanPham)) {
+        filterOptions('tenSanPham');
+      }
     }, { deep: true });
 
+    // Watch for changes in searchTerms.tenSanPham to reset isNewProduct
+    watch(() => searchTerms.value.tenSanPham, (newValue) => {
+      if (!newValue || newValue.trim() === '') {
+        isNewProduct.value = true;
+        localProductData.value = {
+          ...localProductData.value,
+          id: null,
+          idHeDieuHanh: heDieuHanhOptions.value[0]?.id || '',
+          idCongNgheManHinh: congNgheManHinhOptions.value[0]?.id || '',
+          idNhaSanXuat: nhaSanXuatOptions.value[0]?.id || '',
+          idCumCamera: cumCameraOptions.value[0]?.id || '',
+          idSim: simOptions.value[0]?.id || '',
+          idThietKe: thietKeOptions.value[0]?.id || '',
+          idPin: pinOptions.value[0]?.id || '',
+          idCpu: cpuOptions.value[0]?.id || '',
+          idGpu: gpuOptions.value[0]?.id || '',
+          idCongNgheMang: congNgheMangOptions.value[0]?.id || '',
+          idHoTroCongNgheSac: hoTroCongNgheSacOptions.value[0]?.id || '',
+          idChiSoKhangBuiVaNuoc: chiSoKhangBuiVaNuocOptions.value[0]?.id || '',
+          idHoTroBoNhoNgoai: hoTroBoNhoNgoaiOptions.value[0]?.id || '',
+          ghiChu: '',
+        };
+        emit('update:productData', localProductData.value);
+      } else if (!filteredOptions.value.tenSanPham.some(p => p.tenSanPham === newValue)) {
+        isNewProduct.value = true;
+        localProductData.value = {
+          ...localProductData.value,
+          tenSanPham: newValue,
+          id: null,
+        };
+        emit('update:productData', localProductData.value);
+      } else {
+        isNewProduct.value = false;
+      }
+    });
+
+    // Fetch data on component mount
     const fetchData = async () => {
       try {
+        isLoading.value = true;
         const [
           heDieuHanhRes,
           congNgheManHinhRes,
@@ -758,21 +728,76 @@ export default defineComponent({
         chiSoKhangBuiVaNuocOptions.value = chiSoKhangBuiVaNuocRes.data || [];
         hoTroBoNhoNgoaiOptions.value = hoTroBoNhoNgoaiRes.data || [];
         productNameOptions.value = productsRes.data || [];
-        filteredProductNameOptions.value = productsRes.data || [];
 
-        if (heDieuHanhOptions.value.length > 0) localProductData.value.idHeDieuHanh = heDieuHanhOptions.value[0].id;
-        if (congNgheManHinhOptions.value.length > 0) localProductData.value.idCongNgheManHinh = congNgheManHinhOptions.value[0].id;
-        if (nhaSanXuatOptions.value.length > 0) localProductData.value.idNhaSanXuat = nhaSanXuatOptions.value[0].id;
-        if (cumCameraOptions.value.length > 0) localProductData.value.idCumCamera = cumCameraOptions.value[0].id;
-        if (simOptions.value.length > 0) localProductData.value.idSim = simOptions.value[0].id;
-        if (thietKeOptions.value.length > 0) localProductData.value.idThietKe = thietKeOptions.value[0].id;
-        if (pinOptions.value.length > 0) localProductData.value.idPin = pinOptions.value[0].id;
-        if (cpuOptions.value.length > 0) localProductData.value.idCpu = cpuOptions.value[0].id;
-        if (gpuOptions.value.length > 0) localProductData.value.idGpu = gpuOptions.value[0].id;
-        if (congNgheMangOptions.value.length > 0) localProductData.value.idCongNgheMang = congNgheMangOptions.value[0].id;
-        if (hoTroCongNgheSacOptions.value.length > 0) localProductData.value.idHoTroCongNgheSac = hoTroCongNgheSacOptions.value[0].id;
-        if (chiSoKhangBuiVaNuocOptions.value.length > 0) localProductData.value.idChiSoKhangBuiVaNuoc = chiSoKhangBuiVaNuocOptions.value[0].id;
-        if (hoTroBoNhoNgoaiOptions.value.length > 0) localProductData.value.idHoTroBoNhoNgoai = hoTroBoNhoNgoaiOptions.value[0].id;
+        filteredOptions.value = {
+          tenSanPham: productNameOptions.value,
+          heDieuHanh: heDieuHanhOptions.value,
+          congNgheManHinh: congNgheManHinhOptions.value,
+          nhaSanXuat: nhaSanXuatOptions.value,
+          cumCamera: cumCameraOptions.value,
+          sim: simOptions.value,
+          thietKe: thietKeOptions.value,
+          pin: pinOptions.value,
+          cpu: cpuOptions.value,
+          gpu: gpuOptions.value,
+          congNgheMang: congNgheMangOptions.value,
+          hoTroCongNgheSac: hoTroCongNgheSacOptions.value,
+          chiSoKhangBuiVaNuoc: chiSoKhangBuiVaNuocOptions.value,
+          hoTroBoNhoNgoai: hoTroBoNhoNgoaiOptions.value,
+        };
+
+        if (heDieuHanhOptions.value.length > 0 && !localProductData.value.idHeDieuHanh) {
+          localProductData.value.idHeDieuHanh = heDieuHanhOptions.value[0].id;
+          searchTerms.value.heDieuHanh = getOptionText('heDieuHanh', heDieuHanhOptions.value[0]);
+        }
+        if (congNgheManHinhOptions.value.length > 0 && !localProductData.value.idCongNgheManHinh) {
+          localProductData.value.idCongNgheManHinh = congNgheManHinhOptions.value[0].id;
+          searchTerms.value.congNgheManHinh = getOptionText('congNgheManHinh', congNgheManHinhOptions.value[0]);
+        }
+        if (nhaSanXuatOptions.value.length > 0 && !localProductData.value.idNhaSanXuat) {
+          localProductData.value.idNhaSanXuat = nhaSanXuatOptions.value[0].id;
+          searchTerms.value.nhaSanXuat = getOptionText('nhaSanXuat', nhaSanXuatOptions.value[0]);
+        }
+        if (cumCameraOptions.value.length > 0 && !localProductData.value.idCumCamera) {
+          localProductData.value.idCumCamera = cumCameraOptions.value[0].id;
+          searchTerms.value.cumCamera = getOptionText('cumCamera', cumCameraOptions.value[0]);
+        }
+        if (simOptions.value.length > 0 && !localProductData.value.idSim) {
+          localProductData.value.idSim = simOptions.value[0].id;
+          searchTerms.value.sim = getOptionText('sim', simOptions.value[0]);
+        }
+        if (thietKeOptions.value.length > 0 && !localProductData.value.idThietKe) {
+          localProductData.value.idThietKe = thietKeOptions.value[0].id;
+          searchTerms.value.thietKe = getOptionText('thietKe', thietKeOptions.value[0]);
+        }
+        if (pinOptions.value.length > 0 && !localProductData.value.idPin) {
+          localProductData.value.idPin = pinOptions.value[0].id;
+          searchTerms.value.pin = getOptionText('pin', pinOptions.value[0]);
+        }
+        if (cpuOptions.value.length > 0 && !localProductData.value.idCpu) {
+          localProductData.value.idCpu = cpuOptions.value[0].id;
+          searchTerms.value.cpu = getOptionText('cpu', cpuOptions.value[0]);
+        }
+        if (gpuOptions.value.length > 0 && !localProductData.value.idGpu) {
+          localProductData.value.idGpu = gpuOptions.value[0].id;
+          searchTerms.value.gpu = getOptionText('gpu', gpuOptions.value[0]);
+        }
+        if (congNgheMangOptions.value.length > 0 && !localProductData.value.idCongNgheMang) {
+          localProductData.value.idCongNgheMang = congNgheMangOptions.value[0].id;
+          searchTerms.value.congNgheMang = getOptionText('congNgheMang', congNgheMangOptions.value[0]);
+        }
+        if (hoTroCongNgheSacOptions.value.length > 0 && !localProductData.value.idHoTroCongNgheSac) {
+          localProductData.value.idHoTroCongNgheSac = hoTroCongNgheSacOptions.value[0].id;
+          searchTerms.value.hoTroCongNgheSac = getOptionText('hoTroCongNgheSac', hoTroCongNgheSacOptions.value[0]);
+        }
+        if (chiSoKhangBuiVaNuocOptions.value.length > 0 && !localProductData.value.idChiSoKhangBuiVaNuoc) {
+          localProductData.value.idChiSoKhangBuiVaNuoc = chiSoKhangBuiVaNuocOptions.value[0].id;
+          searchTerms.value.chiSoKhangBuiVaNuoc = getOptionText('chiSoKhangBuiVaNuoc', chiSoKhangBuiVaNuocOptions.value[0]);
+        }
+        if (hoTroBoNhoNgoaiOptions.value.length > 0 && !localProductData.value.idHoTroBoNhoNgoai) {
+          localProductData.value.idHoTroBoNhoNgoai = hoTroBoNhoNgoaiOptions.value[0].id;
+          searchTerms.value.hoTroBoNhoNgoai = getOptionText('hoTroBoNhoNgoai', hoTroBoNhoNgoaiOptions.value[0]);
+        }
 
         emit('update:productData', localProductData.value);
       } catch (error) {
@@ -782,51 +807,209 @@ export default defineComponent({
           duration: 3000,
         });
         productNameOptions.value = [];
-        filteredProductNameOptions.value = [];
+        filteredOptions.value.tenSanPham = [];
+      } finally {
+        isLoading.value = false;
       }
     };
 
-    fetchData();
+    onMounted(fetchData);
 
-    const filterProducts = () => {
-      const searchTerm = localProductData.value.tenSanPham?.toLowerCase().trim() || '';
+    const showDropdown = (field) => {
+      if (isNewProduct.value) {
+        dropdownState.value[field] = true;
+        filterOptions(field);
+      }
+    };
+
+    const delayHideDropdown = (field) => {
+      setTimeout(() => {
+        dropdownState.value[field] = false;
+      }, 200);
+    };
+
+    const filterOptions = (field) => {
+      const searchTerm = searchTerms.value[field]?.toLowerCase().trim() || '';
+      const optionsMap = {
+        tenSanPham: productNameOptions.value,
+        heDieuHanh: heDieuHanhOptions.value,
+        congNgheManHinh: congNgheManHinhOptions.value,
+        nhaSanXuat: nhaSanXuatOptions.value,
+        cumCamera: cumCameraOptions.value,
+        sim: simOptions.value,
+        thietKe: thietKeOptions.value,
+        pin: pinOptions.value,
+        cpu: cpuOptions.value,
+        gpu: gpuOptions.value,
+        congNgheMang: congNgheMangOptions.value,
+        hoTroCongNgheSac: hoTroCongNgheSacOptions.value,
+        chiSoKhangBuiVaNuoc: chiSoKhangBuiVaNuocOptions.value,
+        hoTroBoNhoNgoai: hoTroBoNhoNgoaiOptions.value,
+      };
+
       if (!searchTerm) {
-        filteredProductNameOptions.value = productNameOptions.value;
+        filteredOptions.value[field] = optionsMap[field] || [];
       } else {
-        filteredProductNameOptions.value = productNameOptions.value.filter((product) =>
-          product.tenSanPham?.toLowerCase().includes(searchTerm)
-        );
+        filteredOptions.value[field] = optionsMap[field].filter((option) => {
+          const text = getOptionText(field, option).toLowerCase();
+          return text.includes(searchTerm);
+        });
       }
-      isNewProduct.value = searchTerm !== '' && filteredProductNameOptions.value.length === 0;
-      if (!isProductSelected.value) {
-        emit('update:productData', localProductData.value);
+    };
+
+    const getOptionText = (field, option) => {
+      if (!option) return '';
+      switch (field) {
+        case 'tenSanPham':
+          return option.tenSanPham || '';
+        case 'heDieuHanh':
+          return `${option.heDieuHanh || ''} ${option.phienBan || ''}`.trim();
+        case 'congNgheManHinh':
+          return `${option.congNgheManHinh || ''} ${option.chuanManHinh || ''} ${option.kichThuoc || ''} ${option.doPhanGiai || ''} ${option.tanSoQuet || ''}`.trim();
+        case 'nhaSanXuat':
+          return option.nhaSanXuat || '';
+        case 'cumCamera':
+          return `${option.thongSoCameraSau || ''} ${option.thongSoCameraTruoc || ''}`.trim();
+        case 'sim':
+          return `${option.soLuongSimHoTro || ''} ${option.cacLoaiSimHoTro || ''}`.trim();
+        case 'thietKe':
+          return `${option.chatLieuKhung || ''} ${option.chatLieuMatLung || ''}`.trim();
+        case 'pin':
+          return `${option.loaiPin || ''} ${option.dungLuongPin || ''}`.trim();
+        case 'cpu':
+          return option.tenCpu || '';
+        case 'gpu':
+          return option.tenGpu || '';
+        case 'congNgheMang':
+          return option.tenCongNgheMang || '';
+        case 'hoTroCongNgheSac':
+          return `${option.congSac || ''} ${option.congNgheHoTro || ''}`.trim();
+        case 'chiSoKhangBuiVaNuoc':
+          return option.tenChiSo || '';
+        case 'hoTroBoNhoNgoai':
+          return option.hoTroBoNhoNgoai || '';
+        default:
+          return '';
       }
+    };
+
+    const getPlaceholder = (field) => {
+      const selectedOption = getSelectedOption(field);
+      return selectedOption ? getOptionText(field, selectedOption) : `Tìm hoặc chọn ${currentAttributeLabel.value[field] || field}`;
+    };
+
+    const getSelectedOption = (field) => {
+      const optionsMap = {
+        heDieuHanh: heDieuHanhOptions.value,
+        congNgheManHinh: congNgheManHinhOptions.value,
+        nhaSanXuat: nhaSanXuatOptions.value,
+        cumCamera: cumCameraOptions.value,
+        sim: simOptions.value,
+        thietKe: thietKeOptions.value,
+        pin: pinOptions.value,
+        cpu: cpuOptions.value,
+        gpu: gpuOptions.value,
+        congNgheMang: congNgheMangOptions.value,
+        hoTroCongNgheSac: hoTroCongNgheSacOptions.value,
+        chiSoKhangBuiVaNuoc: chiSoKhangBuiVaNuocOptions.value,
+        hoTroBoNhoNgoai: hoTroBoNhoNgoaiOptions.value,
+      };
+      const fieldMap = {
+        heDieuHanh: 'idHeDieuHanh',
+        congNgheManHinh: 'idCongNgheManHinh',
+        nhaSanXuat: 'idNhaSanXuat',
+        cumCamera: 'idCumCamera',
+        sim: 'idSim',
+        thietKe: 'idThietKe',
+        pin: 'idPin',
+        cpu: 'idCpu',
+        gpu: 'idGpu',
+        congNgheMang: 'idCongNgheMang',
+        hoTroCongNgheSac: 'idHoTroCongNgheSac',
+        chiSoKhangBuiVaNuoc: 'idChiSoKhangBuiVaNuoc',
+        hoTroBoNhoNgoai: 'idHoTroBoNhoNgoai',
+      };
+      return optionsMap[field]?.find(option => option.id === localProductData.value[fieldMap[field]]);
+    };
+
+    const updateSearchTerms = () => {
+      const fields = [
+        'heDieuHanh', 'congNgheManHinh', 'nhaSanXuat', 'cumCamera', 'sim',
+        'thietKe', 'pin', 'cpu', 'gpu', 'congNgheMang', 'hoTroCongNgheSac',
+        'chiSoKhangBuiVaNuoc', 'hoTroBoNhoNgoai'
+      ];
+      fields.forEach(field => {
+        const selectedOption = getSelectedOption(field);
+        searchTerms.value[field] = selectedOption ? getOptionText(field, selectedOption) : '';
+      });
     };
 
     const selectProduct = (product) => {
+      isNewProduct.value = !product.id;
       localProductData.value = {
-        ...product,
-        idCongNgheManHinh: product.congNgheManHinhId || '',
-        idHoTroCongNgheSac: product.hoTroCongNgheSacId || '',
-        idHoTroBoNhoNgoai: product.idHoTroBoNhoNgoai || '',
+        ...localProductData.value,
+        id: product.id || null,
+        tenSanPham: product.tenSanPham,
+        idHeDieuHanh: product.idHeDieuHanh || (heDieuHanhOptions.value[0]?.id || ''),
+        idCongNgheManHinh: product.idCongNgheManHinh || (congNgheManHinhOptions.value[0]?.id || ''),
+        idNhaSanXuat: product.idNhaSanXuat || (nhaSanXuatOptions.value[0]?.id || ''),
+        idCumCamera: product.idCumCamera || (cumCameraOptions.value[0]?.id || ''),
+        idSim: product.idSim || (simOptions.value[0]?.id || ''),
+        idThietKe: product.idThietKe || (thietKeOptions.value[0]?.id || ''),
+        idPin: product.idPin || (pinOptions.value[0]?.id || ''),
+        idCpu: product.idCpu || (cpuOptions.value[0]?.id || ''),
+        idGpu: product.idGpu || (gpuOptions.value[0]?.id || ''),
+        idCongNgheMang: product.idCongNgheMang || (congNgheMangOptions.value[0]?.id || ''),
+        idHoTroCongNgheSac: product.idHoTroCongNgheSac || (hoTroCongNgheSacOptions.value[0]?.id || ''),
+        idChiSoKhangBuiVaNuoc: product.idChiSoKhangBuiVaNuoc || (chiSoKhangBuiVaNuocOptions.value[0]?.id || ''),
+        idHoTroBoNhoNgoai: product.idHoTroBoNhoNgoai || (hoTroBoNhoNgoaiOptions.value[0]?.id || ''),
         ghiChu: product.ghiChu || '',
       };
-      showProductDropdown.value = false;
-      isProductSelected.value = true;
-      isNewProduct.value = false;
+      searchTerms.value.tenSanPham = product.tenSanPham;
+      updateSearchTerms();
+      dropdownState.value.tenSanPham = false;
       emit('update:productData', localProductData.value);
       toastNotification.value?.addToast({
         type: 'success',
-        message: 'Đã chọn sản phẩm!',
+        message: 'Đã chọn sản phẩm: ' + product.tenSanPham,
         duration: 3000,
       });
     };
 
+    const selectOption = (field, option) => {
+      if (!isNewProduct.value) return;
+      const fieldMap = {
+        heDieuHanh: 'idHeDieuHanh',
+        congNgheManHinh: 'idCongNgheManHinh',
+        nhaSanXuat: 'idNhaSanXuat',
+        cumCamera: 'idCumCamera',
+        sim: 'idSim',
+        thietKe: 'idThietKe',
+        pin: 'idPin',
+        cpu: 'idCpu',
+        gpu: 'idGpu',
+        congNgheMang: 'idCongNgheMang',
+        hoTroCongNgheSac: 'idHoTroCongNgheSac',
+        chiSoKhangBuiVaNuoc: 'idChiSoKhangBuiVaNuoc',
+        hoTroBoNhoNgoai: 'idHoTroBoNhoNgoai',
+      };
+      if (fieldMap[field]) {
+        localProductData.value[fieldMap[field]] = option.id;
+        searchTerms.value[field] = getOptionText(field, option);
+        dropdownState.value[field] = false;
+        emit('update:productData', localProductData.value);
+        toastNotification.value?.addToast({
+          type: 'success',
+          message: `Đã chọn ${currentAttributeLabel.value[field] || field}: ${searchTerms.value[field]}`,
+          duration: 3000,
+        });
+      }
+    };
+
     const clearProductSelection = () => {
-      isProductSelected.value = false;
-      isNewProduct.value = localProductData.value.tenSanPham !== '';
+      isNewProduct.value = true;
       localProductData.value = {
-        tenSanPham: localProductData.value.tenSanPham,
+        tenSanPham: searchTerms.value.tenSanPham,
         idHeDieuHanh: heDieuHanhOptions.value.length > 0 ? heDieuHanhOptions.value[0].id : '',
         idCongNgheManHinh: congNgheManHinhOptions.value.length > 0 ? congNgheManHinhOptions.value[0].id : '',
         idNhaSanXuat: nhaSanXuatOptions.value.length > 0 ? nhaSanXuatOptions.value[0].id : '',
@@ -842,6 +1025,7 @@ export default defineComponent({
         idHoTroBoNhoNgoai: hoTroBoNhoNgoaiOptions.value.length > 0 ? hoTroBoNhoNgoaiOptions.value[0].id : '',
         ghiChu: '',
       };
+      updateSearchTerms();
       emit('update:productData', localProductData.value);
       toastNotification.value?.addToast({
         type: 'info',
@@ -850,13 +1034,15 @@ export default defineComponent({
       });
     };
 
-    const delayHideProductDropdown = () => {
-      setTimeout(() => {
-        showProductDropdown.value = false;
-      }, 200);
-    };
-
     const openAddModal = (attribute) => {
+      if (!isNewProduct.value) {
+        toastNotification.value?.addToast({
+          type: 'warning',
+          message: 'Không thể thêm thuộc tính cho sản phẩm đã tồn tại.',
+          duration: 3000,
+        });
+        return;
+      }
       currentAttribute.value = attribute;
       entityData.value = {};
       showFormModal.value = true;
@@ -877,6 +1063,8 @@ export default defineComponent({
             await addHeDieuHanh(data);
             heDieuHanhOptions.value.push(data);
             localProductData.value.idHeDieuHanh = newId;
+            searchTerms.value.heDieuHanh = `${data.heDieuHanh} ${data.phienBan}`.trim();
+            filteredOptions.value.heDieuHanh.push(data);
             break;
           case 'congNgheManHinh':
             await addCongNgheManHinh(data);
@@ -888,46 +1076,64 @@ export default defineComponent({
               tanSoQuet: entityData.value.tanSoQuet,
             });
             localProductData.value.idCongNgheManHinh = newId;
+            searchTerms.value.congNgheManHinh = `${data.congNgheManHinh} ${data.chuanManHinh || ''} ${data.kichThuoc} ${data.doPhanGiai} ${data.tanSoQuet}`.trim();
+            filteredOptions.value.congNgheManHinh.push(data);
             break;
           case 'nhaSanXuat':
             await addNhaSanXuat(data);
             nhaSanXuatOptions.value.push(data);
             localProductData.value.idNhaSanXuat = newId;
+            searchTerms.value.nhaSanXuat = data.nhaSanXuat;
+            filteredOptions.value.nhaSanXuat.push(data);
             break;
           case 'cumCamera':
             await addCumCamera(data);
             cumCameraOptions.value.push(data);
             localProductData.value.idCumCamera = newId;
+            searchTerms.value.cumCamera = `${data.thongSoCameraSau} ${data.thongSoCameraTruoc}`.trim();
+            filteredOptions.value.cumCamera.push(data);
             break;
           case 'sim':
             await addSim(data);
             simOptions.value.push(data);
             localProductData.value.idSim = newId;
+            searchTerms.value.sim = `${data.soLuongSimHoTro} ${data.cacLoaiSimHoTro}`.trim();
+            filteredOptions.value.sim.push(data);
             break;
           case 'thietKe':
             await addThietKe(data);
             thietKeOptions.value.push(data);
             localProductData.value.idThietKe = newId;
+            searchTerms.value.thietKe = `${data.chatLieuKhung} ${data.chatLieuMatLung}`.trim();
+            filteredOptions.value.thietKe.push(data);
             break;
           case 'pin':
             await addPin(data);
             pinOptions.value.push(data);
             localProductData.value.idPin = newId;
+            searchTerms.value.pin = `${data.loaiPin} ${data.dungLuongPin}`.trim();
+            filteredOptions.value.pin.push(data);
             break;
           case 'cpu':
             await addCpu(data);
             cpuOptions.value.push(data);
             localProductData.value.idCpu = newId;
+            searchTerms.value.cpu = data.tenCpu;
+            filteredOptions.value.cpu.push(data);
             break;
           case 'gpu':
             await addGpu(data);
             gpuOptions.value.push(data);
             localProductData.value.idGpu = newId;
+            searchTerms.value.gpu = data.tenGpu;
+            filteredOptions.value.gpu.push(data);
             break;
           case 'congNgheMang':
             await addCongNgheMang(data);
             congNgheMangOptions.value.push(data);
             localProductData.value.idCongNgheMang = newId;
+            searchTerms.value.congNgheMang = data.tenCongNgheMang;
+            filteredOptions.value.congNgheMang.push(data);
             break;
           case 'hoTroCongNgheSac':
             await addHoTroCongNgheSac(data);
@@ -937,16 +1143,22 @@ export default defineComponent({
               congNgheHoTro: entityData.value.congNgheHoTro,
             });
             localProductData.value.idHoTroCongNgheSac = newId;
+            searchTerms.value.hoTroCongNgheSac = `${data.congSac} ${data.congNgheHoTro}`.trim();
+            filteredOptions.value.hoTroCongNgheSac.push(data);
             break;
           case 'chiSoKhangBuiVaNuoc':
             await addChiSoKhangBuiVaNuoc(data);
             chiSoKhangBuiVaNuocOptions.value.push(data);
             localProductData.value.idChiSoKhangBuiVaNuoc = newId;
+            searchTerms.value.chiSoKhangBuiVaNuoc = data.tenChiSo;
+            filteredOptions.value.chiSoKhangBuiVaNuoc.push(data);
             break;
           case 'hoTroBoNhoNgoai':
             await addHoTroBoNhoNgoai(data);
             hoTroBoNhoNgoaiOptions.value.push(data);
             localProductData.value.idHoTroBoNhoNgoai = newId;
+            searchTerms.value.hoTroBoNhoNgoai = data.hoTroBoNhoNgoai;
+            filteredOptions.value.hoTroBoNhoNgoai.push(data);
             break;
         }
         toastNotification.value?.addToast({
@@ -966,8 +1178,9 @@ export default defineComponent({
     };
 
     const resetForm = () => {
+      isNewProduct.value = true;
       localProductData.value = {
-        tenSanPham: localProductData.value.tenSanPham,
+        tenSanPham: '',
         idHeDieuHanh: heDieuHanhOptions.value.length > 0 ? heDieuHanhOptions.value[0].id : '',
         idCongNgheManHinh: congNgheManHinhOptions.value.length > 0 ? congNgheManHinhOptions.value[0].id : '',
         idNhaSanXuat: nhaSanXuatOptions.value.length > 0 ? nhaSanXuatOptions.value[0].id : '',
@@ -983,8 +1196,23 @@ export default defineComponent({
         idHoTroBoNhoNgoai: hoTroBoNhoNgoaiOptions.value.length > 0 ? hoTroBoNhoNgoaiOptions.value[0].id : '',
         ghiChu: '',
       };
-      isProductSelected.value = false;
-      isNewProduct.value = false;
+      searchTerms.value = {
+        tenSanPham: '',
+        heDieuHanh: heDieuHanhOptions.value.length > 0 ? getOptionText('heDieuHanh', heDieuHanhOptions.value[0]) : '',
+        congNgheManHinh: congNgheManHinhOptions.value.length > 0 ? getOptionText('congNgheManHinh', congNgheManHinhOptions.value[0]) : '',
+        nhaSanXuat: nhaSanXuatOptions.value.length > 0 ? getOptionText('nhaSanXuat', nhaSanXuatOptions.value[0]) : '',
+        cumCamera: cumCameraOptions.value.length > 0 ? getOptionText('cumCamera', cumCameraOptions.value[0]) : '',
+        sim: simOptions.value.length > 0 ? getOptionText('sim', simOptions.value[0]) : '',
+        thietKe: thietKeOptions.value.length > 0 ? getOptionText('thietKe', thietKeOptions.value[0]) : '',
+        pin: pinOptions.value.length > 0 ? getOptionText('pin', pinOptions.value[0]) : '',
+        cpu: cpuOptions.value.length > 0 ? getOptionText('cpu', cpuOptions.value[0]) : '',
+        gpu: gpuOptions.value.length > 0 ? getOptionText('gpu', gpuOptions.value[0]) : '',
+        congNgheMang: congNgheMangOptions.value.length > 0 ? getOptionText('congNgheMang', congNgheMangOptions.value[0]) : '',
+        hoTroCongNgheSac: hoTroCongNgheSacOptions.value.length > 0 ? getOptionText('hoTroCongNgheSac', hoTroCongNgheSacOptions.value[0]) : '',
+        chiSoKhangBuiVaNuoc: chiSoKhangBuiVaNuocOptions.value.length > 0 ? getOptionText('chiSoKhangBuiVaNuoc', chiSoKhangBuiVaNuocOptions.value[0]) : '',
+        hoTroBoNhoNgoai: hoTroBoNhoNgoaiOptions.value.length > 0 ? getOptionText('hoTroBoNhoNgoai', hoTroBoNhoNgoaiOptions.value[0]) : '',
+      };
+      filteredOptions.value.tenSanPham = productNameOptions.value;
       emit('update:productData', localProductData.value);
       emit('reset-form');
     };
@@ -1006,23 +1234,26 @@ export default defineComponent({
       chiSoKhangBuiVaNuocOptions,
       hoTroBoNhoNgoaiOptions,
       productNameOptions,
-      filteredProductNameOptions,
-      showProductDropdown,
-      isProductSelected,
+      searchTerms,
+      dropdownState,
+      filteredOptions,
       isNewProduct,
       isLoading,
       showFormModal,
       currentAttribute,
       currentAttributeLabel,
       entityData,
-      filterProducts,
+      showDropdown,
+      delayHideDropdown,
+      filterOptions,
       selectProduct,
+      selectOption,
       clearProductSelection,
-      delayHideProductDropdown,
       openAddModal,
       closeFormModal,
       handleAddAttribute,
       resetForm,
+      getPlaceholder,
     };
   },
 });
@@ -1072,7 +1303,8 @@ export default defineComponent({
   font-size: 0.875rem;
 }
 
-.search-group {
+.search-group,
+.filter-group {
   position: relative;
 }
 
@@ -1092,7 +1324,10 @@ export default defineComponent({
 .search-input {
   padding-left: 2.5rem;
   border: 2px solid rgba(52, 211, 153, 0.1);
-  border-radius: 8px;
+  border-top-left-radius: 8px;
+  border-bottom-left-radius: 8px;
+  border-top-right-radius: 0px;
+  border-bottom-right-radius: 0px;
   transition: all 0.2s ease;
   font-size: 0.9rem;
   background: #f8f9fa;
@@ -1103,12 +1338,21 @@ export default defineComponent({
   box-shadow: 0 0 10px rgba(52, 211, 153, 0.2);
 }
 
+.search-input:disabled {
+  background: #e9ecef;
+  cursor: not-allowed;
+}
+
+.form-control {
+  padding: 7px 14px;
+}
+
 .input-group {
   display: flex;
   align-items: center;
 }
 
-.input-group .form-control {
+.input-group .search-input-wrapper {
   flex: 1;
 }
 
