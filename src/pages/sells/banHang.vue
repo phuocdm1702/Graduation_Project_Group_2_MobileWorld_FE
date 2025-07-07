@@ -1381,7 +1381,7 @@
                     cartItems.length === 0 ||
                     isCreatingOrder
                   "
-                  @click="ThanhToan"
+                  @click="confirmPayment"
                 >
                   <span class="fw-semibold">Thanh toán</span>
                 </button>

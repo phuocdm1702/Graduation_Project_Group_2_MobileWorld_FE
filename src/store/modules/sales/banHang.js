@@ -802,6 +802,12 @@ export default {
           return;
         }
         const productData = productResponse.data.content[0];
+        const latestPrice =
+          Number(productData.giaBan) || selectedProduct.value.giaBan;
+        const latestOriginalPrice =
+          Number(productData.giaBanGoc) || latestPrice;
+        const latestInitialPrice =
+          Number(productData.giaBanBanDau) || latestPrice;
         const latestPrice = Number(productData.giaBan) || selectedProduct.value.giaBan;
         const latestOriginalPrice = Number(productData.giaBanGoc) || latestPrice;
         const latestInitialPrice = Number(productData.giaBanBanDau) || latestPrice;
@@ -811,6 +817,7 @@ export default {
           const ghiChuGia = `Giá sản phẩm ${
               selectedProduct.value.tenSanPham
           } đã thay đổi thành ${formatPrice(
+            latestPrice
               latestPrice
           )} từ giá ban đầu ${formatPrice(latestInitialPrice)}`;
           showToast("warning", ghiChuGia);
@@ -1653,6 +1660,12 @@ export default {
 
         // Kiểm tra thay đổi giá
         if (product.giaBanBanDau !== product.giaBan) {
+
+          const ghiChuGia = `Giá sản phẩm ${
+            product.tenSanPham
+          } đã thay đổi thành ${formatPrice(
+            product.giaBan
+
           const ghiChuGia = `Giá sản phẩm ${product.tenSanPham} đã thay đổi thành ${formatPrice(
               product.giaBan
           )} từ giá ban đầu ${formatPrice(product.giaBanBanDau)}`;
@@ -1825,9 +1838,9 @@ export default {
       }
 
       try {
+        // Logic kiểm tra giá sản phẩm và mã giảm giá (giữ nguyên)
         const priceChangeMessages = [];
         const priceCheckErrors = [];
-
         for (const item of cartItems.value) {
           try {
             const productResponse = await apiService.get(
@@ -1838,6 +1851,9 @@ export default {
             const productData = productResponse.data.content[0];
             if (productData && productData.giaBanBanDau !== item.currentPrice) {
               priceChangeMessages.push(
+                `Giá sản phẩm ${item.name} đã thay đổi thành ${formatPrice(
+                  productData.giaBan
+                )} từ giá ban đầu ${formatPrice(productData.giaBanBanDau)}`
                   `Giá sản phẩm ${item.name} đã thay đổi thành ${formatPrice(
                       productData.giaBan
                   )} từ giá ban đầu ${formatPrice(productData.giaBanBanDau)}`
@@ -1858,6 +1874,7 @@ export default {
           return;
         }
 
+        // Logic kiểm tra và áp dụng mã giảm giá (giữ nguyên)
         await fetchPGG();
         if (customer.value?.id) {
           const pggResult = await getPhieuGiamGiaByKhachHang(customer.value.id);
@@ -2014,6 +2031,54 @@ export default {
             const orderInfo = `Thanh toán hóa đơn ${
                 activeInvoiceId.value || "HDXXX"
             }`;
+            const amountToSend = totalPayment.value || 100000;
+            console.log("Sending amount:", amountToSend);
+
+            // Tạo hoaDonRequest để lưu tạm
+            const hoaDonRequest = {
+              idKhachHang: customer.value?.id || null,
+              tenKhachHang: customer.value?.name || "Khách vãng lai",
+              soDienThoaiKhachHang: customer.value?.phone || null,
+              diaChiKhachHang:
+                customer.value && isDelivery.value
+                  ? {
+                      thanhPho: customer.value.city,
+                      quan: customer.value.district,
+                      phuong: customer.value.ward,
+                      diaChiCuThe: customer.value.address,
+                    }
+                  : { thanhPho: "", quan: "", phuong: "", diaChiCuThe: "" },
+              hinhThucThanhToan: [
+                {
+                  phuongThucThanhToanId: 2, // VNPay
+                  tienMat: 0,
+                  tienChuyenKhoan: totalPayment.value,
+                },
+              ],
+              idPhieuGiamGia: selectedDiscount.value?.id || null,
+              giamGia: selectedDiscount.value?.value || 0,
+              phiVanChuyen: isDelivery.value ? shippingFee.value : 0,
+              loaiDon: isDelivery.value ? "online" : "trực tiếp",
+              tongTien: tongTien.value,
+              tongTienSauGiam: totalPayment.value,
+              chiTietGioHang: cartItems.value.map((item) => ({
+                chiTietSanPhamId: item.id,
+                soLuong: item.quantity,
+                maImel: item.imei,
+                giaBan: item.currentPrice,
+                ghiChuGia: item.ghiChuGia || "",
+              })),
+            };
+
+            // Lưu thông tin hóa đơn vào localStorage
+            localStorage.setItem(
+              "pendingHoaDon",
+              JSON.stringify({
+                idHD: activeInvoiceId.value,
+                hoaDonRequest,
+              })
+            );
+
             const amountToSend = Math.round(totalPayment.value) || 100000;
             console.log("Sending amount:", amountToSend);
             const params = new URLSearchParams();
@@ -2029,6 +2094,7 @@ export default {
                   },
                 }
             );
+            window.location.href = response.data; // Chuyển hướng tới VNPay
             window.location.href = response.data;
           } catch (error) {
             showToast(
@@ -2051,36 +2117,56 @@ export default {
       }
     };
 
+    const createOrder = async (
+      idHD = activeInvoiceId.value,
+      hoaDonRequest = null
+    ) => {
 
     const createOrder = async () => {
       isCreatingOrder.value = true;
       try {
-        const hinhThucThanhToan = [];
-        if (paymentMethod.value === "cash") {
-          hinhThucThanhToan.push({
-            phuongThucThanhToanId: 1,
-            tienMat: totalPayment.value,
-            tienChuyenKhoan: 0,
-          });
-        } else if (paymentMethod.value === "transfer") {
-          hinhThucThanhToan.push({
-            phuongThucThanhToanId: 2,
-            tienMat: 0,
-            tienChuyenKhoan: totalPayment.value,
-          });
-        } else if (paymentMethod.value === "both") {
-          hinhThucThanhToan.push({
-            phuongThucThanhToanId: 3,
-            tienMat: tienMat.value,
-            tienChuyenKhoan: tienChuyenKhoan.value,
-          });
-        }
-
-        const hoaDonRequest = {
+        // Nếu không có hoaDonRequest (trường hợp thông thường), tạo mới từ trạng thái hiện tại
+        const requestBody = hoaDonRequest || {
           idKhachHang: customer.value?.id || null,
           tenKhachHang: customer.value?.name || "Khách vãng lai",
           soDienThoaiKhachHang: customer.value?.phone || null,
           diaChiKhachHang:
+            customer.value && isDelivery.value
+              ? {
+                  thanhPho: customer.value.city,
+                  quan: customer.value.district,
+                  phuong: customer.value.ward,
+                  diaChiCuThe: customer.value.address,
+                }
+              : {
+                  thanhPho: "",
+                  quan: "",
+                  phuong: "",
+                  diaChiCuThe: "",
+                },
+          hinhThucThanhToan: (() => {
+            const hinhThucThanhToan = [];
+            if (paymentMethod.value === "cash") {
+              hinhThucThanhToan.push({
+                phuongThucThanhToanId: 1,
+                tienMat: totalPayment.value,
+                tienChuyenKhoan: 0,
+              });
+            } else if (paymentMethod.value === "transfer") {
+              hinhThucThanhToan.push({
+                phuongThucThanhToanId: 2,
+                tienMat: 0,
+                tienChuyenKhoan: totalPayment.value,
+              });
+            } else if (paymentMethod.value === "both") {
+              hinhThucThanhToan.push({
+                phuongThucThanhToanId: 3,
+                tienMat: tienMat.value,
+                tienChuyenKhoan: tienChuyenKhoan.value,
+              });
+            }
+            return hinhThucThanhToan;
+          })(),
               customer.value && isDelivery.value
                   ? {
                     thanhPho: customer.value.city,
@@ -2105,18 +2191,24 @@ export default {
             chiTietSanPhamId: item.id,
             soLuong: item.quantity,
             maImel: item.imei,
+            giaBan: item.currentPrice,
             giaBan: item.currentPrice, // Sử dụng currentPrice
             ghiChuGia: item.ghiChuGia || "",
           })),
         };
 
-        console.log("hoaDonRequest:", JSON.stringify(hoaDonRequest, null, 2));
+        console.log("hoaDonRequest:", JSON.stringify(requestBody, null, 2));
         const response = await apiService.post(
+          `/api/thanh-toan/${idHD}`,
+          requestBody
             `/api/thanh-toan/${activeInvoiceId.value}`,
             hoaDonRequest
         );
-        const invoiceId = response.data.id || activeInvoiceId.value;
+        const invoiceId = response.data.id || idHD;
+
+        // Cập nhật trạng thái giao diện
         pendingInvoices.value = pendingInvoices.value.filter(
+          (inv) => inv.id !== idHD
             (inv) => inv.id !== activeInvoiceId.value
         );
         cartItems.value = [];
@@ -2141,16 +2233,23 @@ export default {
         };
         discount.value = 0;
         selectedDiscount.value = null;
+
+        // Hiển thị thông báo thành công
         showToast(
             "success",
             "Thanh toán thành công, chuẩn bị hiện hóa đơn chi tiết sau vài giây"
         );
         resetNotification();
 
+        // Chuyển hướng đến trang chi tiết hóa đơn
         setTimeout(() => {
           router.push(`/hoaDon/${invoiceId}/detail`);
         }, 1000);
       } catch (error) {
+        // Xử lý lỗi
+        const errorMessage = error.response?.data?.message || error.message;
+        showToast("error", `Lỗi khi thanh toán: ${errorMessage}`);
+        console.error("Error details:", error);
         showToast(
             "error",
             `Lỗi khi thanh toán: ${
@@ -2192,13 +2291,66 @@ export default {
     // Initialize data
     onMounted(async () => {
       try {
+        // Giữ nguyên logic khởi tạo dữ liệu hiện có
         await fetchPGG();
         fetchPendingInvoices();
         fetchProducts();
         fetchLocations();
         await applyBestDiscount(); // Áp dụng PGG tốt nhất khi khởi tạo
+
+        // Xử lý kết quả trả về từ VNPay
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.has("vnp_TransactionStatus")) {
+          try {
+            // Gọi endpoint để kiểm tra trạng thái giao dịch VNPay
+            const response = await apiService.get(
+              "/api/payment/vnpay-payment",
+              {
+                params: urlParams,
+              }
+            );
+
+            if (response.data === "Transaction Successful") {
+              // Lấy thông tin hóa đơn từ localStorage
+              const pendingHoaDon = JSON.parse(
+                localStorage.getItem("pendingHoaDon")
+              );
+              if (
+                pendingHoaDon &&
+                pendingHoaDon.idHD &&
+                pendingHoaDon.hoaDonRequest
+              ) {
+                // Gọi createOrder để hoàn tất hóa đơn
+                await createOrder(
+                  pendingHoaDon.idHD,
+                  pendingHoaDon.hoaDonRequest
+                );
+                localStorage.removeItem("pendingHoaDon"); // Xóa dữ liệu tạm
+                // Xóa query parameters khỏi URL để tránh xử lý lại
+                router.replace({ query: {} });
+              } else {
+                showToast(
+                  "error",
+                  "Không tìm thấy thông tin hóa đơn để hoàn tất thanh toán"
+                );
+              }
+            } else {
+              showToast(
+                "error",
+                response.data || "Thanh toán VNPay không thành công"
+              );
+            }
+          } catch (error) {
+            showToast(
+              "error",
+              `Lỗi khi kiểm tra trạng thái thanh toán: ${error.message}`
+            );
+            console.error("Error details:", error);
+          }
+        }
       } catch (error) {
-        showToast("error", "Lỗi khi khởi tạo dữ liệu");
+        showToast("error", "Lỗi khi khởi tạo dữ liệu hoặc xử lý thanh toán");
+        console.error("Error details:", error);
       }
     });
 
