@@ -230,7 +230,6 @@
   font-weight: 600;
   font-size: clamp(1rem, 2vw, 1.1rem);
   margin-bottom: 1.5rem;
-  position: relative;
   padding-bottom: 0.625rem;
 }
 

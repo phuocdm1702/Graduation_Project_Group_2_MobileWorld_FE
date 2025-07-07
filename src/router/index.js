@@ -267,7 +267,7 @@ const routes = [
         component: KhachHangForm, 
         props: true,
         meta: {
-          title: "Form khách hàng",
+          title: "Form khách hàng", // Sẽ được xử lý động trong component
           breadcrumb: [
             { name: "Trang chủ", path: "/trangChu" },
             { name: "Khách hàng", path: "/khachHang" },

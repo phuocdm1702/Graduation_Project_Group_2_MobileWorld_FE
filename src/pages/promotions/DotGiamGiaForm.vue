@@ -1,5 +1,4 @@
 <template>
-  <div class="min-h-screen bg-gray-100">
     <div class="container-fluid py-4">
       <HeaderCard
           :title="isEditMode ? 'Cập Nhật Đợt Giảm Giá' : 'Thêm Đợt Giảm Giá'"
@@ -8,7 +7,7 @@
           :backgroundOpacity="0.95"
       />
 
-      <div class="container mx-auto px-4">
+      <div>
         <ToastNotification ref="toastNotification" />
         <NotificationModal
             ref="notificationModal"
@@ -22,8 +21,8 @@
         <div class="row">
           <!-- Form Đợt Giảm Giá -->
           <div class="col-md-6">
-            <div class="bg-white border rounded-lg shadow-md p-4 h-100 d-flex flex-column">
-              <FilterTableSection :title="isEditMode ? 'Cập Nhật Đợt Giảm Giá' : 'Thông Tin Đợt Giảm Giá'" icon="pi pi-plus-circle">
+            <div>
+              <FilterTableSection :title="isEditMode ? 'Cập Nhật Đợt Giảm Giá' : 'Thông Tin Đợt Giảm Giá'" icon="bi bi-info-circle">
                 <form @submit.prevent="showConfirmModal" class="p-3 space-y-4 flex-grow-1">
                   <div class="mb-3">
                     <label class="filter-label">Mã đợt giảm giá</label>
@@ -31,11 +30,10 @@
                         v-model="dotGiamGia.ma"
                         type="text"
                         class="form-control input"
-                        placeholder="Nhập mã đợt giảm giá"
+                        placeholder="Mã tự động"
                         :disabled="!isEditMode"
                         @blur="checkDuplicateMa"
                     />
-                    <p v-if="errors.ma" class="text-red-500 text-sm mt-1">{{ errors.ma }}</p>
                   </div>
                   <div class="mb-3">
                     <label class="filter-label">Tên đợt giảm giá</label>
@@ -45,7 +43,6 @@
                         class="form-control input"
                         placeholder="Nhập tên đợt giảm giá"
                     />
-                    <p v-if="errors.tenDotGiamGia" class="text-red-500 text-sm mt-1">{{ errors.tenDotGiamGia }}</p>
                   </div>
                   <div class="mb-3">
                     <label class="filter-label">Loại giảm giá</label>
@@ -54,9 +51,8 @@
                       <option value="Phần trăm">Phần trăm</option>
                       <option value="Tiền mặt">Tiền mặt</option>
                     </select>
-                    <p v-if="errors.loaiGiamGiaApDung" class="text-red-500 text-sm mt-1">{{ errors.loaiGiamGiaApDung }}</p>
                   </div>
-                  <div class="mb-3">
+                  <div class="mb-3" v-if="dotGiamGia.loaiGiamGiaApDung !== 'Tiền mặt'">
                     <label class="filter-label">Giá trị giảm giá</label>
                     <input
                         v-model.number="dotGiamGia.giaTriGiamGia"
@@ -65,19 +61,17 @@
                         placeholder="0"
                         required
                         :min="0"
-                        :disabled="isTienMat"
                     />
-                    <p v-if="errors.giaTriGiamGia" class="text-red-500 text-sm mt-1">{{ errors.giaTriGiamGia }}</p>
                   </div>
                   <div class="mb-3">
-                    <label class="filter-label">Số tiền giảm tối đa</label>
+                    <label class="filter-label">Số tiền giảm</label>
                     <input
                         v-model="formattedSoTienGiamToiDa"
                         type="text"
                         class="form-control input"
-                        placeholder="Nhập số tiền tối đa"
+                        placeholder="Nhập số tiền giảm"
                     />
-                    <p v-if="errors.soTienGiamToiDa" class="text-red-500 text-sm mt-1">{{ errors.soTienGiamToiDa }}</p>
+
                   </div>
                   <div class="mb-3">
                     <label class="filter-label">Ngày bắt đầu</label>
@@ -86,7 +80,6 @@
                         type="date"
                         class="form-control input"
                     />
-                    <p v-if="errors.ngayBatDau" class="text-red-500 text-sm mt-1">{{ errors.ngayBatDau }}</p>
                   </div>
                   <div class="mb-3">
                     <label class="filter-label">Ngày kết thúc</label>
@@ -95,7 +88,6 @@
                         type="date"
                         class="form-control input"
                     />
-                    <p v-if="errors.ngayKetThuc" class="text-red-500 text-sm mt-1">{{ errors.ngayKetThuc }}</p>
                   </div>
                   <div class="d-flex gap-2">
                     <button type="submit" class="btn btn-action flex-fill">
@@ -112,14 +104,14 @@
 
           <!-- Danh Sách Sản Phẩm -->
           <div class="col-md-6">
-            <div class="bg-white border rounded-lg shadow-md p-4 h-100 d-flex flex-column">
-              <FilterTableSection title="Sản Phẩm" icon="pi pi-box">
+            <div>
+              <FilterTableSection title="Danh Sách Sản Phẩm" icon="bi bi-table">
                 <div class="p-3 flex-grow-1">
                   <div class="row mb-3">
                     <div class="col-md-6">
-                      <label class="filter-label">Tìm kiếm theo tên, mã...</label>
+                      <label class="filter-label">Tìm kiếm</label>
                       <div class="search-input-wrapper">
-                        <i class="pi pi-search search-icon"></i>
+                        <i class="bi bi-search search-icon input"></i>
                         <input
                             v-model="searchKeyword"
                             type="text"
@@ -149,7 +141,7 @@
                     </div>
                   </div>
 
-                  <div class="table-responsive flex-grow-1" style="overflow-y: auto;">
+                  <div class="flex-grow-1" style="overflow-y: auto;">
                     <DataTable
                         :headers="productHeaders"
                         :data="dspList"
@@ -165,8 +157,8 @@
                             class="form-check-input"
                         />
                       </template>
-                      <template #index="{ index }">
-                        {{ index + 1 }}
+                      <template #index="{ globalIndex  }">
+                        {{ globalIndex  + 1 }}
                       </template>
                       <template #sp.ma="{ item }">
                         <span>{{ item.sp.ma }}</span>
@@ -189,8 +181,8 @@
         </div>
 
         <!-- Chi Tiết Sản Phẩm -->
-        <div class="card bg-white border rounded-lg shadow-md p-6 mt-6">
-          <FilterTableSection title="Chi Tiết Sản Phẩm" icon="pi pi-list">
+        <div>
+          <FilterTableSection title="Danh Sách Chi Tiết Sản Phẩm" icon="bi bi-table">
             <div class="p-3">
               <div class="row mb-3">
                 <div class="col-md-4">
@@ -243,7 +235,7 @@
                 <i class="pi pi-inbox fs-1"></i>
                 <p class="mt-2">{{ isEditMode ? 'Không có dữ liệu chi tiết đợt giảm giá' : 'Không có dữ liệu' }}</p>
               </div>
-              <div v-else class="table-responsive flex-grow-1" style="overflow-y: auto;">
+              <div v-else class="flex-grow-1" style="overflow-y: auto;">
                 <DataTable
                     :headers="detailHeaders"
                     :data="filteredCTSPList"
@@ -259,21 +251,18 @@
                         class="form-check-input"
                     />
                   </template>
-                  <template #index="{ index }">
-                    {{ index + 1 }}
+                  <template #index="{ globalIndex }">
+                    {{ globalIndex + 1 }}
                   </template>
-                  <template #anh.duongDan="{ item }">
-                    <img v-if="item.anh.duongDan" :src="item.anh.duongDan" alt="Ảnh" class="w-10 h-10 object-cover" />
-                    <span v-else>N/A</span>
-                  </template>
+<template #anh.duongDan="{ item }">
+  <img v-if="item.anh.duongDan" :src="item.anh.duongDan" alt="Ảnh" class="product-image"/>
+  <span v-else>N/A</span>
+</template>
                   <template #soLuongTrongDotGiamGiaKhac="{ item }">
-                    <span>{{ item.soLuongTrongDotGiamGiaKhac || '0' }}</span>
+                    <span>Trùng với {{ item.soLuongTrongDotGiamGiaKhac }} đợt giảm giá</span>
                   </template>
                   <template #sp.tenSanPham_va_MauSac="{ item }">
-                    <span>{{ `${item.sp?.tenSanPham || 'Chưa có dữ liệu'} - ${item.ctsp?.idMauSac?.mauSac || 'Chưa có dữ liệu'}` }}</span>
-                  </template>
-                  <template #bnt.dungLuongBoNhoTrong="{ item }">
-                    <span>{{ item.bnt?.dungLuongBoNhoTrong || 'Chưa có dữ liệu' }}</span>
+                    <span>{{ `${item.sp?.tenSanPham || 'Chưa có dữ liệu'} - ${item.ctsp?.idMauSac?.mauSac || 'Chưa có dữ liệu'} - ${ item.bnt?.dungLuongBoNhoTrong || 'Chưa có dữ liệu' }` }}</span>
                   </template>
                   <template #ctsp.giaBan="{ item }">
                     <span>{{ item.ctsp.giaBan ? item.ctsp.giaBan.toLocaleString() : 'N/A' }}</span>
@@ -288,7 +277,6 @@
         </div>
       </div>
     </div>
-  </div>
 </template>
 
 <script setup>
@@ -383,10 +371,9 @@ const detailHeaders = computed(() => [
   { text: '#', value: 'select' },
   { text: 'STT', value: 'index' },
   { text: 'Ảnh', value: 'anh.duongDan' },
-  { text: 'Số lượng trùng', value: 'soLuongTrongDotGiamGiaKhac' },
-  { text: 'Sản phẩm & Màu sắc', value: 'sp.tenSanPham_va_MauSac' },
-  { text: 'Bộ nhớ', value: 'bnt.dungLuongBoNhoTrong' },
-  { text: 'Đơn giá', value: 'ctsp.giaBan' },
+  { text: 'Trùng', value: 'soLuongTrongDotGiamGiaKhac' },
+  { text: 'Sản phẩm & Màu sắc & Bộ nhớ', value: 'sp.tenSanPham_va_MauSac' },
+  { text: 'Đơn giá gốc', value: 'ctsp.giaBan' },
   { text: 'Đơn giá sau giảm', value: 'giaSauKhiGiam' },
 ]);
 
@@ -426,59 +413,107 @@ const checkDuplicateMa = async () => {
 };
 
 const validateForm = async () => {
-  errors.value = {};
   const today = new Date().toISOString().split('T')[0];
   console.log('Validating form with data:', {
     dotGiamGia: dotGiamGia.value,
     idDSPs: idDSPs.value
   });
 
+  let hasError = false;
+
   if (isEditMode.value) {
     if (!dotGiamGia.value.ma) {
-      errors.value.ma = 'Vui lòng nhập mã đợt giảm giá';
+      toastNotification.value?.addToast({
+        type: 'error',
+        message: 'Vui lòng nhập mã đợt giảm giá',
+        duration: 3000
+      });
+      hasError = true;
     } else if (dotGiamGia.value.ma !== originalMa.value) {
       await checkDuplicateMa();
+      if (errors.value.ma) {
+        toastNotification.value?.addToast({
+          type: 'error',
+          message: errors.value.ma,
+          duration: 3000
+        });
+        hasError = true;
+      }
     }
   }
 
   if (!dotGiamGia.value.tenDotGiamGia) {
-    errors.value.tenDotGiamGia = 'Vui lòng nhập tên đợt giảm giá';
+    toastNotification.value?.addToast({
+      type: 'error',
+      message: 'Vui lòng nhập tên đợt giảm giá',
+      duration: 3000
+    });
+    hasError = true;
   }
 
   if (!dotGiamGia.value.loaiGiamGiaApDung) {
-    errors.value.loaiGiamGiaApDung = 'Vui lòng chọn loại giảm giá';
+    toastNotification.value?.addToast({
+      type: 'error',
+      message: 'Vui lòng chọn loại giảm giá',
+      duration: 3000
+    });
+    hasError = true;
   }
 
   if (dotGiamGia.value.loaiGiamGiaApDung !== 'Tiền mặt' && dotGiamGia.value.giaTriGiamGia <= 0) {
-    errors.value.giaTriGiamGia = 'Vui lòng nhập giá trị giảm giá lớn hơn 0';
+    toastNotification.value?.addToast({
+      type: 'error',
+      message: 'Vui lòng nhập giá trị giảm giá lớn hơn 0',
+      duration: 3000
+    });
+    hasError = true;
   }
 
   if (!dotGiamGia.value.soTienGiamToiDa || dotGiamGia.value.soTienGiamToiDa <= 0) {
-    errors.value.soTienGiamToiDa = 'Số tiền giảm tối đa phải lớn hơn 0';
+    toastNotification.value?.addToast({
+      type: 'error',
+      message: 'Số tiền giảm tối đa phải lớn hơn 0',
+      duration: 3000
+    });
+    hasError = true;
   }
 
   if (!dotGiamGia.value.ngayBatDau) {
-    errors.value.ngayBatDau = 'Vui lòng chọn ngày bắt đầu';
+    toastNotification.value?.addToast({
+      type: 'error',
+      message: 'Vui lòng chọn ngày bắt đầu',
+      duration: 3000
+    });
+    hasError = true;
   } else if (dotGiamGia.value.ngayBatDau < today && !isEditMode.value) {
-    errors.value.ngayBatDau = 'Ngày bắt đầu không được nhỏ hơn ngày hiện tại';
+    toastNotification.value?.addToast({
+      type: 'error',
+      message: 'Ngày bắt đầu không được nhỏ hơn ngày hiện tại',
+      duration: 3000
+    });
+    hasError = true;
   }
 
   if (!dotGiamGia.value.ngayKetThuc || dotGiamGia.value.ngayKetThuc < dotGiamGia.value.ngayBatDau) {
-    errors.value.ngayKetThuc = 'Vui lòng chọn ngày kết thúc hợp lệ';
+    toastNotification.value?.addToast({
+      type: 'error',
+      message: 'Vui lòng chọn ngày kết thúc hợp lệ',
+      duration: 3000
+    });
+    hasError = true;
   }
 
   if (idDSPs.value.length === 0) {
-    console.log('No DSP selected, showing toast');
     toastNotification.value?.addToast({
       type: 'error',
       message: 'Vui lòng chọn ít nhất một dòng sản phẩm',
-      duration: 3000,
+      duration: 3000
     });
-    return false;
+    hasError = true;
   }
 
-  console.log('Validation errors:', errors.value);
-  return Object.keys(errors.value).length === 0;
+  console.log('Validation completed, hasError:', hasError);
+  return !hasError;
 };
 
 const showConfirmModal = async () => {
@@ -508,6 +543,12 @@ onMounted(() => {
   if (isEditMode.value) {
     originalMa.value = dotGiamGia.value.ma;
   }
+  // Đặt giá trị mặc định cho các bộ lọc là "Tất cả"
+  selectedHeDieuHanh.value = '';
+  selectedNhaSanXuat.value = '';
+  selectedDongSanPham.value = '';
+  selectedBoNhoTrong.value = '';
+  selectedMauSac.value = '';
 });
 </script>
 
@@ -525,12 +566,14 @@ onMounted(() => {
 }
 
 .form-control.input {
-  padding: 0.5rem 1rem;
+  padding-left: 2.5rem;
   border: 2px solid rgba(52, 211, 153, 0.1);
   border-radius: 8px;
   transition: all 0.2s ease;
   font-size: 0.9rem;
-  background: #fff;
+  background: #f8f9fa;
+  flex: 1;
+  min-width: 0;
 }
 
 .form-control.input:focus {
@@ -557,7 +600,6 @@ onMounted(() => {
   border-radius: 8px;
   transition: all 0.2s ease;
   font-size: 0.9rem;
-  background: #fff;
 }
 
 .search-input:focus {
@@ -582,7 +624,7 @@ onMounted(() => {
 }
 
 .btn-action:disabled {
-  background: #a3e4d7;
+  background: #6c757d;
   cursor: not-allowed;
 }
 
@@ -605,7 +647,7 @@ onMounted(() => {
 .btn-danger {
   background: #dc3545;
   border: none;
-  padding: 0.4rem 0.8rem;
+  padding: 0.3rem 0.8rem;
   font-size: 0.85rem;
   border-radius: 6px;
   transition: all 0.2s ease;
@@ -619,7 +661,7 @@ onMounted(() => {
 }
 
 .btn-danger:disabled {
-  background: #e57373;
+  background: #6c757d;
   cursor: not-allowed;
 }
 
@@ -638,8 +680,10 @@ onMounted(() => {
   color: #6c757d !important;
 }
 
-/* Định nghĩa chiều cao cố định cho bảng */
-.table-responsive {
-  border: 1px solid #dee2e6; /* Thêm viền để phân biệt */
+.product-image {
+  width: 50px; /* Kích thước chiều rộng ảnh */
+  height: 50px; /* Kích thước chiều cao ảnh */
+  object-fit: cover; /* Đảm bảo ảnh không bị méo */
+  border-radius: 4px; /* Bo góc ảnh (tùy chọn) */
 }
 </style>

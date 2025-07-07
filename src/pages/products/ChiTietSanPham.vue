@@ -1,6 +1,6 @@
 <!-- ChiTietSanPham.vue -->
 <template>
-  <div class="container-fluid py-4 product-detail">
+  <div class="container-fluid py-4">
     <!-- Header -->
     <HeaderCard title="Chi Tiết Sản Phẩm" badgeText="Hệ Thống POS" badgeClass="gradient-custom-teal"
       :backgroundOpacity="0.95" />
@@ -283,7 +283,7 @@
             <table class="table table-hover">
               <thead>
                 <tr>
-                  <th scope="col" style="width: 5%;"></th>
+                  <th scope="col" style="width: 5%;">#</th>
                   <th scope="col" style="width: 5%;">STT</th>
                   <th scope="col" style="width: 15%;">Mã Sản Phẩm</th>
                   <th scope="col" style="width: 20%;">Tên Sản Phẩm</th>
@@ -428,7 +428,7 @@ export default {
     const selectedImeis = ref([]);
 
     const headers = ref([
-      { text: '', value: 'checkbox' },
+      { text: '#', value: 'checkbox' },
       { text: 'STT', value: 'stt' },
       { text: 'Mã Sản Phẩm', value: 'maSanPham' },
       { text: 'Tên Sản Phẩm', value: 'tenSanPham' },
@@ -1204,11 +1204,6 @@ export default {
 .product-name {
   font-weight: 600;
   color: #1f3a44;
-}
-
-.product-detail {
-  font-size: 0.875rem;
-  color: #6c757d;
 }
 
 .product-details {

@@ -9,7 +9,7 @@
             <div class="filter-group">
               <label class="filter-label">RAM</label>
               <div class="input-group">
-                <button @click="toggleDropdown('ram')" class="form-control search-input text-left">
+                <button @click="openVariantModal('ram')" class="form-control search-input text-left">
                   {{
                     currentVariant.selectedRams.length > 0
                       ? currentVariant.selectedRams
@@ -19,12 +19,6 @@
                       : 'Chọn RAM'
                   }}
                 </button>
-                <div v-if="dropdownOpen.ram" class="dropdown-menu show">
-                  <label v-for="ram in ramOptions" :key="ram.id" class="dropdown-item flex items-center">
-                    <input type="checkbox" :value="ram.id" v-model="currentVariant.selectedRams" class="me-2" />
-                    {{ ram.dungLuongRam }}
-                  </label>
-                </div>
                 <button @click="openAddModal('ram')" class="btn btn-action">
                   <i class="bi bi-plus-circle"></i>
                 </button>
@@ -37,7 +31,7 @@
             <div class="filter-group">
               <label class="filter-label">Bộ Nhớ Trong</label>
               <div class="input-group">
-                <button @click="toggleDropdown('boNhoTrong')" class="form-control search-input text-left">
+                <button @click="openVariantModal('boNhoTrong')" class="form-control search-input text-left">
                   {{
                     currentVariant.selectedBoNhoTrongs.length > 0
                       ? currentVariant.selectedBoNhoTrongs
@@ -47,13 +41,6 @@
                       : 'Chọn Bộ Nhớ Trong'
                   }}
                 </button>
-                <div v-if="dropdownOpen.boNhoTrong" class="dropdown-menu show">
-                  <label v-for="boNho in boNhoTrongOptions" :key="boNho.id" class="dropdown-item flex items-center">
-                    <input type="checkbox" :value="boNho.id" v-model="currentVariant.selectedBoNhoTrongs"
-                      class="me-2" />
-                    {{ boNho.dungLuongBoNhoTrong }}
-                  </label>
-                </div>
                 <button @click="openAddModal('boNhoTrong')" class="btn btn-action">
                   <i class="bi bi-plus-circle"></i>
                 </button>
@@ -66,7 +53,7 @@
             <div class="filter-group">
               <label class="filter-label">Màu Sắc</label>
               <div class="input-group">
-                <button @click="openColorModal" class="form-control search-input text-left">
+                <button @click="openVariantModal('mauSac')" class="form-control search-input text-left">
                   {{
                     currentVariant.selectedMauSacs.length > 0
                       ? currentVariant.selectedMauSacs
@@ -81,6 +68,20 @@
                 </button>
               </div>
             </div>
+          </div>
+        </div>
+
+        <!-- Generate Variants Button -->
+        <div class="mt-3 d-flex justify-content-end align-items-start variant-button-container">
+          <div class="text-end">
+            <button @click="generateVariants" class="btn btn-action" :disabled="currentVariant.selectedRams.length === 0 ||
+              currentVariant.selectedBoNhoTrongs.length === 0 ||
+              currentVariant.selectedMauSacs.length === 0">
+              {{ productVariants.length > 0 ? 'Tạo lại biến thể' : 'Tạo biến thể' }}
+            </button>
+            <small v-if="productVariants.length > 0" class="text-muted d-block mt-1">
+              Nhấn lại để tạo lại các biến thể với lựa chọn mới
+            </small>
           </div>
         </div>
 
@@ -133,7 +134,7 @@
                       </div>
                     </td>
                     <td>
-                      <input v-model="variant.donGia" type="text" class="form-control search-input" />
+                      <input v-model="variant.donGia" type="text" class="form-control search-input-table" />
                     </td>
                     <td class="text-center">
                       {{ variantImeis[group.startIndex + variantIndex]?.length || 0 }}
@@ -160,31 +161,130 @@
       </div>
     </FilterTableSection>
 
-    <!-- Color Selection Modal -->
-    <div v-if="showColorModal" class="modal fade show d-block" tabindex="-1">
-      <div class="modal-dialog modal-dialog-centered">
+    <!-- Variant Selection Modal with Slider -->
+    <div v-if="showVariantModal" class="modal fade show d-block" tabindex="-1">
+      <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content">
           <div class="modal-header">
-            <h5 class="modal-title">Chọn Màu Sắc</h5>
-            <button type="button" class="btn-close" @click="closeColorModal"></button>
+            <h5 class="modal-title">{{ modalTitles[currentStep] }}</h5>
+            <button type="button" class="btn-close" @click="closeVariantModal"></button>
           </div>
           <div class="modal-body">
-            <div class="row g-3">
-              <div v-for="mau in mauSacOptions" :key="mau.id" class="col-4">
-                <label class="d-flex align-items-center">
-                  <input type="checkbox" :value="mau.id" v-model="currentVariant.selectedMauSacs" class="me-2" />
-                  <span class="color-swatch me-2" :style="{ backgroundColor: mau.maMau || '#FFFFFF' }"></span>
-                  <span>{{ mau.mauSac }}</span>
-                </label>
+            <!-- Selection Summary -->
+            <div class="selection-summary mb-4 p-3 border rounded bg-light">
+              <h6 class="fw-bold mb-3">Đã chọn:</h6>
+              <div class="row">
+                <div class="col-md-4">
+                  <strong>RAM: </strong>
+                  <span v-if="currentVariant.selectedRams.length > 0">
+                    {{currentVariant.selectedRams
+                      .map((id) => ramOptions.find((r) => r.id === id)?.dungLuongRam)
+                      .filter(Boolean)
+                      .join(', ')}}
+                  </span>
+                  <span v-else class="text-muted">Chưa chọn</span>
+                </div>
+                <div class="col-md-4">
+                  <strong>Bộ Nhớ Trong: </strong>
+                  <span v-if="currentVariant.selectedBoNhoTrongs.length > 0">
+                    {{currentVariant.selectedBoNhoTrongs
+                      .map((id) => boNhoTrongOptions.find((b) => b.id === id)?.dungLuongBoNhoTrong)
+                      .filter(Boolean)
+                      .join(', ')}}
+                  </span>
+                  <span v-else class="text-muted">Chưa chọn</span>
+                </div>
+                <div class="col-md-4 perspective">
+                  <strong>Màu Sắc: </strong>
+                  <span v-if="currentVariant.selectedMauSacs.length > 0">
+                    {{currentVariant.selectedMauSacs
+                      .map((id) => mauSacOptions.find((m) => m.id === id)?.mauSac)
+                      .filter(Boolean)
+                      .join(', ')}}
+                  </span>
+                  <span v-else class="text-muted">Chưa chọn</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- RAM Selection -->
+            <div v-if="currentStep === 'ram'" class="variant-scroll-container">
+              <div class="mb-3">
+                <label class="filter-label">Tìm kiếm RAM</label>
+                <input v-model="variantSearch" type="text" class="form-control search-input"
+                  placeholder="Nhập dung lượng RAM..." />
+              </div>
+              <div class="row g-3">
+                <div v-for="ram in filteredRamOptions" :key="ram.id" class="col-12">
+                  <label class="variant-option d-flex align-items-center p-2 rounded">
+                    <input type="checkbox" :value="ram.id" v-model="currentVariant.selectedRams"
+                      class="me-2 variant-checkbox" />
+                    <span class="variant-name">{{ ram.dungLuongRam }}</span>
+                  </label>
+                </div>
+                <div v-if="filteredRamOptions.length === 0" class="col-12 text-center text-muted">
+                  Không tìm thấy RAM phù hợp
+                </div>
+              </div>
+            </div>
+
+            <!-- ROM Selection -->
+            <div v-if="currentStep === 'boNhoTrong'" class="variant-scroll-container">
+              <div class="mb-3">
+                <label class="filter-label">Tìm kiếm Bộ Nhớ Trong</label>
+                <input v-model="variantSearch" type="text" class="form-control search-input"
+                  placeholder="Nhập dung lượng bộ nhớ trong..." />
+              </div>
+              <div class="row g-3">
+                <div v-for="boNho in filteredBoNhoTrongOptions" :key="boNho.id" class="col-12">
+                  <label class="variant-option d-flex align-items-center p-2 rounded">
+                    <input type="checkbox" :value="boNho.id" v-model="currentVariant.selectedBoNhoTrongs"
+                      class="me-2 variant-checkbox" />
+                    <span class="variant-name">{{ boNho.dungLuongBoNhoTrong }}</span>
+                  </label>
+                </div>
+                <div v-if="filteredBoNhoTrongOptions.length === 0" class="col-12 text-center text-muted">
+                  Không tìm thấy bộ nhớ trong phù hợp
+                </div>
+              </div>
+            </div>
+
+            <!-- Color Selection -->
+            <div v-if="currentStep === 'mauSac'" class="variant-scroll-container">
+              <div class="mb-3">
+                <label class="filter-label">Tìm kiếm màu sắc</label>
+                <input v-model="variantSearch" type="text" class="form-control search-input"
+                  placeholder="Nhập tên màu hoặc mã màu..." />
+              </div>
+              <div class="row g-3">
+                <div v-for="mau in filteredMauSacOptions" :key="mau.id" class="col-12">
+                  <label class="variant-option d-flex align-items-center p-2 rounded">
+                    <input type="checkbox" :value="mau.id" v-model="currentVariant.selectedMauSacs"
+                      class="me-2 variant-checkbox" />
+                    <span class="color-swatch me-2" :style="{ backgroundColor: mau.maMau || '#FFFFFF' }"
+                      :title="mau.maMau"></span>
+                    <div class="color-info flex-grow-1">
+                      <span class="variant-name">{{ mau.mauSac }}</span>
+                      <small class="color-code text-muted">{{ mau.maMau }}</small>
+                    </div>
+                  </label>
+                </div>
+                <div v-if="filteredMauSacOptions.length === 0" class="col-12 text-center text-muted">
+                  Không tìm thấy màu sắc phù hợp
+                </div>
               </div>
             </div>
           </div>
           <div class="modal-footer">
-            <button type="button" class="btn btn-reset" @click="closeColorModal">
-              Đóng
+            <button v-if="currentStep !== 'ram'" type="button" class="btn btn-reset" @click="prevStep">
+              Quay lại
             </button>
-            <button type="button" class="btn btn-action" @click="confirmColorSelection">
-              Xác nhận
+            <button v-if="currentStep !== 'mauSac'" type="button" class="btn btn-action" @click="nextStep"
+              :disabled="!canProceed">
+              Tiếp theo
+            </button>
+            <button type="button" class="btn btn-reset" @click="closeVariantModal">
+              Đóng
             </button>
           </div>
         </div>
@@ -196,22 +296,34 @@
       <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
           <div class="modal-header">
-            <h5 class="modal-title">Nhập IMEI</h5>
+            <h5 class="modal-title">Nhập IMEI cho biến thể {{ currentVariantLabel }}</h5>
             <button type="button" class="btn-close" @click="closeImeiModal"></button>
           </div>
           <div class="modal-body">
             <div class="mb-3">
-              <label class="filter-label">Nhập IMEI (mỗi IMEI trên một dòng)</label>
-              <textarea v-model="imeiInput" rows="5" class="form-control search-input"
-                placeholder="Nhập IMEI, mỗi IMEI trên một dòng..."></textarea>
-              <div class="mt-2">
-                <p v-for="(imei, index) in filteredImeiList" :key="index" class="text-sm">
-                  IMEI {{ index + 1 }}: {{ imei.length }} chữ số
-                  <span :class="imei.length === 15 ? 'text-success' : 'text-danger'">
-                    {{ imei.length === 15 ? '(Đủ 15 số)' : '(Cần 15 số)' }}
+              <label class="filter-label">Nhập IMEI</label>
+              <textarea v-model="imeiInput" rows="6" class="form-control search-input"
+                placeholder="Nhập IMEI, mỗi IMEI trên một dòng, đúng 15 chữ số..."
+                @input="restrictImeiInput"></textarea>
+            </div>
+            <div class="imei-list mb-3">
+              <h6 class="fw-bold">Danh sách IMEI: {{ filteredImeiList.length }} IMEI</h6>
+              <div v-if="filteredImeiList.length > 0" class="imei-scroll-container">
+                <div v-for="(imei, index) in filteredImeiList" :key="index"
+                  class="imei-item d-flex align-items-center p-2">
+                  <span class="flex-grow-1">
+                    IMEI {{ index + 1 }}: {{ imei }}
+                    <span :class="imei.length === 15 ? 'text-success' : 'text-danger'">
+                      {{ imei.length === 15 ? '(Hợp lệ)' : `(Không hợp lệ, cần 15 số, hiện tại ${imei.length} số)` }}
+                    </span>
                   </span>
-                </p>
-                <p v-if="!imeiInput.trim()" class="text-sm">Chưa nhập IMEI</p>
+                  <button @click="removeImei(index)" class="btn btn-sm btn-reset ms-2" title="Xóa IMEI">
+                    <i class="bi bi-trash-fill"></i>
+                  </button>
+                </div>
+              </div>
+              <div v-else class="text-muted text-center">
+                Chưa có IMEI nào được nhập
               </div>
             </div>
             <div class="row g-3">
@@ -228,10 +340,10 @@
             </div>
           </div>
           <div class="modal-footer">
-            <button type="button" class="btn btn-reset" @click="closeImeiModal">
-              Đóng
-            </button>
-            <button type="button" class="btn btn-action" @click="saveImei">
+            <button type="button" class="btn btn-reset" @click="clearImeiInput">Xóa tất cả</button>
+            <button type="button" class="btn btn-reset" @click="closeImeiModal">Đóng</button>
+            <button type="button" class="btn btn-action" @click="saveImei"
+              :disabled="validImeis.length === 0 && imeiInput.trim()">
               Lưu
             </button>
           </div>
@@ -270,8 +382,12 @@
               </div>
               <div class="col-12">
                 <label class="filter-label">Mã Màu (Hex)</label>
-                <input v-model="entityData.maMau" type="text" class="form-control search-input"
-                  placeholder="Nhập mã màu (ví dụ: #FFFFFF)" />
+                <div class="input-group">
+                  <input v-model="entityData.maMau" type="text" class="form-control search-input"
+                    placeholder="Nhập mã màu (ví dụ: #FFFFFF)" />
+                  <span class="input-group-text color-preview"
+                    :style="{ backgroundColor: isValidHex(entityData.maMau) ? entityData.maMau : '#FFFFFF' }"></span>
+                </div>
               </div>
             </div>
           </div>
@@ -334,17 +450,28 @@ export default defineComponent({
     const ramOptions = ref([]);
     const boNhoTrongOptions = ref([]);
     const mauSacOptions = ref([]);
-    const dropdownOpen = ref({
-      ram: false,
-      boNhoTrong: false,
-    });
     const showFormModal = ref(false);
     const currentAttribute = ref('');
-    const showColorModal = ref(false);
+    const showVariantModal = ref(false);
     const showImeiModal = ref(false);
     const currentVariantIndex = ref(null);
     const imeiInput = ref('');
     const entityData = ref({});
+    const variantSearch = ref('');
+    const currentStep = ref('ram');
+
+    const modalTitles = {
+      ram: 'Chọn RAM',
+      boNhoTrong: 'Chọn Bộ Nhớ Trong',
+      mauSac: 'Chọn Màu Sắc',
+    };
+
+    // Watch for changes in props.productData to update local state
+    watch(() => props.productData, (newProductData) => {
+      console.log('ProductData updated in ThemPhienBan:', newProductData);
+      updateSelectedOptions();
+      validateSelections();
+    }, { deep: true });
 
     // Watch for changes in props.productVariants and props.variantImeis to reset local state
     watch(() => props.productVariants, (newVariants) => {
@@ -391,11 +518,56 @@ export default defineComponent({
       return groups;
     });
 
+    const currentVariantLabel = computed(() => {
+      if (currentVariantIndex.value === null) return '';
+      const variant = localProductVariants.value[currentVariantIndex.value];
+      if (!variant) return '';
+      const ram = ramOptions.value.find((r) => r.id === variant.idRam)?.dungLuongRam || 'Unknown';
+      const rom = boNhoTrongOptions.value.find((b) => b.id === variant.idBoNhoTrong)?.dungLuongBoNhoTrong || 'Unknown';
+      const color = mauSacOptions.value.find((m) => m.id === variant.idMauSac)?.mauSac || 'Unknown';
+      return `${ram}/${rom}/${color}`;
+    });
+
     const filteredImeiList = computed(() => {
       return imeiInput.value
         .split('\n')
         .map((imei) => imei.trim())
         .filter((imei) => imei.length > 0);
+    });
+
+    const validImeis = computed(() => {
+      const existingImeis = new Set(
+        Object.values(localVariantImeis.value).flat().filter((imei) => imei.length === 15)
+      );
+      return filteredImeiList.value
+        .filter((imei) => imei.length === 15 && !existingImeis.has(imei))
+        .map((imei) => imei);
+    });
+
+    const filteredRamOptions = computed(() => {
+      if (!variantSearch.value.trim()) return ramOptions.value;
+      const searchTerm = variantSearch.value.toLowerCase();
+      return ramOptions.value.filter(
+        (ram) => ram.dungLuongRam.toLowerCase().includes(searchTerm)
+      );
+    });
+
+    const filteredBoNhoTrongOptions = computed(() => {
+      if (!variantSearch.value.trim()) return boNhoTrongOptions.value;
+      const searchTerm = variantSearch.value.toLowerCase();
+      return boNhoTrongOptions.value.filter(
+        (boNho) => boNho.dungLuongBoNhoTrong.toLowerCase().includes(searchTerm)
+      );
+    });
+
+    const filteredMauSacOptions = computed(() => {
+      if (!variantSearch.value.trim()) return mauSacOptions.value;
+      const searchTerm = variantSearch.value.toLowerCase();
+      return mauSacOptions.value.filter(
+        (mau) =>
+          mau.mauSac.toLowerCase().includes(searchTerm) ||
+          mau.maMau.toLowerCase().includes(searchTerm)
+      );
     });
 
     const currentAttributeLabel = computed(() => {
@@ -406,6 +578,16 @@ export default defineComponent({
       };
       return labels[currentAttribute.value] || currentAttribute.value;
     });
+
+    const canProceed = computed(() => {
+      if (currentStep.value === 'ram') return currentVariant.value.selectedRams.length > 0;
+      if (currentStep.value === 'boNhoTrong') return currentVariant.value.selectedBoNhoTrongs.length > 0;
+      return true;
+    });
+
+    const isValidHex = (hex) => {
+      return /^#([0-9A-Fa-f]{3}){1,2}$/.test(hex);
+    };
 
     // Fetch data from APIs
     const fetchData = async () => {
@@ -455,22 +637,7 @@ export default defineComponent({
       currentVariant.value.selectedMauSacs = [...mauSacs].filter(Boolean);
     };
 
-    const toggleDropdown = (type) => {
-      dropdownOpen.value[type] = !dropdownOpen.value[type];
-      Object.keys(dropdownOpen.value).forEach((key) => {
-        if (key !== type) {
-          dropdownOpen.value[key] = false;
-        }
-      });
-    };
-
-    const closeAllDropdowns = () => {
-      Object.keys(dropdownOpen.value).forEach((key) => {
-        dropdownOpen.value[key] = false;
-      });
-    };
-
-    const addVariant = () => {
+    const generateVariants = () => {
       if (!props.productData.tenSanPham) {
         toastNotification.value?.addToast({
           type: 'error',
@@ -493,43 +660,63 @@ export default defineComponent({
         return false;
       }
 
+      // Lưu danh sách biến thể cũ để sao chép giá và IMEI
+      const oldVariants = [...localProductVariants.value];
+      const oldImeis = { ...localVariantImeis.value };
       const newVariants = [];
+
+      // Tạo danh sách biến thể mới
       currentVariant.value.selectedRams.forEach((ramId) => {
         currentVariant.value.selectedBoNhoTrongs.forEach((boNhoId) => {
           currentVariant.value.selectedMauSacs.forEach((mauSacId) => {
-            const exists = localProductVariants.value.some(
-              (variant) =>
-                variant.idRam === ramId &&
-                variant.idBoNhoTrong === boNhoId &&
-                variant.idMauSac === mauSacId
+            // Tìm biến thể cũ để giữ giá
+            const existingVariant = oldVariants.find(
+              (v) => v.idRam === ramId && v.idBoNhoTrong === boNhoId && v.idMauSac === mauSacId
             );
-            if (!exists) {
-              newVariants.push({
-                idRam: ramId,
-                idBoNhoTrong: boNhoId,
-                idMauSac: mauSacId,
-                donGia: '',
-              });
-            }
+            newVariants.push({
+              idRam: ramId,
+              idBoNhoTrong: boNhoId,
+              idMauSac: mauSacId,
+              donGia: existingVariant ? existingVariant.donGia : '',
+            });
           });
         });
       });
 
-      if (newVariants.length > 0) {
-        localProductVariants.value = [...localProductVariants.value, ...newVariants];
-        updateSelectedOptions();
-        validateSelections();
-        emit('variants-updated', { variants: localProductVariants.value, imeis: localVariantImeis.value });
-        console.log('Emitting productVariants:', localProductVariants.value);
-        console.log('Emitting variantImeis:', localVariantImeis.value);
-        toastNotification.value?.addToast({
-          type: 'success',
-          message: 'Thêm biến thể thành công!',
-          duration: 3000,
-        });
-        return true;
-      }
-      return false;
+      // Cập nhật lại IMEI cho các biến thể vẫn còn
+      const newVariantImeis = {};
+      newVariants.forEach((variant, index) => {
+        const oldIndex = oldVariants.findIndex(
+          (v) => v.idRam === variant.idRam && v.idBoNhoTrong === variant.idBoNhoTrong && v.idMauSac === variant.idMauSac
+        );
+        if (oldIndex !== -1 && oldImeis[oldIndex]) {
+          newVariantImeis[index] = [...oldImeis[oldIndex]];
+        }
+      });
+
+      // Cập nhật state
+      localProductVariants.value = [...newVariants];
+      localVariantImeis.value = newVariantImeis;
+      selectedVariants.value = [];
+      allSelected.value = {};
+      groupCommonValues.value = {};
+
+      // Cập nhật lại các lựa chọn và trạng thái
+      updateSelectedOptions();
+      validateSelections();
+
+      // Phát sự kiện để cập nhật biến thể
+      emit('variants-updated', { variants: localProductVariants.value, imeis: localVariantImeis.value });
+      console.log('Emitting productVariants:', localProductVariants.value);
+      console.log('Emitting variantImeis:', localVariantImeis.value);
+
+      toastNotification.value?.addToast({
+        type: 'success',
+        message: 'Tạo lại biến thể thành công!',
+        duration: 3000,
+      });
+
+      return true;
     };
 
     const removeVariant = (index) => {
@@ -539,8 +726,6 @@ export default defineComponent({
       validateSelections();
       updateSelectedOptions();
       emit('variants-updated', { variants: localProductVariants.value, imeis: localVariantImeis.value });
-      console.log('After removeVariant - productVariants:', localProductVariants.value);
-      console.log('After removeVariant - variantImeis:', localVariantImeis.value);
     };
 
     const removeMultipleVariants = () => {
@@ -554,8 +739,6 @@ export default defineComponent({
       validateSelections();
       updateSelectedOptions();
       emit('variants-updated', { variants: localProductVariants.value, imeis: localVariantImeis.value });
-      console.log('After removeMultipleVariants - productVariants:', localProductVariants.value);
-      console.log('After removeMultipleVariants - variantImeis:', localVariantImeis.value);
     };
 
     const updateSelectedVariants = (group) => {
@@ -601,7 +784,6 @@ export default defineComponent({
     };
 
     const openAddModal = (attribute) => {
-      closeAllDropdowns();
       currentAttribute.value = attribute;
       entityData.value = {};
       showFormModal.value = true;
@@ -648,19 +830,31 @@ export default defineComponent({
       }
     };
 
-    const openColorModal = () => {
-      closeAllDropdowns();
-      showColorModal.value = true;
+    const openVariantModal = (step) => {
+      currentStep.value = step;
+      variantSearch.value = '';
+      showVariantModal.value = true;
     };
 
-    const closeColorModal = () => {
-      showColorModal.value = false;
+    const closeVariantModal = () => {
+      showVariantModal.value = false;
+      currentStep.value = 'ram';
+      variantSearch.value = '';
     };
 
-    const confirmColorSelection = () => {
-      const success = addVariant();
-      if (success) {
-        closeColorModal();
+    const nextStep = () => {
+      if (currentStep.value === 'ram' && currentVariant.value.selectedRams.length > 0) {
+        currentStep.value = 'boNhoTrong';
+      } else if (currentStep.value === 'boNhoTrong' && currentVariant.value.selectedBoNhoTrongs.length > 0) {
+        currentStep.value = 'mauSac';
+      }
+    };
+
+    const prevStep = () => {
+      if (currentStep.value === 'mauSac') {
+        currentStep.value = 'boNhoTrong';
+      } else if (currentStep.value === 'boNhoTrong') {
+        currentStep.value = 'ram';
       }
     };
 
@@ -676,24 +870,117 @@ export default defineComponent({
       imeiInput.value = '';
     };
 
+    const restrictImeiInput = (event) => {
+      const textarea = event.target;
+      let lines = imeiInput.value.split('\n');
+      let cursorPos = textarea.selectionStart;
+      let currentLineIndex = imeiInput.value.substr(0, cursorPos).split('\n').length - 1;
+      let currentLine = lines[currentLineIndex] || '';
+
+      // Chỉ giữ số và giới hạn 15 ký tự mỗi dòng
+      lines = lines.map((line, index) => {
+        let cleaned = line.replace(/[^0-9]/g, '').slice(0, 15);
+        if (index === currentLineIndex && cleaned.length >= 15 && imeiInput.value[cursorPos - 1] !== '\n') {
+          cleaned += '\n';
+        }
+        return cleaned;
+      });
+
+      imeiInput.value = lines.join('\n');
+
+      // Cập nhật vị trí con trỏ
+      const newLines = imeiInput.value.split('\n');
+      let newCursorPos = 0;
+      for (let i = 0; i < Math.min(currentLineIndex, newLines.length); i++) {
+        newCursorPos += newLines[i].length + 1;
+      }
+      newCursorPos += Math.min(currentLine.replace(/[^0-9]/g, '').length, 15);
+      if (currentLine.replace(/[^0-9]/g, '').length >= 15 && imeiInput.value[cursorPos - 1] !== '\n') {
+        newCursorPos++;
+      }
+      setTimeout(() => textarea.setSelectionRange(newCursorPos, newCursorPos), 0);
+
+      // Kiểm tra và thông báo lỗi
+      const invalidLines = lines.filter(line => line.length > 0 && line.length !== 15);
+      if (invalidLines.length > 0) {
+        toastNotification.value?.addToast({
+          type: 'warning',
+          message: `Có ${invalidLines.length} IMEI không hợp lệ (cần đúng 15 chữ số)!`,
+          duration: 3000,
+        });
+      }
+    };
+
+    const removeImei = (index) => {
+      const lines = imeiInput.value.split('\n').filter((_, i) => i !== index);
+      imeiInput.value = lines.join('\n');
+      toastNotification.value?.addToast({
+        type: 'success',
+        message: 'Đã xóa IMEI thành công!',
+        duration: 2000,
+      });
+    };
+
+    const clearImeiInput = () => {
+      imeiInput.value = '';
+      toastNotification.value?.addToast({
+        type: 'info',
+        message: 'Đã xóa tất cả IMEI!',
+        duration: 2000,
+      });
+    };
+
     const saveImei = () => {
-      const imeis = filteredImeiList.value.filter((imei) => imei.length === 15);
-      if (imeis.length === 0 && imeiInput.value.trim()) {
+      const existingImeis = new Set(
+        Object.values(localVariantImeis.value)
+          .flat()
+          .filter((imei) => imei.length === 15)
+      );
+      const newImeis = validImeis.value;
+      const duplicates = newImeis.filter((imei) => existingImeis.has(imei));
+      const invalidImeis = filteredImeiList.value.filter((imei) => imei.length !== 15 && imei.length > 0);
+
+      if (filteredImeiList.value.length > 0 && newImeis.length === 0) {
         toastNotification.value?.addToast({
           type: 'error',
-          message: 'Không có IMEI hợp lệ (cần 15 chữ số)!',
+          message: 'Không có IMEI hợp lệ! Tất cả IMEI phải có đúng 15 chữ số.',
           duration: 3000,
         });
         return;
       }
-      localVariantImeis.value[currentVariantIndex.value] = imeis;
-      emit('variants-updated', { variants: localProductVariants.value, imeis: localVariantImeis.value });
-      console.log('After saveImei - variantImeis:', localVariantImeis.value);
-      toastNotification.value?.addToast({
-        type: 'success',
-        message: 'Lưu IMEI thành công!',
-        duration: 3000,
-      });
+
+      if (invalidImeis.length > 0) {
+        toastNotification.value?.addToast({
+          type: 'warning',
+          message: `Có ${invalidImeis.length} IMEI không hợp lệ đã bị bỏ qua.`,
+          duration: 3000,
+        });
+      }
+
+      if (duplicates.length > 0) {
+        toastNotification.value?.addToast({
+          type: 'warning',
+          message: `Có ${duplicates.length} IMEI trùng lặp đã bị bỏ qua.`,
+          duration: 3000,
+        });
+      }
+
+      if (newImeis.length > 0) {
+        localVariantImeis.value[currentVariantIndex.value] = [...(localVariantImeis.value[currentVariantIndex.value] || []), ...newImeis];
+        emit('variants-updated', { variants: localProductVariants.value, imeis: localVariantImeis.value });
+        toastNotification.value?.addToast({
+          type: 'success',
+          message: `Lưu ${newImeis.length} IMEI thành công!`,
+          duration: 3000,
+        });
+      } else {
+        toastNotification.value?.addToast({
+          type: 'info',
+          message: 'Không có IMEI mới nào được lưu.',
+          duration: 3000,
+        });
+      }
+
       closeImeiModal();
     };
 
@@ -707,14 +994,33 @@ export default defineComponent({
           const workbook = XLSX.read(data, { type: 'array' });
           const sheetName = workbook.SheetNames[0];
           const sheet = workbook.Sheets[sheetName];
-          const json = XLSX.utils.sheet_to_json(sheet);
+          const json = XLSX.utils.sheet_to_json(sheet, { header: ['IMEI'] });
+          const existingImeis = new Set(
+            Object.values(localVariantImeis.value).flat().filter((imei) => imei.length === 15)
+          );
           const imeis = json
-            .map((row) => row.IMEI?.toString().trim())
-            .filter((imei) => imei && imei.length === 15);
-          imeiInput.value = imeis.join('\n');
+            .map((row) => row.IMEI?.toString().replace(/[^0-9]/g, '').slice(0, 15))
+            .filter((imei) => imei && imei.length === 15 && !existingImeis.has(imei));
+          const duplicates = json
+            .map((row) => row.IMEI?.toString().replace(/[^0-9]/g, '').slice(0, 15))
+            .filter((imei) => imei && imei.length === 15 && existingImeis.has(imei));
+          const invalid = json
+            .map((row) => row.IMEI?.toString().replace(/[^0-9]/g, ''))
+            .filter((imei) => imei && imei.length !== 15);
+
+          if (imeis.length === 0 && (duplicates.length > 0 || invalid.length > 0)) {
+            toastNotification.value?.addToast({
+              type: 'error',
+              message: `Không có IMEI hợp lệ mới! ${duplicates.length} trùng lặp, ${invalid.length} không hợp lệ.`,
+              duration: 3000,
+            });
+            return;
+          }
+
+          imeiInput.value = [...filteredImeiList.value, ...imeis].join('\n');
           toastNotification.value?.addToast({
             type: 'success',
-            message: `Đã nhập ${imeis.length} IMEI từ Excel!`,
+            message: `Đã nhập ${imeis.length} IMEI hợp lệ từ Excel!${duplicates.length > 0 ? ` (${duplicates.length} trùng lặp bị bỏ qua)` : ''}${invalid.length > 0 ? ` (${invalid.length} không hợp lệ bị bỏ qua)` : ''}`,
             duration: 3000,
           });
         };
@@ -729,61 +1035,45 @@ export default defineComponent({
     };
 
     const downloadImeiTemplate = () => {
-      const ws = XLSX.utils.json_to_sheet([{ IMEI: '123456789012345' }]);
+      const ws = XLSX.utils.json_to_sheet([{ IMEI: '123456789012345' }], { header: ['IMEI'] });
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, 'IMEI Template');
       XLSX.write(wb, 'imei_template.xlsx');
       toastNotification.value?.addToast({
         type: 'info',
-        message: 'Đã tải mẫu Excel!',
+        message: 'Đã tải mẫu Excel! Mỗi IMEI phải có đúng 15 chữ số.',
         duration: 3000,
       });
     };
 
     const resetForm = async () => {
-  localProductVariants.value = [];
-  localVariantImeis.value = {};
-  currentVariant.value = {
-    selectedRams: [],
-    selectedBoNhoTrongs: [],
-    selectedMauSacs: [],
-  };
-  selectedVariants.value = [];
-  allSelected.value = {};
-  groupCommonValues.value = {};
-  closeAllDropdowns();
-  showColorModal.value = false;
-  showImeiModal.value = false;
-  showFormModal.value = false;
-  currentAttribute.value = '';
-  imeiInput.value = '';
-  entityData.value = {};
-  await nextTick(); // Đảm bảo giao diện được cập nhật
-  emit('variants-updated', { variants: [], imeis: {} });
-  emit('reset-form');
-  toastNotification.value?.addToast({
-    type: 'info',
-    message: 'Đã làm mới danh sách biến thể!',
-    duration: 3000,
-  });
-  console.log('ProductVariants reset - localProductVariants:', localProductVariants.value);
-  console.log('ProductVariants reset - currentVariant:', currentVariant.value);
-};
-
-    // Close dropdowns when clicking outside
-    const handleClickOutside = (event) => {
-      if (!event.target.closest('.input-group')) {
-        closeAllDropdowns();
-      }
+      localProductVariants.value = [];
+      localVariantImeis.value = {};
+      currentVariant.value = {
+        selectedRams: [],
+        selectedBoNhoTrongs: [],
+        selectedMauSacs: [],
+      };
+      selectedVariants.value = [];
+      allSelected.value = {};
+      groupCommonValues.value = {};
+      showVariantModal.value = false;
+      showImeiModal.value = false;
+      showFormModal.value = false;
+      currentAttribute.value = '';
+      imeiInput.value = '';
+      entityData.value = {};
+      variantSearch.value = '';
+      currentStep.value = 'ram';
+      await nextTick();
+      emit('variants-updated', { variants: [], imeis: {} });
+      emit('reset-form');
+      toastNotification.value?.addToast({
+        type: 'info',
+        message: 'Đã làm mới danh sách biến thể!',
+        duration: 3000,
+      });
     };
-
-    onMounted(() => {
-      document.addEventListener('click', handleClickOutside);
-    });
-
-    onUnmounted(() => {
-      document.removeEventListener('click', handleClickOutside);
-    });
 
     return {
       toastNotification,
@@ -796,25 +1086,34 @@ export default defineComponent({
       ramOptions,
       boNhoTrongOptions,
       mauSacOptions,
-      dropdownOpen,
       isLoading,
       showFormModal,
       currentAttribute,
       currentAttributeLabel,
-      showColorModal,
+      showVariantModal,
       showImeiModal,
       currentVariantIndex,
       imeiInput,
       entityData,
+      variantSearch,
+      currentStep,
+      modalTitles,
+      currentVariantLabel,
       groupVariantsByRamAndRom,
       filteredImeiList,
-      toggleDropdown,
+      validImeis,
+      filteredRamOptions,
+      filteredBoNhoTrongOptions,
+      filteredMauSacOptions,
+      canProceed,
+      generateVariants,
       openAddModal,
       closeFormModal,
       handleAddAttribute,
-      openColorModal,
-      closeColorModal,
-      confirmColorSelection,
+      openVariantModal,
+      closeVariantModal,
+      nextStep,
+      prevStep,
       openImeiModal,
       closeImeiModal,
       saveImei,
@@ -826,12 +1125,31 @@ export default defineComponent({
       handleExcelImport,
       downloadImeiTemplate,
       resetForm,
+      isValidHex,
+      restrictImeiInput,
+      removeImei,
+      clearImeiInput,
     };
   },
 });
 </script>
 
 <style scoped>
+td,
+th {
+  text-align: center;
+}
+
+.variant-button-container {
+  display: flex;
+  justify-content: flex-end;
+  align-items: flex-start;
+}
+
+.text-end {
+  text-align: end;
+}
+
 .color-swatch {
   display: inline-block;
   width: 20px;
@@ -886,7 +1204,7 @@ export default defineComponent({
   font-size: 0.875rem;
 }
 
-.search-input {
+.search-input-table {
   padding-left: 2.5rem;
   border: 2px solid rgba(52, 211, 153, 0.1);
   border-radius: 8px;
@@ -895,9 +1213,26 @@ export default defineComponent({
   background: #f8f9fa;
 }
 
-.search-input:focus {
+.search-input {
+  padding-left: 2.5rem;
+  border: 2px solid rgba(52, 211, 153, 0.1);
+  border-top-left-radius: 8px;
+  border-bottom-left-radius: 8px;
+  border-top-right-radius: 0px;
+  border-bottom-right-radius: 0px;
+  transition: all 0.2s ease;
+  font-size: 0.9rem;
+  background: #f8f9fa;
+}
+
+.search-input:focus,
+.search-input-table:focus {
   border-color: #34d399;
   box-shadow: 0 0 10px rgba(52, 211, 153, 0.2);
+}
+
+.form-control {
+  padding: 7px 14px;
 }
 
 .btn-action {
@@ -916,6 +1251,11 @@ export default defineComponent({
   box-shadow: 0 0 15px rgba(52, 211, 153, 0.3);
 }
 
+.btn-action:disabled {
+  background: #94a3b8;
+  cursor: not-allowed;
+}
+
 .btn-reset {
   background: #6c757d;
   color: white;
@@ -930,30 +1270,6 @@ export default defineComponent({
   background: #5c636a;
   color: white;
   box-shadow: 0 0 15px rgba(108, 117, 125, 0.3);
-}
-
-.dropdown-menu {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  z-index: 1000;
-  width: 100%;
-  background: #f8f9fa;
-  border: 1px solid rgba(52, 211, 153, 0.2);
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  max-height: 200px;
-  overflow-y: auto;
-}
-
-.dropdown-item {
-  padding: 0.5rem 1rem;
-  cursor: pointer;
-  transition: background 0.2s ease;
-}
-
-.dropdown-item:hover {
-  background: rgba(52, 211, 153, 0.1);
 }
 
 .modal {
@@ -988,5 +1304,123 @@ export default defineComponent({
 
 .btn-close:hover {
   color: #1f3a44;
+}
+
+.variant-option {
+  transition: all 0.2s ease;
+  cursor: pointer;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+}
+
+.variant-option:hover {
+  background: rgba(52, 211, 153, 0.1);
+  border-color: #34d399;
+  transform: translateY(-2px);
+}
+
+.color-swatch {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  border: 2px solid #e5e7eb;
+  transition: transform 0.2s ease;
+}
+
+.variant-option:hover .color-swatch {
+  transform: scale(1.1);
+}
+
+.variant-checkbox {
+  width: 18px;
+  height: 18px;
+}
+
+.color-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.variant-name {
+  font-weight: 500;
+  color: #1f3a44;
+}
+
+.color-code {
+  font-size: 0.8rem;
+}
+
+.color-preview {
+  width: 40px;
+  border: 1px solid #e5e7eb;
+  border-radius: 0 8px 8px 0;
+}
+
+.variant-scroll-container {
+  max-height: 300px;
+  overflow-y: auto;
+  padding-right: 10px;
+}
+
+.variant-scroll-container::-webkit-scrollbar {
+  width: 8px;
+}
+
+.variant-scroll-container::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.variant-scroll-container::-webkit-scrollbar-thumb {
+  background: #34d399;
+  border-radius: 4px;
+}
+
+.variant-scroll-container::-webkit-scrollbar-thumb:hover {
+  background: #16a34a;
+}
+
+.selection-summary {
+  background-color: #f8f9fa;
+  border: 1px solid rgba(52, 211, 153, 0.2);
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.imei-list {
+  max-height: 200px;
+  overflow-y: auto;
+  padding-right: 10px;
+}
+
+.imei-list::-webkit-scrollbar {
+  width: 8px;
+}
+
+.imei-list::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.imei-list::-webkit-scrollbar-thumb {
+  background: #34d399;
+  border-radius: 4px;
+}
+
+.imei-list::-webkit-scrollbar-thumb:hover {
+  background: #16a34a;
+}
+
+.imei-item {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  margin-bottom: 0.5rem;
+  transition: all 0.2s ease;
+}
+
+.imei-item:hover {
+  background: rgba(52, 211, 153, 0.1);
+  border-color: #34d399;
 }
 </style>

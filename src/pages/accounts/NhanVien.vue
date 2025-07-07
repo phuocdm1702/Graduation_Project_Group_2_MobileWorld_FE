@@ -1,5 +1,5 @@
 <template>
-  <div class="container-fluid py-4 employee-management">
+  <div class="container-fluid py-4">
     <HeaderCard
       title="Quản Lý Nhân Viên"
       badgeText="Hệ Thống POS"
@@ -952,11 +952,6 @@ const handleExcelUpload = async (event) => {
 
 .gradient-custom-teal {
   background: linear-gradient(135deg, #34d399, #10b981);
-}
-
-.employee-management {
-  min-height: 100vh;
-  padding: 1rem;
 }
 
 .filter-label {

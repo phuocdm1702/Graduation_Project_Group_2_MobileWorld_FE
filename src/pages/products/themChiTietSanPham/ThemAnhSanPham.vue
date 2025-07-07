@@ -58,7 +58,6 @@ import { useRouter } from 'vue-router';
 import FilterTableSection from '@/components/common/FilterTableSection.vue';
 import ToastNotification from '@/components/common/ToastNotification.vue';
 import { getMauSac, addChiTietSanPham } from '@/store/modules/products/chiTietSanPham';
-import imageCompression from 'browser-image-compression';
 
 export default defineComponent({
   name: 'ProductImages',
@@ -103,7 +102,7 @@ export default defineComponent({
     const fetchMauSac = async () => {
       try {
         const response = await getMauSac();
-        props.mauSacOptions = response.data;
+        props.mauSacOptions.splice(0, props.mauSacOptions.length, ...response.data);
       } catch (error) {
         toastNotification.value?.addToast({
           type: 'error',
@@ -117,39 +116,57 @@ export default defineComponent({
 
     const handleColorImageUpload = async (event, colorId) => {
       const file = event.target.files[0];
-      if (file && file.type.startsWith('image/')) {
-        try {
-          const compressionOptions = {
-            maxSizeMB: 0.2,
-            maxWidthOrHeight: 800,
-            useWebWorker: true,
-          };
-          const compressedFile = await imageCompression(file, compressionOptions);
-          const reader = new FileReader();
-          reader.onload = (e) => {
-            colorImages.value[colorId] = {
-              file: compressedFile,
-              previewUrl: e.target.result,
-              status: 'Đã nén, sẵn sàng tải lên',
-            };
-            toastNotification.value?.addToast({
-              type: 'success',
-              message: `Tải ảnh cho màu ${props.mauSacOptions.find((mau) => mau.id === colorId)?.mauSac} thành công!`,
-              duration: 3000,
-            });
-          };
-          reader.readAsDataURL(compressedFile);
-        } catch (error) {
-          toastNotification.value?.addToast({
-            type: 'error',
-            message: 'Lỗi khi nén ảnh: ' + error.message,
-            duration: 3000,
-          });
-        }
-      } else {
+      if (!file) {
+        toastNotification.value?.addToast({
+          type: 'error',
+          message: 'Không có file nào được chọn!',
+          duration: 3000,
+        });
+        return;
+      }
+      if (!file.type.startsWith('image/')) {
         toastNotification.value?.addToast({
           type: 'error',
           message: 'Vui lòng chọn file ảnh hợp lệ!',
+          duration: 3000,
+        });
+        return;
+      }
+      if (file.size > 10 * 1024 * 1024) {
+        toastNotification.value?.addToast({
+          type: 'error',
+          message: 'Kích thước ảnh vượt quá 10MB!',
+          duration: 3000,
+        });
+        return;
+      }
+
+      try {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          colorImages.value[colorId] = {
+            file,
+            previewUrl: e.target.result,
+            status: 'Sẵn sàng tải lên',
+          };
+          toastNotification.value?.addToast({
+            type: 'success',
+            message: `Tải ảnh cho màu ${props.mauSacOptions.find((mau) => mau.id === colorId)?.mauSac} thành công!`,
+            duration: 3000,
+          });
+        };
+        reader.onerror = () => {
+          toastNotification.value?.addToast({
+            type: 'error',
+            message: 'Lỗi khi đọc file ảnh!',
+            duration: 3000,
+          });
+        };
+        reader.readAsDataURL(file);
+      } catch (error) {
+        toastNotification.value?.addToast({
+          type: 'error',
+          message: 'Lỗi khi xử lý ảnh: ' + error.message,
           duration: 3000,
         });
       }
@@ -172,17 +189,17 @@ export default defineComponent({
       if (!props.productData.idChiSoKhangBuiVaNuoc) return { valid: false, message: 'Vui lòng chọn chỉ số kháng bụi nước!' };
       if (!props.productVariants || props.productVariants.length === 0) return { valid: false, message: 'Vui lòng thêm ít nhất một phiên bản sản phẩm!' };
       for (const [index, variant] of props.productVariants.entries()) {
-        if (!variant.idMauSac) return { valid: false, message: 'Vui lòng chọn màu sắc cho phiên bản!' };
-        if (!variant.idRam) return { valid: false, message: 'Vui lòng chọn RAM cho phiên bản!' };
-        if (!variant.idBoNhoTrong) return { valid: false, message: 'Vui lòng chọn bộ nhớ trong cho phiên bản!' };
-        if (!variant.donGia || isNaN(parseFloat(variant.donGia)) || parseFloat(variant.donGia) <= 0) return { valid: false, message: 'Vui lòng nhập đơn giá hợp lệ cho tất cả phiên bản!' };
+        if (!variant.idMauSac) return { valid: false, message: `Vui lòng chọn màu sắc cho phiên bản ${index + 1}!` };
+        if (!variant.idRam) return { valid: false, message: `Vui lòng chọn RAM cho phiên bản ${index + 1}!` };
+        if (!variant.idBoNhoTrong) return { valid: false, message: `Vui lòng chọn bộ nhớ trong cho phiên bản ${index + 1}!` };
+        if (!variant.donGia || isNaN(parseFloat(variant.donGia)) || parseFloat(variant.donGia) <= 0) return { valid: false, message: `Vui lòng nhập đơn giá hợp lệ cho phiên bản ${index + 1}!` };
         const imeis = props.variantImeis[index] || [];
         if (!imeis || imeis.length === 0) return { valid: false, message: `Vui lòng nhập ít nhất một IMEI cho phiên bản ${index + 1}!` };
         for (const imei of imeis) {
-          if (!imei || imei.length !== 15 || !/^\d{15}$/.test(imei)) return { valid: false, message: `IMEI "${imei}" không hợp lệ! IMEI phải là 15 chữ số.` };
+          if (!imei || imei.length !== 15 || !/^\d{15}$/.test(imei)) return { valid: false, message: `IMEI "${imei}" không hợp lệ ở phiên bản ${index + 1}! IMEI phải là 15 chữ số.` };
         }
       }
-      const missingImages = uniqueColors.value.filter((color) => !colorImages.value[color.colorId]);
+      const missingImages = uniqueColors.value.filter((color) => !colorImages.value[color.colorId]?.file);
       if (missingImages.length > 0) return { valid: false, message: `Vui lòng tải ảnh cho màu: ${missingImages.map((c) => c.colorName).join(', ')}!` };
       return { valid: true };
     };
@@ -234,10 +251,22 @@ export default defineComponent({
         };
 
         console.log('Payload to send:', JSON.stringify(productPayload, null, 2));
-        const images = Object.values(colorImages.value).map((imageData) => imageData.file);
-        console.log('Images to send:', images);
+        const images = uniqueColors.value
+          .map((color) => colorImages.value[color.colorId]?.file)
+          .filter((file) => file !== undefined);
+        console.log('Images to send:', images.map((file) => file.name));
 
-        const response = await addChiTietSanPham(productPayload, images);
+        if (images.length === 0) {
+          toastNotification.value?.addToast({
+            type: 'error',
+            message: 'Phải có ít nhất một ảnh sản phẩm!',
+            duration: 3000,
+          });
+          isSubmitting.value = false;
+          return;
+        }
+
+        const response = await addChiTietSanPham(productPayload, images, []);
         console.log('Response from server:', response);
 
         toastNotification.value?.addToast({
@@ -250,10 +279,11 @@ export default defineComponent({
         router.push('/sanPham');
       } catch (error) {
         console.error('Error in submitProduct:', error);
+        let errorMessage = error.response?.data?.message || error.message;
         toastNotification.value?.addToast({
           type: 'error',
-          message: 'Có lỗi xảy ra khi thêm sản phẩm: ' + error.message,
-          duration: 3000,
+          message: `Có lỗi xảy ra khi thêm sản phẩm: ${errorMessage}`,
+          duration: 5000,
         });
       } finally {
         isSubmitting.value = false;
@@ -262,6 +292,7 @@ export default defineComponent({
 
     const resetForm = () => {
       emit('reset-form');
+      colorImages.value = {};
       toastNotification.value?.addToast({
         type: 'success',
         message: 'Đã làm mới biểu mẫu!',

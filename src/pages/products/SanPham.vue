@@ -1,6 +1,6 @@
 <!-- SanPham.vue -->
 <template>
-  <div class="py-4 product-management">
+  <div class="container-fluid py-4">
     <!-- Header -->
     <HeaderCard title="Quản Lý Sản Phẩm" badgeText="Hệ Thống POS" badgeClass="gradient-custom-teal"
       :backgroundOpacity="0.95" />
@@ -339,11 +339,6 @@ export default {
 /* Gradient Definitions */
 .gradient-custom-teal {
   background: #34d399;
-}
-
-/* Base Styles */
-.product-management {
-  min-height: 100vh;
 }
 
 /* Filter Label and Inputs */

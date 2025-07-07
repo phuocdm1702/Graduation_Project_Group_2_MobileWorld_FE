@@ -1,5 +1,5 @@
 <template>
-  <div class="container-fluid p-4">
+  <div class="container-fluid py-4">
     <ProductInfo
       :product-data="productData"
       @update:product-data="updateProductData"
@@ -156,6 +156,6 @@ export default defineComponent({
 
 <style scoped>
 .container-fluid {
-  padding: 0;
+  padding: 0 .5rem;
 }
 </style>
