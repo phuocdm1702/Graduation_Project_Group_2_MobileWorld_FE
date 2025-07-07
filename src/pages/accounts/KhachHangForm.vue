@@ -813,7 +813,7 @@ const loadCustomerData = async () => {
         const addressResponse = await GetKhachHangDiaChiList(customerId);
         if (addressResponse.success && addressResponse.data) {
           addresses.value = addressResponse.data
-            .filter((addr) => addr.deleted !== true)
+            .filter((addr) => addr.deleted !== false)
             .map((addr) => ({
               id: addr.id,
               diaChiCuThe: addr.diaChiCuThe || "",
