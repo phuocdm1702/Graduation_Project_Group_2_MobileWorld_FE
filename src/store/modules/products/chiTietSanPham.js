@@ -169,39 +169,43 @@ export const getChiTietSanPhamBySanPhamId = (id) => {
   return apiService.get(`/api/chi-tiet-san-pham/${id}`);
 };
 
-// Kiểm tra ảnh đã tồn tại
-export const checkExistingImages = async (productGroupKey, imageHashes) => {
-  try {
-    const response = await apiService.post('/api/anh-san-pham/check', {
-      productGroupKey,
-      hashes: imageHashes,
-    });
-    return response.data; // Expected: { hash: imageUrl } for existing images
-  } catch (error) {
-    console.error('Error checking existing images:', error);
-    throw error;
-  }
-};
-
-// Tính MD5 hash của ảnh
-const generateImageHash = async (file) => {
-  try {
-    const buffer = await file.arrayBuffer();
-    const msgUint8 = new Uint8Array(buffer);
-    const hashBuffer = await crypto.subtle.digest('MD5', msgUint8);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-    return hashHex;
-  } catch (error) {
-    console.error('Error generating image hash:', error);
-    throw error;
-  }
-};
-
-// Thêm chi tiết sản phẩm với tối ưu hóa ảnh
-export const addChiTietSanPham = async (data, images) => {
+// Thêm chi tiết sản phẩm
+export const addChiTietSanPham = async (data, images, existingImageUrls = []) => {
   try {
     const formData = new FormData();
+
+    // Validate input data
+    if (!data.tenSanPham || !data.tenSanPham.trim()) {
+      throw new Error('Tên sản phẩm không được để trống');
+    }
+    if (!data.variants || !Array.isArray(data.variants) || data.variants.length === 0) {
+      throw new Error('Danh sách biến thể không được để trống');
+    }
+
+    // Validate and add images
+    if (images && images.length > 0) {
+      for (const image of images) {
+        if (!(image instanceof File)) {
+          console.warn('Invalid image object:', image);
+          throw new Error('File ảnh không hợp lệ');
+        }
+        if (!image.type.startsWith('image/')) {
+          console.warn('Invalid image type:', image.type);
+          throw new Error('File ảnh không hợp lệ - chỉ chấp nhận file ảnh');
+        }
+        if (image.size > 10 * 1024 * 1024) {
+          throw new Error(`File ảnh ${image.name} vượt quá kích thước tối đa 10MB`);
+        }
+        formData.append('images', image);
+      }
+    }
+
+    // Add existing image URLs if any
+    if (existingImageUrls && existingImageUrls.length > 0) {
+      existingImageUrls.forEach((url, index) => {
+        formData.append(`existingImageUrls[${index}]`, url);
+      });
+    }
 
     // Thêm các trường cấp cao
     formData.append('tenSanPham', data.tenSanPham);
@@ -221,58 +225,33 @@ export const addChiTietSanPham = async (data, images) => {
     formData.append('ghiChu', data.ghiChu || '');
 
     // Thêm các trường trong mảng variants
-    if (data.variants && Array.isArray(data.variants)) {
-      data.variants.forEach((variant, index) => {
-        formData.append(`variants[${index}].idMauSac`, variant.idMauSac || '');
-        formData.append(`variants[${index}].idRam`, variant.idRam || '');
-        formData.append(`variants[${index}].idBoNhoTrong`, variant.idBoNhoTrong || '');
-        formData.append(`variants[${index}].donGia`, variant.donGia || '');
-        if (variant.imeiList && Array.isArray(variant.imeiList)) {
-          variant.imeiList.forEach((imei, imeiIndex) => {
-            formData.append(`variants[${index}].imeiList[${imeiIndex}]`, imei || '');
-          });
+    data.variants.forEach((variant, index) => {
+      if (!variant.idMauSac || !variant.idRam || !variant.idBoNhoTrong || !variant.donGia) {
+        throw new Error(`Biến thể ${index + 1} không hợp lệ: Thiếu thông tin bắt buộc`);
+      }
+      if (!variant.imeiList || !Array.isArray(variant.imeiList) || variant.imeiList.length === 0) {
+        throw new Error(`Biến thể ${index + 1} không hợp lệ: Thiếu danh sách IMEI`);
+      }
+      
+      formData.append(`variants[${index}].idMauSac`, variant.idMauSac);
+      formData.append(`variants[${index}].idRam`, variant.idRam);
+      formData.append(`variants[${index}].idBoNhoTrong`, variant.idBoNhoTrong);
+      formData.append(`variants[${index}].donGia`, variant.donGia);
+      
+      variant.imeiList.forEach((imei, imeiIndex) => {
+        if (!imei || typeof imei !== 'string' || imei.length !== 15 || !/^\d{15}$/.test(imei)) {
+          throw new Error(`IMEI "${imei}" tại biến thể ${index + 1} không hợp lệ - phải là 15 chữ số`);
         }
+        formData.append(`variants[${index}].imeiList[${imeiIndex}]`, imei);
       });
-    }
-
-    // Nén và tính hash cho ảnh
-    const imageData = [];
-    const imageHashes = [];
-    const compressionOptions = {
-      maxSizeMB: 0.2, // Giới hạn kích thước ảnh ở 200KB
-      maxWidthOrHeight: 800, // Giới hạn chiều rộng/cao
-      useWebWorker: true,
-    };
-
-    for (const image of images) {
-      if (image instanceof File && image.type.startsWith('image/')) {
-        const compressedImage = await imageCompression(image, compressionOptions);
-        const hash = await generateImageHash(compressedImage);
-        imageData.push({ file: compressedImage, hash });
-        imageHashes.push(hash);
-      } else {
-        console.warn('Invalid image file:', image);
-      }
-    }
-
-    // Kiểm tra ảnh đã tồn tại
-    let productGroupKey = `SP${data.tenSanPham.replace(/\s+/g, '_')}`; // Tạm thời tạo productGroupKey
-    const existingImages = await checkExistingImages(productGroupKey, imageHashes);
-
-    // Thêm ảnh và hash vào FormData
-    imageData.forEach((img, index) => {
-      if (!existingImages[img.hash]) {
-        formData.append('images', img.file);
-        formData.append(`imageHashes[${index}]`, img.hash);
-      } else {
-        formData.append(`existingImageUrls[${index}]`, existingImages[img.hash]);
-        formData.append(`imageHashes[${index}]`, img.hash);
-      }
     });
 
-    // Log FormData entries for debugging
-    for (const [key, value] of formData.entries()) {
-      console.log(`FormData ${key}:`, value instanceof File ? value.name : value);
+    // Log FormData entries for debugging (only in development)
+    if (process.env.NODE_ENV === 'development') {
+      console.log('FormData entries:');
+      for (const [key, value] of formData.entries()) {
+        console.log(`${key}:`, value instanceof File ? `File: ${value.name} (${value.size} bytes)` : value);
+      }
     }
 
     // Gửi yêu cầu
@@ -280,27 +259,79 @@ export const addChiTietSanPham = async (data, images) => {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
+      timeout: 30000, // 30 second timeout
     });
+    
     return response;
   } catch (error) {
     console.error('Error in addChiTietSanPham:', {
       message: error.message,
       response: error.response?.data,
       status: error.response?.status,
+      stack: error.stack
     });
-    throw error;
+    
+    // Provide more specific error messages
+    if (error.response?.status === 500) {
+      throw new Error(`Lỗi server: ${error.response?.data?.message || 'Có lỗi xảy ra trên server'}`);
+    } else if (error.response?.status === 400) {
+      throw new Error(`Dữ liệu không hợp lệ: ${error.response?.data?.message || 'Kiểm tra lại thông tin đã nhập'}`);
+    } else if (error.message.includes('Network Error')) {
+      throw new Error('Lỗi kết nối mạng. Vui lòng kiểm tra kết nối internet.');
+    } else if (error.message.includes('timeout')) {
+      throw new Error('Yêu cầu quá pim quá thời gian chờ. Vui lòng thử lại.');
+    } else {
+      throw new Error(`Lỗi khi thêm chi tiết sản phẩm: ${error.message}`);
+    }
   }
 };
 
-export const updateChiTietSanPham = async (id, data, images) => {
+// Cập nhật chi tiết sản phẩm
+export const updateChiTietSanPham = async (id, data, images, existingImageUrls = []) => {
   try {
     const formData = new FormData();
+
+    // Validate input data
+    if (!id || id <= 0) {
+      throw new Error('ID sản phẩm không hợp lệ');
+    }
+    if (!data.tenSanPham || !data.tenSanPham.trim()) {
+      throw new Error('Tên sản phẩm không được để trống');
+    }
+    if (!data.variants || !Array.isArray(data.variants) || data.variants.length === 0) {
+      throw new Error('Danh sách biến thể không được để trống');
+    }
 
     // Thêm ID sản phẩm
     formData.append('id', id);
 
+    // Validate and add images
+    if (images && images.length > 0) {
+      for (const image of images) {
+        if (!(image instanceof File)) {
+          console.warn('Invalid image object:', image);
+          throw new Error('File ảnh không hợp lệ');
+        }
+        if (!image.type.startsWith('image/')) {
+          console.warn('Invalid image type:', image.type);
+          throw new Error('File ảnh không hợp lệ - chỉ chấp nhận file ảnh');
+        }
+        if (image.size > 10 * 1024 * 1024) {
+          throw new Error(`File ảnh ${image.name} vượt quá kích thước tối đa 10MB`);
+        }
+        formData.append('images', image);
+      }
+    }
+
+    // Add existing image URLs if any
+    if (existingImageUrls && existingImageUrls.length > 0) {
+      existingImageUrls.forEach((url, index) => {
+        formData.append(`existingImageUrls[${index}]`, url);
+      });
+    }
+
     // Thêm các trường cấp cao
-    formData.append('tenSanPham', data.tenSanPham || '');
+    formData.append('tenSanPham', data.tenSanPham);
     formData.append('idNhaSanXuat', data.idNhaSanXuat || '');
     formData.append('idPin', data.idPin || '');
     formData.append('idCongNgheManHinh', data.idCongNgheManHinh || '');
@@ -317,73 +348,63 @@ export const updateChiTietSanPham = async (id, data, images) => {
     formData.append('ghiChu', data.ghiChu || '');
 
     // Thêm các trường trong mảng variants
-    if (data.variants && Array.isArray(data.variants)) {
-      data.variants.forEach((variant, index) => {
-        formData.append(`variants[${index}].idMauSac`, variant.idMauSac || '');
-        formData.append(`variants[${index}].idRam`, variant.idRam || '');
-        formData.append(`variants[${index}].idBoNhoTrong`, variant.idBoNhoTrong || '');
-        formData.append(`variants[${index}].donGia`, variant.donGia || '');
-        if (variant.imeiList && Array.isArray(variant.imeiList)) {
-          variant.imeiList.forEach((imei, imeiIndex) => {
-            formData.append(`variants[${index}].imeiList[${imeiIndex}]`, imei || '');
-          });
+    data.variants.forEach((variant, index) => {
+      if (!variant.idMauSac || !variant.idRam || !variant.idBoNhoTrong || !variant.donGia) {
+        throw new Error(`Biến thể ${index + 1} không hợp lệ: Thiếu thông tin bắt buộc`);
+      }
+      if (!variant.imeiList || !Array.isArray(variant.imeiList) || variant.imeiList.length === 0) {
+        throw new Error(`Biến thể ${index + 1} không hợp lệ: Thiếu danh sách IMEI`);
+      }
+      
+      formData.append(`variants[${index}].idMauSac`, variant.idMauSac);
+      formData.append(`variants[${index}].idRam`, variant.idRam);
+      formData.append(`variants[${index}].idBoNhoTrong`, variant.idBoNhoTrong);
+      formData.append(`variants[${index}].donGia`, variant.donGia);
+      
+      variant.imeiList.forEach((imei, imeiIndex) => {
+        if (!imei || typeof imei !== 'string' || imei.length !== 15 || !/^\d{15}$/.test(imei)) {
+          throw new Error(`IMEI "${imei}" tại biến thể ${index + 1} không hợp lệ - phải là 15 chữ số`);
         }
+        formData.append(`variants[${index}].imeiList[${imeiIndex}]`, imei);
       });
-    }
-
-    // Nén và tính hash cho ảnh
-    const imageData = [];
-    const imageHashes = [];
-    const compressionOptions = {
-      maxSizeMB: 0.2, // Giới hạn kích thước ảnh ở 200KB
-      maxWidthOrHeight: 800, // Giới hạn chiều rộng/cao
-      useWebWorker: true,
-    };
-
-    for (const image of images || []) {
-      if (image instanceof File && image.type.startsWith('image/')) {
-        const compressedImage = await imageCompression(image, compressionOptions);
-        const hash = await generateImageHash(compressedImage);
-        imageData.push({ file: compressedImage, hash });
-        imageHashes.push(hash);
-      } else {
-        console.warn('Invalid image file:', image);
-      }
-    }
-
-    // Kiểm tra ảnh đã tồn tại
-    let productGroupKey = `SP${data.tenSanPham.replace(/\s+/g, '_')}`;
-    const existingImages = await checkExistingImages(productGroupKey, imageHashes);
-
-    // Thêm ảnh và hash vào FormData
-    imageData.forEach((img, index) => {
-      if (!existingImages[img.hash]) {
-        formData.append('images', img.file);
-        formData.append(`imageHashes[${index}]`, img.hash);
-      } else {
-        formData.append(`existingImageUrls[${index}]`, existingImages[img.hash]);
-        formData.append(`imageHashes[${index}]`, img.hash);
-      }
     });
 
-    // Log FormData entries for debugging
-    for (const [key, value] of formData.entries()) {
-      console.log(`FormData ${key}:`, value instanceof File ? value.name : value);
+    // Log FormData entries for debugging (only in development)
+    if (process.env.NODE_ENV === 'development') {
+      console.log('FormData entries:');
+      for (const [key, value] of formData.entries()) {
+        console.log(`${key}:`, value instanceof File ? `File: ${value.name} (${value.size} bytes)` : value);
+      }
     }
 
-    // Gửi yêu cầu PUT
-    const response = await apiService.put(`/api/chi-tiet-san-pham/edit/${id}`, formData, {
+    // Gửi yêu cầu
+    const response = await apiService.put(`/api/chi-tiet-san-pham/${id}`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
+      timeout: 30000, // 30 second timeout
     });
+    
     return response;
   } catch (error) {
     console.error('Error in updateChiTietSanPham:', {
       message: error.message,
       response: error.response?.data,
       status: error.response?.status,
+      stack: error.stack
     });
-    throw error;
+    
+    // Provide more specific error messages
+    if (error.response?.status === 500) {
+      throw new Error(`Lỗi server: ${error.response?.data?.message || 'Có lỗi xảy ra trên server'}`);
+    } else if (error.response?.status === 400) {
+      throw new Error(`Dữ liệu không hợp lệ: ${error.response?.data?.message || 'Kiểm tra lại thông tin đã nhập'}`);
+    } else if (error.message.includes('Network Error')) {
+      throw new Error('Lỗi kết nối mạng. Vui lòng kiểm tra kết nối internet.');
+    } else if (error.message.includes('timeout')) {
+      throw new Error('Yêu cầu quá thời gian chờ. Vui lòng thử lại.');
+    } else {
+      throw new Error(`Lỗi khi cập nhật chi tiết sản phẩm: ${error.message}`);
+    }
   }
 };
