@@ -295,26 +295,25 @@ th {
 
 .table-responsive {
   max-height: 450px; 
-  overflow-y: auto; 
-  scrollbar-width: thin; 
-  scrollbar-color: rgba(52, 211, 153, 0.5) rgba(0, 0, 0, 0.1); 
+  overflow-y: auto;
 }
 
 .table-responsive::-webkit-scrollbar {
-  width: 8px;
+  width: 6px;
 }
 
 .table-responsive::-webkit-scrollbar-track {
-  background: rgba(0, 0, 0, 0.1);
+  background: #f8f9fa;
+  border-radius: 3px;
 }
 
 .table-responsive::-webkit-scrollbar-thumb {
-  background: rgba(52, 211, 153, 0.5);
-  border-radius: 4px;
+  background: #34d399;
+  border-radius: 3px;
 }
 
 .table-responsive::-webkit-scrollbar-thumb:hover {
-  background: rgba(52, 211, 153, 0.8);
+  background: #16a34a;
 }
 
 @media (max-width: 768px) {
