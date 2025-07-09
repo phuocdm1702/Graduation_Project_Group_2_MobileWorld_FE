@@ -702,8 +702,6 @@ const fetchDistrictsForEdit = async (index) => {
   const address = addresses.value[index];
   address.districts = [];
   address.wards = [];
-  address.quan = "";
-  address.phuong = "";
 
   const selectedProvince = provinces.value.find(
     (p) => p.name === address.thanhPho
@@ -714,6 +712,19 @@ const fetchDistrictsForEdit = async (index) => {
         `https://provinces.open-api.vn/api/p/${selectedProvince.code}?depth=2`
       );
       address.districts = response.data.districts;
+
+      // Kiểm tra xem quan hiện tại có trong danh sách districts không
+      const currentDistrict = address.districts.find(
+        (d) => d.name === address.quan
+      );
+      if (currentDistrict) {
+        // Nếu quan hợp lệ, giữ nguyên và tải danh sách phường
+        await fetchWardsForEdit(index);
+      } else {
+        // Nếu quan không hợp lệ, reset quan và phuong
+        address.quan = "";
+        address.phuong = "";
+      }
     } catch (error) {
       console.error("Lỗi khi tải danh sách quận/huyện:", error);
       toastNotification.value.addToast({
@@ -721,6 +732,9 @@ const fetchDistrictsForEdit = async (index) => {
         message: "Không thể tải danh sách quận/huyện!",
       });
     }
+  } else {
+    address.quan = "";
+    address.phuong = "";
   }
 };
 
@@ -728,7 +742,6 @@ const fetchDistrictsForEdit = async (index) => {
 const fetchWardsForEdit = async (index) => {
   const address = addresses.value[index];
   address.wards = [];
-  address.phuong = "";
 
   const selectedDistrict = address.districts.find(
     (d) => d.name === address.quan
@@ -739,6 +752,12 @@ const fetchWardsForEdit = async (index) => {
         `https://provinces.open-api.vn/api/d/${selectedDistrict.code}?depth=2`
       );
       address.wards = response.data.wards;
+
+      // Kiểm tra xem phuong hiện tại có trong danh sách wards không
+      const currentWard = address.wards.find((w) => w.name === address.phuong);
+      if (!currentWard) {
+        address.phuong = "";
+      }
     } catch (error) {
       console.error("Lỗi khi tải danh sách xã/phường:", error);
       toastNotification.value.addToast({
@@ -746,6 +765,8 @@ const fetchWardsForEdit = async (index) => {
         message: "Không thể tải danh sách xã/phường!",
       });
     }
+  } else {
+    address.phuong = "";
   }
 };
 
