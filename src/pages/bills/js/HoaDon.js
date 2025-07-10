@@ -602,36 +602,8 @@ export const invoiceManagementLogic = {
       }
     };
 
-    const getStatusIcon = (status) => {
-      switch (status) {
-        case 'Chờ xác nhận':
-          return 'bi bi-clock';
-        case 'Chờ giao hàng':
-          return 'bi bi-truck';
-        case 'Đang giao':
-          return 'bi bi-arrow-left-right';
-        case 'Hoàn thành':
-          return 'bi bi-check-circle';
-        case 'Đã hủy':
-          return 'bi bi-x-circle';
-        default:
-          return 'bi bi-question-circle';
-      }
-    };
-
     const getTypeBadgeClass = (type) => {
       return ['online', 'trực tiếp'].includes((type || '').toLowerCase()) ? 'badge-info' : 'badge-info';
-    };
-
-    const getTypeIcon = (type) => {
-      switch ((type || '').toLowerCase()) {
-        case 'online':
-          return 'bi bi-globe';
-        case 'trực tiếp':
-          return 'bi bi-shop';
-        default:
-          return 'bi bi-question-circle';
-      }
     };
 
     // Khởi tạo
@@ -688,9 +660,7 @@ export const invoiceManagementLogic = {
       setActiveTab,
       setActiveTabByStatus,
       getStatusBadgeClass,
-      getStatusIcon,
       getTypeBadgeClass,
-      getTypeIcon,
       getRowClass,
       notificationType,
       notificationMessage,

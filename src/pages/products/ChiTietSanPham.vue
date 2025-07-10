@@ -440,8 +440,8 @@ export default {
       { text: '#', value: 'checkbox' },
       { text: 'STT', value: 'stt' },
       { text: 'Ảnh', value: 'imageUrl' }, // Thêm cột ảnh
-      { text: 'Mã Sản Phẩm', value: 'maSanPham' },
-      { text: 'Tên Sản Phẩm', value: 'tenSanPham' },
+      { text: 'Mã SP', value: 'maSanPham' },
+      { text: 'Tên SP', value: 'tenSanPham' },
       { text: 'IMEI', value: 'imei' },
       { text: 'Màu Sắc', value: 'mauSac' },
       { text: 'RAM', value: 'dungLuongRam' },
@@ -1133,14 +1133,13 @@ export default {
 }
 
 .status-badge {
-  padding: 0.4rem 0.9rem;
-  border-radius: 1.5rem;
-  width: 120px;
-  display: inline-flex;
+  padding: 0.25rem 0.75rem;
+  border-radius: 1rem;
+  display: flex;
   justify-content: center;
-  align-items: center;
-  font-size: 0.85rem;
+  font-size: 0.75rem;
   font-weight: 500;
+  align-items: center;
 }
 
 .badge-completed {
@@ -1200,6 +1199,7 @@ export default {
   justify-content: space-between;
   align-items: center;
   padding: 1rem;
+  gap: 1rem;
   background: #f8f9fa;
   border-bottom: 1px solid rgba(52, 211, 153, 0.1);
 }
