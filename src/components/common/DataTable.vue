@@ -8,7 +8,7 @@
           <table class="table table-hover align-middle mb-0">
             <thead class="sticky-header">
               <tr class="text-muted small" style="background: rgba(52, 211, 153, 0.05);">
-                <th v-for="(header, index) in headers" :key="index" class="p-3">
+                <th v-for="(header, index) in headers" :key="index" class="p-1">
                   {{ header.text }}
                 </th>
               </tr>
@@ -20,7 +20,7 @@
                 class="table-row"
                 :style="`animation-delay: ${index * 0.1}s;`"
               >
-                <td v-for="(header, hIndex) in headers" :key="hIndex" class="p-3">
+                <td v-for="(header, hIndex) in headers" :key="hIndex" class="p-1">
                   <slot :name="header.value" :item="item" :index="index" :globalIndex="(internalCurrentPage - 1) * internalItemsPerPage + index">
                     {{ item[header.value] }}
                   </slot>
@@ -177,7 +177,7 @@ export default {
 </script>
 
 <style scoped>
-/* Existing styles remain unchanged */
+/* Existing styles unchanged, only adding new rules and modifications */
 @keyframes fadeInUp {
   from {
     opacity: 0;
@@ -279,10 +279,31 @@ export default {
 
 th, td {
   text-align: center;
+  white-space: normal; /* Allow text to wrap */
+  word-break: break-word; /* Break long words */
+  max-width: 200px; /* Set a reasonable max-width for cells */
+  min-width: 80px; /* Ensure minimum width for readability */
+  overflow: hidden; /* Hide overflow if needed */
+  text-overflow: ellipsis; /* Add ellipsis for overflow */
 }
 
 th {
-  font-size: 1.1rem;
+  font-size: 1rem;
+}
+
+td {
+  font-size: 0.9rem; /* Slightly smaller font for table data */
+}
+
+/* Handle long content by shrinking font size */
+td.long-content {
+  font-size: 0.8rem; /* Shrink font for long content */
+}
+
+/* Ensure table layout is stable */
+table {
+  table-layout: fixed; /* Prevent columns from resizing unpredictably */
+  width: 100%;
 }
 
 .sticky-header {
@@ -294,12 +315,16 @@ th {
 }
 
 .table-responsive {
-  max-height: 450px; 
+  max-height: 450px;
   overflow-y: auto;
+  /* Add horizontal scroll for very wide tables */
+  overflow-x: auto;
 }
 
+/* Custom scrollbar for table */
 .table-responsive::-webkit-scrollbar {
   width: 6px;
+  height: 6px; /* For horizontal scrollbar */
 }
 
 .table-responsive::-webkit-scrollbar-track {
@@ -316,9 +341,20 @@ th {
   background: #16a34a;
 }
 
+/* Responsive adjustments */
 @media (max-width: 768px) {
   .datatable-card {
     padding: 10px;
+  }
+
+  th, td {
+    max-width: 120px; /* Reduce max-width for smaller screens */
+    min-width: 60px;
+    font-size: 0.8rem; /* Smaller font for mobile */
+  }
+
+  td.long-content {
+    font-size: 0.7rem; /* Even smaller for long content */
   }
 
   .table-row:hover {
@@ -329,6 +365,22 @@ th {
     flex-direction: column;
     align-items: flex-start;
     gap: 10px;
+  }
+}
+
+@media (max-width: 576px) {
+  th, td {
+    max-width: 100px;
+    min-width: 50px;
+    font-size: 0.7rem;
+  }
+
+  td.long-content {
+    font-size: 0.6rem;
+  }
+
+  .table-responsive {
+    font-size: 0.8rem; /* Adjust overall table font size */
   }
 }
 

@@ -47,15 +47,18 @@
               <i :class="stat.icon" class="fs-4"></i>
             </div>
             <div class="text-end">
-              <div class="stat-value fw-bold mb-1">{{ stat.value }}</div>
-              <div class="stat-change" :class="stat.changeClass">
-                <i :class="stat.trendIcon" class="me-1"></i>
-                {{ stat.change }}
-              </div>
+            <h6 class="stat-title mb-1">{{ stat.title }}</h6>
+            <p class="stat-subtitle text-muted small mb-0">{{ stat.subtitle }}</p>
             </div>
           </div>
-          <h6 class="stat-title mb-1">{{ stat.title }}</h6>
-          <p class="stat-subtitle text-muted small mb-0">{{ stat.subtitle }}</p>
+          <div>
+                        <div class="stat-change" :class="stat.changeClass">
+              <i :class="stat.trendIcon" class="me-1"></i>
+              {{ stat.change }}
+            </div>
+            <div class="stat-value fw-bold mb-1">{{ stat.value }}</div>
+
+          </div>
         </div>
       </div>
     </div>
@@ -76,12 +79,8 @@
           </div>
           <div class="card-body">
             <div class="activity-timeline">
-              <div
-                  v-for="(activity, index) in recentActivities"
-                  :key="activity.id"
-                  class="timeline-item"
-                  :style="{ animationDelay: `${index * 0.1}s` }"
-              >
+              <div v-for="(activity, index) in recentActivities" :key="activity.id" class="timeline-item"
+                :style="{ animationDelay: `${index * 0.1}s` }">
                 <div class="timeline-dot" :class="{ 'completed': activity.completed }"></div>
                 <div class="timeline-content">
                   <div class="d-flex justify-content-between align-items-start">
@@ -114,18 +113,13 @@
           </div>
           <div class="card-body">
             <div class="d-grid gap-3">
-              <router-link
-                  v-for="(action, index) in quickActions"
-                  :key="action.name"
-                  :to="action.link || '#'"
-              class="quick-action btn d-flex align-items-center p-3"
-              :style="{ animationDelay: `${index * 0.1}s` }"
-              >
-              <div class="action-icon me-3" :class="action.bgClass">
-                <i :class="action.icon"></i>
-              </div>
-              <span class="fw-medium">{{ action.name }}</span>
-              <i class="bi bi-chevron-right ms-auto"></i>
+              <router-link v-for="(action, index) in quickActions" :key="action.name" :to="action.link || '#'"
+                class="quick-action btn d-flex align-items-center p-3" :style="{ animationDelay: `${index * 0.1}s` }">
+                <div class="action-icon me-3" :class="action.bgClass">
+                  <i :class="action.icon"></i>
+                </div>
+                <span class="fw-medium">{{ action.name }}</span>
+                <i class="bi bi-chevron-right ms-auto"></i>
               </router-link>
             </div>
           </div>
@@ -140,12 +134,9 @@
           </div>
           <div class="card-body">
             <div class="system-status">
-              <div
-                  v-for="(status, index) in systemStatus"
-                  :key="status.name"
-                  class="status-item d-flex justify-content-between align-items-center mb-3"
-                  :style="{ animationDelay: `${index * 0.1}s` }"
-              >
+              <div v-for="(status, index) in systemStatus" :key="status.name"
+                class="status-item d-flex justify-content-between align-items-center mb-3"
+                :style="{ animationDelay: `${index * 0.1}s` }">
                 <div class="d-flex align-items-center">
                   <div class="status-icon me-3" :class="status.iconClass">
                     <i :class="status.icon"></i>
@@ -200,7 +191,6 @@ export default {
 }
 </script>
 <style scoped>
-
 .glass-card {
   background: rgba(255, 255, 255, 0.9);
   backdrop-filter: blur(20px);
@@ -244,9 +234,9 @@ export default {
 }
 
 .stat-icon {
-  width: 50px;
-  height: 50px;
-  border-radius: 15px;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -286,7 +276,7 @@ export default {
 }
 
 .stat-value {
-  font-size: 2rem;
+  font-size: 1.5rem;
   color: #1f2937;
 }
 
@@ -436,9 +426,12 @@ export default {
 }
 
 @keyframes pulse {
-  0%, 100% {
+
+  0%,
+  100% {
     opacity: 1;
   }
+
   50% {
     opacity: 0.5;
   }
@@ -449,6 +442,7 @@ export default {
     opacity: 0;
     transform: translateY(30px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -460,6 +454,7 @@ export default {
     opacity: 0;
     transform: translateX(-30px);
   }
+
   to {
     opacity: 1;
     transform: translateX(0);

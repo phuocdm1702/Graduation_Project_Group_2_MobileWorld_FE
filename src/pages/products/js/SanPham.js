@@ -78,7 +78,7 @@ export default defineComponent({
       { text: "Hãng", value: "tenNhaSanXuat" },
       { text: "Hệ Điều Hành", value: "heDieuHanh" },
       { text: "Màn Hình", value: "congNgheManHinh" },
-      { text: "CPU", value: "tenCpu" },
+ 
       { text: "Pin", value: "dungLuongPin" },
       { text: "Số Lượng", value: "imeiCount" },
       { text: "Khoảng Giá", value: "priceRange" },

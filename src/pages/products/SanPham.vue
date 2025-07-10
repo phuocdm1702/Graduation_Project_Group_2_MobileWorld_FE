@@ -532,6 +532,7 @@ export default {
 .status-badge {
   padding: 0.25rem 0.75rem;
   border-radius: 1rem;
+  width: 130px;
   display: flex;
   justify-content: center;
   font-size: 0.75rem;

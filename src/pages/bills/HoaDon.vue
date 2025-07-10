@@ -257,13 +257,11 @@
             </template>
             <template #loaiDon="{ item }">
               <span class="type-badge" :class="getTypeBadgeClass(item.loaiDon)">
-                <i :class="getTypeIcon(item.loaiDon)" class="me-1"></i>
                 {{ item.loaiDon }}
               </span>
             </template>
             <template #trangThaiFormatted="{ item }">
               <span class="status-badge" :class="getStatusBadgeClass(item.trangThaiFormatted)">
-                <i :class="getStatusIcon(item.trangThaiFormatted)" class="me-1"></i>
                 {{ item.trangThaiFormatted }}
               </span>
             </template>
@@ -897,7 +895,6 @@ export default {
 .status-badge {
   padding: 0.25rem 0.75rem;
   border-radius: 1rem;
-  width: 130px;
   display: flex;
   justify-content: center;
   font-size: 0.75rem;
@@ -1014,12 +1011,6 @@ export default {
 .invoice-amounts {
   padding-top: 1rem;
   border-top: 1px solid rgba(52, 211, 153, 0.1);
-}
-
-.total-amount {
-  font-weight: 600;
-  color: #16a34a;
-  font-size: 1.1rem;
 }
 
 .amount-details {
