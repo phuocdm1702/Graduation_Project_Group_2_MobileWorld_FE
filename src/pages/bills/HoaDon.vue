@@ -149,51 +149,53 @@
 
     <!-- Status Filter Section -->
     <FilterTableSection title="Bộ lọc Trạng thái Hóa đơn" icon="bi bi-funnel">
-      <div class="status-badge d-flex gap-3 m-3" style="width: max-content;">
-        <button type="button" class="btn btn-outline-primary position-relative"
-          @click="setActiveTabByStatus('Chờ xác nhận')">
-          Chờ xác nhận
-          <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill badge-waiting"
-            v-if="statusCounts['Chờ xác nhận']">
-            {{ statusCounts['Chờ xác nhận'] > 99 ? '99+' : statusCounts['Chờ xác nhận'] }}
-            <span class="visually-hidden">hóa đơn chờ xác nhận</span>
-          </span>
-        </button>
-        <button type="button" class="btn btn-outline-primary position-relative"
-          @click="setActiveTabByStatus('Chờ giao hàng')">
-          Chờ giao hàng
-          <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill badge-waiting"
-            v-if="statusCounts['Chờ giao hàng']">
-            {{ statusCounts['Chờ giao hàng'] > 99 ? '99+' : statusCounts['Chờ giao hàng'] }}
-            <span class="visually-hidden">hóa đơn chờ giao hàng</span>
-          </span>
-        </button>
-        <button type="button" class="btn btn-outline-primary position-relative"
-          @click="setActiveTabByStatus('Đang giao')">
-          Đang giao
-          <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill badge-waiting"
-            v-if="statusCounts['Đang giao']">
-            {{ statusCounts['Đang giao'] > 99 ? '99+' : statusCounts['Đang giao'] }}
-            <span class="visually-hidden">hóa đơn đang giao</span>
-          </span>
-        </button>
-        <button type="button" class="btn btn-outline-primary position-relative"
-          @click="setActiveTabByStatus('Hoàn thành')">
-          Hoàn thành
-          <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill badge-completed"
-            v-if="statusCounts['Hoàn thành']">
-            {{ statusCounts['Hoàn thành'] > 99 ? '99+' : statusCounts['Hoàn thành'] }}
-            <span class="visually-hidden">hóa đơn hoàn thành</span>
-          </span>
-        </button>
-        <button type="button" class="btn btn-outline-primary position-relative" @click="setActiveTabByStatus('Đã hủy')">
-          Đã hủy
-          <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill badge-canceled"
-            v-if="statusCounts['Đã hủy']">
-            {{ statusCounts['Đã hủy'] > 99 ? '99+' : statusCounts['Đã hủy'] }}
-            <span class="visually-hidden">hóa đơn đã hủy</span>
-          </span>
-        </button>
+      <div class="status-badge-container m-3">
+        <div class="status-badge-grid">
+          <button type="button" class="btn btn-outline-primary position-relative"
+            @click="setActiveTabByStatus('Chờ xác nhận')">
+            Chờ xác nhận
+            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill badge-waiting"
+              v-if="statusCounts['Chờ xác nhận']">
+              {{ statusCounts['Chờ xác nhận'] > 99 ? '99+' : statusCounts['Chờ xác nhận'] }}
+              <span class="visually-hidden">hóa đơn chờ xác nhận</span>
+            </span>
+          </button>
+          <button type="button" class="btn btn-outline-primary position-relative"
+            @click="setActiveTabByStatus('Chờ giao hàng')">
+            Chờ giao hàng
+            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill badge-waiting"
+              v-if="statusCounts['Chờ giao hàng']">
+              {{ statusCounts['Chờ giao hàng'] > 99 ? '99+' : statusCounts['Chờ giao hàng'] }}
+              <span class="visually-hidden">hóa đơn chờ giao hàng</span>
+            </span>
+          </button>
+          <button type="button" class="btn btn-outline-primary position-relative"
+            @click="setActiveTabByStatus('Đang giao')">
+            Đang giao
+            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill badge-waiting"
+              v-if="statusCounts['Đang giao']">
+              {{ statusCounts['Đang giao'] > 99 ? '99+' : statusCounts['Đang giao'] }}
+              <span class="visually-hidden">hóa đơn đang giao</span>
+            </span>
+          </button>
+          <button type="button" class="btn btn-outline-primary position-relative"
+            @click="setActiveTabByStatus('Hoàn thành')">
+            Hoàn thành
+            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill badge-completed"
+              v-if="statusCounts['Hoàn thành']">
+              {{ statusCounts['Hoàn thành'] > 99 ? '99+' : statusCounts['Hoàn thành'] }}
+              <span class="visually-hidden">hóa đơn hoàn thành</span>
+            </span>
+          </button>
+          <button type="button" class="btn btn-outline-primary position-relative" @click="setActiveTabByStatus('Đã hủy')">
+            Đã hủy
+            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill badge-canceled"
+              v-if="statusCounts['Đã hủy']">
+              {{ statusCounts['Đã hủy'] > 99 ? '99+' : statusCounts['Đã hủy'] }}
+              <span class="visually-hidden">hóa đơn đã hủy</span>
+            </span>
+          </button>
+        </div>
       </div>
     </FilterTableSection>
 
@@ -607,7 +609,6 @@ export default {
 }
 
 .search-input {
-  /* width: 200%; */
   padding-left: 2.5rem;
   border: 2px solid rgba(52, 211, 153, 0.1);
   border-radius: 8px;
@@ -728,30 +729,33 @@ export default {
   cursor: default;
 }
 
-.status-badge {
-  padding: 0.5rem 1rem;
-  border-radius: 1rem;
-  font-weight: 500;
-  font-size: 0.9rem;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
+.status-badge-container {
+  width: 100%;
 }
 
-/* (Tùy chọn) Nếu muốn giữ outline và điều chỉnh text color */
+.status-badge-grid {
+  display: flex;
+  gap: 1rem;
+}
+
+.status-badge-grid .btn {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 0.85rem;
+  min-height: 40px;
+  max-width: 100px;
+  white-space: nowrap;
+  text-align: center;
+}
+
 .btn-outline-primary {
   border-color: #16a34a !important;
-  /* Giữ đường viền đồng bộ với background */
   color: #16a34a !important;
-  /* Đổi màu chữ thành trắng để nổi bật trên nền xanh */
 }
 
-/* (Tùy chọn) Hover effect */
 .btn-outline-primary:hover {
   background: #16a34a !important;
-  /* Màu xanh đậm hơn khi hover */
   border-color: #16a34a !important;
   color: #ffffff !important;
 }
@@ -1119,20 +1123,23 @@ export default {
     font-size: 0.9rem;
   }
 
-  .status-badge {
-    width: 100%;
-    text-align: center;
-    margin-bottom: 0.5rem;
+  .status-badge-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    gap: 0.5rem;
+  }
+
+  .status-badge-grid .btn {
+    width: 90px;
+    font-size: 0.8rem;
+    padding: 0.4rem;
+    min-height: 36px;
   }
 }
 
 @media (max-width: 576px) {
   .page-title {
     font-size: 1.5rem;
-  }
-
-  .card-grid {
-    grid-template-columns: 1fr;
   }
 
   .invoice-tabs {
@@ -1150,9 +1157,17 @@ export default {
     margin-bottom: 0.5rem;
   }
 
-  .status-badge {
+    .status-badge-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
+    gap: 0.4rem;
+  }
+
+  .status-badge-grid .btn {
+    width: 80px;
     font-size: 0.8rem;
-    padding: 0.4rem 0.8rem;
+    padding: 0.5rem;
+    min-height: 40px;
   }
 }
 

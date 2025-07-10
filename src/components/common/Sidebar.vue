@@ -1193,7 +1193,6 @@ onUnmounted(() => {
   align-items: center;
   justify-content: center;
   flex: 1;
-  padding: 0.75rem 0.5rem;
   color: #374151;
   text-decoration: none;
   border-radius: 12px;
@@ -1389,7 +1388,6 @@ onUnmounted(() => {
 }
 
 .mobile-submenu-item-active {
-  background: #dcfce7;
   color: #15803d;
   font-weight: 600;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
