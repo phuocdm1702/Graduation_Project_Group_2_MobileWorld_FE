@@ -233,18 +233,6 @@
   padding-bottom: 0.625rem;
 }
 
-.section-title::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 30px;
-  height: 2px;
-  background: linear-gradient(135deg, #60a5fa, #34d399);
-  border-radius: 1px;
-  transition: left 0.3s ease, transform 0.3s ease;
-}
-
 .footer-links {
   list-style: none;
   padding: 0;
