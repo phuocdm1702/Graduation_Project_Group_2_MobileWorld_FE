@@ -41,7 +41,6 @@
                     'status-badge': info.key === 'trangThai',
                     [getBadgeClass(info.key, info.value)]: info.key === 'loaiDon' || info.key === 'trangThai',
                   }">
-                    <i v-if="info.icon" :class="info.icon" class="me-1"></i>
                     {{ info.value }}
                   </span>
                 </div>
