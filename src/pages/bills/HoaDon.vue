@@ -187,7 +187,8 @@
               <span class="visually-hidden">hóa đơn hoàn thành</span>
             </span>
           </button>
-          <button type="button" class="btn btn-outline-primary position-relative" @click="setActiveTabByStatus('Đã hủy')">
+          <button type="button" class="btn btn-outline-primary position-relative"
+            @click="setActiveTabByStatus('Đã hủy')">
             Đã hủy
             <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill badge-canceled"
               v-if="statusCounts['Đã hủy']">
@@ -1072,6 +1073,17 @@ export default {
 }
 
 /* Responsive */
+@media (max-width: 1100px) {
+  .date-range-wrapper {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .date-separator {
+    display: none;
+  }
+}
+
 @media (max-width: 768px) {
   .header-content {
     flex-direction: column;
@@ -1157,7 +1169,7 @@ export default {
     margin-bottom: 0.5rem;
   }
 
-    .status-badge-grid {
+  .status-badge-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
     gap: 0.4rem;
