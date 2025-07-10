@@ -1,159 +1,276 @@
 <template>
-  <aside
-    class="modern-sidebar fixed-top h-100"
-    :class="isSidebarOpen ? 'w-280px' : 'w-70px'"
-  >
-    <div class="sidebar-header">
-      <div class="logo-container">
-        <img class="logo-icon" src="/images/logos/logo3.png" alt="Logo">
-        <div class="logo-text" :class="{ 'logo-hidden': !isSidebarOpen }">
-          Mobile World
+  <div>
+    <!-- Sidebar for desktop (hidden on mobile) -->
+    <aside
+      class="modern-sidebar fixed-top h-100"
+      :class="isSidebarOpen && !isMobile ? 'w-280px' : 'w-70px'"
+      v-if="!isMobile"
+    >
+      <div class="sidebar-header">
+        <div class="logo-container">
+          <img class="logo-icon" src="/images/logos/logo3.png" alt="Logo">
+          <div class="logo-text" :class="{ 'logo-hidden': !isSidebarOpen }">
+            Mobile World
+          </div>
+        </div>
+        <button
+          class="toggle-btn"
+          @click="toggleSidebar"
+          aria-label="Toggle Sidebar"
+        >
+          <span
+            class="toggle-icon"
+            :class="isSidebarOpen ? 'rotate-180' : ''"
+          >
+            <i class="bi bi-list"></i>
+          </span>
+        </button>
+      </div>
+
+      <nav class="sidebar-nav">
+        <div
+          v-for="(item) in menuItems"
+          :key="item.name"
+          class="nav-item-wrapper"
+        >
+          <router-link
+            v-if="!item.children"
+            :to="item.path"
+            class="nav-item"
+            :class="{ 'nav-item-active': isActive(item.path) }"
+          >
+            <div class="nav-icon">
+              <component
+                :is="item.icon"
+                class="icon-svg"
+              />
+            </div>
+            <div class="nav-text" :class="{ 'text-hidden': !isSidebarOpen }">
+              {{ item.name }}
+            </div>
+            <div
+              v-if="!isSidebarOpen"
+              class="nav-tooltip"
+            >
+              {{ item.name }}
+              <div class="tooltip-arrow"></div>
+            </div>
+          </router-link>
+
+          <div
+            v-else
+            class="nav-item nav-parent"
+            :class="{ 
+              'nav-item-active': isActive(item.path),
+              'nav-item-expanded': item.isOpen && isSidebarOpen 
+            }"
+            @click="toggleSubmenu(item)"
+          >
+            <div class="nav-icon">
+              <component
+                :is="item.icon"
+                class="icon-svg"
+              />
+            </div>
+            <div class="nav-text" :class="{ 'text-hidden': !isSidebarOpen }">
+              {{ item.name }}
+            </div>
+            <div
+              v-if="isSidebarOpen"
+              class="dropdown-arrow"
+              :class="{ 'dropdown-expanded': item.isOpen }"
+            >
+              <i class="bi bi-chevron-down"></i>
+            </div>
+            <div
+              v-if="!isSidebarOpen"
+              class="nav-tooltip"
+            >
+              {{ item.name }}
+              <div class="tooltip-arrow"></div>
+            </div>
+          </div>
+
+          <transition
+            name="submenu-slide"
+            @before-enter="beforeEnter"
+            @enter="enter"
+            @before-leave="beforeLeave"
+            @leave="leave"
+          >
+            <div
+              v-if="item.children && isSidebarOpen && item.isOpen"
+              class="submenu"
+            >
+              <router-link
+                v-for="(subItem, subIndex) in item.children"
+                :key="subItem.name"
+                :to="subItem.path"
+                class="submenu-item"
+                :class="{ 'submenu-item-active': isActive(subItem.path) }"
+                :style="{ 
+                  transitionDelay: `${subIndex * 30}ms`,
+                  animationDelay: `${subIndex * 30}ms` 
+                }"
+              >
+                <div class="submenu-indicator">
+                  <div 
+                    class="indicator-dot"
+                    :class="{ 'indicator-active': isActive(subItem.path) }"
+                  ></div>
+                </div>
+                <div class="submenu-text">
+                  {{ subItem.name }}
+                </div>
+              </router-link>
+            </div>
+          </transition>
+        </div>
+      </nav>
+      
+      <div class="sidebar-footer">
+        <div
+          class="user-profile"
+          :class="{ 'user-profile-collapsed': !isSidebarOpen }"
+          @click="openUserModal"
+          role="button"
+          tabindex="0"
+          aria-label="Open user menu"
+        >
+          <div class="avatar">
+            <img 
+              :src="userAvatar || '/images/avatars/huan2.jpg'" 
+              alt="User Avatar" 
+              class="avatar-img"
+              @error="handleImageError"
+            />
+            <span class="avatar-fallback">A</span>
+          </div>
+          <div class="user-info" :class="{ 'text-hidden': !isSidebarOpen }">
+            <div class="user-name">Admin</div>
+            <div class="user-role">Administrator</div>
+          </div>
+          <div v-if="!isSidebarOpen" class="nav-tooltip">
+            User Menu
+            <div class="tooltip-arrow"></div>
+          </div>
         </div>
       </div>
-      <button
-        class="toggle-btn"
-        @click="toggleSidebar"
-        aria-label="Toggle Sidebar"
-      >
-        <span
-          class="toggle-icon"
-          :class="isSidebarOpen ? 'rotate-180' : ''"
-        >
-          <i class="bi bi-list"></i>
-        </span>
-      </button>
-    </div>
+    </aside>
 
-    <nav class="sidebar-nav">
-      <div
-        v-for="(item) in menuItems"
-        :key="item.name"
-        class="nav-item-wrapper"
-      >
+    <!-- Navbar for mobile -->
+    <nav class="mobile-navbar" v-if="isMobile">
+      <div class="navbar-content">
         <router-link
-          v-if="!item.children"
+          v-for="(item, index) in mainMenuItems"
+          :key="item.name"
           :to="item.path"
-          class="nav-item"
-          :class="{ 'nav-item-active': isActive(item.path) }"
+          class="navbar-item"
+          :class="{ 'navbar-item-active': isActive(item.path) }"
+          :aria-label="item.name"
         >
-          <div class="nav-icon">
-            <component
-              :is="item.icon"
-              class="icon-svg"
-            />
+          <div class="navbar-icon">
+            <component :is="item.icon" class="icon-svg" />
           </div>
-          <div class="nav-text" :class="{ 'text-hidden': !isSidebarOpen }">
-            {{ item.name }}
-          </div>
-          <div
-            v-if="!isSidebarOpen"
-            class="nav-tooltip"
-          >
-            {{ item.name }}
-            <div class="tooltip-arrow"></div>
-          </div>
+          <span class="navbar-text">{{ item.name }}</span>
         </router-link>
-
-        <div
-          v-else
-          class="nav-item nav-parent"
-          :class="{ 
-            'nav-item-active': isActive(item.path),
-            'nav-item-expanded': item.isOpen && isSidebarOpen 
-          }"
-          @click="toggleSubmenu(item)"
-        >
-          <div class="nav-icon">
-            <component
-              :is="item.icon"
-              class="icon-svg"
-            />
+        <button class="navbar-item" @click="toggleMobileMenu" aria-label="Open Menu">
+          <div class="navbar-icon">
+            <i class="bi bi-list"></i>
           </div>
-          <div class="nav-text" :class="{ 'text-hidden': !isSidebarOpen }">
-            {{ item.name }}
-          </div>
-          <div
-            v-if="isSidebarOpen"
-            class="dropdown-arrow"
-            :class="{ 'dropdown-expanded': item.isOpen }"
-          >
-            <i class="bi bi-chevron-down"></i>
-          </div>
-          <div
-            v-if="!isSidebarOpen"
-            class="nav-tooltip"
-          >
-            {{ item.name }}
-            <div class="tooltip-arrow"></div>
-          </div>
-        </div>
-
-        <transition
-          name="submenu-slide"
-          @before-enter="beforeEnter"
-          @enter="enter"
-          @before-leave="beforeLeave"
-          @leave="leave"
-        >
-          <div
-            v-if="item.children && isSidebarOpen && item.isOpen"
-            class="submenu"
-          >
-            <router-link
-              v-for="(subItem, subIndex) in item.children"
-              :key="subItem.name"
-              :to="subItem.path"
-              class="submenu-item"
-              :class="{ 'submenu-item-active': isActive(subItem.path) }"
-              :style="{ 
-                transitionDelay: `${subIndex * 30}ms`,
-                animationDelay: `${subIndex * 30}ms` 
-              }"
-            >
-              <div class="submenu-indicator">
-                <div 
-                  class="indicator-dot"
-                  :class="{ 'indicator-active': isActive(subItem.path) }"
-                ></div>
-              </div>
-              <div class="submenu-text">
-                {{ subItem.name }}
-              </div>
-            </router-link>
-          </div>
-        </transition>
+          <span class="navbar-text">Menu</span>
+        </button>
       </div>
     </nav>
-    
-    <div class="sidebar-footer">
-      <!-- User Profile -->
-      <div
-        class="user-profile"
-        :class="{ 'user-profile-collapsed': !isSidebarOpen }"
-        @click="openUserModal"
-        role="button"
-        tabindex="0"
-        aria-label="Open user menu"
-      >
-        <div class="avatar">
-          <img 
-            :src="userAvatar || '/images/avatars/huan2.jpg'" 
-            alt="User Avatar" 
-            class="avatar-img"
-            @error="handleImageError"
-          />
-          <span class="avatar-fallback">A</span>
-        </div>
-        <div class="user-info" :class="{ 'text-hidden': !isSidebarOpen }">
-          <div class="user-name">Admin</div>
-          <div class="user-role">Administrator</div>
-        </div>
-        <div v-if="!isSidebarOpen" class="nav-tooltip">
-          User Menu
-          <div class="tooltip-arrow"></div>
+
+    <!-- Mobile menu overlay -->
+    <transition name="mobile-menu-slide">
+      <div v-if="isMobileMenuOpen && isMobile" class="mobile-menu-overlay">
+        <div class="mobile-menu-content">
+          <div class="mobile-menu-header">
+            <div class="logo-container">
+              <img class="logo-icon" src="/images/logos/logo3.png" alt="Logo">
+              <div class="logo-text">Mobile World</div>
+            </div>
+            <button class="mobile-menu-close" @click="toggleMobileMenu" aria-label="Close Menu">
+              <i class="bi bi-x-lg"></i>
+            </button>
+          </div>
+          <div class="mobile-menu-nav">
+            <div
+              v-for="item in menuItems"
+              :key="item.name"
+              class="mobile-nav-item-wrapper"
+            >
+              <router-link
+                v-if="!item.children"
+                :to="item.path"
+                class="mobile-nav-item"
+                :class="{ 'mobile-nav-item-active': isActive(item.path) }"
+                @click="toggleMobileMenu"
+              >
+                <div class="nav-icon">
+                  <component :is="item.icon" class="icon-svg" />
+                </div>
+                <span class="mobile-nav-text">{{ item.name }}</span>
+              </router-link>
+              <button
+                v-else
+                class="mobile-nav-item mobile-nav-parent"
+                :class="{ 'mobile-nav-item-active': isActive(item.path) }"
+                @click="toggleSubmenu(item)"
+                :aria-expanded="item.isOpen"
+                :aria-label="item.name"
+              >
+                <div class="nav-icon">
+                  <component :is="item.icon" class="icon-svg" />
+                </div>
+                <span class="mobile-nav-text">{{ item.name }}</span>
+                <i
+                  class="bi bi-chevron-down"
+                  :class="{ 'dropdown-expanded': item.isOpen }"
+                ></i>
+              </button>
+              <div v-if="item.children && item.isOpen" class="mobile-submenu">
+                <router-link
+                  v-for="subItem in item.children"
+                  :key="subItem.name"
+                  :to="subItem.path"
+                  class="mobile-submenu-item"
+                  :class="{ 'mobile-submenu-item-active': isActive(subItem.path) }"
+                  @click="toggleMobileMenu"
+                >
+                  <div class="submenu-indicator">
+                    <div
+                      class="indicator-dot"
+                      :class="{ 'indicator-active': isActive(subItem.path) }"
+                    ></div>
+                  </div>
+                  <span class="mobile-submenu-text">{{ subItem.name }}</span>
+                </router-link>
+              </div>
+            </div>
+          </div>
+          <div class="mobile-menu-footer">
+            <button class="user-profile" @click="openUserModal" aria-label="Open user menu">
+              <div class="avatar">
+                <img
+                  :src="userAvatar || '/images/avatars/huan2.jpg'"
+                  alt="User Avatar"
+                  class="avatar-img"
+                  @error="handleImageError"
+                />
+                <span class="avatar-fallback">A</span>
+              </div>
+              <div class="user-info">
+                <div class="user-name">Admin</div>
+                <div class="user-role">Administrator</div>
+              </div>
+            </button>
+          </div>
         </div>
       </div>
-    </div>
+    </transition>
 
     <!-- User Modal -->
     <transition name="modal-fade">
@@ -162,7 +279,7 @@
         <div class="modal-content">
           <div class="modal-header">
             <h3>Cài đặt quản trị viên</h3>
-            <button class="modal-close-btn" @click="closeUserModal">
+            <button class="modal-close-btn" @click="closeUserModal" aria-label="Close user modal">
               <i class="bi bi-x-lg"></i>
             </button>
           </div>
@@ -199,11 +316,11 @@
       :isLoading="isLoading"
       @close="resetNotification"
     />
-  </aside>
+  </div>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useUiStore } from '@/store/modules/ui';
 import NotificationModal from './NotificationModal.vue';
@@ -222,6 +339,7 @@ const route = useRoute();
 const router = useRouter();
 const isSidebarOpen = computed(() => uiStore.isSidebarOpen);
 const isUserModalOpen = ref(false);
+const isMobileMenuOpen = ref(false);
 const notificationModal = ref(null);
 const notificationType = ref('');
 const notificationMessage = ref('');
@@ -229,7 +347,16 @@ const notificationConfirmText = ref('Xác nhận');
 const notificationOnConfirm = ref(() => {});
 const notificationOnCancel = ref(() => {});
 const isLoading = ref(false);
-const userAvatar = ref(''); // Lấy từ API hoặc dữ liệu người dùng
+const userAvatar = ref('');
+const isMobile = ref(window.innerWidth <= 768);
+
+// Main menu items for navbar (limited to key items for mobile)
+const mainMenuItems = computed(() => [
+  { name: 'Trang chủ', path: '/trangChu', icon: HomeIcon },
+  { name: 'Bán Hàng', path: '/banHang', icon: ShoppingCartIcon },
+  { name: 'Hóa đơn', path: '/hoaDon', icon: DocumentTextIcon },
+  { name: 'Thống kê', path: '/thongKe', icon: ChartBarIcon },
+]);
 
 const menuItems = ref([
   { name: 'Trang chủ', path: '/trangChu', icon: HomeIcon },
@@ -292,25 +419,24 @@ const toggleSidebar = () => {
   uiStore.toggleSidebar();
 };
 
+const toggleMobileMenu = () => {
+  isMobileMenuOpen.value = !isMobileMenuOpen.value;
+};
+
 const toggleSubmenu = (item) => {
-  // Nếu sidebar đang đóng, mở sidebar và mở luôn submenu
-  if (!isSidebarOpen.value) {
+  if (!isSidebarOpen.value && !isMobile.value) {
     uiStore.toggleSidebar();
-    // Đợi một chút để sidebar mở xong rồi mới mở submenu
     setTimeout(() => {
-      // Đóng tất cả submenu khác
       menuItems.value.forEach(menuItem => {
         if (menuItem !== item && menuItem.children) {
           menuItem.isOpen = false;
         }
       });
-      // Mở submenu được click
       item.isOpen = true;
-    }, 100); // Delay 100ms để sidebar mở mượt
+    }, 100);
     return;
   }
   
-  // Nếu sidebar đã mở, thì toggle submenu bình thường
   menuItems.value.forEach(menuItem => {
     if (menuItem !== item && menuItem.children) {
       menuItem.isOpen = false;
@@ -320,12 +446,15 @@ const toggleSubmenu = (item) => {
 };
 
 const handleImageError = (event) => {
-  event.target.src = '/images/default-avatar.png'; // Sử dụng ảnh mặc định
-  event.target.nextElementSibling.style.display = 'none'; // Ẩn fallback
+  event.target.src = '/images/default-avatar.png';
+  event.target.nextElementSibling.style.display = 'none';
 };
 
 const openUserModal = () => {
   isUserModalOpen.value = true;
+  if (isMobile.value) {
+    isMobileMenuOpen.value = false;
+  }
 };
 
 const closeUserModal = () => {
@@ -333,7 +462,6 @@ const closeUserModal = () => {
 };
 
 const toggleDarkMode = () => {
-  console.log('Toggle dark mode');
   notificationType.value = 'success';
   notificationMessage.value = 'Đã thay đổi giao diện thành công!';
   notificationConfirmText.value = 'OK';
@@ -357,16 +485,13 @@ const openLogoutConfirmModal = () => {
   notificationMessage.value = 'Bạn có chắc chắn muốn đăng xuất?';
   notificationConfirmText.value = 'Đăng xuất';
   notificationOnConfirm.value = async () => {
-    isLoading.value = true; // Start loading
-    console.log('Logout confirmed');
-    await new Promise(resolve => setTimeout(resolve, 1500)); // 1.5s delay
-    isLoading.value = false; // Stop loading
+    isLoading.value = true;
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    isLoading.value = false;
     router.push('/auth/login');
     closeUserModal();
   };
-  notificationOnCancel.value = () => {
-    console.log('Logout cancelled');
-  };
+  notificationOnCancel.value = () => {};
   notificationModal.value.openModal();
 };
 
@@ -387,7 +512,7 @@ const beforeEnter = (el) => {
 };
 
 const enter = (el, done) => {
-  el.offsetHeight; // Force reflow
+  el.offsetHeight;
   el.style.transition = 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)';
   el.style.height = el.scrollHeight + 'px';
   el.style.opacity = '1';
@@ -406,7 +531,7 @@ const beforeLeave = (el) => {
 };
 
 const leave = (el, done) => {
-  el.offsetHeight; // Force reflow
+  el.offsetHeight;
   el.style.transition = 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
   el.style.height = '0';
   el.style.opacity = '0';
@@ -414,9 +539,27 @@ const leave = (el, done) => {
   
   setTimeout(done, 300);
 };
+
+// Handle window resize to toggle between sidebar and navbar
+const handleResize = () => {
+  isMobile.value = window.innerWidth <= 768;
+  if (isMobile.value) {
+    isMobileMenuOpen.value = false;
+    uiStore.setSidebarState(false);
+  }
+};
+
+onMounted(() => {
+  window.addEventListener('resize', handleResize);
+});
+
+onUnmounted(() => {
+  window.removeEventListener('resize', handleResize);
+});
 </script>
 
 <style scoped>
+/* Existing sidebar styles (unchanged) */
 .modern-sidebar {
   position: fixed;
   top: 0;
@@ -460,7 +603,6 @@ const leave = (el, done) => {
 }
 
 .logo-icon {
-  background-clip: text;
   flex-shrink: 0;
   width: 50px;
   margin-right: 5px;
@@ -673,7 +815,6 @@ const leave = (el, done) => {
   border-right: 6px solid #111827;
 }
 
-/* Optimized submenu animations */
 .submenu {
   overflow: hidden;
   background-color: rgba(249, 250, 251, 0.95);
@@ -774,7 +915,6 @@ const leave = (el, done) => {
   flex: 1;
 }
 
-/* Sidebar footer layout */
 .sidebar-footer {
   padding: 1rem;
   border-top: 1px solid rgba(229, 231, 235, 0.5);
@@ -787,7 +927,6 @@ const leave = (el, done) => {
   min-height: 80px;
 }
 
-/* User Profile */
 .user-profile {
   display: flex;
   align-items: center;
@@ -879,7 +1018,6 @@ const leave = (el, done) => {
   text-overflow: ellipsis;
 }
 
-/* User Modal */
 .user-modal {
   position: fixed;
   top: 0;
@@ -988,7 +1126,6 @@ const leave = (el, done) => {
   transform: scale(1.1);
 }
 
-/* Modal Animation */
 .modal-fade-enter-active,
 .modal-fade-leave-active {
   transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -1026,42 +1163,307 @@ const leave = (el, done) => {
   background: #6b7280;
 }
 
+/* Optimized mobile navbar styles */
+.mobile-navbar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  background: rgba(255, 255, 255, 0.98);
+  backdrop-filter: blur(8px);
+  box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.08);
+  z-index: 1000;
+  padding: 0.75rem 0;
+  border-top: 1px solid rgba(229, 231, 235, 0.3);
+}
+
+.navbar-content {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 0 0.5rem;
+}
+
+.navbar-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  padding: 0.75rem 0.5rem;
+  color: #374151;
+  text-decoration: none;
+  border-radius: 12px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  touch-action: manipulation;
+  min-height: 60px;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.navbar-item:hover {
+  background: #f0fdf4;
+  color: #16a34a;
+  transform: scale(1.05);
+}
+
+.navbar-item:active {
+  transform: scale(0.95);
+  background: #dcfce7;
+}
+
+.navbar-item-active {
+  background: #dcfce7;
+  color: #15803d;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.navbar-icon {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0.25rem;
+}
+
+.navbar-item .icon-svg {
+  width: 24px;
+  height: 24px;
+  transition: transform 0.2s ease;
+}
+
+.navbar-item:hover .icon-svg,
+.navbar-item-active .icon-svg {
+  transform: scale(1.15);
+}
+
+.navbar-text {
+  font-size: 0.8rem;
+  font-weight: 500;
+  text-align: center;
+  line-height: 1.2;
+}
+
+/* Mobile menu overlay */
+.mobile-menu-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  z-index: 999;
+  display: flex;
+  align-items: flex-end;
+}
+
+.mobile-menu-content {
+  background: #ffffff;
+  width: 100%;
+  max-height: 85vh;
+  border-top-left-radius: 20px;
+  border-top-right-radius: 20px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 -8px 20px rgba(0, 0, 0, 0.15);
+}
+
+.mobile-menu-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid rgba(229, 231, 235, 0.4);
+  background: rgba(249, 250, 251, 0.95);
+}
+
+.mobile-menu-close {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: #6b7280;
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.mobile-menu-close:hover {
+  color: #15803d;
+  background: #f0fdf4;
+}
+
+.mobile-menu-nav {
+  flex: 1;
+  padding: 1.5rem;
+  overflow-y: auto;
+}
+
+.mobile-nav-item-wrapper {
+  margin-bottom: 0.75rem;
+}
+
+.mobile-nav-item,
+.mobile-nav-parent {
+  display: flex;
+  align-items: center;
+  padding: 1rem 1.25rem;
+  color: #374151;
+  text-decoration: none;
+  border-radius: 12px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  font-size: 1rem;
+  font-weight: 500;
+  min-height: 56px;
+  touch-action: manipulation;
+}
+
+.mobile-nav-item:hover,
+.mobile-nav-parent:hover {
+  background: #f0fdf4;
+  color: #16a34a;
+  transform: translateX(4px);
+}
+
+.mobile-nav-item:active,
+.mobile-nav-parent:active {
+  transform: scale(0.98);
+}
+
+.mobile-nav-item-active {
+  background: #dcfce7;
+  color: #15803d;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.mobile-nav-text {
+  margin-left: 1.25rem;
+  font-size: 1rem;
+  font-weight: 500;
+  flex: 1;
+}
+
+.mobile-nav-parent .bi-chevron-down {
+  font-size: 0.9rem;
+  transition: transform 0.3s ease;
+}
+
+.mobile-nav-parent .dropdown-expanded {
+  transform: rotate(180deg);
+}
+
+.mobile-submenu {
+  padding-left: 2.5rem;
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.mobile-submenu-item {
+  display: flex;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  color: #374151;
+  text-decoration: none;
+  font-size: 0.95rem;
+  border-radius: 8px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  min-height: 48px;
+}
+
+.mobile-submenu-item:hover {
+  background: #f0fdf4;
+  color: #16a34a;
+  transform: translateX(4px);
+}
+
+.mobile-submenu-item:active {
+  transform: scale(0.98);
+}
+
+.mobile-submenu-item-active {
+  background: #dcfce7;
+  color: #15803d;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.mobile-submenu-text {
+  flex: 1;
+  font-weight: 500;
+}
+
+.mobile-menu-footer {
+  padding: 1.25rem 1.5rem;
+  border-top: 1px solid rgba(229, 231, 235, 0.4);
+  background: rgba(249, 250, 251, 0.95);
+}
+
+.mobile-menu-footer .user-profile {
+  padding: 1rem;
+  border-radius: 12px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.mobile-menu-footer .user-profile:hover {
+  background: #f0fdf4;
+  transform: scale(1.02);
+}
+
+.mobile-menu-footer .user-profile:active {
+  transform: scale(0.98);
+}
+
+.mobile-menu-slide-enter-active,
+.mobile-menu-slide-leave-active {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.mobile-menu-slide-enter-from,
+.mobile-menu-slide-leave-to {
+  transform: translateY(100%);
+  opacity: 0;
+}
+
+.mobile-menu-content {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
 @media (max-width: 768px) {
   .modern-sidebar {
-    width: 70px;
-    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-
-  .modern-sidebar.w-280px {
-    width: 280px;
-  }
-
-  .modern-sidebar.w-70px {
-    width: 70px;
-  }
-  
-  .sidebar-header {
-    padding: 1rem 0.75rem;
-  }
-  
-  .nav-item {
-    margin: 0.2rem 0.5rem;
-    padding: 0.625rem;
-  }
-  
-  .submenu-item {
-    margin: 0.2rem;
-    padding: 0.5rem 1rem;
-  }
-  
-  .sidebar-footer {
-    padding: 0.75rem;
+    display: none;
   }
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  .modern-sidebar * {
-    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+@media (min-width: 769px) {
+  .mobile-navbar,
+  .mobile-menu-overlay {
+    display: none;
   }
+}
+
+/* Scrollbar for mobile menu */
+.mobile-menu-nav::-webkit-scrollbar {
+  width: 6px;
+}
+
+.mobile-menu-nav::-webkit-scrollbar-track {
+  background: rgba(249, 250, 251, 0.95);
+}
+
+.mobile-menu-nav::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 3px;
+}
+
+.mobile-menu-nav::-webkit-scrollbar-thumb:hover {
+  background: #6b7280;
 }
 </style>
