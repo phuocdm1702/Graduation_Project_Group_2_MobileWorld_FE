@@ -216,10 +216,11 @@ export default {
 .status-badge {
   background: linear-gradient(135deg, #60a5fa, #34d399);
   color: white;
-  padding: 12px 20px;
-  border-radius: 25px;
+  padding: 7.5px 15px;
+  border-radius: 20px;
   display: inline-flex;
   align-items: center;
+  font-size: 1rem;
 }
 
 .stat-card {

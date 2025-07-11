@@ -74,20 +74,16 @@
           </div>
 
           <div class="action-buttons">
-            <button class="btn btn-reset" @click="resetFilters">
-              <i class="bi bi-arrow-clockwise me-2"></i>
+            <button class="btn btn-reset" @click="resetFilters">       
               Đặt lại bộ lọc
             </button>
             <button class="btn btn-action" @click="exportExcel">
-              <i class="bi bi-file-earmark-excel me-2"></i>
               Xuất Excel
             </button>
             <button class="btn btn-action" @click="scanQR">
-              <i class="bi bi-qr-code me-2"></i>
               Quét QR
             </button>
             <router-link to="/banHang" class="btn btn-action">
-              <i class="bi bi-plus-circle me-2"></i>
               Tạo Hóa Đơn
             </router-link>
           </div>
