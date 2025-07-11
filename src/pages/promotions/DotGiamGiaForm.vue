@@ -1,274 +1,123 @@
 <template>
-    <div class="container-fluid py-4">
-      <HeaderCard
-          :title="isEditMode ? 'Cập Nhật Đợt Giảm Giá' : 'Thêm Đợt Giảm Giá'"
-          badgeText="Hệ Thống POS"
-          badgeClass="gradient-custom-teal"
-          :backgroundOpacity="0.95"
-      />
+  <div class="container-fluid py-4">
+    <HeaderCard :title="isEditMode ? 'Cập Nhật Đợt Giảm Giá' : 'Thêm Đợt Giảm Giá'" badgeText="Hệ Thống POS"
+      badgeClass="gradient-custom-teal" :backgroundOpacity="0.95" />
 
-      <div>
-        <ToastNotification ref="toastNotification" />
-        <NotificationModal
-            ref="notificationModal"
-            :type="'confirm'"
-            :message="'Bạn có chắc chắn muốn ' + (isEditMode ? 'cập nhật' : 'thêm') + ' đợt giảm giá này?'"
-            :confirmText="'Xác nhận'"
-            :onConfirm="confirmAddData"
-        />
+    <div>
+      <ToastNotification ref="toastNotification" />
+      <NotificationModal ref="notificationModal" :type="'confirm'"
+        :message="'Bạn có chắc chắn muốn ' + (isEditMode ? 'cập nhật' : 'thêm') + ' đợt giảm giá này?'"
+        :confirmText="'Xác nhận'" :onConfirm="confirmAddData" />
 
-        <!-- Container chính -->
-        <div class="row">
-          <!-- Form Đợt Giảm Giá -->
-          <div class="col-md-6">
-            <div>
-              <FilterTableSection :title="isEditMode ? 'Cập Nhật Đợt Giảm Giá' : 'Thông Tin Đợt Giảm Giá'" icon="bi bi-info-circle">
-                <form @submit.prevent="showConfirmModal" class="p-3 space-y-4 flex-grow-1">
-                  <div class="mb-3">
-                    <label class="filter-label">Mã đợt giảm giá</label>
-                    <input
-                        v-model="dotGiamGia.ma"
-                        type="text"
-                        class="form-control input"
-                        placeholder="Mã tự động"
-                        :disabled="!isEditMode"
-                        @blur="checkDuplicateMa"
-                    />
-                  </div>
-                  <div class="mb-3">
-                    <label class="filter-label">Tên đợt giảm giá</label>
-                    <input
-                        v-model="dotGiamGia.tenDotGiamGia"
-                        type="text"
-                        class="form-control input"
-                        placeholder="Nhập tên đợt giảm giá"
-                    />
-                  </div>
-                  <div class="mb-3">
-                    <label class="filter-label">Loại giảm giá</label>
-                    <select v-model="dotGiamGia.loaiGiamGiaApDung" class="form-control input">
-                      <option value="" disabled>Chọn loại giảm giá</option>
-                      <option value="Phần trăm">Phần trăm</option>
-                      <option value="Tiền mặt">Tiền mặt</option>
-                    </select>
-                  </div>
-                  <div class="mb-3" v-if="dotGiamGia.loaiGiamGiaApDung !== 'Tiền mặt'">
-                    <label class="filter-label">Giá trị giảm giá</label>
-                    <input
-                        v-model.number="dotGiamGia.giaTriGiamGia"
-                        type="number"
-                        class="form-control input"
-                        placeholder="0"
-                        required
-                        :min="0"
-                    />
-                  </div>
-                  <div class="mb-3">
-                    <label class="filter-label">Số tiền giảm</label>
-                    <input
-                        v-model="formattedSoTienGiamToiDa"
-                        type="text"
-                        class="form-control input"
-                        placeholder="Nhập số tiền giảm"
-                    />
-
-                  </div>
-                  <div class="mb-3">
-                    <label class="filter-label">Ngày bắt đầu</label>
-                    <input
-                        v-model="dotGiamGia.ngayBatDau"
-                        type="date"
-                        class="form-control input"
-                    />
-                  </div>
-                  <div class="mb-3">
-                    <label class="filter-label">Ngày kết thúc</label>
-                    <input
-                        v-model="dotGiamGia.ngayKetThuc"
-                        type="date"
-                        class="form-control input"
-                    />
-                  </div>
-                  <div class="d-flex gap-2">
-                    <button type="submit" class="btn btn-action flex-fill">
-                      {{ isEditMode ? 'Cập Nhật' : 'Thêm' }}
-                    </button>
-                    <button type="button" class="btn btn-secondary flex-fill" @click="goBack">
-                      Quay Về
-                    </button>
-                  </div>
-                </form>
-              </FilterTableSection>
-            </div>
-          </div>
-
-          <!-- Danh Sách Sản Phẩm -->
-          <div class="col-md-6">
-            <div>
-              <FilterTableSection title="Danh Sách Sản Phẩm" icon="bi bi-table">
-                <div class="p-3 flex-grow-1">
-                  <div class="row mb-3">
-                    <div class="col-md-6">
-                      <label class="filter-label">Tìm kiếm</label>
-                      <div class="search-input-wrapper">
-                        <i class="bi bi-search search-icon input"></i>
-                        <input
-                            v-model="searchKeyword"
-                            type="text"
-                            class="form-control search-input"
-                            placeholder="Tìm kiếm theo tên, mã..."
-                            @input="fetchData"
-                        />
-                      </div>
-                    </div>
-                    <div class="col-md-3">
-                      <label class="filter-label">Hệ điều hành</label>
-                      <select v-model="selectedHeDieuHanh" class="form-control input">
-                        <option value="">Tất cả</option>
-                        <option v-for="hdh in uniqueHeDieuHanh" :key="hdh.id" :value="hdh.id">
-                          {{ hdh.heDieuHanh }} {{ hdh.phienBan }}
-                        </option>
-                      </select>
-                    </div>
-                    <div class="col-md-3">
-                      <label class="filter-label">Nhà sản xuất</label>
-                      <select v-model="selectedNhaSanXuat" class="form-control input">
-                        <option value="">Tất cả</option>
-                        <option v-for="nsx in uniqueNhaSanXuat" :key="nsx.id" :value="nsx.id">
-                          {{ nsx.nhaSanXuat }}
-                        </option>
-                      </select>
-                    </div>
-                  </div>
-
-                  <div class="flex-grow-1" style="overflow-y: auto;">
-                    <DataTable
-                        :headers="productHeaders"
-                        :data="dspList"
-                        :pageSizeOptions="[5, 10, 15]"
-                        class="product-table"
-                    >
-                      <template #checkbox="{ item }">
-                        <input
-                            type="checkbox"
-                            :value="item.sp.id"
-                            :checked="idDSPs.includes(item.sp.id)"
-                            @change="fetchCTSPData(item.sp.id)"
-                            class="form-check-input"
-                        />
-                      </template>
-                      <template #index="{ globalIndex  }">
-                        {{ globalIndex  + 1 }}
-                      </template>
-                      <template #sp.ma="{ item }">
-                        <span>{{ item.sp.ma }}</span>
-                      </template>
-                      <template #sp.tenSanPham="{ item }">
-                        <span>{{ item.sp.tenSanPham }}</span>
-                      </template>
-                      <template #nsx.nhaSanXuat="{ item }">
-                        <span>{{ item.nsx.nhaSanXuat }}</span>
-                      </template>
-                      <template #soLuongCTSP="{ item }">
-                        <span>{{ item.soLuongCTSP }}</span>
-                      </template>
-                    </DataTable>
-                  </div>
-                </div>
-              </FilterTableSection>
-            </div>
-          </div>
+      <!-- Container chính -->
+      <div class="form-container">
+        <!-- Form Đợt Giảm Giá -->
+        <div class="form-section-wrapper">
+          <FilterTableSection :title="isEditMode ? 'Cập Nhật Đợt Giảm Giá' : 'Thông Tin Đợt Giảm Giá'"
+            icon="bi bi-info-circle" class="form-section">
+            <form @submit.prevent="showConfirmModal" class="p-3 space-y-4 h-100">
+              <div class="mb-3">
+                <label class="filter-label">Mã đợt giảm giá</label>
+                <input v-model="dotGiamGia.ma" type="text" class="form-control input" placeholder="Mã tự động"
+                  :disabled="!isEditMode" @blur="checkDuplicateMa" />
+              </div>
+              <div class="mb-3">
+                <label class="filter-label">Tên đợt giảm giá</label>
+                <input v-model="dotGiamGia.tenDotGiamGia" type="text" class="form-control input"
+                  placeholder="Nhập tên đợt giảm giá" />
+              </div>
+              <div class="mb-3">
+                <label class="filter-label">Loại giảm giá</label>
+                <select v-model="dotGiamGia.loaiGiamGiaApDung" class="form-control input">
+                  <option value="" disabled>Chọn loại giảm giá</option>
+                  <option value="Phần trăm">Phần trăm</option>
+                  <option value="Tiền mặt">Tiền mặt</option>
+                </select>
+              </div>
+              <div class="mb-3" v-if="dotGiamGia.loaiGiamGiaApDung !== 'Tiền mặt'">
+                <label class="filter-label">Giá trị giảm giá</label>
+                <input v-model.number="dotGiamGia.giaTriGiamGia" type="number" class="form-control input"
+                  placeholder="0" required :min="0" />
+              </div>
+              <div class="mb-3">
+                <label class="filter-label">Số tiền giảm</label>
+                <input v-model="formattedSoTienGiamToiDa" type="text" class="form-control input"
+                  placeholder="Nhập số tiền giảm" />
+              </div>
+              <div class="mb-3">
+                <label class="filter-label">Ngày bắt đầu</label>
+                <input v-model="dotGiamGia.ngayBatDau" type="date" class="form-control input" />
+              </div>
+              <div class="mb-3">
+                <label class="filter-label">Ngày kết thúc</label>
+                <input v-model="dotGiamGia.ngayKetThuc" type="date" class="form-control input" />
+              </div>
+              <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-action flex-fill">
+                  {{ isEditMode ? 'Cập Nhật' : 'Thêm' }}
+                </button>
+                <button type="button" class="btn btn-secondary flex-fill" @click="goBack">
+                  Quay Về
+                </button>
+              </div>
+            </form>
+          </FilterTableSection>
         </div>
 
-        <!-- Chi Tiết Sản Phẩm -->
-        <div>
-          <FilterTableSection title="Danh Sách Chi Tiết Sản Phẩm" icon="bi bi-table">
-            <div class="p-3">
+        <!-- Danh Sách Sản Phẩm -->
+        <div class="product-section-wrapper">
+          <FilterTableSection title="Danh Sách Sản Phẩm" icon="bi bi-table" class="product-section">
+            <div class="p-3 h-100">
               <div class="row mb-3">
-                <div class="col-md-4">
-                  <label class="filter-label">Dòng sản phẩm</label>
-                  <select v-model="selectedDongSanPham" class="form-control input" @change="updateBoNhoTrong">
+                <div class="col-md-6">
+                  <label сlass="filter-label">Tìm kiếm</label>
+                  <div class="search-input-wrapper">
+                    <i class="bi bi-search search-icon input"></i>
+                    <input v-model="searchKeyword" type="text" class="form-control search-input"
+                      placeholder="Tìm kiếm theo tên, mã..." @input="fetchData" />
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <label class="filter-label">Hệ điều hành</label>
+                  <select v-model="selectedHeDieuHanh" class="form-control input">
                     <option value="">Tất cả</option>
-                    <option v-for="dong in uniqueDongSanPhams" :key="dong" :value="dong">
-                      {{ dong }}
+                    <option v-for="hdh in uniqueHeDieuHanh" :key="hdh.id" :value="hdh.id">
+                      {{ hdh.heDieuHanh }} {{ hdh.phienBan }}
                     </option>
                   </select>
                 </div>
-                <div class="col-md-4">
-                  <label class="filter-label">Bộ nhớ trong</label>
-                  <select v-model="selectedBoNhoTrong" class="form-control input">
+                <div class="col-md-3">
+                  <label class="filter-label">Nhà sản xuất</label>
+                  <select v-model="selectedNhaSanXuat" class="form-control input">
                     <option value="">Tất cả</option>
-                    <option v-for="boNho in filteredBoNhoTrong" :key="boNho" :value="boNho">
-                      {{ boNho }}
-                    </option>
-                  </select>
-                </div>
-                <div class="col-md-4">
-                  <label class="filter-label">Màu sắc</label>
-                  <select v-model="selectedMauSac" class="form-control input">
-                    <option value="">Tất cả</option>
-                    <option v-for="mau in filteredMauSac" :key="mau" :value="mau">
-                      {{ mau }}
+                    <option v-for="nsx in uniqueNhaSanXuat" :key="nsx.id" :value="nsx.id">
+                      {{ nsx.nhaSanXuat }}
                     </option>
                   </select>
                 </div>
               </div>
 
-              <div class="mb-3 d-flex justify-content-end gap-2">
-                <button
-                    class="btn btn-action btn-sm"
-                    @click="selectAllCTSP"
-                    :disabled="idDSPs.length === 0"
-                >
-                  Chọn tất cả
-                </button>
-                <button
-                    class="btn btn-danger btn-sm"
-                    @click="deselectAllCTSP"
-                    :disabled="idDSPs.length === 0"
-                >
-                  Bỏ chọn tất cả
-                </button>
-              </div>
-
-              <div v-if="filteredCTSPList.length === 0" class="text-center py-4 text-muted">
-                <i class="pi pi-inbox fs-1"></i>
-                <p class="mt-2">{{ isEditMode ? 'Không có dữ liệu chi tiết đợt giảm giá' : 'Không có dữ liệu' }}</p>
-              </div>
-              <div v-else class="flex-grow-1" style="overflow-y: auto;">
-                <DataTable
-                    :headers="detailHeaders"
-                    :data="filteredCTSPList"
-                    :pageSizeOptions="[5, 10, 15]"
-                    class="detail-table"
-                >
-                  <template #select="{ item }">
-                    <input
-                        type="checkbox"
-                        :value="item.ctsp.id"
-                        :checked="item.selected"
-                        @change="handleCheckboxChangeCTSP(item.ctsp.id, $event.target.checked)"
-                        class="form-check-input"
-                    />
+              <div class="table-container h-100" style="overflow-y: auto;">
+                <DataTable :headers="productHeaders" :data="dspList" :pageSizeOptions="[5, 10, 15, 20, 30, 40, 50]"
+                  :itemsPerPage="10" class="product-table">
+                  <template #checkbox="{ item }">
+                    <input type="checkbox" :value="item.sp.id" :checked="idDSPs.includes(item.sp.id)"
+                      @change="fetchCTSPData(item.sp.id)" class="form-check-input" />
                   </template>
                   <template #index="{ globalIndex }">
                     {{ globalIndex + 1 }}
                   </template>
-<template #anh.duongDan="{ item }">
-  <img v-if="item.anh.duongDan" :src="item.anh.duongDan" alt="Ảnh" class="product-image"/>
-  <span v-else>N/A</span>
-</template>
-                  <template #soLuongTrongDotGiamGiaKhac="{ item }">
-                    <span>Trùng với {{ item.soLuongTrongDotGiamGiaKhac }} đợt giảm giá</span>
+                  <template #sp.ma="{ item }">
+                    <span>{{ item.sp.ma }}</span>
                   </template>
-                  <template #sp.tenSanPham_va_MauSac="{ item }">
-                    <span>{{ `${item.sp?.tenSanPham || 'Chưa có dữ liệu'} - ${item.ctsp?.idMauSac?.mauSac || 'Chưa có dữ liệu'} - ${ item.bnt?.dungLuongBoNhoTrong || 'Chưa có dữ liệu' }` }}</span>
+                  <template #sp.tenSanPham="{ item }">
+                    <span>{{ item.sp.tenSanPham }}</span>
                   </template>
-                  <template #ctsp.giaBan="{ item }">
-                    <span>{{ item.ctsp.giaBan ? item.ctsp.giaBan.toLocaleString() : 'N/A' }}</span>
+                  <template #nsx.nhaSanXuat="{ item }">
+                    <span>{{ item.nsx.nhaSanXuat }}</span>
                   </template>
-                  <template #giaSauKhiGiam="{ item }">
-                    <span>{{ item.giaSauKhiGiam ? item.giaSauKhiGiam.toLocaleString() : 'N/A' }}</span>
+                  <template #soLuongCTSP="{ item }">
+                    <span>{{ item.soLuongCTSP }}</span>
                   </template>
                 </DataTable>
               </div>
@@ -276,7 +125,87 @@
           </FilterTableSection>
         </div>
       </div>
+
+      <!-- Chi Tiết Sản Phẩm -->
+      <div>
+        <FilterTableSection title="Danh Sách Chi Tiết Sản Phẩm" icon="bi bi-table">
+          <div class="p-3">
+            <div class="row mb-3">
+              <div class="col-md-4">
+                <label class="filter-label">Dòng sản phẩm</label>
+                <select v-model="selectedDongSanPham" class="form-control input" @change="updateBoNhoTrong">
+                  <option value="">Tất cả</option>
+                  <option v-for="dong in uniqueDongSanPhams" :key="dong" :value="dong">
+                    {{ dong }}
+                  </option>
+                </select>
+              </div>
+              <div class="col-md-4">
+                <label class="filter-label">Bộ nhớ trong</label>
+                <select v-model="selectedBoNhoTrong" class="form-control input">
+                  <option value="">Tất cả</option>
+                  <option v-for="boNho in filteredBoNhoTrong" :key="boNho" :value="boNho">
+                    {{ boNho }}
+                  </option>
+                </select>
+              </div>
+              <div class="col-md-4">
+                <label class="filter-label">Màu sắc</label>
+                <select v-model="selectedMauSac" class="form-control input">
+                  <option value="">Tất cả</option>
+                  <option v-for="mau in filteredMauSac" :key="mau" :value="mau">
+                    {{ mau }}
+                  </option>
+                </select>
+              </div>
+            </div>
+
+            <div class="mb-3 d-flex justify-content-end gap-2">
+              <button class="btn btn-action btn-sm" @click="selectAllCTSP" :disabled="idDSPs.length === 0">
+                Chọn tất cả
+              </button>
+              <button class="btn btn-danger btn-sm" @click="deselectAllCTSP" :disabled="idDSPs.length === 0">
+                Bỏ chọn tất cả
+              </button>
+            </div>
+
+            <div v-if="filteredCTSPList.length === 0" class="text-center py-4 text-muted">
+              <i class="pi pi-inbox fs-1"></i>
+              <p class="mt-2">{{ isEditMode ? 'Không có dữ liệu chi tiết đợt giảm giá' : 'Không có dữ liệu' }}</p>
+            </div>
+            <div v-else class="table-container" style="overflow-y: auto;">
+              <DataTable :headers="detailHeaders" :data="filteredCTSPList" :pageSizeOptions="[5, 10, 15, 20, 30, 40, 50]"
+                class="detail-table">
+                <template #select="{ item }">
+                  <input type="checkbox" :value="item.ctsp.id" :checked="item.selected"
+                    @change="handleCheckboxChangeCTSP(item.ctsp.id, $event.target.checked)" class="form-check-input" />
+                </template>
+                <template #index="{ globalIndex }">
+                  {{ globalIndex + 1 }}
+                </template>
+                <template #anh.duongDan="{ item }">
+                  <img v-if="item.anh.duongDan" :src="item.anh.duongDan" alt="Ảnh" class="product-image" />
+                  <span v-else>N/A</span>
+                </template>
+                <template #soLuongTrongDotGiamGiaKhac="{ item }">
+                  <span>Trùng với {{ item.soLuongTrongDotGiamGiaKhac }} đợt giảm giá</span>
+                </template>
+                <template #sp.tenSanPham_va_MauSac="{ item }">
+                  <span>{{ `${item.sp?.tenSanPham || 'Chưa có dữ liệu'} - ${item.ctsp?.idMauSac?.mauSac || 'Chưa có dữ liệu'} - ${ item.bnt?.dungLuongBoNhoTrong || 'Chưa có dữ liệu' }` }}</span>
+                </template>
+                <template #ctsp.giaBan="{ item }">
+                  <span>{{ item.ctsp.giaBan ? item.ctsp.giaBan.toLocaleString() : 'N/A' }}</span>
+                </template>
+                <template #giaSauKhiGiam="{ item }">
+                  <span>{{ item.giaSauKhiGiam ? item.giaSauKhiGiam.toLocaleString() : 'N/A' }}</span>
+                </template>
+              </DataTable>
+            </div>
+          </div>
+        </FilterTableSection>
+      </div>
     </div>
+  </div>
 </template>
 
 <script setup>
@@ -362,7 +291,7 @@ const productHeaders = computed(() => [
   { text: '#', value: 'checkbox' },
   { text: 'STT', value: 'index' },
   { text: 'Mã', value: 'sp.ma' },
-  { text: 'Tên sản phẩm', value: 'sp.tenSanPham' },
+  { text: 'Tên SP', value: 'sp.tenSanPham' },
   { text: 'Hãng', value: 'nsx.nhaSanXuat' },
   { text: 'Số lượng', value: 'soLuongCTSP' },
 ]);
@@ -681,9 +610,93 @@ onMounted(() => {
 }
 
 .product-image {
-  width: 50px; /* Kích thước chiều rộng ảnh */
-  height: 50px; /* Kích thước chiều cao ảnh */
-  object-fit: cover; /* Đảm bảo ảnh không bị méo */
-  border-radius: 4px; /* Bo góc ảnh (tùy chọn) */
+  width: 50px;
+  height: 50px;
+  object-fit: cover;
+  border-radius: 4px;
+}
+
+/* Đảm bảo chiều cao bằng nhau với CSS Grid */
+.form-container {
+  display: grid;
+  grid-template-columns: 5fr 7fr;
+  /* Tỷ lệ tương ứng với col-md-5 và col-md-7 */
+  gap: 1rem;
+  align-items: stretch;
+  /* Đảm bảo các cột có chiều cao bằng nhau */
+}
+
+.form-section-wrapper,
+.product-section-wrapper {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  /* Đảm bảo wrapper chiếm toàn bộ chiều cao của grid cell */
+}
+
+.form-section,
+.product-section {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  /* Đảm bảo FilterTableSection chiếm toàn bộ không gian có sẵn */
+}
+
+.form-section .p-3,
+.product-section .p-3 {
+  flex: 1;
+  /* Nội dung bên trong co giãn để lấp đầy */
+  display: flex;
+  flex-direction: column;
+}
+
+.form-section .space-y-4,
+.product-section .h-100 {
+  flex: 1;
+}
+
+.table-container {
+  flex: 1;
+  overflow-y: auto;
+}
+
+/* Scrollbar Styling */
+.table-container::-webkit-scrollbar,
+.product-table::-webkit-scrollbar,
+.detail-table::-webkit-scrollbar {
+  width: 6px;
+}
+
+.table-container::-webkit-scrollbar-track,
+.product-table::-webkit-scrollbar-track,
+.detail-table::-webkit-scrollbar-track {
+  background: #f8f9fa;
+  border-radius: 3px;
+}
+
+.table-container::-webkit-scrollbar-thumb,
+.product-table::-webkit-scrollbar-thumb,
+.detail-table::-webkit-scrollbar-thumb {
+  background: #34d399;
+  border-radius: 3px;
+}
+
+.table-container::-webkit-scrollbar-thumb:hover,
+.product-table::-webkit-scrollbar-thumb:hover,
+.detail-table::-webkit-scrollbar-thumb:hover {
+  background: #16a34a;
+}
+
+@media (max-width: 768px) {
+  .form-container {
+    grid-template-columns: 1fr;
+    /* Chuyển về 1 cột trên màn hình nhỏ */
+  }
+
+  .form-section-wrapper,
+  .product-section-wrapper {
+    min-height: 400px;
+    /* Giảm chiều cao trên màn hình nhỏ */
+  }
 }
 </style>

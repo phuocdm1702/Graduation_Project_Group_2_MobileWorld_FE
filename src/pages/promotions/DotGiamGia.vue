@@ -129,13 +129,13 @@
           <!-- Action Buttons -->
           <div class="filter-actions mt-4 d-flex flex-wrap gap-2 justify-content-end">
             <button class="btn btn-reset" @click="resetFilters">
-              <i class="bi bi-arrow-clockwise me-2"></i> Đặt lại bộ lọc
+              Đặt lại bộ lọc
             </button>
             <button class="btn btn-action" @click="exportExcel">
-              <i class="bi bi-file-earmark-excel me-2"></i> Xuất Excel
+              Xuất Excel
             </button>
             <router-link to="/dotGiamGia/form" class="btn btn-action">
-              <i class="bi bi-plus-circle me-2"></i> Thêm Đợt Giảm Giá
+              Thêm Đợt Giảm Giá
             </router-link>
           </div>
         </div>
@@ -482,6 +482,7 @@ watch([searchQuery, filterType, filterStatus, startDate, endDate, saleValue, min
   text-decoration: none;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
 }
 
 .btn-action:hover {

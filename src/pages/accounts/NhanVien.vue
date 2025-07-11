@@ -64,19 +64,15 @@
           </div>
           <div class="action-buttons">
             <button class="btn btn-reset" @click="resetFilters">
-              <i class="bi bi-arrow-clockwise me-2"></i>
               Đặt lại bộ lọc
             </button>
             <router-link to="/nhanVien/form" class="btn btn-action">
-              <i class="bi bi-plus-circle me-2"></i>
               Thêm Nhân Viên
             </router-link>
             <button class="btn btn-action" @click="exportExcel">
-              <i class="bi bi-file-earmark-excel me-2"></i>
               Xuất Excel
             </button>
             <label for="import-excel" class="btn btn-action cursor-pointer">
-              <i class="bi bi-file-earmark-excel me-2"></i>
               Nhập từ Excel
               <input
                 id="import-excel"
@@ -87,7 +83,6 @@
               />
             </label>
             <button class="btn btn-action" @click="downloadTemplate">
-              <i class="bi bi-file-earmark-excel me-2"></i>
               Tải mẫu Excel
             </button>
           </div>
@@ -184,7 +179,6 @@
                 class="status-badge"
                 :class="getStatusBadgeClass(item.idTaiKhoan.deleted)"
               >
-                <i :class="getStatusIcon(item.idTaiKhoan.deleted)" class="me-1"></i>
                 {{ item.idTaiKhoan.deleted ? "Đang làm" : "Đã nghỉ" }}
               </span>
             </template>
@@ -230,7 +224,7 @@
                 class="status-badge"
                 :class="getStatusBadgeClass(employee.idTaiKhoan.deleted)"
               >
-                {{ employee.trangThai }}
+                {{ employee.deleted ? "Đang làm" : "Đã nghỉ" }}
               </span>
             </div>
             <div class="invoice-card-body">
@@ -460,13 +454,6 @@ const getStatusBadgeClass = (status) => {
   return {
     "badge-waiting": status,
     "badge-canceled": !status,
-  };
-};
-
-const getStatusIcon = (status) => {
-  return {
-    "bi bi-check-circle": status,
-    "bi bi-x-circle": !status,
   };
 };
 
@@ -1032,6 +1019,16 @@ const handleExcelUpload = async (event) => {
   box-shadow: 0 0 15px rgba(108, 117, 125, 0.3);
 }
 
+.status-badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 1rem;
+  display: flex;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 500;
+  align-items: center;
+}
+
 .btn-action {
   background: #34d399;
   color: white;
@@ -1039,6 +1036,7 @@ const handleExcelUpload = async (event) => {
   text-decoration: none;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
 }
 
 .btn-action:hover {
@@ -1139,7 +1137,6 @@ const handleExcelUpload = async (event) => {
 .status-badge {
   padding: 0.25rem 0.75rem;
   border-radius: 1rem;
-  width: 130px;
   display: flex;
   justify-content: center;
   font-size: 0.75rem;

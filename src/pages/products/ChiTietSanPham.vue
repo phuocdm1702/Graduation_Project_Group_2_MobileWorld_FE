@@ -696,17 +696,6 @@ export default {
       }
     };
 
-    const getStatusIcon = (status) => {
-      switch (status) {
-        case 'Hoạt động':
-          return 'bi bi-check-circle';
-        case 'Đã Bán':
-          return 'bi bi-x-circle';
-        default:
-          return 'bi bi-circle';
-      }
-    };
-
     const editProductDetail = (item) => {
       console.log('Navigating with id:', route.params.id);
       if (!route.params.id) {
@@ -891,7 +880,6 @@ export default {
       goToPage,
       handleItemsPerPageChange,
       getStatusBadgeClass,
-      getStatusIcon,
       editProductDetail,
       showBarcode,
       copyImei,

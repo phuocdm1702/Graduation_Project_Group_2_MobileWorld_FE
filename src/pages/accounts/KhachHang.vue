@@ -64,19 +64,15 @@
           </div>
           <div class="action-buttons">
             <button class="btn btn-reset" @click="resetFilters">
-              <i class="bi bi-arrow-clockwise me-2"></i>
               Đặt lại bộ lọc
             </button>
             <router-link to="/khachHang/form" class="btn btn-action">
-              <i class="bi bi-plus-circle me-2"></i>
               Thêm Khách Hàng
             </router-link>
             <button class="btn btn-action" @click="exportExcel">
-              <i class="bi bi-file-earmark-excel me-2"></i>
               Xuất Excel
             </button>
             <label for="import-excel" class="btn btn-action cursor-pointer">
-              <i class="bi bi-file-earmark-excel me-2"></i>
               Nhập từ Excel
               <input
                 id="import-excel"
@@ -87,7 +83,6 @@
               />
             </label>
             <button class="btn btn-action" @click="downloadTemplate">
-              <i class="bi bi-file-earmark-excel me-2"></i>
               Tải mẫu Excel
             </button>
           </div>
@@ -181,7 +176,6 @@
                 class="status-badge"
                 :class="getStatusBadgeClass(item.idTaiKhoan.deleted)"
               >
-                <i :class="getStatusIcon(item.idTaiKhoan.deleted)" class="me-1"></i>
                 {{ item.idTaiKhoan.deleted ? "Kích Hoạt":"Đã Hủy" }}
               </span>
             </template>
@@ -225,9 +219,9 @@
               <div class="invoice-code">{{ customer.ma }}</div>
               <span
                 class="status-badge"
-                :class="getStatusBadgeClass(customer.trangThai)"
+                :class="getStatusBadgeClass(customer.idTaiKhoan.deleted)"
               >
-                {{ customer.trangThai }}
+                {{ customer.idTaiKhoan.deleted  ? "Kích Hoạt" : "Đã Hủy"  }}
               </span>
             </div>
             <div class="invoice-card-body">
@@ -418,13 +412,6 @@ const getStatusBadgeClass = (status) => {
   return {
     "badge-waiting": status,
     "badge-canceled": !status,
-  };
-};
-
-const getStatusIcon = (status) => {
-  return {
-    "bi bi-check-circle": status,
-    "bi bi-x-circle": !status,
   };
 };
 
@@ -868,6 +855,7 @@ const handleExcelUpload = async (event) => {
   text-decoration: none;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
 }
 
 .btn-action:hover {
@@ -961,7 +949,6 @@ const handleExcelUpload = async (event) => {
 .status-badge {
   padding: 0.25rem 0.75rem;
   border-radius: 1rem;
-  width: 130px;
   display: flex;
   justify-content: center;
   font-size: 0.75rem;
