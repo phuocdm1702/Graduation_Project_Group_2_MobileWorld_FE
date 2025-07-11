@@ -250,7 +250,7 @@
     <div class="action-buttons m-3 animate__animated animate__fadeInUp d-flex gap-2 justify-content-end"
       style="--animate-delay: 0.6s;">
       <router-link to="/hoaDon" class="btn btn-reset">
-        <i class="bi bi-arrow-left me-2"></i> Quay lại
+        Quay lại
       </router-link>
       <button class="btn btn-action" @click="showUpdateModal">
         Cập nhật
