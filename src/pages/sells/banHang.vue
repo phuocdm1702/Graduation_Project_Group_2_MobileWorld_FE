@@ -809,8 +809,8 @@
                     </div>
                     <hr class="my-3" style="border-color: rgba(52, 211, 153, 0.2)" />
                     <div class="d-flex justify-content-between align-items-center">
-                      <span class="fw-bold text-dark" style="font-size: 1.1rem">Tổng thanh toán:</span>
-                      <span class="fw-bold fs-4 text-success">{{
+                      <span class="fw-bold text-dark" style="font-size: 1rem">Tổng thanh toán:</span>
+                      <span class="fw-bold fs-5 text-success">{{
                         formatPrice(totalPayment)
                       }}</span>
                     </div>
@@ -1317,6 +1317,8 @@ export default defineComponent({
 
 .text-success {
   color: #16a34a !important;
+  white-space: normal; 
+  word-break: break-word; /* Break long words */
 }
 
 .text-muted {
@@ -1392,14 +1394,14 @@ export default defineComponent({
   align-items: stretch;
 }
 
-.filter-table-section,.order-card  {
+.filter-table-section, .order-card {
   display: flex;
   flex-direction: column;
 }
 
 /* Áp dụng thanh cuộn cho thông tin đơn */
 .variant-scroll-container {
-  max-height: 1100px;
+  max-height: 950px;
   overflow-y: auto;
   overflow-x: hidden;
   padding-right: 10px;
@@ -1421,13 +1423,5 @@ export default defineComponent({
 
 .variant-scroll-container::-webkit-scrollbar-thumb:hover {
   background: #16a34a;
-}
-
-/* Đảm bảo phần giỏ hàng và danh sách sản phẩm cũng có chiều cao đồng bộ */
-.product-card,
-.mt-4 {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
 }
 </style>

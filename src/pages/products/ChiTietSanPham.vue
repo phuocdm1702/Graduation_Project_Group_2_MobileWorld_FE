@@ -206,7 +206,6 @@
             </template>
             <template #deleted="{ item }">
               <span class="status-badge" :class="getStatusBadgeClass(item.deleted ? 'Đã Bán' : 'Hoạt động')">
-                <i :class="getStatusIcon(item.deleted ? 'Đã Bán' : 'Hoạt động')" class="me-1"></i>
                 {{ item.deleted ? 'Đã Bán' : 'Hoạt động' }}
               </span>
             </template>
@@ -312,7 +311,6 @@
                   <td class="imei-code">{{ item.imei }}</td>
                   <td>
                     <span class="status-badge" :class="getStatusBadgeClass(item.deleted ? 'Đã Bán' : 'Hoạt động')">
-                      <i :class="getStatusIcon(item.deleted ? 'Đã Bán' : 'Hoạt động')" class="me-1"></i>
                       {{ item.deleted ? 'Đã Bán' : 'Hoạt động' }}
                     </span>
                   </td>

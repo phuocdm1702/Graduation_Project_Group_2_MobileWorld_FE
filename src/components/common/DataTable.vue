@@ -303,6 +303,7 @@ td.long-content {
 /* Ensure table layout is stable */
 table {
   table-layout: fixed; /* Prevent columns from resizing unpredictably */
+  border-bottom: #fafafa;
   width: 100%;
 }
 

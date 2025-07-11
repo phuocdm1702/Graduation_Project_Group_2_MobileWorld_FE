@@ -293,17 +293,6 @@ export default defineComponent({
       }
     };
 
-    const getStatusIcon = (status) => {
-      switch (status) {
-        case "Còn hàng":
-          return "bi bi-check-circle";
-        case "Hết hàng":
-          return "bi bi-x-circle";
-        default:
-          return "bi bi-circle";
-      }
-    };
-
     const handlePageChange = (page) => {
       currentPage.value = page;
       loadProducts();
@@ -367,7 +356,6 @@ export default defineComponent({
       editProduct,
       resetNotification,
       getStatusBadgeClass,
-      getStatusIcon,
       handlePageChange,
       handleItemsPerPageChange,
       notificationType,
