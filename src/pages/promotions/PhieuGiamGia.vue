@@ -115,15 +115,12 @@
         <!-- Action Buttons -->
         <div class="filter-actions mt-4 d-flex flex-wrap gap-2 justify-content-end">
           <button class="btn btn-reset" @click="resetFilters">
-            <i class="bi bi-arrow-clockwise me-2"></i>
             Đặt lại bộ lọc
           </button>
           <button class="btn btn-action" @click="exportExcel">
-            <i class="bi bi-file-earmark-excel me-2"></i>
             Xuất Excel
           </button>
           <router-link to="/phieuGiamGia/form" class="btn btn-action">
-            <i class="bi bi-plus-circle me-2"></i>
             Thêm Phiếu Giảm Giá
           </router-link>
         </div>
@@ -185,13 +182,11 @@
             </template>
             <template #type="{ item }">
               <span class="type-badge" :class="getTypeBadgeClass(item.type)">
-                <i :class="getTypeIcon(item.type)" class="me-1"></i>
                 {{ item.type }}
               </span>
             </template>
             <template #status="{ item }">
               <span class="status-badge" :class="getStatusBadgeClass(item.status)">
-                <i :class="getStatusIcon(item.status)" class="me-1"></i>
                 {{ item.status }}
               </span>
             </template>
@@ -573,21 +568,6 @@ export default {
       }
     };
 
-    const getTypeIcon = (type) => {
-      return type === 'Phần trăm' ? 'bi bi-percent' : 'bi bi-currency-dollar';
-    };
-
-    const getStatusIcon = (status) => {
-      switch (status) {
-        case 'Đang diễn ra':
-          return 'bi bi-check-circle';
-        case 'Chưa diễn ra':
-          return 'bi bi-hourglass-split';
-        default:
-          return 'bi bi-x-circle';
-      }
-    };
-
     // Watchers
     watch([searchQuery, filterType, filterStatus, startDate, endDate, rangeMin, rangeMax], () => {
       currentPage.value = 1;
@@ -642,8 +622,6 @@ export default {
       resetNotification,
       getTypeBadgeClass,
       getStatusBadgeClass,
-      getTypeIcon,
-      getStatusIcon,
     };
   },
 };
@@ -896,6 +874,7 @@ export default {
   text-decoration: none;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
 }
 
 .btn-action:hover {
@@ -996,12 +975,10 @@ export default {
 .status-badge {
   padding: 0.25rem 0.75rem;
   border-radius: 1rem;
-  width: 140px;
   display: flex;
   justify-content: center;
   font-size: 0.75rem;
   font-weight: 500;
-  display: inline-flex;
   align-items: center;
 }
 

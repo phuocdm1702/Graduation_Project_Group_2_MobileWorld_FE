@@ -15,6 +15,7 @@
             isEditMode ? 'Cập Nhật Phiếu Giảm Giá' : 'Thêm Phiếu Giảm Giá'
           "
           icon="bi bi-plus-circle"
+          class="voucher-form"
         >
           <form @submit.prevent="submitForm" class="p-3">
             <div class="mb-3">
@@ -137,7 +138,6 @@
             </div>
             <div class="d-flex gap-2">
               <button type="submit" class="btn btn-action flex-fill">
-                <i class="bi bi-plus-circle me-2"></i>
                 {{ isEditMode ? "Cập Nhật" : "Thêm" }}
               </button>
               <button
@@ -152,9 +152,9 @@
         </FilterTableSection>
       </div>
 
-      <!-- Chọn Khách Hàng -->
-      <div class="col-lg-6">
-        <FilterTableSection title="Chọn Khách Hàng" icon="bi bi-people">
+      <!-- Chọn Khách Hàng và Khách Hàng Đã Chọn -->
+      <div class="col-lg-6 customer-container">
+        <FilterTableSection title="Chọn Khách Hàng" icon="bi bi-people" class="customer-section">
           <div class="p-3" :class="{ 'disabled-section': !formData.riengTu }">
             <div class="mb-3">
               <label class="filter-label">Tìm kiếm khách hàng</label>
@@ -184,19 +184,18 @@
                 "
               >
                 <span>{{ customer.ma }} - {{ customer.ten }}</span>
-                <span>{{ customer.gioiTinh == 1 ? "Nam" : "Nữ" }}</span>
+                <span>{{ customer.gioiTinh == 1 ? 'Nam' : 'Nữ' }}</span>
               </div>
             </div>
           </div>
         </FilterTableSection>
 
-        <!-- Danh Sách Khách Hàng Đã Chọn -->
         <FilterTableSection
           title="Khách Hàng Đã Chọn"
           icon="bi bi-check-circle"
-          class="mt-4"
+          class="customer-section"
         >
-          <div class="p-3">
+          <div class="p-3 table-container">
             <table class="table table-striped">
               <thead>
                 <tr>
@@ -214,7 +213,7 @@
                 >
                   <td>{{ customer.ma }}</td>
                   <td>{{ customer.ten }}</td>
-                  <td>{{ customer.gioiTinh == 1 ? "Nam" : "Nữ" }}</td>
+                  <td>{{ customer.gioiTinh == 1 ? 'Nam' : 'Nữ' }}</td>
                   <td>{{ formatDate(customer.ngaySinh) }}</td>
                   <td>
                     <button
@@ -705,19 +704,97 @@ export default {
   cursor: not-allowed;
 }
 
+.customer-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 600px; /* Đồng bộ chiều cao với form phiếu giảm giá */
+}
+
+.voucher-form {
+  min-height: 600px; /* Đặt chiều cao cố định cho form phiếu giảm giá */
+}
+
+.customer-section {
+  flex: 1; /* Cho phép mỗi section co giãn để lấp đầy không gian */
+}
+
+.customer-section:first-child {
+  margin-bottom: 10px; /* Đặt khoảng cách 10px giữa hai section */
+}
+
+.table-container {
+  max-height: 350px;
+  overflow-y: auto;
+}
+
 .table {
   background: #fff;
+  width: 100%;
+  table-layout: fixed;
 }
 
 .table th,
 .table td {
   vertical-align: middle;
+  padding: 0.5rem;
+  font-size: 0.9rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.table th:nth-child(1),
+.table td:nth-child(1) {
+  width: 20%;
+}
+.table th:nth-child(2),
+.table td:nth-child(2) {
+  width: 30%;
+}
+.table th:nth-child(3),
+.table td:nth-child(3) {
+  width: 15%;
+}
+.table th:nth-child(4),
+.table td:nth-child(4) {
+  width: 20%;
+}
+.table th:nth-child(5),
+.table td:nth-child(5) {
+  width: 15%;
+}
+
+/* Scrollbar Styling */
+.customer-list::-webkit-scrollbar,
+.table-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.customer-list::-webkit-scrollbar-track,
+.table-container::-webkit-scrollbar-track {
+  background: #f8f9fa;
+  border-radius: 3px;
+}
+
+.customer-list::-webkit-scrollbar-thumb,
+.table-container::-webkit-scrollbar-thumb {
+  background: #34d399;
+  border-radius: 3px;
+}
+
+.customer-list::-webkit-scrollbar-thumb:hover,
+.table-container::-webkit-scrollbar-thumb:hover {
+  background: #16a34a;
 }
 
 @media (max-width: 768px) {
   .col-lg-6 {
     flex: 0 0 100%;
     max-width: 100%;
+  }
+  .customer-container,
+  .voucher-form {
+    min-height: 400px; /* Giảm chiều cao trên màn hình nhỏ */
   }
 }
 </style>
