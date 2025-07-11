@@ -44,8 +44,8 @@ export const invoiceManagementLogic = {
 
     // State
     const keyword = ref('');
-    const rangeMin = ref(null);
-    const rangeMax = ref(null);
+    const rangeMin = ref(0); // Initialize with 0 instead of null
+    const rangeMax = ref(0); // Initialize with 0 instead of null
     const startDate = ref('');
     const endDate = ref('');
     const viewMode = ref('table');
@@ -121,7 +121,7 @@ export const invoiceManagementLogic = {
     const sliderRangeStyle = computed(() => {
       const min = minInvoiceTotal.value;
       const max = maxInvoiceTotal.value;
-      const range = max - min || 1;
+      const range = max - min || 1; // Avoid division by zero
       const left = ((rangeMin.value - min) / range) * 100;
       const width = ((rangeMax.value - rangeMin.value) / range) * 100;
       return {
@@ -133,12 +133,14 @@ export const invoiceManagementLogic = {
     const filteredInvoices = computed(() => {
       let filtered = invoices.value;
 
+      // Filter by tab (loaiDon)
       if (activeTab.value === 'in-store') {
         filtered = filtered.filter((inv) => inv.loaiDon?.toLowerCase() === 'trực tiếp');
       } else if (activeTab.value === 'online') {
         filtered = filtered.filter((inv) => inv.loaiDon?.toLowerCase() === 'online');
       }
 
+      // Filter by keyword
       if (keyword.value) {
         const query = keyword.value.toLowerCase();
         filtered = filtered.filter(
@@ -150,13 +152,16 @@ export const invoiceManagementLogic = {
         );
       }
 
-      if (rangeMin.value !== null) {
-        filtered = filtered.filter((inv) => (inv.tongTienSauGiam || 0) >= rangeMin.value);
-      }
-      if (rangeMax.value !== null) {
-        filtered = filtered.filter((inv) => (inv.tongTienSauGiam || 0) <= rangeMax.value);
+      // Filter by price range
+      if (rangeMin.value > minInvoiceTotal.value || rangeMax.value < maxInvoiceTotal.value) {
+        filtered = filtered.filter(
+          (inv) =>
+            (inv.tongTienSauGiam || 0) >= rangeMin.value &&
+            (inv.tongTienSauGiam || 0) <= rangeMax.value
+        );
       }
 
+      // Filter by date range
       if (startDate.value) {
         filtered = filtered.filter((inv) => {
           const invDate = new Date(inv.ngayTao)
@@ -253,12 +258,12 @@ export const invoiceManagementLogic = {
 
       hoaDonStore.updateFilters({
         keyword: '',
-        minAmount: null,
-        maxAmount: null,
+        minAmount: minInvoiceTotal.value,
+        maxAmount: maxInvoiceTotal.value,
         startDate: null,
         endDate: null,
         trangThai: null,
-        loaiDon: null, // Reset loaiDon
+        loaiDon: null,
       });
 
       toastNotification.value?.addToast({
@@ -535,20 +540,6 @@ export const invoiceManagementLogic = {
       notificationOnCancel.value = () => { };
     };
 
-    // const setActiveTab = (tab) => {
-    //   activeTab.value = tab;
-    //   currentPage.value = 1;
-    //   highlightedInvoiceId.value = null;
-    //   toastNotification.value?.addToast({
-    //     type: 'info',
-    //     message: `Đã chuyển sang tab ${tab === 'all' ? 'Tất cả hóa đơn' : tab === 'in-store' ? 'Hóa đơn tại quầy' : 'Hóa đơn online'
-    //       }`,
-    //     duration: 2000,
-    //   });
-    // };
-
-
-    // Cập nhật hàm setActiveTab
     const setActiveTab = (tab) => {
       activeTab.value = tab;
       currentPage.value = 1;
@@ -611,12 +602,19 @@ export const invoiceManagementLogic = {
       hoaDonStore.fetchInvoices({ page: 0, size: itemsPerPage.value });
     });
 
-    watch(invoices, (newInvoices) => {
+    // Watch invoices to update rangeMin and rangeMax
+    watch([invoices, minInvoiceTotal, maxInvoiceTotal], ([newInvoices, minTotal, maxTotal]) => {
       if (newInvoices.length > 0) {
-        const min = Math.min(...newInvoices.map((inv) => inv.tongTienSauGiam || 0));
-        const max = Math.max(...newInvoices.map((inv) => inv.tongTienSauGiam || 0));
-        if (rangeMin.value === null || rangeMin.value < min) rangeMin.value = min;
-        if (rangeMax.value === null || rangeMax.value > max) rangeMax.value = max;
+        if (rangeMin.value === 0 || rangeMin.value < minTotal) {
+          rangeMin.value = minTotal;
+        }
+        if (rangeMax.value === 0 || rangeMax.value > maxTotal) {
+          rangeMax.value = maxTotal;
+        }
+        hoaDonStore.updateFilters({
+          minAmount: rangeMin.value,
+          maxAmount: rangeMax.value,
+        });
       }
     }, { immediate: true });
 
