@@ -106,7 +106,9 @@
                       :max="maxSoTienGiamToiDa"
                       class="range-slider"
                       style="z-index: 2"
-                      @input="updateMinOrderMax"
+                      @input="updateMinOrderMin"
+                      @mousedown="isDraggingMinOrder = true"
+                      @mouseup="isDraggingMinOrder = false; fetchMaxValues()"
                   />
                   <input
                       type="range"
@@ -115,7 +117,9 @@
                       :max="maxSoTienGiamToiDa"
                       class="range-slider"
                       style="z-index: 1"
-                      @input="updateMinOrderMin"
+                      @input="updateMinOrderMax"
+                      @mousedown="isDraggingMinOrder = true"
+                      @mouseup="isDraggingMinOrder = false; fetchMaxValues()"
                   />
                 </div>
                 <div class="range-labels d-flex justify-content-between">
@@ -248,6 +252,7 @@ const {
   saleValueMax,
   minOrderMin,
   minOrderMax,
+  isDraggingMinOrder
 } = useDiscountManagement();
 
 const notificationModal = ref(null);
