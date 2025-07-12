@@ -20,12 +20,12 @@ export function useDiscountManagement() {
     const deleted = ref("");
 
     // Range slider values
-    const maxGiaTriGiamGia = ref(100);
-    const maxSoTienGiamToiDa = ref(1000000);
+    const maxGiaTriGiamGia = ref(0); // Khởi tạo mặc định là 0 thay vì 100
+    const maxSoTienGiamToiDa = ref(0); // Khởi tạo mặc định là 0 thay vì 10000000
     const saleValueMin = ref(0);
-    const saleValueMax = ref(100);
+    const saleValueMax = ref(0); // Khởi tạo mặc định là 0 thay vì 100
     const minOrderMin = ref(0);
-    const minOrderMax = ref(1000000);
+    const minOrderMax = ref(0); // Khởi tạo mặc định là 0 thay vì 1000000
 
     // Confirm Modal
     const showConfirmModal = ref(false);
@@ -63,20 +63,49 @@ export function useDiscountManagement() {
         fetchData();
     };
 
+    const isDraggingMinOrder = ref(false);
+
     const fetchMaxValues = async () => {
         try {
+            let trangThai = null;
+            let deleted = null;
+            if (filterStatus.value === "0") {
+                trangThai = false;
+                deleted = false;
+            } else if (filterStatus.value === "1") {
+                trangThai = true;
+                deleted = false;
+            } else if (filterStatus.value === "deleted") {
+                deleted = true;
+            }
+
             const [giaTriResponse, soTienResponse] = await Promise.all([
-                axios.get("/api/dotGiamGia/maxGiaTriGiamGia"),
-                axios.get("/api/dotGiamGia/maxSoTienGiamToiDa")
+                axios.get("/api/dotGiamGia/maxGiaTriGiamGia", {
+                    params: { trangThai, deleted }
+                }),
+                axios.get("/api/dotGiamGia/maxSoTienGiamToiDa", {
+                    params: { trangThai, deleted }
+                })
             ]);
-            maxGiaTriGiamGia.value = giaTriResponse.data;
-            maxSoTienGiamToiDa.value = soTienResponse.data ;
-            saleValueMax.value = maxGiaTriGiamGia.value;
-            minOrderMax.value = maxSoTienGiamToiDa.value;
+            // Đặt giá trị mặc định là 0 nếu dữ liệu từ BE là null hoặc 0
+            maxGiaTriGiamGia.value = Number(giaTriResponse.data) || 0;
+            maxSoTienGiamToiDa.value = Number(soTienResponse.data) || 0;
+            // Chỉ cập nhật nếu không đang kéo thanh trượt
+            if (!isDraggingMinOrder.value) {
+                saleValueMax.value = maxGiaTriGiamGia.value;
+                minOrderMax.value = maxSoTienGiamToiDa.value;
+            }
         } catch (error) {
             console.error("Lỗi khi lấy giá trị tối đa:", error);
             if (toast.value) {
                 toast.value.addToast({ type: "error", message: "Không thể tải giá trị tối đa!", duration: 3000 });
+            }
+            // Đặt giá trị mặc định khi có lỗi
+            maxGiaTriGiamGia.value = 0;
+            maxSoTienGiamToiDa.value = 0;
+            if (!isDraggingMinOrder.value) {
+                saleValueMax.value = maxGiaTriGiamGia.value;
+                minOrderMax.value = maxSoTienGiamToiDa.value;
             }
         }
     };
@@ -285,6 +314,7 @@ export function useDiscountManagement() {
         handleCustomEvents();
     });
 
+
     watch([
         searchQuery,
         filterType,
@@ -297,7 +327,9 @@ export function useDiscountManagement() {
     ], () => {
         currentPage.value = 0;
         fetchData();
+        fetchMaxValues(); // Gọi lại fetchMaxValues khi filterStatus thay đổi
     });
+
 
     return {
         router,
@@ -335,5 +367,6 @@ export function useDiscountManagement() {
         saleValueMax,
         minOrderMin,
         minOrderMax,
+        isDraggingMinOrder
     };
 }

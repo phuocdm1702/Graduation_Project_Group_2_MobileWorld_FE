@@ -33,23 +33,29 @@
           </div>
 
           <!-- Price Range Slider -->
-          <div class="col-lg-4">
+          <div class="col-lg-4 col-md-6">
             <div class="filter-group">
-              <div class="price-range-container">
-                <label class="filter-label">Khoảng giá trị</label>
-                <div class="dual-range-slider">
-                  <div class="slider-track">
-                    <div class="slider-range" :style="sliderRangeStyle"></div>
-                  </div>
-                  <input type="range" v-model.number="rangeMin" :min="minInvoiceTotal" :max="maxInvoiceTotal"
-                    class="range-slider" style="z-index: 2;" @input="updateRangeMax" />
-                  <input type="range" v-model.number="rangeMax" :min="minInvoiceTotal" :max="maxInvoiceTotal"
-                    class="range-slider" style="z-index: 1;" @input="updateRangeMin" />
-                </div>
-                <div class="range-labels d-flex justify-content-between">
-                  <span>{{ formatPrice(rangeMin) }}</span>
-                  <span>{{ formatPrice(rangeMax) }}</span>
-                </div>
+              <label class="filter-label">Khoảng Giá</label>
+              <div class="slider-container">
+                <div class="slider-track"></div>
+                <div class="slider-range" :style="{
+                  left: `${((rangeMin - minInvoiceTotal) / (maxInvoiceTotal - minInvoiceTotal) * 100)}%`,
+                  width: `${((rangeMax - rangeMin) / (maxInvoiceTotal - minInvoiceTotal) * 100)}%`
+                }"></div>
+                <div class="slider-thumb"
+                  :style="{ left: `${((rangeMin - minInvoiceTotal) / (maxInvoiceTotal - minInvoiceTotal) * 100)}%` }"
+                  @mousedown="(e) => startDrag('min', e)"></div>
+                <div class="slider-thumb"
+                  :style="{ left: `${((rangeMax - minInvoiceTotal) / (maxInvoiceTotal - minInvoiceTotal) * 100)}%` }"
+                  @mousedown="(e) => startDrag('max', e)"></div>
+                <input type="range" v-model.number="rangeMin" :min="minInvoiceTotal" :max="rangeMax"
+                  class="absolute opacity-0 w-full h-full" />
+                <input type="range" v-model.number="rangeMax" :min="rangeMin" :max="maxInvoiceTotal"
+                  class="absolute opacity-0 w-full h-full" />
+              </div>
+              <div class="d-flex justify-content-between text-sm text-gray-600 mt-1">
+                <span>{{ formatPrice(rangeMin) }}</span>
+                <span>{{ formatPrice(rangeMax) }}</span>
               </div>
             </div>
           </div>
@@ -74,7 +80,7 @@
           </div>
 
           <div class="action-buttons">
-            <button class="btn btn-reset" @click="resetFilters">       
+            <button class="btn btn-reset" @click="resetFilters">
               Đặt lại bộ lọc
             </button>
             <button class="btn btn-action" @click="exportExcel">
@@ -145,54 +151,51 @@
 
     <!-- Status Filter Section -->
     <FilterTableSection title="Bộ lọc Trạng thái Hóa đơn" icon="bi bi-funnel">
-      <div class="status-badge-container m-3">
-        <div class="status-badge-grid">
-          <button type="button" class="btn btn-outline-primary position-relative"
-            @click="setActiveTabByStatus('Chờ xác nhận')">
-            Chờ xác nhận
-            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill badge-waiting"
-              v-if="statusCounts['Chờ xác nhận']">
-              {{ statusCounts['Chờ xác nhận'] > 99 ? '99+' : statusCounts['Chờ xác nhận'] }}
-              <span class="visually-hidden">hóa đơn chờ xác nhận</span>
-            </span>
-          </button>
-          <button type="button" class="btn btn-outline-primary position-relative"
-            @click="setActiveTabByStatus('Chờ giao hàng')">
-            Chờ giao hàng
-            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill badge-waiting"
-              v-if="statusCounts['Chờ giao hàng']">
-              {{ statusCounts['Chờ giao hàng'] > 99 ? '99+' : statusCounts['Chờ giao hàng'] }}
-              <span class="visually-hidden">hóa đơn chờ giao hàng</span>
-            </span>
-          </button>
-          <button type="button" class="btn btn-outline-primary position-relative"
-            @click="setActiveTabByStatus('Đang giao')">
-            Đang giao
-            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill badge-waiting"
-              v-if="statusCounts['Đang giao']">
-              {{ statusCounts['Đang giao'] > 99 ? '99+' : statusCounts['Đang giao'] }}
-              <span class="visually-hidden">hóa đơn đang giao</span>
-            </span>
-          </button>
-          <button type="button" class="btn btn-outline-primary position-relative"
-            @click="setActiveTabByStatus('Hoàn thành')">
-            Hoàn thành
-            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill badge-completed"
-              v-if="statusCounts['Hoàn thành']">
-              {{ statusCounts['Hoàn thành'] > 99 ? '99+' : statusCounts['Hoàn thành'] }}
-              <span class="visually-hidden">hóa đơn hoàn thành</span>
-            </span>
-          </button>
-          <button type="button" class="btn btn-outline-primary position-relative"
-            @click="setActiveTabByStatus('Đã hủy')">
-            Đã hủy
-            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill badge-canceled"
-              v-if="statusCounts['Đã hủy']">
-              {{ statusCounts['Đã hủy'] > 99 ? '99+' : statusCounts['Đã hủy'] }}
-              <span class="visually-hidden">hóa đơn đã hủy</span>
-            </span>
-          </button>
-        </div>
+      <div class="status-badge d-flex gap-3 m-3" style="width: max-content;">
+        <button type="button" class="btn btn-outline-primary position-relative"
+          @click="setActiveTabByStatus('Chờ xác nhận')">
+          Chờ xác nhận
+          <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill badge-waiting"
+            v-if="statusCounts['Chờ xác nhận']">
+            {{ statusCounts['Chờ xác nhận'] > 99 ? '99+' : statusCounts['Chờ xác nhận'] }}
+            <span class="visually-hidden">hóa đơn chờ xác nhận</span>
+          </span>
+        </button>
+        <button type="button" class="btn btn-outline-primary position-relative"
+          @click="setActiveTabByStatus('Chờ giao hàng')">
+          Chờ giao hàng
+          <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill badge-waiting"
+            v-if="statusCounts['Chờ giao hàng']">
+            {{ statusCounts['Chờ giao hàng'] > 99 ? '99+' : statusCounts['Chờ giao hàng'] }}
+            <span class="visually-hidden">hóa đơn chờ giao hàng</span>
+          </span>
+        </button>
+        <button type="button" class="btn btn-outline-primary position-relative"
+          @click="setActiveTabByStatus('Đang giao')">
+          Đang giao
+          <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill badge-waiting"
+            v-if="statusCounts['Đang giao']">
+            {{ statusCounts['Đang giao'] > 99 ? '99+' : statusCounts['Đang giao'] }}
+            <span class="visually-hidden">hóa đơn đang giao</span>
+          </span>
+        </button>
+        <button type="button" class="btn btn-outline-primary position-relative"
+          @click="setActiveTabByStatus('Hoàn thành')">
+          Hoàn thành
+          <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill badge-completed"
+            v-if="statusCounts['Hoàn thành']">
+            {{ statusCounts['Hoàn thành'] > 99 ? '99+' : statusCounts['Hoàn thành'] }}
+            <span class="visually-hidden">hóa đơn hoàn thành</span>
+          </span>
+        </button>
+        <button type="button" class="btn btn-outline-primary position-relative" @click="setActiveTabByStatus('Đã hủy')">
+          Đã hủy
+          <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill badge-canceled"
+            v-if="statusCounts['Đã hủy']">
+            {{ statusCounts['Đã hủy'] > 99 ? '99+' : statusCounts['Đã hủy'] }}
+            <span class="visually-hidden">hóa đơn đã hủy</span>
+          </span>
+        </button>
       </div>
     </FilterTableSection>
 
@@ -202,156 +205,61 @@
         <div class="table-title-wrapper">
           <span class="table-count">{{ filteredInvoices.length }} hóa đơn</span>
         </div>
-        <div class="table-controls">
-          <div class="view-toggle">
-            <button class="btn btn-sm"
-              :class="{ 'btn-primary': viewMode === 'table', 'btn-outline-secondary': viewMode !== 'table' }"
-              @click="viewMode = 'table'">
-              <i class="bi bi-table"></i>
-            </button>
-            <button class="btn btn-sm"
-              :class="{ 'btn-primary': viewMode === 'card', 'btn-outline-secondary': viewMode !== 'card' }"
-              @click="viewMode = 'card'">
-              <i class="bi bi-grid-3x3-gap"></i>
-            </button>
-          </div>
-        </div>
       </div>
 
       <div class="table-body">
-        <!-- Table View -->
-        <div v-if="viewMode === 'table'">
-          <DataTable title="" :headers="headers" :data="filteredInvoices" :pageSizeOptions="[5, 10, 15, 20, 30, 40, 50]"
-            :rowClass="getRowClass">
-            <template #stt="{ globalIndex }">
-              {{ globalIndex + 1 }}
-            </template>
-            <template #ma="{ item }">
-              <div class="code-cell">
-                <span class="code-text">{{ item.ma }}</span>
-                <small class="code-date">{{ item.ngayTao }}</small>
-              </div>
-            </template>
-            <template #maNhanVien="{ item }">
-              <div class="employee-cell">
-                <div class="employee-avatar">
-                  <i class="bi bi-person-circle"></i>
-                </div>
-                <span class="employee-name">{{ item.maNhanVien }}</span>
-              </div>
-            </template>
-            <template #tenKhachHang="{ item }">
-              <div class="customer-cell">
-                <div class="customer-name">{{ item.tenKhachHang }}</div>
-                <div class="customer-phone">{{ item.soDienThoaiKhachHang }}</div>
-              </div>
-            </template>
-            <template #tongTienSauGiam="{ item }">
-              <div class="amount-cell">
-                <div class="total-amount">{{ formatPrice(item.tongTienSauGiam) }}</div>
-                <div class="discount-info" v-if="item.soTienGiamToiDa > 0">
-                  <small class="text-muted">Giảm: {{ formatPrice(item.soTienGiamToiDa) }}</small>
-                </div>
-              </div>
-            </template>
-            <template #loaiDon="{ item }">
-              <span class="type-badge" :class="getTypeBadgeClass(item.loaiDon)">
-                {{ item.loaiDon }}
-              </span>
-            </template>
-            <template #trangThaiFormatted="{ item }">
-              <span class="status-badge" :class="getStatusBadgeClass(item.trangThaiFormatted)">
-                {{ item.trangThaiFormatted }}
-              </span>
-            </template>
-            <template #actions="{ item }">
-              <div class="action-buttons-cell">
-                <button class="btn btn-sm btn-table" @click="viewInvoice(item)" title="Xem chi tiết">
-                  <i class="bi bi-eye-fill"></i>
-                </button>
-                <button class="btn btn-sm btn-table" @click="printInvoice(item)" title="Xuất Hóa đơn">
-                  <i class="bi bi-printer-fill"></i>
-                </button>
-                <button class="btn btn-sm btn-table" @click="downloadQrCode(item)" title="Tải QR">
-                  <i class="bi bi-qr-code"></i>
-                </button>
-              </div>
-            </template>
-          </DataTable>
-        </div>
-
-        <!-- Card View -->
-        <div v-else class="card-grid">
-          <div v-for="invoice in paginatedInvoices" :key="invoice.id" class="invoice-card">
-            <div class="invoice-card-header">
-              <div class="invoice-code">{{ invoice.ma }}</div>
-              <span class="status-badge" :class="getStatusBadgeClass(invoice.trangThaiFormatted)">
-                {{ invoice.trangThaiFormatted }}
-              </span>
+        <DataTable title="" :headers="headers" :data="filteredInvoices" :pageSizeOptions="[5, 10, 15, 20, 30, 40, 50]"
+          :rowClass="getRowClass">
+          <template #stt="{ globalIndex }">
+            {{ globalIndex + 1 }}
+          </template>
+          <template #ma="{ item }">
+            <div class="code-cell">
+              <span class="code-text">{{ item.ma }}</span>
+              <small class="code-date">{{ item.ngayTao }}</small>
             </div>
-            <div class="invoice-card-body">
-              <div class="customer-info">
-                <div class="customer-name">{{ invoice.tenKhachHang }}</div>
-                <div class="customer-phone">{{ invoice.soDienThoaiKhachHang }}</div>
-              </div>
-              <div class="invoice-details">
-                <div class="detail-row">
-                  <span class="detail-label">Nhân viên:</span>
-                  <span class="detail-value">{{ invoice.maNhanVien }}</span>
-                </div>
-                <div class="detail-row">
-                  <span class="detail-label">Loại đơn:</span>
-                  <span class="type-badge" :class="getTypeBadgeClass(invoice.loaiDon)">
-                    {{ invoice.loaiDon }}
-                  </span>
-                </div>
-                <div class="detail-row">
-                  <span class="detail-label">Ngày tạo:</span>
-                  <span class="detail-value">{{ invoice.ngayTao }}</span>
-                </div>
-              </div>
-              <div class="invoice-amounts">
-                <div class="total-amount">{{ formatPrice(invoice.tongTienSauGiam) }}</div>
-                <div class="amount-details">
-                  <small class="text-muted">Giảm: {{ formatPrice(invoice.discount) }}</small>
-                  <small class="text-muted">Phí: {{ formatPrice(invoice.phiVanChuyen) }}</small>
-                </div>
+          </template>
+          <template #maNhanVien="{ item }">
+            <span class="employee-name">{{ item.maNhanVien }}</span>
+          </template>
+          <template #tenKhachHang="{ item }">
+            <div class="customer-cell">
+              <div class="customer-name">{{ item.tenKhachHang }}</div>
+              <div class="customer-phone">{{ item.soDienThoaiKhachHang }}</div>
+            </div>
+          </template>
+          <template #tongTienSauGiam="{ item }">
+            <div class="amount-cell">
+              <div class="total-amount">{{ formatPrice(item.tongTienSauGiam) }}</div>
+              <div class="discount-info" v-if="item.soTienGiamToiDa > 0">
+                <small class="text-muted">Giảm: {{ formatPrice(item.soTienGiamToiDa) }}</small>
               </div>
             </div>
-            <div class="invoice-card-actions">
-              <button class="btn btn-sm btn-table" @click="viewInvoice(invoice)">
-                <i class="bi bi-eye me-1"></i> Xem
+          </template>
+          <template #loaiDon="{ item }">
+            <span class="type-badge" :class="getTypeBadgeClass(item.loaiDon)">
+              {{ item.loaiDon }}
+            </span>
+          </template>
+          <template #trangThaiFormatted="{ item }">
+            <span class="status-badge" :class="getStatusBadgeClass(item.trangThaiFormatted)">
+              {{ item.trangThaiFormatted }}
+            </span>
+          </template>
+          <template #actions="{ item }">
+            <div class="action-buttons-cell">
+              <button class="btn btn-sm btn-table" @click="viewInvoice(item)" title="Xem chi tiết">
+                <i class="bi bi-eye-fill"></i>
               </button>
-              <button class="btn btn-sm btn-table" @click="printInvoice(invoice)">
-                <i class="bi bi-printer-fill"></i> Xuất HD
+              <button class="btn btn-sm btn-table" @click="printInvoice(item)" title="Xuất Hóa đơn">
+                <i class="bi bi-printer-fill"></i>
               </button>
-              <button class="btn btn-sm btn-table" @click="downloadQrCode(invoice)">
-                <i class="bi bi-qr-code"></i> Tải QR
+              <button class="btn btn-sm btn-table" @click="downloadQrCode(item)" title="Tải QR">
+                <i class="bi bi-qr-code"></i>
               </button>
             </div>
-          </div>
-        </div>
-
-        <!-- Pagination for Card View -->
-        <div v-if="viewMode === 'card'" class="card-pagination">
-          <nav aria-label="Page navigation">
-            <ul class="pagination justify-content-center">
-              <li class="page-item" :class="{ disabled: currentPage === 1 }">
-                <button class="page-link" @click="currentPage--" :disabled="currentPage === 1">
-                  <i class="bi bi-chevron-left"></i>
-                </button>
-              </li>
-              <li v-for="page in totalPages" :key="page" class="page-item" :class="{ active: currentPage === page }">
-                <button class="page-link" @click="currentPage = page">{{ page }}</button>
-              </li>
-              <li class="page-item" :class="{ disabled: currentPage === totalPages }">
-                <button class="page-link" @click="currentPage++" :disabled="currentPage === totalPages">
-                  <i class="bi bi-chevron-right"></i>
-                </button>
-              </li>
-            </ul>
-          </nav>
-        </div>
+          </template>
+        </DataTable>
       </div>
     </FilterTableSection>
 
@@ -370,7 +278,38 @@ export default {
   name: 'InvoiceManagement',
   components: invoiceManagementLogic.components,
   setup() {
-    return invoiceManagementLogic.setup();
+    const logic = invoiceManagementLogic.setup();
+
+    // Thêm hàm startDrag để xử lý kéo thả thanh trượt giá
+    const startDrag = (type, event) => {
+      const slider = event.target.closest('.slider-container');
+      const updatePrice = (e) => {
+        const rect = slider.getBoundingClientRect();
+        const pos = (e.clientX - rect.left) / rect.width;
+        const newPrice = Math.round(pos * (logic.maxInvoiceTotal.value - logic.minInvoiceTotal.value) + logic.minInvoiceTotal.value);
+
+        if (type === 'min' && newPrice < logic.rangeMax.value) {
+          logic.rangeMin.value = Math.max(logic.minInvoiceTotal.value, newPrice);
+        } else if (type === 'max' && newPrice > logic.rangeMin.value) {
+          logic.rangeMax.value = Math.min(logic.maxInvoiceTotal.value, newPrice);
+        }
+        logic.updateRangeMin();
+        logic.updateRangeMax();
+      };
+
+      const stopDrag = () => {
+        document.removeEventListener('mousemove', updatePrice);
+        document.removeEventListener('mouseup', stopDrag);
+      };
+
+      document.addEventListener('mousemove', updatePrice);
+      document.addEventListener('mouseup', stopDrag);
+    };
+
+    return {
+      ...logic,
+      startDrag,
+    };
   },
 };
 </script>
@@ -382,7 +321,6 @@ export default {
     opacity: 0;
     transform: translateY(15px);
   }
-
   to {
     opacity: 1;
     transform: translateY(0);
@@ -394,7 +332,6 @@ export default {
     opacity: 0;
     transform: translateX(-15px);
   }
-
   to {
     opacity: 1;
     transform: translateX(0);
@@ -402,26 +339,11 @@ export default {
 }
 
 @keyframes gentleGlow {
-
-  0%,
-  100% {
+  0%, 100% {
     box-shadow: 0 0 5px rgba(52, 211, 153, 0.3);
   }
-
   50% {
     box-shadow: 0 0 12px rgba(52, 211, 153, 0.5);
-  }
-}
-
-@keyframes zoomIn {
-  from {
-    opacity: 0;
-    transform: scale(0.97);
-  }
-
-  to {
-    opacity: 1;
-    transform: scale(1);
   }
 }
 
@@ -429,7 +351,6 @@ export default {
   from {
     background-color: rgba(52, 211, 153, 0.4);
   }
-
   to {
     background-color: rgba(52, 211, 153, 0.2);
   }
@@ -461,75 +382,45 @@ export default {
 }
 
 /* Price Range */
-.price-range-container {
-  display: flex;
-  flex-direction: column;
-}
-
-.dual-range-slider {
+.slider-container {
   position: relative;
+  height: 30px;
   width: 100%;
-  height: 20px;
+  display: flex;
+  align-items: center;
 }
 
 .slider-track {
-  position: absolute;
-  top: 7px;
+  height: 4px;
   width: 100%;
-  height: 6px;
-  background: #e9ecef;
-  border-radius: 3px;
+  background-color: #e5e7eb;
+  border-radius: 2px;
+  position: absolute;
 }
 
 .slider-range {
+  height: 4px;
+  background-color: #34d399;
+  border-radius: 2px;
   position: absolute;
-  height: 6px;
-  background: #34d399;
-  border-radius: 3px;
 }
 
-.range-slider {
-  position: absolute;
-  width: 100%;
-  height: 6px;
-  top: 7px;
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  appearance: none;
-  background: transparent;
-  pointer-events: none;
-}
-
-.range-slider::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  appearance: none;
+.slider-thumb {
   width: 18px;
   height: 18px;
+  background-color: #34d399;
   border-radius: 50%;
-  background: #34d399;
+  border: 2px solid white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
   cursor: pointer;
-  pointer-events: auto;
-  border: 2px solid #fff;
-  box-shadow: 0 0 4px rgba(0, 0, 0, 0.2);
+  z-index: 2;
 }
 
-.range-slider::-moz-range-thumb {
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  background: #34d399;
-  cursor: pointer;
-  pointer-events: auto;
-  border: none;
-  box-shadow: 0 0 4px rgba(0, 0, 0, 0.2);
-}
-
-.range-labels {
-  display: flex;
-  justify-content: space-between;
-  font-size: 0.875rem;
-  color: #1f3a44;
-  font-weight: 500;
+.slider-thumb:hover {
+  transform: translate(-50%, -50%) scale(1.1);
 }
 
 /* Filter Stats */
@@ -726,26 +617,6 @@ export default {
   cursor: default;
 }
 
-.status-badge-container {
-  width: 100%;
-}
-
-.status-badge-grid {
-  display: flex;
-  gap: 1rem;
-}
-
-.status-badge-grid .btn {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  font-size: 0.85rem;
-  min-height: 40px;
-  max-width: 100px;
-  white-space: nowrap;
-  text-align: center;
-}
-
 .btn-outline-primary {
   border-color: #16a34a !important;
   color: #16a34a !important;
@@ -793,42 +664,6 @@ export default {
   font-weight: 500;
 }
 
-.table-controls {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.view-toggle {
-  display: flex;
-  gap: 0.25rem;
-}
-
-.view-toggle .btn {
-  padding: 0.5rem 0.75rem;
-  border-radius: 8px;
-  transition: all 0.2s ease;
-}
-
-.view-toggle .btn-primary {
-  background: linear-gradient(135deg, #34d399, #16a34a);
-  border: none;
-}
-
-.view-toggle .btn-primary:hover {
-  background: linear-gradient(135deg, #16a34a, #15803d);
-}
-
-.view-toggle .btn-outline-secondary {
-  border: 1px solid rgba(52, 211, 153, 0.2);
-  color: #1f3a44;
-}
-
-.view-toggle .btn-outline-secondary:hover {
-  background: rgba(52, 211, 153, 0.1);
-  color: #16a34a;
-}
-
 .code-cell {
   display: flex;
   flex-direction: column;
@@ -841,18 +676,6 @@ export default {
 
 .code-date {
   font-size: 0.75rem;
-  color: #6c757d;
-}
-
-.employee-cell {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-}
-
-.employee-avatar {
-  font-size: 1.25rem;
   color: #6c757d;
 }
 
@@ -935,151 +758,7 @@ export default {
   text-shadow: 0 0 15px rgba(52, 211, 153, 0.3);
 }
 
-.card-grid {
-  padding: 1.5rem;
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 1.5rem;
-}
-
-.invoice-card {
-  background: #f8f9fa;
-  backdrop-filter: blur(15px);
-  border: 1px solid rgba(52, 211, 153, 0.1);
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  animation: zoomIn 0.3s ease-out;
-}
-
-.invoice-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 6px 12px rgba(52, 211, 153, 0.2);
-}
-
-.invoice-card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1rem;
-  background: #f8f9fa;
-  border-bottom: 1px solid rgba(52, 211, 153, 0.1);
-}
-
-.invoice-code {
-  font-weight: 600;
-  color: #34d399;
-}
-
-.invoice-card-body {
-  padding: 1rem;
-}
-
-.customer-info {
-  margin-bottom: 1rem;
-}
-
-.customer-name {
-  font-weight: 600;
-  color: #1f3a44;
-}
-
-.customer-phone {
-  font-size: 0.875rem;
-  color: #6c757d;
-}
-
-.invoice-details {
-  margin-bottom: 1rem;
-}
-
-.detail-row {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 0.5rem;
-}
-
-.detail-label {
-  font-weight: 500;
-  color: #6c757d;
-}
-
-.detail-value {
-  font-weight: 500;
-  color: #1f3a44;
-}
-
-.invoice-amounts {
-  padding-top: 1rem;
-  border-top: 1px solid rgba(52, 211, 153, 0.1);
-}
-
-.amount-details {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-  margin-top: 0.5rem;
-}
-
-.amount-details small {
-  color: #6c757d;
-}
-
-.invoice-card-actions {
-  padding: 1rem;
-  border-top: 1px solid rgba(52, 211, 153, 0.1);
-  display: flex;
-  gap: 0.5rem;
-  justify-content: flex-end;
-}
-
-.card-pagination {
-  padding: 1.5rem;
-}
-
-.pagination {
-  margin: 0;
-  justify-content: center;
-}
-
-.page-item .page-link {
-  border-radius: 8px;
-  margin: 0 0.25rem;
-  color: #1f3a44;
-  border: 1px solid rgba(52, 211, 153, 0.2);
-  transition: all 0.2s ease;
-}
-
-.page-item.active .page-link {
-  background: linear-gradient(135deg, #34d399, #16a34a);
-  border-color: #34d399;
-  color: white;
-}
-
-.page-item:not(.disabled) .page-link:hover {
-  background: linear-gradient(135deg, #16a34a, #15803d);
-  border-color: #16a34a;
-  color: white;
-}
-
-.page-item.disabled .page-link {
-  background: #f8f9fa;
-  border-color: rgba(52, 211, 153, 0.2);
-  color: #6c757d;
-}
-
 /* Responsive */
-@media (max-width: 1100px) {
-  .date-range-wrapper {
-    flex-direction: column;
-    gap: 1rem;
-  }
-
-  .date-separator {
-    display: none;
-  }
-}
-
 @media (max-width: 768px) {
   .header-content {
     flex-direction: column;
@@ -1131,17 +810,10 @@ export default {
     font-size: 0.9rem;
   }
 
-  .status-badge-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
-    gap: 0.5rem;
-  }
-
-  .status-badge-grid .btn {
-    width: 90px;
-    font-size: 0.8rem;
-    padding: 0.4rem;
-    min-height: 36px;
+  .status-badge {
+    width: 100%;
+    text-align: center;
+    margin-bottom: 0.5rem;
   }
 }
 
@@ -1165,17 +837,9 @@ export default {
     margin-bottom: 0.5rem;
   }
 
-  .status-badge-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
-    gap: 0.4rem;
-  }
-
-  .status-badge-grid .btn {
-    width: 80px;
+  .status-badge {
     font-size: 0.8rem;
-    padding: 0.5rem;
-    min-height: 40px;
+    padding: 0.4rem 0.8rem;
   }
 }
 
@@ -1194,10 +858,6 @@ export default {
 
 .animate__fadeIn {
   animation-name: fadeIn;
-}
-
-.animate__zoomIn {
-  animation-name: zoomIn;
 }
 
 /* Modal QR Scanner */
@@ -1324,41 +984,8 @@ export default {
   from {
     opacity: 0;
   }
-
   to {
     opacity: 1;
-  }
-}
-
-@keyframes gentleGlow {
-
-  0%,
-  100% {
-    box-shadow: 0 0 5px rgba(52, 211, 153, 0.3);
-  }
-
-  50% {
-    box-shadow: 0 0 12px rgba(52, 211, 153, 0.5);
-  }
-}
-
-/* Responsive */
-@media (max-width: 576px) {
-  .modal-qr {
-    max-width: 90%;
-  }
-
-  .modal-body {
-    padding: 1rem;
-  }
-
-  .qr-overlay {
-    max-width: 100%;
-    aspect-ratio: 1;
-  }
-
-  .modal-footer .btn-secondary {
-    width: 100%;
   }
 }
 </style>

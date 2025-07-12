@@ -57,35 +57,27 @@
           <!-- Sale Value Range Slider -->
           <div class="col-lg-4 col-md-6">
             <div class="filter-group">
-              <div class="price-range-container">
-                <label class="filter-label">Giá trị giảm (%)</label>
-                <div class="dual-range-slider">
-                  <div class="slider-track">
-                    <div class="slider-range" :style="saleValueSliderStyle"></div>
-                  </div>
-                  <input
-                      type="range"
-                      v-model.number="saleValueMin"
-                      :min="0"
-                      :max="maxGiaTriGiamGia"
-                      class="range-slider"
-                      style="z-index: 2"
-                      @input="updateSaleValueMax"
-                  />
-                  <input
-                      type="range"
-                      v-model.number="saleValueMax"
-                      :min="0"
-                      :max="maxGiaTriGiamGia"
-                      class="range-slider"
-                      style="z-index: 1"
-                      @input="updateSaleValueMin"
-                  />
-                </div>
-                <div class="range-labels d-flex justify-content-between">
-                  <span>{{ saleValueMin }}%</span>
-                  <span>{{ saleValueMax }}%</span>
-                </div>
+              <label class="filter-label">Giá trị giảm (%)</label>
+              <div class="slider-container">
+                <div class="slider-track"></div>
+                <div class="slider-range" :style="{
+                  left: `${(saleValueMin / maxGiaTriGiamGia) * 100}%`,
+                  width: `${((saleValueMax - saleValueMin) / maxGiaTriGiamGia) * 100}%`
+                }"></div>
+                <div class="slider-thumb"
+                  :style="{ left: `${(saleValueMin / maxGiaTriGiamGia) * 100}%` }"
+                  @mousedown="(e) => startDrag('saleValueMin', e)"></div>
+                <div class="slider-thumb"
+                  :style="{ left: `${(saleValueMax / maxGiaTriGiamGia) * 100}%` }"
+                  @mousedown="(e) => startDrag('saleValueMax', e)"></div>
+                <input type="range" v-model.number="saleValueMin" :min="0" :max="saleValueMax"
+                  class="absolute opacity-0 w-full h-full" />
+                <input type="range" v-model.number="saleValueMax" :min="saleValueMin" :max="maxGiaTriGiamGia"
+                  class="absolute opacity-0 w-full h-full" />
+              </div>
+              <div class="d-flex justify-content-between text-sm text-gray-600 mt-1">
+                <span>{{ saleValueMin }}%</span>
+                <span>{{ saleValueMax }}%</span>
               </div>
             </div>
           </div>
@@ -93,35 +85,27 @@
           <!-- Min Order Range Slider -->
           <div class="col-lg-4 col-md-6">
             <div class="filter-group">
-              <div class="price-range-container">
-                <label class="filter-label">Số tiền giảm tối đa (VND)</label>
-                <div class="dual-range-slider">
-                  <div class="slider-track">
-                    <div class="slider-range" :style="minOrderSliderStyle"></div>
-                  </div>
-                  <input
-                      type="range"
-                      v-model.number="minOrderMin"
-                      :min="0"
-                      :max="maxSoTienGiamToiDa"
-                      class="range-slider"
-                      style="z-index: 2"
-                      @input="updateMinOrderMax"
-                  />
-                  <input
-                      type="range"
-                      v-model.number="minOrderMax"
-                      :min="0"
-                      :max="maxSoTienGiamToiDa"
-                      class="range-slider"
-                      style="z-index: 1"
-                      @input="updateMinOrderMin"
-                  />
-                </div>
-                <div class="range-labels d-flex justify-content-between">
-                  <span>{{ formatPrice(minOrderMin) }}</span>
-                  <span>{{ formatPrice(minOrderMax) }}</span>
-                </div>
+              <label class="filter-label">Số tiền giảm tối đa (VND)</label>
+              <div class="slider-container">
+                <div class="slider-track"></div>
+                <div class="slider-range" :style="{
+                  left: `${(minOrderMin / maxSoTienGiamToiDa) * 100}%`,
+                  width: `${((minOrderMax - minOrderMin) / maxSoTienGiamToiDa) * 100}%`
+                }"></div>
+                <div class="slider-thumb"
+                  :style="{ left: `${(minOrderMin / maxSoTienGiamToiDa) * 100}%` }"
+                  @mousedown="(e) => startDrag('minOrderMin', e)"></div>
+                <div class="slider-thumb"
+                  :style="{ left: `${(minOrderMax / maxSoTienGiamToiDa) * 100}%` }"
+                  @mousedown="(e) => startDrag('minOrderMax', e)"></div>
+                <input type="range" v-model.number="minOrderMin" :min="0" :max="minOrderMax"
+                  class="absolute opacity-0 w-full h-full" @change="fetchMaxValues" />
+                <input type="range" v-model.number="minOrderMax" :min="minOrderMin" :max="maxSoTienGiamToiDa"
+                  class="absolute opacity-0 w-full h-full" @change="fetchMaxValues" />
+              </div>
+              <div class="d-flex justify-content-between text-sm text-gray-600 mt-1">
+                <span>{{ formatPrice(minOrderMin) }}</span>
+                <span>{{ formatPrice(minOrderMax) }}</span>
               </div>
             </div>
           </div>
@@ -181,8 +165,8 @@
         <template #actions="{ item }">
           <div class="action-buttons-cell d-flex justify-content-center gap-2">
             <button class="btn btn-sm btn-table"
-            @click="viewUpdate(item)"
-            title="Chỉnh sửa">
+                    @click="viewUpdate(item)"
+                    title="Chỉnh sửa">
               <i class="bi bi-pencil-fill"></i>
             </button>
             <button
@@ -248,6 +232,7 @@ const {
   saleValueMax,
   minOrderMin,
   minOrderMax,
+  isDraggingMinOrder
 } = useDiscountManagement();
 
 const notificationModal = ref(null);
@@ -266,54 +251,51 @@ const headers = ref([
   { text: 'Hành Động', value: 'actions' },
 ]);
 
-const saleValueSliderStyle = computed(() => {
-  const min = 0;
-  const max = maxGiaTriGiamGia.value;
-  const left = (saleValueMin.value / max) * 100;
-  const width = ((saleValueMax.value - saleValueMin.value) / max) * 100;
-  return {
-    left: `${left}%`,
-    width: `${width}%`
+// Hàm xử lý kéo thả cho thanh trượt
+const startDrag = (type, event) => {
+  const slider = event.target.closest('.slider-container');
+  const updateValue = (e) => {
+    const rect = slider.getBoundingClientRect();
+    const pos = (e.clientX - rect.left) / rect.width;
+    
+    if (type === 'saleValueMin') {
+      const newValue = Math.round(pos * maxGiaTriGiamGia.value);
+      if (newValue < saleValueMax.value) {
+        saleValueMin.value = Math.max(0, newValue);
+      }
+      updateSaleValueMin();
+    } else if (type === 'saleValueMax') {
+      const newValue = Math.round(pos * maxGiaTriGiamGia.value);
+      if (newValue > saleValueMin.value) {
+        saleValueMax.value = Math.min(maxGiaTriGiamGia.value, newValue);
+      }
+      updateSaleValueMax();
+    } else if (type === 'minOrderMin') {
+      const newValue = Math.round(pos * maxSoTienGiamToiDa.value);
+      if (newValue < minOrderMax.value) {
+        minOrderMin.value = Math.max(0, newValue);
+      }
+      updateMinOrderMin();
+    } else if (type === 'minOrderMax') {
+      const newValue = Math.round(pos * maxSoTienGiamToiDa.value);
+      if (newValue > minOrderMin.value) {
+        minOrderMax.value = Math.min(maxSoTienGiamToiDa.value, newValue);
+      }
+      updateMinOrderMax();
+    }
   };
-});
 
-const minOrderSliderStyle = computed(() => {
-  const min = 0;
-  const max = maxSoTienGiamToiDa.value;
-  const left = (minOrderMin.value / max) * 100;
-  const width = ((minOrderMax.value - minOrderMin.value) / max) * 100;
-  return {
-    left: `${left}%`,
-    width: `${width}%`
+  const stopDrag = () => {
+    document.removeEventListener('mousemove', updateValue);
+    document.removeEventListener('mouseup', stopDrag);
+    if (type.includes('minOrder')) {
+      isDraggingMinOrder.value = false;
+      fetchData();
+    }
   };
-});
 
-const updateSaleValueMin = () => {
-  if (saleValueMin.value > saleValueMax.value) {
-    saleValueMin.value = saleValueMax.value;
-  }
-  saleValue.value = saleValueMax.value; // Update single value for filtering
-};
-
-const updateSaleValueMax = () => {
-  if (saleValueMax.value < saleValueMin.value) {
-    saleValueMax.value = saleValueMin.value;
-  }
-  saleValue.value = saleValueMax.value; // Update single value for filtering
-};
-
-const updateMinOrderMin = () => {
-  if (minOrderMin.value > minOrderMax.value) {
-    minOrderMin.value = minOrderMax.value;
-  }
-  minOrder.value = minOrderMax.value; // Update single value for filtering
-};
-
-const updateMinOrderMax = () => {
-  if (minOrderMax.value < minOrderMin.value) {
-    minOrderMax.value = minOrderMin.value;
-  }
-  minOrder.value = minOrderMax.value; // Update single value for filtering
+  document.addEventListener('mousemove', updateValue);
+  document.addEventListener('mouseup', stopDrag);
 };
 
 const formatPrice = (value) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);
@@ -510,14 +492,14 @@ watch([searchQuery, filterType, filterStatus, startDate, endDate, saleValue, min
 }
 
 .badge-cash {
-  border: 1px solid #34d399; /* Viền cho Tiền mặt */
+  border: 1px solid #34d399;
   padding: .5rem 1rem;
   color: #34d399;
   background: transparent;
 }
 
 .badge-percent {
-  border: 1px solid #059669; /* Viền cho Phần trăm */
+  border: 1px solid #059669;
   padding: .45rem 1rem;
   color: #059669;
   background: transparent;
@@ -539,72 +521,45 @@ watch([searchQuery, filterType, filterStatus, startDate, endDate, saleValue, min
 }
 
 /* Range Slider Styles */
-.price-range-container {
-  margin-top: 0.5rem;
-}
-
-.dual-range-slider {
+.slider-container {
   position: relative;
+  height: 30px;
   width: 100%;
-  height: 10px;
-  margin: 20px 0;
+  display: flex;
+  align-items: center;
 }
 
 .slider-track {
-  position: absolute;
-  width: 100%;
   height: 4px;
-  background: #e0e0e0;
+  width: 100%;
+  background-color: #e5e7eb;
   border-radius: 2px;
-  top: 50%;
-  transform: translateY(-50%);
+  position: absolute;
 }
 
 .slider-range {
-  position: absolute;
   height: 4px;
-  background: #34d399;
+  background-color: #34d399;
   border-radius: 2px;
-}
-
-.range-slider {
   position: absolute;
-  width: 100%;
-  height: 10px;
-  background: transparent;
-  -webkit-appearance: none;
-  appearance: none;
-  pointer-events: none;
+}
+
+.slider-thumb {
+  width: 18px;
+  height: 18px;
+  background-color: #34d399;
+  border-radius: 50%;
+  border: 2px solid white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  position: absolute;
   top: 50%;
-  transform: translateY(-50%);
-}
-
-.range-slider::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 16px;
-  height: 16px;
-  background: #34d399;
-  border-radius: 50%;
+  transform: translate(-50%, -50%);
   cursor: pointer;
-  pointer-events: auto;
-  box-shadow: 0 0 4px rgba(0, 0, 0, 0.2);
+  z-index: 2;
 }
 
-.range-slider::-moz-range-thumb {
-  width: 16px;
-  height: 16px;
-  background: #34d399;
-  border-radius: 50%;
-  cursor: pointer;
-  pointer-events: auto;
-  box-shadow: 0 0 4px rgba(0, 0, 0, 0.2);
-}
-
-.range-labels {
-  margin-top: 0.5rem;
-  font-size: 0.875rem;
-  color: #1f3a44;
+.slider-thumb:hover {
+  transform: translate(-50%, -50%) scale(1.1);
 }
 
 .action-buttons-cell {
