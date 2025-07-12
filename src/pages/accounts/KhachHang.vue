@@ -1,11 +1,7 @@
 <template>
   <div class="container-fluid py-4">
-    <HeaderCard
-      title="Quản Lý Khách Hàng"
-      badgeText="Hệ Thống POS"
-      badgeClass="gradient-custom-teal"
-      :backgroundOpacity="0.95"
-    />
+    <HeaderCard title="Quản Lý Khách Hàng" badgeText="Hệ Thống POS" badgeClass="gradient-custom-teal"
+      :backgroundOpacity="0.95" />
 
     <!-- Filter Section -->
     <FilterTableSection title="Bộ Lọc Tìm Kiếm" icon="bi bi-funnel">
@@ -16,34 +12,28 @@
               <label class="filter-label">Tìm kiếm</label>
               <div class="search-input-wrapper">
                 <i class="bi bi-search search-icon"></i>
-                <input
-                  type="text"
-                  class="form-control search-input"
-                  placeholder="Mã, tên, email, SĐT..."
-                  :value="keyword"
-                  @input="debouncedSearch($event.target.value)"
-                />
+                <input type="text" class="form-control search-input" placeholder="Mã, tên, email, SĐT..."
+                  :value="keyword" @input="debouncedSearch($event.target.value)" />
               </div>
             </div>
           </div>
           <div class="col-lg-4 col-md-6">
             <div class="filter-group">
-              <label class="filter-label">Giới tính</label>
-              <select class="form-control date-input" v-model="genderFilter">
-                <option value="tat-ca">Tất cả</option>
-                <option value="Nam">Nam</option>
-                <option value="Nữ">Nữ</option>
-              </select>
-            </div>
-          </div>
-          <div class="col-lg-4 col-md-6">
-            <div class="filter-group">
               <label class="filter-label">Trạng thái</label>
-              <select class="form-control date-input" v-model="statusFilter">
-                <option value="tat-ca">Tất cả</option>
-                <option value="Kích hoạt">Kích hoạt</option>
-                <option value="Hủy kích hoạt">Hủy kích hoạt</option>
-              </select>
+              <div class="radio-group">
+                <label class="radio-label">
+                  <input type="radio" value="tat-ca" v-model="statusFilter" class="radio-input" />
+                  Tất cả
+                </label>
+                <label class="radio-label">
+                  <input type="radio" value="Kích hoạt" v-model="statusFilter" class="radio-input" />
+                  Kích hoạt
+                </label>
+                <label class="radio-label">
+                  <input type="radio" value="Hủy kích hoạt" v-model="statusFilter" class="radio-input" />
+                  Hủy kích hoạt
+                </label>
+              </div>
             </div>
           </div>
         </div>
@@ -53,11 +43,8 @@
               <div class="filter-stats">
                 <div class="stat-item d-flex gap-2">
                   <span class="stat-label">Tổng số khách hàng:</span>
-                  <span
-                    class="stat-value"
-                    style="color: #15803d; font-weight: bold"
-                    >{{ filteredCustomers.length }}</span
-                  >
+                  <span class="stat-value" style="color: #15803d; font-weight: bold">{{ filteredCustomers.length
+                    }}</span>
                 </div>
               </div>
             </div>
@@ -74,13 +61,7 @@
             </button>
             <label for="import-excel" class="btn btn-action cursor-pointer">
               Nhập từ Excel
-              <input
-                id="import-excel"
-                type="file"
-                accept=".xlsx, .xls"
-                class="d-none"
-                @change="handleExcelUpload"
-              />
+              <input id="import-excel" type="file" accept=".xlsx, .xls" class="d-none" @change="handleExcelUpload" />
             </label>
             <button class="btn btn-action" @click="downloadTemplate">
               Tải mẫu Excel
@@ -94,47 +75,14 @@
     <FilterTableSection title="Danh Sách Khách Hàng" icon="bi bi-table">
       <div class="table-header">
         <div class="table-title-wrapper">
-          <span class="table-count"
-            >{{ filteredCustomers.length }} khách hàng</span
-          >
-        </div>
-        <div class="table-controls">
-          <div class="view-toggle">
-            <button
-              class="btn btn-sm"
-              :class="{
-                'btn-primary': viewMode === 'table',
-                'btn-outline-secondary': viewMode !== 'table',
-              }"
-              @click="viewMode = 'table'"
-            >
-              <i class="bi bi-table"></i>
-            </button>
-            <button
-              class="btn btn-sm"
-              :class="{
-                'btn-primary': viewMode === 'card',
-                'btn-outline-secondary': viewMode !== 'card',
-              }"
-              @click="viewMode = 'card'"
-            >
-              <i class="bi bi-grid-3x3-gap"></i>
-            </button>
-          </div>
+          <span class="table-count">{{ filteredCustomers.length }} khách hàng</span>
         </div>
       </div>
 
       <div class="table-body">
         <!-- Table View -->
-        <div
-          v-if="viewMode === 'table'"
-          class="animate__animated animate__zoomIn"
-        >
-          <DataTable
-            :headers="headers"
-            :data="filteredCustomers"
-            :pageSizeOptions="[5, 10, 15, 20, 30, 40, 50]"
-          >
+        <div class="animate__animated animate__zoomIn">
+          <DataTable :headers="headers" :data="filteredCustomers" :pageSizeOptions="[5, 10, 15, 20, 30, 40, 50]">
             <template #stt="{ item, index }">
               {{ index + 1 }}
             </template>
@@ -153,170 +101,51 @@
                 <div class="customer-name">{{ item.idTaiKhoan.soDienThoai }}</div>
               </div>
             </template>
-             <template #email="{ item }">
+            <template #email="{ item }">
               <div class="customer-cell">
                 <div class="customer-name">{{ item.idTaiKhoan.email }}</div>
               </div>
             </template>
             <template #diaChi="{ item }">
-        <div class="customer-cell">
-          <div class="customer-name">
-            <span v-if="item.idDiaChiKhachHang && item.idDiaChiKhachHang.macDinh === true">
-              {{ item.idDiaChiKhachHang.diaChiCuThe }},
-              {{ item.idDiaChiKhachHang.thanhPho }},
-              {{ item.idDiaChiKhachHang.quan }},
-              {{ item.idDiaChiKhachHang.phuong }}
-            </span>
-            <span v-else>Không có địa chỉ</span>
-          </div>
-        </div>
-      </template>
+              <div class="customer-cell">
+                <div class="customer-name">
+                  <span v-if="item.idDiaChiKhachHang && item.idDiaChiKhachHang.macDinh === true">
+                    {{ item.idDiaChiKhachHang.diaChiCuThe }},
+                    {{ item.idDiaChiKhachHang.thanhPho }},
+                    {{ item.idDiaChiKhachHang.quan }},
+                    {{ item.idDiaChiKhachHang.phuong }}
+                  </span>
+                  <span v-else>Không có địa chỉ</span>
+                </div>
+              </div>
+            </template>
             <template #trangThai="{ item }">
-              <span
-                class="status-badge"
-                :class="getStatusBadgeClass(item.idTaiKhoan.deleted)"
-              >
-                {{ item.idTaiKhoan.deleted ? "Kích Hoạt":"Đã Hủy" }}
+              <span class="status-badge" :class="getStatusBadgeClass(item.idTaiKhoan.deleted)">
+                {{ item.idTaiKhoan.deleted ? "Kích Hoạt" : "Đã Hủy" }}
               </span>
             </template>
             <template #actions="{ item }">
               <div class="action-buttons-cell d-flex gap-2">
                 <label class="switch">
-                  <input
-                    type="checkbox"
-                    :checked="item.idTaiKhoan.deleted"
-                    @change="toggleCustomerStatus(item)"
-                  />
+                  <input type="checkbox" :checked="item.idTaiKhoan.deleted" @change="toggleCustomerStatus(item)" />
                   <span class="slider round"></span>
                 </label>
-                <button
-                  class="btn btn-sm btn-table"
-                  @click="editCustomer(item)"
-                  title="Chỉnh sửa"
-                >
+                <button class="btn btn-sm btn-table" @click="editCustomer(item)" title="Chỉnh sửa">
                   <i class="bi bi-pencil-fill"></i>
                 </button>
-                <button
-                  class="btn btn-sm btn-table"
-                  @click="confirmDeleteCustomer(item)"
-                  title="Xóa"
-                >
+                <button class="btn btn-sm btn-table" @click="confirmDeleteCustomer(item)" title="Xóa">
                   <i class="bi bi-trash-fill"></i>
                 </button>
               </div>
             </template>
           </DataTable>
         </div>
-
-        <!-- Card View -->
-        <div v-else class="card-grid animate__animated animate__zoomIn">
-          <div
-            v-for="customer in paginatedCustomers"
-            :key="customer.ma"
-            class="customer-card"
-          >
-            <div class="invoice-card-header">
-              <div class="invoice-code">{{ customer.ma }}</div>
-              <span
-                class="status-badge"
-                :class="getStatusBadgeClass(customer.idTaiKhoan.deleted)"
-              >
-                {{ customer.idTaiKhoan.deleted  ? "Kích Hoạt" : "Đã Hủy"  }}
-              </span>
-            </div>
-            <div class="invoice-card-body">
-              <div class="customer-info">
-                <div class="customer-name">{{ customer.ten }}</div>
-              </div>
-              <div class="customer-info">
-                <div class="customer-phone">{{ customer.idTaiKhoan.soDienThoai }}</div>
-              </div>
-              <div class="invoice-details">
-                <div class="detail-row">
-                  <span class="detail-label">Email:</span>
-                  <span class="detail-value">{{ customer.email }}</span>
-                </div>
-                <div class="detail-row">
-                  <span class="detail-label">Địa chỉ:</span>
-                  <span class="detail-value">{{ customer.diaChi }}</span>
-                </div>
-              </div>
-            </div>
-            <div class="invoice-card-actions">
-              <label class="switch">
-                <input
-                  type="checkbox"
-                  :checked="customer.trangThai === 'Kích hoạt'"
-                  @change="toggleCustomerStatus(customer)"
-                />
-                <span class="slider round"></span>
-              </label>
-              <button
-                class="btn btn-sm btn-table"
-                @click="editCustomer(customer)"
-              >
-                <i class="bi bi-pen-fill me-1"></i> Sửa
-              </button>
-              <button
-                class="btn btn-sm btn-table"
-                @click="confirmDeleteCustomer(customer)"
-              >
-                <i class="bi bi-trash-fill me-1"></i> Xóa
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Pagination for Card View -->
-        <div v-if="viewMode === 'card'" class="card-pagination">
-          <nav aria-label="Page navigation">
-            <ul class="pagination justify-content-center">
-              <li class="page-item" :class="{ disabled: currentPage === 1 }">
-                <button
-                  class="page-link"
-                  @click="currentPage--"
-                  :disabled="currentPage === 1"
-                >
-                  <i class="bi bi-chevron-left"></i>
-                </button>
-              </li>
-              <li
-                v-for="page in totalPages"
-                :key="page"
-                class="page-item"
-                :class="{ active: currentPage === page }"
-              >
-                <button class="page-link" @click="currentPage = page">
-                  {{ page }}
-                </button>
-              </li>
-              <li
-                class="page-item"
-                :class="{ disabled: currentPage === totalPages }"
-              >
-                <button
-                  class="page-link"
-                  @click="currentPage++"
-                  :disabled="currentPage === totalPages"
-                >
-                  <i class="bi bi-chevron-right"></i>
-                </button>
-              </li>
-            </ul>
-          </nav>
-        </div>
       </div>
     </FilterTableSection>
 
-    <NotificationModal
-      ref="notificationModal"
-      :type="notificationType"
-      :message="notificationMessage"
-      :isLoading="isNotificationLoading"
-      :onConfirm="notificationOnConfirm"
-      :onCancel="notificationOnCancel"
-      @close="resetNotification"
-    />
+    <NotificationModal ref="notificationModal" :type="notificationType" :message="notificationMessage"
+      :isLoading="isNotificationLoading" :onConfirm="notificationOnConfirm" :onCancel="notificationOnCancel"
+      @close="resetNotification" />
     <ToastNotification ref="toastNotification" />
   </div>
 </template>
@@ -330,15 +159,13 @@ import NotificationModal from "@/components/common/NotificationModal.vue";
 import ToastNotification from "@/components/common/ToastNotification.vue";
 import HeaderCard from "@/components/common/HeaderCard.vue";
 import FilterTableSection from "@/components/common/FilterTableSection.vue";
-import { fetchKhachHang, trangThai,importKhachHang } from "../../store/modules/customers/khachHang";
+import { fetchKhachHang, trangThai, importKhachHang } from "../../store/modules/customers/khachHang";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
 
 const router = useRouter();
 const keyword = ref("");
-const genderFilter = ref("tat-ca");
 const statusFilter = ref("tat-ca");
-const viewMode = ref("table");
 const currentPage = ref(1);
 const pageSize = ref(10);
 const notificationType = ref("");
@@ -362,33 +189,20 @@ const filteredCustomers = computed(() => {
     const matchesStatus =
       statusFilter.value === "tat-ca" ||
       customer.trangThai === statusFilter.value;
-    const matchesGender =
-      genderFilter.value === "tat-ca" ||
-      customer.gioiTinh === genderFilter.value;
-    return matchesSearch && matchesStatus && matchesGender;
+    return matchesSearch && matchesStatus;
   });
 });
 
 onMounted(async () => {
   const data = await fetchKhachHang();
   customers.value = data;
-
-});
-
-const totalPages = computed(() =>
-  Math.ceil(filteredCustomers.value.length / pageSize.value)
-);
-
-const paginatedCustomers = computed(() => {
-  const start = (currentPage.value - 1) * pageSize.value;
-  return filteredCustomers.value.slice(start, start + pageSize.value);
 });
 
 const headers = [
   { value: "stt", text: "STT" },
   { value: "ma", text: "Mã Khách Hàng" },
   { value: "ten", text: "Tên Khách Hàng" },
-   { value: "soDienThoai", text: "Số Điện Thoại" },
+  { value: "soDienThoai", text: "Số Điện Thoại" },
   { value: "email", text: "Email" },
   { value: "diaChi", text: "Địa Chỉ" },
   { value: "trangThai", text: "Trạng Thái" },
@@ -400,10 +214,8 @@ const debouncedSearch = debounce((value) => {
   currentPage.value = 1;
 }, 300);
 
-
 const resetFilters = () => {
   keyword.value = "";
-  genderFilter.value = "tat-ca";
   statusFilter.value = "tat-ca";
   currentPage.value = 1;
 };
@@ -437,7 +249,7 @@ const deleteCustomer = (customer) => {
 };
 
 const toggleCustomerStatus = async (customer) => {
-  const newDeleted = !customer.idTaiKhoan.deleted; 
+  const newDeleted = !customer.idTaiKhoan.deleted;
   const newStatus = newDeleted ? "Kích Hoạt" : "Đã Hủy";
 
   try {
@@ -452,10 +264,10 @@ const toggleCustomerStatus = async (customer) => {
       customers.value = customers.value.map((e) =>
         e.id === customer.id
           ? {
-              ...e,
-              trangThai: newStatus,
-              idTaiKhoan: { ...e.idTaiKhoan, deleted: newDeleted },
-            }
+            ...e,
+            trangThai: newStatus,
+            idTaiKhoan: { ...e.idTaiKhoan, deleted: newDeleted },
+          }
           : e
       );
 
@@ -482,7 +294,6 @@ const resetNotification = () => {
   notificationOnCancel.value = null;
 };
 
-
 const exportExcel = () => {
   if (!customers.value.length) {
     toastNotification.value.addToast({
@@ -499,18 +310,16 @@ const exportExcel = () => {
       "Tên Khách Hàng": customer.ten || "N/A",
       "Email": customer.idTaiKhoan?.email || "N/A",
       "Số Điện Thoại": customer.idTaiKhoan?.soDienThoai || "N/A",
-      "Giới Tính": customer.gioiTinh === false ? "Nam" : 
-                    customer.gioiTinh === true ? "Nữ" : "N/A",
-      "Ngày Sinh": customer.ngaySinh ? 
+      "Ngày Sinh": customer.ngaySinh ?
         new Date(customer.ngaySinh).toLocaleDateString("vi-VN") : "N/A",
       "CCCD": customer.cccd || "N/A",
-      "Địa Chỉ Cụ Thể": customer.idDiaChiKhachHang?.macDinh ? 
+      "Địa Chỉ Cụ Thể": customer.idDiaChiKhachHang?.macDinh ?
         customer.idDiaChiKhachHang.diaChiCuThe || "N/A" : "N/A",
-      "Phường": customer.idDiaChiKhachHang?.macDinh ? 
+      "Phường": customer.idDiaChiKhachHang?.macDinh ?
         customer.idDiaChiKhachHang.phuong || "N/A" : "N/A",
-      "Quận": customer.idDiaChiKhachHang?.macDinh ? 
+      "Quận": customer.idDiaChiKhachHang?.macDinh ?
         customer.idDiaChiKhachHang.quan || "N/A" : "N/A",
-      "Thành Phố": customer.idDiaChiKhachHang?.macDinh ? 
+      "Thành Phố": customer.idDiaChiKhachHang?.macDinh ?
         customer.idDiaChiKhachHang.thanhPho || "N/A" : "N/A",
       "Trạng Thái": customer.idTaiKhoan?.deleted === false ? "Kích Hoạt" : "Đã Hủy",
       "Ảnh Khách Hàng": customer.anhKhachHang || "N/A",
@@ -518,7 +327,7 @@ const exportExcel = () => {
 
     const worksheet = XLSX.utils.json_to_sheet(exportData);
     const workbook = XLSX.utils.book_new();
-    
+
     // Đặt độ rộng cột
     worksheet["!cols"] = [
       { wch: 5 },  // STT
@@ -526,7 +335,6 @@ const exportExcel = () => {
       { wch: 20 }, // Tên Khách Hàng
       { wch: 25 }, // Email
       { wch: 15 }, // Số Điện Thoại
-      { wch: 10 }, // Giới Tính
       { wch: 15 }, // Ngày Sinh
       { wch: 15 }, // CCCD
       { wch: 30 }, // Địa Chỉ Cụ Thể
@@ -621,12 +429,6 @@ const handleExcelUpload = async (event) => {
             throw new Error(`Dòng ${index + 2}: Trạng Thái phải là 'Kích Hoạt' hoặc 'Đã Hủy'`);
           }
 
-          // Xác thực giới tính
-          const gioiTinh = row["Giới Tính"]?.toString().trim();
-          if (gioiTinh && !["Nam", "Nữ"].includes(gioiTinh)) {
-            throw new Error(`Dòng ${index + 2}: Giới Tính phải là 'Nam' hoặc 'Nữ'`);
-          }
-
           // Xử lý ngày sinh
           let ngaySinh = null;
           if (row["Ngày Sinh"]) {
@@ -659,16 +461,15 @@ const handleExcelUpload = async (event) => {
             ma: row["Mã Khách Hàng"].toString().trim(),
             tenKH: row["Tên Khách Hàng"].toString().trim(),
             email: email || "",
-            soDienThoai: soDienThoai || "",
+            soDienThoai: row["Số Điện Thoại"]?.toString().trim() || "",
             userName: row["Tên Đăng Nhập"]?.toString().trim() || email,
-            gioiTinh: gioiTinh === "Nam" ? false : gioiTinh === "Nữ" ? true : null,
             ngaySinh: ngaySinh,
             cccd: cccd || null,
             diaChiCuThe: row["Địa Chỉ Cụ Thể"]?.toString().trim() || "",
             phuong: row["Phường"]?.toString().trim() || "",
             quan: row["Quận"]?.toString().trim() || "",
             thanhPho: row["Thành Phố"]?.toString().trim() || "",
-            createdAt: row["Ngày Tạo"] ? new Date(row["Ngày Tạo"]).toISOString() : new Date().toISOString(),
+            createdAt: new Date().toISOString(),
             deleted: trangThai === "Kích Hoạt" ? false : true,
           };
         });
@@ -718,7 +519,7 @@ const handleExcelUpload = async (event) => {
 </script>
 
 <style scoped>
-/* Animations */
+/* Removed card view and table-controls related styles */
 @keyframes fadeInUp {
   from {
     opacity: 0;
@@ -731,19 +532,8 @@ const handleExcelUpload = async (event) => {
   }
 }
 
-@keyframes zoomIn {
-  from {
-    opacity: 0;
-    transform: scale(0.97);
-  }
-
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
 @keyframes gentleGlow {
+
   0%,
   100% {
     box-shadow: 0 0 5px rgba(52, 211, 153, 0.3);
@@ -795,8 +585,7 @@ const handleExcelUpload = async (event) => {
   z-index: 2;
 }
 
-.search-input,
-.date-input {
+.search-input {
   padding-left: 2.5rem;
   border: 2px solid rgba(52, 211, 153, 0.1);
   border-radius: 8px;
@@ -807,9 +596,49 @@ const handleExcelUpload = async (event) => {
   min-width: 0;
 }
 
-.search-input:focus,
-.date-input:focus {
+.search-input:focus {
   border-color: #34d399;
+  box-shadow: 0 0 10px rgba(52, 211, 153, 0.2);
+}
+
+.radio-group {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.radio-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  color: #1f3a44;
+  cursor: pointer;
+}
+
+.radio-input {
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border: 2px solid #34d399;
+  border-radius: 50%;
+  position: relative;
+  cursor: pointer;
+}
+
+.radio-input:checked::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 8px;
+  height: 8px;
+  background: #34d399;
+  border-radius: 50%;
+}
+
+.radio-input:focus {
   box-shadow: 0 0 10px rgba(52, 211, 153, 0.2);
 }
 
@@ -885,42 +714,6 @@ const handleExcelUpload = async (event) => {
   font-weight: 500;
 }
 
-.table-controls {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.view-toggle {
-  display: flex;
-  gap: 0.25rem;
-}
-
-.view-toggle .btn {
-  padding: 0.5rem 0.75rem;
-  border-radius: 8px;
-  transition: all 0.2s ease;
-}
-
-.view-toggle .btn-primary {
-  background: linear-gradient(135deg, #34d399, #16a34a);
-  border: none;
-}
-
-.view-toggle .btn-primary:hover {
-  background: linear-gradient(135deg, #16a34a, #15803d);
-}
-
-.view-toggle .btn-outline-secondary {
-  border: 1px solid rgba(45, 212, 191, 0.2);
-  color: #1f3a44;
-}
-
-.view-toggle .btn-outline-secondary:hover {
-  background: rgba(52, 211, 153, 0.1);
-  color: #16a34a;
-}
-
 .code-cell {
   display: flex;
   flex-direction: column;
@@ -982,117 +775,6 @@ const handleExcelUpload = async (event) => {
   text-shadow: 0 0 15px rgba(52, 211, 153, 0.3);
 }
 
-.card-grid {
-  padding: 1.5rem;
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 1.5rem;
-}
-
-.customer-card {
-  background: #f8f9fa;
-  border: 1px solid rgba(45, 212, 191, 0.1);
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  animation: zoomIn 0.3s ease-out;
-}
-
-.customer-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 6px 12px rgba(45, 212, 191, 0.2);
-}
-
-.invoice-card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1rem;
-  background: #f8f9fa;
-  border-bottom: 1px solid rgba(45, 212, 191, 0.1);
-}
-
-.invoice-code {
-  font-weight: 600;
-  color: #34d399;
-}
-
-.invoice-card-body {
-  padding: 1rem;
-}
-
-.customer-info {
-  margin-bottom: 1rem;
-}
-
-.customer-name {
-  font-weight: 600;
-  color: #1f3a44;
-}
-
-.customer-phone {
-  font-size: 0.875rem;
-  color: #6c757d;
-}
-
-.invoice-details {
-  margin-bottom: 1rem;
-}
-
-.detail-row {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 0.5rem;
-}
-
-.detail-label {
-  font-weight: 500;
-  color: #6c757d;
-}
-
-.detail-value {
-  font-weight: 500;
-  color: #1f3a44;
-}
-
-.invoice-card-actions {
-  padding: 1rem;
-  border-top: 1px solid rgba(45, 212, 191, 0.1);
-  display: flex;
-  gap: 0.5rem;
-  justify-content: flex-end;
-}
-
-.card-pagination {
-  padding: 1.5rem;
-}
-
-.page-item .page-link {
-  border-radius: 8px;
-  margin: 0 0.25rem;
-  color: #1f3a44;
-  border: 1px solid rgba(45, 212, 191, 0.2);
-  transition: all 0.2s ease;
-}
-
-.page-item.active .page-link {
-  background: linear-gradient(135deg, #34d399, #16a34a);
-  border-color: #34d399;
-  color: white;
-}
-
-.page-item:not(.disabled) .page-link:hover {
-  background: linear-gradient(135deg, #16a34a, #15803d);
-  border-color: #16a34a;
-  color: white;
-}
-
-.page-item.disabled .page-link {
-  background: #f8f9fa;
-  border-color: rgba(52, 211, 153, 0.2);
-  color: #6c757d;
-}
-
 .switch {
   position: relative;
   display: inline-block;
@@ -1130,11 +812,11 @@ const handleExcelUpload = async (event) => {
   border-radius: 50%;
 }
 
-input:checked + .slider {
+input:checked+.slider {
   background-color: #34d399;
 }
 
-input:checked + .slider:before {
+input:checked+.slider:before {
   transform: translateX(20px);
 }
 
@@ -1167,7 +849,7 @@ input:checked + .slider:before {
     margin-right: -0.25rem;
   }
 
-  .row.g-4 > [class*="col-"] {
+  .row.g-4>[class*="col-"] {
     padding-left: 0.25rem;
     padding-right: 0.25rem;
   }
@@ -1176,8 +858,7 @@ input:checked + .slider:before {
     font-size: 0.8rem;
   }
 
-  .search-input,
-  .date-input {
+  .search-input {
     font-size: 0.85rem;
     padding: 0.5rem 0.5rem 0.5rem 2rem;
   }
@@ -1185,11 +866,9 @@ input:checked + .slider:before {
   .search-icon {
     left: 0.75rem;
   }
-}
 
-@media (max-width: 576px) {
-  .card-grid {
-    grid-template-columns: 1fr;
+  .radio-label {
+    font-size: 0.85rem;
   }
 }
 </style>

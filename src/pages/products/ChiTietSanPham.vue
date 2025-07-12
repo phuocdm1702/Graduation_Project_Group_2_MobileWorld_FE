@@ -42,7 +42,7 @@
                 <input type="range" v-model="priceRange[1]" :min="priceRange[0]" :max="maxPrice"
                   class="absolute opacity-0 w-full h-full" />
               </div>
-              <div class="flex justify-between text-sm text-gray-600 mt-1">
+              <div class="d-flex justify-content-between text-sm text-gray-600 mt-1">
                 <span>{{ formatPrice(priceRange[0]) }}</span>
                 <span>{{ formatPrice(priceRange[1]) }}</span>
               </div>
@@ -1283,7 +1283,7 @@ export default {
 
 .slider-range {
   height: 4px;
-  background-color: #16a34a;
+  background-color: #34d399;
   border-radius: 2px;
   position: absolute;
 }
@@ -1291,7 +1291,7 @@ export default {
 .slider-thumb {
   width: 18px;
   height: 18px;
-  background-color: #16a34a;
+  background-color: #34d399;
   border-radius: 50%;
   border: 2px solid white;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
@@ -1379,7 +1379,7 @@ export default {
 }
 
 .imei-list-container tbody tr {
-  transition: background 0.2s ease;
+  transition: 0.2s ease;
 }
 
 .imei-list-container tbody tr:hover {

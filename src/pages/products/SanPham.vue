@@ -127,156 +127,61 @@
 
     <!-- Table View -->
     <FilterTableSection title="Danh Sách Sản Phẩm" icon="bi bi-table">
-      <!-- Table/Card View Toggle -->
       <div class="table-header">
         <div class="table-title-wrapper">
           <span class="table-count">{{ sharedFilteredItems.length }} sản phẩm</span>
         </div>
-        <div class="table-controls">
-          <div class="view-toggle">
-            <button class="btn btn-sm"
-              :class="{ 'btn-primary': viewMode === 'table', 'btn-outline-secondary': viewMode !== 'table' }"
-              @click="viewMode = 'table'">
-              <i class="bi bi-table"></i>
-            </button>
-            <button class="btn btn-sm"
-              :class="{ 'btn-primary': viewMode === 'card', 'btn-outline-secondary': viewMode !== 'card' }"
-              @click="viewMode = 'card'">
-              <i class="bi bi-grid-3x3-gap"></i>
-            </button>
-          </div>
-        </div>
       </div>
       <div class="table-body">
-        <div v-if="viewMode === 'table'">
-          <DataTable title="" :headers="headers" :data="paginatedProducts"
-            :pageSizeOptions="[5, 10, 15, 20, 30, 40, 50]">
-            <template #stt="{ globalIndex }">
-              {{ globalIndex + 1 }}
-            </template>
-            <template #tenSanPham="{ item }">
-              <div class="code-text">{{ item.tenSanPham }}</div>
-            </template>
-            <template #tenNhaSanXuat="{ item }">
-              <div class="employee-name">{{ item.tenNhaSanXuat }}</div>
-            </template>
-            <template #heDieuHanh="{ item }">
-              <div class="customer-name">{{ item.heDieuHanh }} {{ item.phienBan }}</div>
-            </template>
-            <template #congNgheManHinh="{ item }">
-              <div class="customer-name">{{ item.congNgheManHinh }}</div>
-            </template>
-            <template #tenCpu="{ item }">
-              <div class="customer-name">{{ item.tenCpu }}</div>
-            </template>
-            <template #dungLuongPin="{ item }">
-              <div class="customer-name">{{ item.dungLuongPin }}</div>
-            </template>
-            <template #imeiCount="{ item }">
-              <div class="amount-cell">{{ item.imeiCount || '0' }}</div>
-            </template>
-            <template #priceRange="{ item }">
-              <div class="amount-cell">
-                <div class="total-amount">
-                  {{ item.priceRange }}
-                </div>
-              </div>
-            </template>
-            <template #stockStatus="{ item }">
-              <span class="status-badge" :class="getStatusBadgeClass(item.stockStatus)">
-                {{ item.stockStatus }}
-              </span>
-            </template>
-            <template #actions="{ item }">
-              <div class="action-buttons-cell">
-                <button class="btn btn-sm btn-table" @click="viewProduct(item)" title="Xem chi tiết">
-                  <i class="bi bi-eye-fill"></i>
-                </button>
-                <button class="btn btn-sm btn-table" @click="editProduct(item)" title="Chỉnh sửa">
-                  <i class="bi bi-pencil-fill"></i>
-                </button>
-              </div>
-            </template>
-          </DataTable>
-        </div>
-
-        <!-- Card View -->
-        <div v-else class="card-grid">
-          <div v-for="product in sharedPaginatedItems" :key="product.id" class="product-card">
-            <div class="product-card-header">
-              <div class="product-code">{{ product.tenSanPham }}</div>
-              <span class="status-badge" :class="getStatusBadgeClass(product.stockStatus)">
-                {{ product.stockStatus }}
-              </span>
-            </div>
-
-            <div class="product-card-body">
-              <div class="product-info">
-                <div class="product-name">{{ product.tenNhaSanXuat }}</div>
-                <div class="product-detail">
-                  {{ product.heDieuHanh }} {{ product.phienBan }}
-                </div>
-              </div>
-
-              <div class="product-details">
-                <div class="detail-row">
-                  <span class="detail-label">Màn hình:</span>
-                  <span class="detail-value">{{ product.congNgheManHinh }}</span>
-                </div>
-                <div class="detail-row">
-                  <span class="detail-label">CPU:</span>
-                  <span class="detail-value">{{ product.tenCpu }}</span>
-                </div>
-                <div class="detail-row">
-                  <span class="detail-label">Pin:</span>
-                  <span class="detail-value">{{ product.dungLuongPin }}</span>
-                </div>
-                <div class="detail-row">
-                  <span class="detail-label">Số lượng:</span>
-                  <span class="detail-value">{{ product.imeiCount || '0' }}</span>
-                </div>
-              </div>
-
-              <div class="product-amounts">
-                <div class="total-amount">
-                  {{ product.priceRange }}
-                </div>
+        <DataTable title="" :headers="headers" :data="paginatedProducts"
+          :pageSizeOptions="[5, 10, 15, 20, 30, 40, 50]">
+          <template #stt="{ globalIndex }">
+            {{ globalIndex + 1 }}
+          </template>
+          <template #tenSanPham="{ item }">
+            <div class="code-text">{{ item.tenSanPham }}</div>
+          </template>
+          <template #tenNhaSanXuat="{ item }">
+            <div class="employee-name">{{ item.tenNhaSanXuat }}</div>
+          </template>
+          <template #heDieuHanh="{ item }">
+            <div class="customer-name">{{ item.heDieuHanh }} {{ item.phienBan }}</div>
+          </template>
+          <template #congNgheManHinh="{ item }">
+            <div class="customer-name">{{ item.congNgheManHinh }}</div>
+          </template>
+          <template #tenCpu="{ item }">
+            <div class="customer-name">{{ item.tenCpu }}</div>
+          </template>
+          <template #dungLuongPin="{ item }">
+            <div class="customer-name">{{ item.dungLuongPin }}</div>
+          </template>
+          <template #imeiCount="{ item }">
+            <div class="amount-cell">{{ item.imeiCount || '0' }}</div>
+          </template>
+          <template #priceRange="{ item }">
+            <div class="amount-cell">
+              <div class="total-amount">
+                {{ item.priceRange }}
               </div>
             </div>
-
-            <div class="product-card-actions">
-              <button class="btn btn-sm btn-table" @click="viewProduct(product)">
-                <i class="bi bi-eye-fill"></i> Xem
+          </template>
+          <template #stockStatus="{ item }">
+            <span class="status-badge" :class="getStatusBadgeClass(item.stockStatus)">
+              {{ item.stockStatus }}
+            </span>
+          </template>
+          <template #actions="{ item }">
+            <div class="action-buttons-cell">
+              <button class="btn btn-sm btn-table" @click="viewProduct(item)" title="Xem chi tiết">
+                <i class="bi bi-eye-fill"></i>
               </button>
-              <button class="btn btn-sm btn-table" @click="editProduct(product)">
-                <i class="bi bi-pencil-fill"></i> Sửa
+              <button class="btn btn-sm btn-table" @click="editProduct(item)" title="Chỉnh sửa">
+                <i class="bi bi-pencil-fill"></i>
               </button>
             </div>
-          </div>
-        </div>
-
-        <!-- Pagination for Card View -->
-        <div v-if="viewMode === 'card'" class="shared-pagination">
-          <nav aria-label="Shared Page navigation">
-            <ul class="pagination justify-content-center">
-              <li class="page-item" :class="{ disabled: sharedCurrentPage === 1 }">
-                <button class="page-link" @click="sharedCurrentPage--" :disabled="sharedCurrentPage === 1">
-                  <i class="bi bi-chevron-left"></i>
-                </button>
-              </li>
-              <li v-for="page in sharedTotalPages" :key="page" class="page-item"
-                :class="{ active: sharedCurrentPage === page }">
-                <button class="page-link" @click="sharedCurrentPage = page">{{ page }}</button>
-              </li>
-              <li class="page-item" :class="{ disabled: sharedCurrentPage === sharedTotalPages }">
-                <button class="page-link" @click="sharedCurrentPage++"
-                  :disabled="sharedCurrentPage === sharedTotalPages">
-                  <i class="bi bi-chevron-right"></i>
-                </button>
-              </li>
-            </ul>
-          </nav>
-        </div>
+          </template>
+        </DataTable>
       </div>
     </FilterTableSection>
 
@@ -289,12 +194,373 @@
 </template>
 
 <script>
-import SanPhamJS from './js/SanPham';
+import { defineComponent, ref, computed, onMounted, watch } from "vue";
+import { useRoute, useRouter } from "vue-router";
+import DataTable from "@/components/common/DataTable.vue";
+import NotificationModal from "@/components/common/NotificationModal.vue";
+import ToastNotification from "@/components/common/ToastNotification.vue";
+import HeaderCard from "@/components/common/HeaderCard.vue";
+import FilterTableSection from "@/components/common/FilterTableSection.vue";
 
-export default {
-  name: 'ProductManagement',
-  ...SanPhamJS,
+// Import API services
+import {
+  fetchProducts,
+  searchProductsWithFilters,
+  fetchNhaSanXuat,
+  fetchHeDieuHanh,
+  fetchCongNgheManHinh,
+  fetchPin,
+} from "@/store/modules/products/sanPham";
+
+// Debounce utility
+const debounce = (func, delay) => {
+  let timeoutId;
+  return (...args) => {
+    clearTimeout(timeoutId);
+    timeoutId = setTimeout(() => func(...args), delay);
+  };
 };
+
+export default defineComponent({
+  name: "ProductManagement",
+  components: {
+    DataTable,
+    NotificationModal,
+    ToastNotification,
+    HeaderCard,
+    FilterTableSection,
+  },
+  setup() {
+    const router = useRouter();
+    const route = useRoute();
+    const toastNotification = ref(null);
+    const notificationModal = ref(null);
+    const viewMode = ref("table");
+    const currentPage = ref(1);
+    const sharedCurrentPage = ref(1); // For card view pagination
+    const itemsPerPage = ref(99999); // For DataTable
+    const sharedPageSize = ref(10); // For card view, updated to 12 items per page
+    const isLoading = ref(false);
+    const totalElements = ref(0);
+
+    // Notification state
+    const notificationType = ref("confirm");
+    const notificationMessage = ref("");
+    const isNotificationLoading = ref(false);
+    const notificationOnConfirm = ref(() => {});
+    const notificationOnCancel = ref(() => {});
+
+    // State
+    const keyword = ref("");
+    const filters = ref({
+      idNhaSanXuat: "",
+      idHeDieuHanh: "",
+      idCongNgheManHinh: "",
+      idPin: "",
+      stockStatus: "",
+    });
+
+    // Data from API
+    const products = ref([]);
+    const nhaSanXuatOptions = ref([]);
+    const heDieuHanhOptions = ref([]);
+    const congNgheManHinhOptions = ref([]);
+    const pinOptions = ref([]);
+
+    // Headers for DataTable
+    const headers = ref([
+      { text: "STT", value: "stt" },
+      { text: "Tên Sản Phẩm", value: "tenSanPham" },
+      { text: "Hãng", value: "tenNhaSanXuat" },
+      { text: "Hệ Điều Hành", value: "heDieuHanh" },
+      { text: "Màn Hình", value: "congNgheManHinh" },
+      { text: "Pin", value: "dungLuongPin" },
+      { text: "Số Lượng", value: "imeiCount" },
+      { text: "Khoảng Giá", value: "priceRange" },
+      { text: "Trạng Thái", value: "stockStatus" },
+      { text: "Thao Tác", value: "actions" },
+    ]);
+
+    // API Methods
+    const loadProducts = async () => {
+      try {
+        isLoading.value = true;
+        const searchParams = {};
+        if (keyword.value) searchParams.keyword = keyword.value;
+        if (filters.value.idNhaSanXuat) searchParams.idNhaSanXuat = filters.value.idNhaSanXuat;
+        if (filters.value.idHeDieuHanh) searchParams.idHeDieuHanh = filters.value.idHeDieuHanh;
+        if (filters.value.idCongNgheManHinh) searchParams.idCongNgheManHinh = filters.value.idCongNgheManHinh;
+        if (filters.value.idPin) searchParams.idPin = filters.value.idPin;
+        if (filters.value.stockStatus) {
+          if (filters.value.stockStatus === "inStock") {
+            searchParams.inStock = true;
+          } else if (filters.value.stockStatus === "outOfStock") {
+            searchParams.inStock = false;
+          } else if (filters.value.stockStatus === "inactive") {
+            searchParams.isActive = false;
+          }
+        }
+
+        const page = viewMode.value === 'table' ? currentPage.value - 1 : sharedCurrentPage.value - 1;
+        const size = viewMode.value === 'table' ? itemsPerPage.value : sharedPageSize.value;
+
+        let response;
+        const hasFilters = keyword.value || Object.values(filters.value).some((v) => v);
+        if (hasFilters) {
+          response = await searchProductsWithFilters(searchParams, page, size);
+        } else {
+          response = await fetchProducts(page, size);
+        }
+
+        if (response.data) {
+          products.value = (response.data.content || []).map((product) => ({
+            ...product,
+          }));
+          totalElements.value = response.data.totalElements || 0;
+        } else {
+          products.value = [];
+          totalElements.value = 0;
+        }
+      } catch (error) {
+        console.error("Error fetching products:", error);
+        toastNotification.value?.addToast({
+          type: "error",
+          message: "Lỗi khi tải danh sách sản phẩm: " + (error.response?.data?.message || error.message),
+          duration: 5000,
+        });
+        products.value = [];
+        totalElements.value = 0;
+      } finally {
+        isLoading.value = false;
+      }
+    };
+
+    const loadFilterOptions = async () => {
+      try {
+        const [nhaSanXuatRes, heDieuHanhRes, congNgheManHinhRes, pinRes] = await Promise.allSettled([
+          fetchNhaSanXuat(),
+          fetchHeDieuHanh(),
+          fetchCongNgheManHinh(),
+          fetchPin(),
+        ]);
+
+        if (nhaSanXuatRes.status === "fulfilled") {
+          nhaSanXuatOptions.value = nhaSanXuatRes.value.data || [];
+        }
+        if (heDieuHanhRes.status === "fulfilled") {
+          heDieuHanhOptions.value = heDieuHanhRes.value.data || [];
+        }
+        if (congNgheManHinhRes.status === "fulfilled") {
+          congNgheManHinhOptions.value = congNgheManHinhRes.value.data || [];
+        }
+        if (pinRes.status === "fulfilled") {
+          pinOptions.value = pinRes.value.data || [];
+        }
+      } catch (error) {
+        console.error("Error fetching filter options:", error);
+        toastNotification.value?.addToast({
+          type: "error",
+          message: "Lỗi khi tải danh sách bộ lọc: " + (error.response?.data?.message || error.message),
+          duration: 3000,
+        });
+
+        // Fallback data
+        nhaSanXuatOptions.value = [
+          { id: 1, nhaSanXuat: "Apple" },
+          { id: 2, nhaSanXuat: "Samsung" },
+          { id: 3, nhaSanXuat: "Google" },
+        ];
+        heDieuHanhOptions.value = [
+          { id: 1, heDieuHanh: "iOS", phienBan: "16" },
+          { id: 2, heDieuHanh: "Android", phienBan: "13" },
+        ];
+        congNgheManHinhOptions.value = [
+          { id: 1, chuanManHinh: "OLED", congNgheManHinh: "OLED" },
+          { id: 2, chuanManHinh: "AMOLED", congNgheManHinh: "AMOLED" },
+        ];
+        pinOptions.value = [
+          { id: 1, loaiPin: "Li-Ion", dungLuongPin: "3200 mAh" },
+          { id: 2, loaiPin: "Li-Po", dungLuongPin: "5000 mAh" },
+        ];
+      }
+    };
+
+    // Computed properties
+    const sharedFilteredItems = computed(() => {
+      return products.value || [];
+    });
+
+    const sharedPaginatedItems = computed(() => {
+      const start = (sharedCurrentPage.value - 1) * sharedPageSize.value;
+      const end = start + sharedPageSize.value;
+      return sharedFilteredItems.value.slice(start, end).map((product, index) => ({
+        ...product,
+        stt: start + index + 1,
+        stockStatus: product.imeiCount > 0 ? "Còn hàng" : "Hết hàng",
+        priceRange: product.minPrice && product.maxPrice
+          ? `${formatPrice(product.minPrice)} - ${formatPrice(product.maxPrice)}`
+          : "Chưa có giá",
+      }));
+    });
+
+    const sharedTotalPages = computed(() =>
+      Math.ceil(sharedFilteredItems.value.length / sharedPageSize.value)
+    );
+
+    const paginatedProducts = computed(() => {
+      const start = (currentPage.value - 1) * itemsPerPage.value;
+      const end = start + itemsPerPage.value;
+      return (products.value || []).slice(start, end).map((product, index) => ({
+        ...product,
+        stt: start + index + 1,
+        stockStatus: product.imeiCount > 0 ? "Còn hàng" : "Hết hàng",
+        priceRange: product.minPrice && product.maxPrice
+          ? `${formatPrice(product.minPrice)} - ${formatPrice(product.maxPrice)}`
+          : "Chưa có giá",
+      }));
+    });
+
+    // Methods
+    const formatPrice = (price) => {
+      if (price === null || price === undefined) return "0 ₫";
+      return new Intl.NumberFormat("vi-VN", {
+        style: "currency",
+        currency: "VND",
+      }).format(price);
+    };
+
+    const debouncedSearch = debounce(() => {
+      currentPage.value = 1;
+      sharedCurrentPage.value = 1;
+      loadProducts();
+    }, 500);
+
+    const searchProductsHandler = () => {
+      currentPage.value = 1;
+      sharedCurrentPage.value = 1;
+      loadProducts();
+    };
+
+    const resetFilters = () => {
+      keyword.value = "";
+      filters.value = {
+        idNhaSanXuat: "",
+        idHeDieuHanh: "",
+        idCongNgheManHinh: "",
+        idPin: "",
+        stockStatus: "",
+      };
+      currentPage.value = 1;
+      sharedCurrentPage.value = 1;
+      loadProducts();
+
+      toastNotification.value?.addToast({
+        type: "info",
+        message: "Đã đặt lại tất cả bộ lọc",
+        duration: 2000,
+      });
+    };
+
+    const viewProduct = (item) => {
+      router.push(`/chiTietSanPham/${item.id}`);
+    };
+
+    const editProduct = (item) => {
+      router.push(`/editSanPham/${item.id}`);
+    };
+
+    const resetNotification = () => {
+      notificationType.value = "confirm";
+      notificationMessage.value = "";
+      isNotificationLoading.value = false;
+      notificationOnConfirm.value = () => {};
+      notificationOnCancel.value = () => {};
+    };
+
+    const getStatusBadgeClass = (status) => {
+      switch (status) {
+        case "Còn hàng":
+          return "badge-completed";
+        case "Hết hàng":
+          return "badge-canceled";
+        default:
+          return "badge-primary";
+      }
+    };
+
+    const handlePageChange = (page) => {
+      currentPage.value = page;
+      loadProducts();
+    };
+
+    const handleItemsPerPageChange = (size) => {
+      itemsPerPage.value = size;
+      currentPage.value = 1;
+      loadProducts();
+    };
+
+    // Watchers
+    watch(keyword, debouncedSearch);
+
+    watch(
+      filters,
+      () => {
+        currentPage.value = 1;
+        sharedCurrentPage.value = 1;
+        loadProducts();
+      },
+      { deep: true }
+    );
+
+    watch(() => viewMode.value, () => {
+      sharedCurrentPage.value = 1; // Reset shared pagination when view mode changes
+    });
+
+    // Lifecycle
+    onMounted(async () => {
+      await Promise.all([loadFilterOptions(), loadProducts()]);
+    });
+
+    return {
+      toastNotification,
+      notificationModal,
+      keyword,
+      filters,
+      products,
+      nhaSanXuatOptions,
+      heDieuHanhOptions,
+      congNgheManHinhOptions,
+      pinOptions,
+      headers,
+      viewMode,
+      currentPage,
+      sharedCurrentPage,
+      itemsPerPage,
+      sharedPageSize,
+      isLoading,
+      totalElements,
+      sharedFilteredItems,
+      sharedPaginatedItems,
+      sharedTotalPages,
+      paginatedProducts,
+      formatPrice,
+      debouncedSearch,
+      searchProducts: searchProductsHandler,
+      resetFilters,
+      viewProduct,
+      editProduct,
+      resetNotification,
+      getStatusBadgeClass,
+      handlePageChange,
+      handleItemsPerPageChange,
+      notificationType,
+      notificationMessage,
+      isNotificationLoading,
+      notificationOnConfirm,
+      notificationOnCancel,
+    };
+  },
+});
 </script>
 
 <style scoped>
@@ -324,7 +590,6 @@ export default {
 }
 
 @keyframes gentleGlow {
-
   0%,
   100% {
     box-shadow: 0 0 5px rgba(52, 211, 153, 0.3);
@@ -492,47 +757,12 @@ export default {
   font-weight: 500;
 }
 
-.table-controls {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.view-toggle {
-  display: flex;
-  gap: 0.25rem;
-}
-
-.view-toggle .btn {
-  padding: 0.5rem 0.75rem;
-  border-radius: 8px;
-  transition: all 0.2s ease;
-}
-
-.view-toggle .btn-primary {
-  background: linear-gradient(135deg, #34d399, #16a34a);
-  border: none;
-}
-
-.view-toggle .btn-primary:hover {
-  background: linear-gradient(135deg, #16a34a, #15803d);
-}
-
-.view-toggle .btn-outline-secondary {
-  border: 1px solid rgba(52, 211, 153, 0.2);
-  color: #1f3a44;
-}
-
-.view-toggle .btn-outline-secondary:hover {
-  background: rgba(52, 211, 153, 0.1);
-  color: #16a34a;
-}
-
 .status-badge {
   padding: 0.25rem 0.75rem;
   border-radius: 1rem;
   display: flex;
   justify-content: center;
+  text-align: center;
   font-size: 0.75rem;
   font-weight: 500;
   align-items: center;
@@ -586,129 +816,6 @@ export default {
   text-shadow: 0 0 15px rgba(52, 211, 153, 0.3);
 }
 
-.card-grid {
-  padding: 1.5rem;
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 1.5rem;
-}
-
-.product-card {
-  background: #f8f9fa;
-  backdrop-filter: blur(15px);
-  border: 1px solid rgba(52, 211, 153, 0.1);
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  animation: zoomIn 0.3s ease-out;
-}
-
-.product-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 6px 12px rgba(52, 211, 153, 0.2);
-}
-
-.product-card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1rem;
-  background: #f8f9fa;
-  border-bottom: 1px solid rgba(52, 211, 153, 0.1);
-}
-
-.product-code {
-  font-weight: 600;
-  color: #34d399;
-}
-
-.product-card-body {
-  padding: 1rem;
-}
-
-.product-info {
-  margin-bottom: 1rem;
-}
-
-.product-name {
-  font-weight: 600;
-  color: #1f3a44;
-}
-
-.product-detail {
-  font-size: 0.875rem;
-  color: #6c757d;
-}
-
-.product-details {
-  margin-bottom: 1rem;
-}
-
-.detail-row {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 0.5rem;
-}
-
-.detail-label {
-  font-weight: 500;
-  color: #6c757d;
-}
-
-.detail-value {
-  font-weight: 500;
-  color: #1f3a44;
-}
-
-.product-amounts {
-  padding-top: 1rem;
-  border-top: 1px solid rgba(52, 211, 153, 0.1);
-}
-
-.product-card-actions {
-  padding: 1rem;
-  border-top: 1px solid rgba(52, 211, 153, 0.1);
-  display: flex;
-  gap: 0.5rem;
-  justify-content: flex-end;
-  align-items: center;
-}
-
-.shared-pagination {
-  padding: 1rem;
-}
-
-.pagination {
-  margin: 0;
-  justify-content: center;
-}
-
-.page-item .page-link {
-  border-radius: 8px;
-  margin: 0 0.25rem;
-  color: #1f3a44;
-  border: 1px solid rgba(52, 211, 153, 0.2);
-  transition: all 0.2s ease;
-}
-
-.page-item.active .page-link {
-  background: linear-gradient(135deg, #34d399, #16a34a);
-  border-color: #34d399;
-  color: white;
-}
-
-.page-item:not(.disabled) .page-link:hover {
-  background: linear-gradient(135deg, #16a34a, #15803d);
-  border-color: #16a34a;
-  color: white;
-}
-
-.page-item.disabled .page-link {
-  background: #f8f9fa;
-  border-color: rgba(52, 211, 153, 0.2);
-  color: #6c757d;
-}
-
 /* Responsive */
 @media (max-width: 768px) {
   .filter-actions {
@@ -743,11 +850,6 @@ export default {
     gap: 0.3rem;
   }
 
-  .product-card-actions {
-    flex-direction: row;
-    gap: 0.3rem;
-  }
-
   .status-radio-group {
     flex-direction: column;
     align-items: flex-start;
@@ -756,10 +858,6 @@ export default {
 }
 
 @media (max-width: 576px) {
-  .card-grid {
-    grid-template-columns: 1fr;
-  }
-
   .status-badge {
     font-size: 0.8rem;
     padding: 0.4rem 0.8rem;

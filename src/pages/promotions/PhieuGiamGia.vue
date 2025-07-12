@@ -133,167 +133,70 @@
         <div class="table-title-wrapper">
           <span class="table-count">{{ filteredVouchers.length }} phiếu giảm giá</span>
         </div>
-        <div class="table-controls">
-          <div class="view-toggle">
-            <button
-              class="btn btn-sm"
-              :class="{ 'btn-primary': viewMode === 'table', 'btn-outline-secondary': viewMode !== 'table' }"
-              @click="viewMode = 'table'"
-            >
-              <i class="bi bi-table"></i>
-            </button>
-            <button
-              class="btn btn-sm"
-              :class="{ 'btn-primary': viewMode === 'card', 'btn-outline-secondary': viewMode !== 'card' }"
-              @click="viewMode = 'card'"
-            >
-              <i class="bi bi-grid-3x3-gap"></i>
-            </button>
-          </div>
-        </div>
       </div>
 
       <div class="table-body">
         <!-- Table View -->
-        <div v-if="viewMode === 'table'">
-          <DataTable
-            :headers="headers"
-            :data="filteredVouchers"
-            :pageSizeOptions="[5, 10, 15, 20, 30, 40, 50]"
-          >
-            <template #stt="{ item, index }">
-              {{ index + 1 }}
-            </template>
-            <template #code="{ item }">
-              <div class="code-cell">
-                <span class="code-text">{{ item.code }}</span>
-                <small class="code-date">{{ item.startDate }}</small>
-              </div>
-            </template>
-            <template #value="{ item }">
-              <div class="amount-cell">
-                <div class="total-amount">
-                  {{ item.type === 'Phần trăm' ? `${item.value}%` : formatPrice(item.value) }}
-                </div>
-                <div class="discount-info" v-if="item.minOrder > 0">
-                  <small class="text-muted">Đơn tối thiểu: {{ formatPrice(item.minOrder) }}</small>
-                </div>
-              </div>
-            </template>
-            <template #type="{ item }">
-              <span class="type-badge" :class="getTypeBadgeClass(item.type)">
-                {{ item.type }}
-              </span>
-            </template>
-            <template #status="{ item }">
-              <span class="status-badge" :class="getStatusBadgeClass(item.status)">
-                {{ item.status }}
-              </span>
-            </template>
-            <template #startDate="{ item }">
-              <span>{{ item.startDate }}</span>
-            </template>
-            <template #expiryDate="{ item }">
-              <span>{{ item.expiryDate }}</span>
-            </template>
-            <template #actions="{ item }">
-              <div class="action-buttons-cell d-flex gap-2">
-                <label class="switch">
-                  <input
-                    type="checkbox"
-                    :checked="item.status === 'Đang diễn ra'"
-                    @change="toggleVoucherStatus(item)"
-                  />
-                  <span class="slider round"></span>
-                </label>
-                <button
-                  class="btn btn-sm btn-table"
-                  @click="editVoucher(item)"
-                  title="Chỉnh sửa"
-                >
-                  <i class="bi bi-pencil-fill"></i>
-                </button>
-              </div>
-            </template>
-          </DataTable>
-        </div>
-
-        <!-- Card View -->
-        <div v-else class="card-grid">
-          <div v-for="voucher in paginatedVouchers" :key="voucher.id" class="invoice-card">
-            <div class="invoice-card-header">
-              <div class="invoice-code">{{ voucher.code }}</div>
-              <span class="status-badge" :class="getStatusBadgeClass(voucher.status)">
-                {{ voucher.status }}
-              </span>
+        <DataTable
+          :headers="headers"
+          :data="filteredVouchers"
+          :pageSizeOptions="[5, 10, 15, 20, 30, 40, 50]"
+        >
+          <template #stt="{ item, index }">
+            {{ index + 1 }}
+          </template>
+          <template #code="{ item }">
+            <div class="code-cell">
+              <span class="code-text">{{ item.code }}</span>
+              <small class="code-date">{{ item.startDate }}</small>
             </div>
-            <div class="invoice-card-body">
-              <div class="invoice-details">
-                <div class="detail-row">
-                  <span class="detail-label">Loại phiếu:</span>
-                  <span class="type-badge" :class="getTypeBadgeClass(voucher.type)">
-                    {{ voucher.type }}
-                  </span>
-                </div>
-                <div class="detail-row">
-                  <span class="detail-label">Ngày bắt đầu:</span>
-                  <span class="detail-value">{{ voucher.startDate }}</span>
-                </div>
-                <div class="detail-row">
-                  <span class="detail-label">Ngày kết thúc:</span>
-                  <span class="detail-value">{{ voucher.expiryDate }}</span>
-                </div>
+          </template>
+          <template #value="{ item }">
+            <div class="amount-cell">
+              <div class="total-amount">
+                {{ item.type === 'Phần trăm' ? `${item.value}%` : formatPrice(item.value) }}
               </div>
-              <div class="invoice-amounts">
-                <div class="total-amount">{{ formatPrice(voucher.value) }}</div>
-                <div class="amount-details">
-                  <small class="text-muted">Đơn tối thiểu: {{ formatPrice(voucher.minOrder) }}</small>
-                </div>
+              <div class="discount-info" v-if="item.minOrder > 0">
+                <small class="text-muted">Đơn tối thiểu: {{ formatPrice(item.minOrder) }}</small>
               </div>
             </div>
-            <div class="invoice-card-actions">
+          </template>
+          <template #type="{ item }">
+            <span class="type-badge" :class="getTypeBadgeClass(item.type)">
+              {{ item.type }}
+            </span>
+          </template>
+          <template #status="{ item }">
+            <span class="status-badge" :class="getStatusBadgeClass(item.status)">
+              {{ item.status }}
+            </span>
+          </template>
+          <template #startDate="{ item }">
+            <span>{{ item.startDate }}</span>
+          </template>
+          <template #expiryDate="{ item }">
+            <span>{{ item.expiryDate }}</span>
+          </template>
+          <template #actions="{ item }">
+            <div class="action-buttons-cell d-flex gap-2">
               <label class="switch">
                 <input
                   type="checkbox"
-                  :checked="voucher.status === 'Đang diễn ra'"
-                  @change="toggleVoucherStatus(voucher)"
+                  :checked="item.status === 'Đang diễn ra'"
+                  @change="toggleVoucherStatus(item)"
                 />
                 <span class="slider round"></span>
               </label>
-              <button class="btn btn-sm btn-table" @click="editVoucher(voucher)">
-                <i class="bi bi-pencil-fill me-1"></i> Sửa
+              <button
+                class="btn btn-sm btn-table"
+                @click="editVoucher(item)"
+                title="Chỉnh sửa"
+              >
+                <i class="bi bi-pencil-fill"></i>
               </button>
             </div>
-          </div>
-        </div>
-
-        <!-- Pagination for Card View -->
-        <div v-if="viewMode === 'card'" class="card-pagination">
-          <nav aria-label="Page navigation">
-            <ul class="pagination pagination-sm mb-0 justify-content-center">
-              <li class="page-item" :class="{ disabled: currentPage === 1 }">
-                <button class="page-link" @click="currentPage--" :disabled="currentPage === 1">
-                  <i class="bi bi-chevron-left"></i>
-                </button>
-              </li>
-              <li
-                v-for="page in totalPages"
-                :key="page"
-                class="page-item"
-                :class="{ active: currentPage === page }"
-              >
-                <button class="page-link" @click="currentPage = page">
-                  {{ page }}
-                </button>
-              </li>
-              <li class="page-item" :class="{ disabled: currentPage === totalPages }">
-                <button class="page-link" @click="currentPage++" :disabled="currentPage === totalPages">
-                  <i class="bi bi-chevron-right"></i>
-                </button>
-              </li>
-            </ul>
-          </nav>
-        </div>
+          </template>
+        </DataTable>
       </div>
     </FilterTableSection>
 
@@ -355,7 +258,6 @@ export default {
     const rangeMax = ref(5000000);
     const minVoucherValue = 0;
     const maxVoucherValue = 5000000;
-    const viewMode = ref('table');
     const currentPage = ref(1);
     const pageSize = ref(10);
     const totalItems = ref(0);
@@ -372,13 +274,6 @@ export default {
         startDate: formatDate(voucher.ngayBatDau),
         expiryDate: formatDate(voucher.ngayKetThuc),
       }));
-    });
-
-    const totalPages = computed(() => Math.ceil(totalItems.value / pageSize.value));
-
-    const paginatedVouchers = computed(() => {
-      const start = (currentPage.value - 1) * pageSize.value;
-      return filteredVouchers.value.slice(start, start + pageSize.value);
     });
 
     const sliderRangeStyle = computed(() => {
@@ -596,12 +491,9 @@ export default {
       rangeMax,
       minVoucherValue,
       maxVoucherValue,
-      viewMode,
       currentPage,
       pageSize,
       filteredVouchers,
-      totalPages,
-      paginatedVouchers,
       sliderRangeStyle,
       headers,
       formatPrice,
@@ -628,7 +520,7 @@ export default {
 </script>
 
 <style scoped>
-/* Giữ nguyên style từ file gốc */
+/* Removed card view and table-controls related styles */
 @keyframes fadeInUp {
   from {
     opacity: 0;
@@ -657,17 +549,6 @@ export default {
   }
   50% {
     box-shadow: 0 0 12px rgba(52, 211, 153, 0.5);
-  }
-}
-
-@keyframes zoomIn {
-  from {
-    opacity: 0;
-    transform: scale(0.97);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
   }
 }
 
@@ -761,33 +642,6 @@ export default {
   font-size: 0.875rem;
   color: #1f3a44;
   font-weight: 500;
-}
-
-.filter-stats {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.stat-item {
-  display: flex;
-  flex-direction: column;
-}
-
-.stat-label {
-  font-size: 0.875rem;
-  color: #1f3a44;
-  font-weight: 500;
-}
-
-.stat-value {
-  font-size: 1rem;
-  font-weight: 600;
-  color: #1f3a44;
-}
-
-.stat-value.text-success {
-  color: #16a34a !important;
 }
 
 .search-group {
@@ -904,42 +758,6 @@ export default {
   font-weight: 500;
 }
 
-.table-controls {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.view-toggle {
-  display: flex;
-  gap: 0.25rem;
-}
-
-.view-toggle .btn {
-  padding: 0.5rem 0.75rem;
-  border-radius: 8px;
-  transition: all 0.2s ease;
-}
-
-.view-toggle .btn-primary {
-  background: linear-gradient(135deg, #34d399, #16a34a);
-  border: none;
-}
-
-.view-toggle .btn-primary:hover {
-  background: linear-gradient(135deg, #16a34a, #15803d);
-}
-
-.view-toggle .btn-outline-secondary {
-  border: 1px solid rgba(52, 211, 153, 0.2);
-  color: #1f3a44;
-}
-
-.view-toggle .btn-outline-secondary:hover {
-  background: rgba(52, 211, 153, 0.1);
-  color: #16a34a;
-}
-
 .code-cell {
   display: flex;
   flex-direction: column;
@@ -982,11 +800,6 @@ export default {
   align-items: center;
 }
 
-.badge-primary {
-  background: linear-gradient(135deg, #34d399, #16a34a);
-  color: white;
-}
-
 .badge-info {
   background: #f8f9fa;
   color: #1f3a44;
@@ -1022,127 +835,6 @@ export default {
 .btn-table:hover {
   color: #16a34a;
   text-shadow: 0 0 15px rgba(52, 211, 153, 0.3);
-}
-
-.card-grid {
-  padding: 1.5rem;
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 1.5rem;
-}
-
-.invoice-card {
-  background: #f8f9fa;
-  backdrop-filter: blur(15px);
-  border: 1px solid rgba(52, 211, 153, 0.1);
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  animation: zoomIn 0.3s ease-out;
-}
-
-.invoice-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 6px 12px rgba(52, 211, 153, 0.2);
-}
-
-.invoice-card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1rem;
-  background: #f8f9fa;
-  border-bottom: 1px solid rgba(52, 211, 153, 0.1);
-}
-
-.invoice-code {
-  font-weight: 600;
-  color: #34d399;
-}
-
-.invoice-card-body {
-  padding: 1rem;
-}
-
-.invoice-details {
-  margin-bottom: 1rem;
-}
-
-.detail-row {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 0.5rem;
-}
-
-.detail-label {
-  font-weight: 500;
-  color: #6c757d;
-}
-
-.detail-value {
-  font-weight: 500;
-  color: #1f3a44;
-}
-
-.invoice-amounts {
-  padding-top: 1rem;
-  border-top: 1px solid rgba(52, 211, 153, 0.1);
-}
-
-.total-amount {
-  font-weight: 600;
-  color: #16a34a;
-  font-size: 1.1rem;
-}
-
-.amount-details {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-  margin-top: 0.5rem;
-}
-
-.invoice-card-actions {
-  padding: 1rem;
-  border-top: 1px solid rgba(52, 211, 153, 0.1);
-  display: flex;
-  gap: 0.5rem;
-  justify-content: flex-end;
-}
-
-.card-pagination {
-  padding: 1.5rem;
-}
-
-.pagination {
-  margin: 0;
-  justify-content: center;
-}
-
-.page-item .page-link {
-  border-radius: 8px;
-  margin: 0 0.25rem;
-  color: #1f3a44;
-  border: 1px solid rgba(52, 211, 153, 0.2);
-  transition: all 0.2s ease;
-}
-
-.page-item.active .page-link {
-  background: linear-gradient(135deg, #34d399, #16a34a);
-  border-color: #34d399;
-  color: white;
-}
-
-.page-item:not(.disabled) .page-link:hover {
-  background: linear-gradient(135deg, #16a34a, #15803d);
-  border-color: #16a34a;
-  color: white;
-}
-
-.page-item.disabled .page-link {
-  background: #f8f9fa;
-  border-color: rgba(52, 211, 153, 0.2);
-  color: #6c757d;
 }
 
 .switch {
@@ -1218,12 +910,6 @@ input:checked + .slider:before {
 }
 
 @media (max-width: 768px) {
-  .filter-stats {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.75rem;
-  }
-
   .row.g-3 {
     margin-left: -0.25rem;
     margin-right: -0.25rem;
@@ -1246,16 +932,6 @@ input:checked + .slider:before {
 
   .search-icon {
     left: 0.75rem;
-  }
-}
-
-@media (max-width: 576px) {
-  .card-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .range-labels {
-    font-size: 0.8rem;
   }
 }
 
