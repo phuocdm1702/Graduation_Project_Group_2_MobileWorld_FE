@@ -533,6 +533,7 @@ export default {
   border-radius: 1rem;
   display: flex;
   justify-content: center;
+  text-align: center;
   font-size: 0.75rem;
   font-weight: 500;
   align-items: center;
