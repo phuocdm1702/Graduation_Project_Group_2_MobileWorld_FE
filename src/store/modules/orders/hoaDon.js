@@ -80,6 +80,7 @@ export const useHoaDonStore = defineStore('hoaDon', {
             try {
                 const response = await apiService.get(`/api/hoa-don/${id}/detail`);
                 this.invoiceDetail = {
+                    id: response.data.id,
                     ma: response.data.maHoaDon,
                     loaiDon: response.data.loaiDon,
                     trangThai: this.mapStatus(response.data.trangThai), // Sử dụng mapStatus
@@ -227,6 +228,38 @@ export const useHoaDonStore = defineStore('hoaDon', {
             } catch (error) {
                 this.error = error.message || 'Không thể xuất danh sách hóa đơn ra Excel';
                 console.error('Lỗi khi gọi API xuất Excel:', error);
+                return { success: false, message: this.error };
+            } finally {
+                this.isLoading = false;
+            }
+        },
+
+        // Trong actions của useHoaDonStore
+        async updateInvoiceStatus(id, trangThai, idNhanVien = null) {
+            this.isLoading = true;
+            this.error = null;
+
+            try {
+                const response = await apiService.put(`/api/hoa-don/${id}/update-status`, null, {
+                    params: { trangThai, idNhanVien }
+                });
+                // Cập nhật invoiceDetail nếu hóa đơn đang được xem
+                if (this.invoiceDetail && this.invoiceDetail.id === id) {
+                    this.invoiceDetail.trangThai = this.mapStatus(response.data.trangThai);
+                    this.invoiceDetail.history.push({
+                        id: Date.now(),
+                        code: `LSHD_${Date.now()}`,
+                        invoice: response.data.ma,
+                        employee: response.data.maNhanVien || 'Hệ thống',
+                        action: `Cập nhật trạng thái: ${this.mapStatus(response.data.trangThai)}`,
+                        timestamp: this.formatDate(new Date()),
+                        status: 'completed',
+                    });
+                }
+                return { success: true, data: response.data };
+            } catch (error) {
+                this.error = error.message || 'Không thể cập nhật trạng thái hóa đơn';
+                console.error('Lỗi khi cập nhật trạng thái:', error);
                 return { success: false, message: this.error };
             } finally {
                 this.isLoading = false;
