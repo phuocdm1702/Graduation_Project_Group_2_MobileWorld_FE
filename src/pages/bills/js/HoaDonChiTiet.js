@@ -50,8 +50,8 @@ export default {
     const notificationType = ref('confirm');
     const notificationMessage = ref('');
     const isNotificationLoading = ref(false);
-    const notificationOnConfirm = ref(() => {});
-    const notificationOnCancel = ref(() => {});
+    const notificationOnConfirm = ref(() => { });
+    const notificationOnCancel = ref(() => { });
     const notificationModal = ref(null);
     const toastNotification = ref(null);
 
@@ -76,12 +76,12 @@ export default {
     const updateTimelineStatuses = () => {
       if (invoice.value.loaiDon === 'trực tiếp') {
         timelineStatuses.value = [
-          { 
-            title: 'Hoàn thành', 
-            time: invoice.value.ngayTao || 'Đang chờ', 
-            icon: 'bi bi-check-circle', 
-            completed: true, 
-            current: true 
+          {
+            title: 'Hoàn thành',
+            time: invoice.value.ngayTao || 'Đang chờ',
+            icon: 'bi bi-check-circle',
+            completed: true,
+            current: true
           }
         ];
       } else {
@@ -124,12 +124,12 @@ export default {
     watch(() => invoice.value.loaiDon, (newLoaiDon) => {
       if (newLoaiDon === 'trực tiếp') {
         timelineStatuses.value = [
-          { 
-            title: 'Hoàn thành', 
-            time: invoice.value.ngayTao || 'Đang chờ', 
-            icon: 'bi bi-check-circle', 
-            completed: true, 
-            current: true 
+          {
+            title: 'Hoàn thành',
+            time: invoice.value.ngayTao || 'Đang chờ',
+            icon: 'bi bi-check-circle',
+            completed: true,
+            current: true
           }
         ];
       } else {
@@ -325,16 +325,16 @@ export default {
           status: 'completed'
         });
       }
-      
+
       // Update timeline
       updateTimelineStatuses();
-      
+
       toastNotification.value.addToast({
         type: 'success',
         message: 'Đã cập nhật thông tin hóa đơn thành công',
         duration: 3000,
       });
-      
+
       closeUpdateModal();
     };
 
@@ -373,7 +373,7 @@ export default {
           resetNotification();
         }, 500);
       };
-      notificationOnCancel.value = () => {};
+      notificationOnCancel.value = () => { };
       isNotificationLoading.value = false;
       notificationModal.value.openModal();
     };
@@ -387,7 +387,56 @@ export default {
       });
     };
 
-    const changeStatus = (status) => {
+    // const changeStatus = (status) => {
+    //   if (invoice.value.loaiDon === 'trực tiếp') {
+    //     toastNotification.value.addToast({
+    //       type: 'error',
+    //       message: 'Không thể thay đổi trạng thái cho đơn trực tiếp',
+    //       duration: 3000,
+    //     });
+    //     return;
+    //   }
+    //   if (invoice.value.trangThai === 'Hoàn thành' || invoice.value.trangThai === 'Đã hủy') {
+    //     toastNotification.value.addToast({
+    //       type: 'error',
+    //       message: 'Không thể thay đổi trạng thái từ trạng thái hiện tại',
+    //       duration: 3000,
+    //     });
+    //     return;
+    //   }
+
+    //   notificationType.value = 'confirm';
+    //   notificationMessage.value = `Bạn có chắc chắn muốn thay đổi trạng thái thành "${status}"?`;
+    //   notificationOnConfirm.value = () => {
+    //     isNotificationLoading.value = true;
+    //     setTimeout(() => {
+    //       invoice.value.trangThai = status;
+    //       updateTimelineStatuses();
+    //       history.value.push({
+    //         id: history.value.length + 1,
+    //         action: `Cập nhật trạng thái: ${status}`,
+    //         employee: 'Hệ thống',
+    //         timestamp: new Date().toLocaleString('vi-VN'),
+    //         status: 'completed'
+    //       });
+    //       toastNotification.value.addToast({
+    //         type: 'success',
+    //         message: `Cập nhật trạng thái thành công: ${status}`,
+    //         duration: 3000,
+    //       });
+    //       isNotificationLoading.value = false;
+    //       resetNotification();
+    //     }, 500);
+    //   };
+    //   notificationOnCancel.value = () => {
+    //     resetNotification();
+    //   };
+    //   isNotificationLoading.value = false;
+    //   notificationModal.value.openModal();
+    // };
+
+
+    const changeStatus = async (status) => {
       if (invoice.value.loaiDon === 'trực tiếp') {
         toastNotification.value.addToast({
           type: 'error',
@@ -407,26 +456,40 @@ export default {
 
       notificationType.value = 'confirm';
       notificationMessage.value = `Bạn có chắc chắn muốn thay đổi trạng thái thành "${status}"?`;
-      notificationOnConfirm.value = () => {
+      notificationOnConfirm.value = async () => {
         isNotificationLoading.value = true;
-        setTimeout(() => {
-          invoice.value.trangThai = status;
-          updateTimelineStatuses();
-          history.value.push({
-            id: history.value.length + 1,
-            action: `Cập nhật trạng thái: ${status}`,
-            employee: 'Hệ thống',
-            timestamp: new Date().toLocaleString('vi-VN'),
-            status: 'completed'
-          });
+        try {
+          const trangThaiNumber = hoaDonStore.mapStatusToNumber(status);
+          const result = await hoaDonStore.updateInvoiceStatus(
+            invoice.value.id,
+            trangThaiNumber,
+            null // idNhanVien, có thể lấy từ thông tin người dùng đang đăng nhập
+          );
+          if (result.success) {
+            invoice.value.trangThai = status;
+            updateTimelineStatuses();
+            toastNotification.value.addToast({
+              type: 'success',
+              message: `Cập nhật trạng thái thành công: ${status}`,
+              duration: 3000,
+            });
+          } else {
+            toastNotification.value.addToast({
+              type: 'error',
+              message: result.message,
+              duration: 3000,
+            });
+          }
+        } catch (error) {
           toastNotification.value.addToast({
-            type: 'success',
-            message: `Cập nhật trạng thái thành công: ${status}`,
+            type: 'error',
+            message: 'Lỗi khi cập nhật trạng thái',
             duration: 3000,
           });
+        } finally {
           isNotificationLoading.value = false;
           resetNotification();
-        }, 500);
+        }
       };
       notificationOnCancel.value = () => {
         resetNotification();
@@ -439,8 +502,8 @@ export default {
       notificationType.value = 'confirm';
       notificationMessage.value = '';
       isNotificationLoading.value = false;
-      notificationOnConfirm.value = () => {};
-      notificationOnCancel.value = () => {};
+      notificationOnConfirm.value = () => { };
+      notificationOnCancel.value = () => { };
     };
 
     return {
