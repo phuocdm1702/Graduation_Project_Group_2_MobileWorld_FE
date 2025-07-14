@@ -92,13 +92,13 @@
               <span class="table-count">Phiên bản {{ group.ram }}/{{ group.rom }}</span>
               <div class="action-buttons">
                 <div class="filter-group me-3">
-                  <label class="filter-label">Giá Chung</label>
                   <input v-model="groupCommonValues[group.groupKey].price" type="text" placeholder="Nhập giá chung"
-                    class="form-control search-input" @input="updateSelectedVariants(group)" />
+                    class="form-control search-input" @input="updateSelectedVariants(group)"
+                    style="  border-top-right-radius: 8px; border-bottom-right-radius: 8px;" />
                 </div>
-                <button v-if="selectedVariants.length > 0" @click="removeMultipleVariants" class="btn btn-reset">
+                <button v-if="hasSelectedInGroup[group.groupKey]" @click="removeMultipleVariants" class="btn btn-reset">
                   <i class="bi bi-trash-fill me-2"></i>
-                  Xóa {{ selectedVariants.length }} Đã Chọn
+                  Xóa {{ selectedVariantsInGroup(group).length }} Đã Chọn
                 </button>
               </div>
             </div>
@@ -517,6 +517,21 @@ export default defineComponent({
 
       return groups;
     });
+
+    const hasSelectedInGroup = computed(() => {
+      const result = {};
+      groupVariantsByRamAndRom.value.forEach((group) => {
+        const groupKey = group.groupKey;
+        const groupIndices = group.variants.map((_, index) => group.startIndex + index);
+        result[groupKey] = groupIndices.some((index) => selectedVariants.value.includes(index));
+      });
+      return result;
+    });
+
+    const selectedVariantsInGroup = (group) => {
+      const groupIndices = group.variants.map((_, index) => group.startIndex + index);
+      return selectedVariants.value.filter((index) => groupIndices.includes(index));
+    };
 
     const currentVariantLabel = computed(() => {
       if (currentVariantIndex.value === null) return '';
@@ -1100,6 +1115,8 @@ export default defineComponent({
       modalTitles,
       currentVariantLabel,
       groupVariantsByRamAndRom,
+      hasSelectedInGroup,
+      selectedVariantsInGroup,
       filteredImeiList,
       validImeis,
       filteredRamOptions,
