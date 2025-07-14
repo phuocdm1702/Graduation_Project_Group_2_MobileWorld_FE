@@ -207,13 +207,21 @@
       <!-- Action Buttons -->
       <div class="action-buttons mt-5">
         <button type="button" class="btn btn-reset" @click="goBack">Hủy</button>
-        <button class="btn btn-action" @click="submitForm">
+        <button class="btn btn-action" @click="showConfirmModal">
           {{ isEditMode ? 'Cập Nhật' : 'Thêm' }}
         </button>
       </div>
-    </div>
 
-    <ToastNotification ref="toastNotification" />
+      <ToastNotification ref="toastNotification" />
+      <NotificationModal
+        ref="notificationModal"
+        :type="'confirm'"
+        :message="'Bạn có chắc chắn muốn ' + (isEditMode ? 'cập nhật' : 'thêm') + ' nhân viên này không?'"
+        :confirmText="'Xác nhận'"
+        :onConfirm="submitForm"
+        :onCancel="closeConfirmModal"
+      />
+    </div>
   </div>
 </template>
 
@@ -222,6 +230,7 @@ import { ref, computed, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import HeaderCard from '@/components/common/HeaderCard.vue';
 import ToastNotification from '@/components/common/ToastNotification.vue';
+import NotificationModal from '@/components/common/NotificationModal.vue';
 import { Html5Qrcode } from 'html5-qrcode';
 import { addNhanVien, getNhanVienDetail, UpdateNhanVien } from '../../store/modules/employees/nhanVien';
 import axios from 'axios';
@@ -231,6 +240,7 @@ export default {
   components: {
     HeaderCard,
     ToastNotification,
+    NotificationModal,
   },
   setup() {
     const router = useRouter();
@@ -239,6 +249,7 @@ export default {
     const isScanning = ref(false);
     const employeeImage = ref(null);
     const toastNotification = ref(null);
+    const notificationModal = ref(null);
     const html5QrCode = ref(null);
     const provinces = ref([]);
     const districts = ref([]);
@@ -544,7 +555,7 @@ export default {
       if (fileInput.value) fileInput.value.value = '';
     };
 
-    const submitForm = async () => {
+    const showConfirmModal = () => {
       if (!employee.value.tenNhanVien.trim()) {
         toastNotification.value.addToast({ type: 'error', message: 'Vui lòng nhập tên nhân viên!' });
         return;
@@ -579,7 +590,10 @@ export default {
         return;
       }
       if (!/^\d{12}$/.test(employee.value.cccd.trim())) {
-        toastNotification.value.addToast({ type: 'error', message: 'CCCD phải là 12 chữ số!' });
+        toastNotification.value.addToast({
+          type: 'error',
+          message: 'CCCD phải là 12 chữ số!',
+        });
         return;
       }
       if (!employee.value.email.trim()) {
@@ -610,6 +624,14 @@ export default {
         return;
       }
 
+      notificationModal.value.openModal();
+    };
+
+    const closeConfirmModal = () => {
+      notificationModal.value.closeModal();
+    };
+
+    const submitForm = async () => {
       const file = fileInput.value?.files[0];
       const dataNhanVien = {
         ...employee.value,
@@ -676,6 +698,7 @@ export default {
       employeeImage,
       employee,
       toastNotification,
+      notificationModal,
       isEditMode,
       triggerFileInput,
       handleImageUpload,
@@ -689,6 +712,8 @@ export default {
       fetchWards,
       startScanning,
       stopScanning,
+      showConfirmModal,
+      closeConfirmModal,
     };
   },
 };
