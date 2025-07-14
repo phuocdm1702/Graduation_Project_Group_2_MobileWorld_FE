@@ -159,7 +159,7 @@ import NotificationModal from "@/components/common/NotificationModal.vue";
 import ToastNotification from "@/components/common/ToastNotification.vue";
 import HeaderCard from "@/components/common/HeaderCard.vue";
 import FilterTableSection from "@/components/common/FilterTableSection.vue";
-import { fetchKhachHang, trangThai, importKhachHang } from "../../store/modules/customers/khachHang";
+import { fetchKhachHang, trangThai, importKhachHang, Search } from "../../store/modules/customers/khachHang";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
 
@@ -184,11 +184,12 @@ const filteredCustomers = computed(() => {
     const matchesSearch =
       customer.ma.toLowerCase().includes(searchText) ||
       customer.ten.toLowerCase().includes(searchText) ||
-      customer.email.toLowerCase().includes(searchText) ||
-      customer.soDienThoai.includes(searchText);
+      customer.idTaiKhoan.email.toLowerCase().includes(searchText) ||
+      customer.idTaiKhoan.soDienThoai.includes(searchText);
     const matchesStatus =
       statusFilter.value === "tat-ca" ||
-      customer.trangThai === statusFilter.value;
+      (statusFilter.value === "Kích hoạt" && customer.idTaiKhoan.deleted) ||
+      (statusFilter.value === "Hủy kích hoạt" && !customer.idTaiKhoan.deleted);
     return matchesSearch && matchesStatus;
   });
 });
@@ -209,9 +210,25 @@ const headers = [
   { value: "actions", text: "Hành Động" },
 ];
 
-const debouncedSearch = debounce((value) => {
+const debouncedSearch = debounce(async (value) => {
   keyword.value = value;
   currentPage.value = 1;
+  try {
+    const result = await Search(value);
+    if (result.success) {
+      customers.value = result.data;
+    } else {
+      toastNotification.value.addToast({
+        type: "error",
+        message: result.message,
+      });
+    }
+  } catch (error) {
+    toastNotification.value.addToast({
+      type: "error",
+      message: "Lỗi khi tìm kiếm khách hàng",
+    });
+  }
 }, 300);
 
 const resetFilters = () => {
