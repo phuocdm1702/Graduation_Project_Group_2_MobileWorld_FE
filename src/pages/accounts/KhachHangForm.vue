@@ -25,7 +25,7 @@
       </div>
 
       <!-- Customer Image -->
-      <div class="flex justify-center mb-6 animate__animated animate__zoomIn">
+      <!-- <div class="flex justify-center mb-6 animate__animated animate__zoomIn">
         <div class="employee-image-container relative">
           <div class="image-upload-wrapper">
             <div class="image-preview" @click="triggerFileInput">
@@ -40,15 +40,15 @@
                 <span class="upload-text">Chọn ảnh</span>
                 <span class="upload-subtext">JPG, PNG tối đa 5MB</span>
               </div>
-            </div>
+            </div> -->
 
             <!-- Upload overlay -->
-            <div class="upload-overlay" @click="triggerFileInput">
+            <!-- <div class="upload-overlay" @click="triggerFileInput">
               <i class="bi bi-camera-fill"></i>
-            </div>
+            </div> -->
 
             <!-- Remove button -->
-            <button
+            <!-- <button
               v-if="customerImage"
               class="remove-image-btn"
               @click.stop="removeImage"
@@ -66,7 +66,7 @@
             @change="handleImageUpload"
           />
         </div>
-      </div>
+      </div> -->
 
       <!-- Form Fields -->
       <div class="row g-4">
