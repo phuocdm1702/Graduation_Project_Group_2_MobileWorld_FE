@@ -14,7 +14,6 @@
                 <span v-else class="text-gray-700">Chưa có ảnh</span>
               </div>
               <label class="btn btn-action mt-3">
-                <i class="bi bi-upload me-2"></i>
                 Tải ảnh lên
                 <input type="file" accept="image/*" @change="handleColorImageUpload($event, color.colorId)" class="d-none" />
               </label>
@@ -26,11 +25,9 @@
         </div>
         <div class="action-buttons mt-4">
           <button @click="resetForm" class="btn btn-reset">
-            <i class="bi bi-arrow-clockwise me-2"></i>
             Làm mới
           </button>
           <button @click="handleSubmit" :disabled="isSubmitting" class="btn btn-action" :class="{ 'btn-disabled': isSubmitting }">
-            <i class="bi bi-check-circle me-2"></i>
             {{ isSubmitting ? 'Đang xử lý...' : 'Thêm sản phẩm' }}
           </button>
         </div>
