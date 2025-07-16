@@ -94,10 +94,10 @@ export const UpdateKhachHangDiaChi = async (id, diaChiData) => {
   }
 };
 
-export const Search = async (keyword) => {
+export const Search = async (query) => {
   try {
     const response = await apiService.get('/khach-hang/search', {
-      params: { keyword },
+      params: { query },
     });
     return { success: true, data: response.data };
   } catch (error) {
