@@ -24,50 +24,6 @@
         </div>
       </div>
 
-      <!-- Customer Image -->
-      <!-- <div class="flex justify-center mb-6 animate__animated animate__zoomIn">
-        <div class="employee-image-container relative">
-          <div class="image-upload-wrapper">
-            <div class="image-preview" @click="triggerFileInput">
-              <img
-                v-if="customerImage"
-                :src="customerImage"
-                alt="Ảnh khách hàng"
-                class="employee-avatar"
-              />
-              <div v-else class="image-placeholder">
-                <i class="bi bi-camera-fill upload-icon"></i>
-                <span class="upload-text">Chọn ảnh</span>
-                <span class="upload-subtext">JPG, PNG tối đa 5MB</span>
-              </div>
-            </div> -->
-
-            <!-- Upload overlay -->
-            <!-- <div class="upload-overlay" @click="triggerFileInput">
-              <i class="bi bi-camera-fill"></i>
-            </div> -->
-
-            <!-- Remove button -->
-            <!-- <button
-              v-if="customerImage"
-              class="remove-image-btn"
-              @click.stop="removeImage"
-              title="Xóa ảnh"
-            >
-              <i class="bi bi-x-lg"></i>
-            </button>
-          </div>
-
-          <input
-            ref="fileInput"
-            type="file"
-            class="d-none"
-            accept="image/*"
-            @change="handleImageUpload"
-          />
-        </div>
-      </div> -->
-
       <!-- Form Fields -->
       <div class="row g-4">
         <div class="col-md-6">
@@ -871,6 +827,7 @@ const loadCustomerData = async () => {
 };
 
 const addAddress = async () => {
+  // Validate input
   if (!newAddress.value.diaChiCuThe.trim()) {
     toastNotification.value.addToast({
       type: "error",
@@ -900,7 +857,8 @@ const addAddress = async () => {
     return;
   }
 
-  const diaChiData = {
+  // Prepare address data
+  const addressData = {
     idKhachHang: customer.value.id,
     diaChiCuThe: newAddress.value.diaChiCuThe,
     thanhPho: newAddress.value.thanhPho,
@@ -910,17 +868,23 @@ const addAddress = async () => {
   };
 
   try {
-    const response = await addDiaChi(diaChiData);
-    if (!response.success) {
-      throw new Error(response.message || "Lỗi khi lưu địa chỉ!");
+    // If in edit mode, call API to add address to server
+    if (isEditMode.value) {
+      const response = await addDiaChi(addressData);
+      if (!response.success) {
+        throw new Error(response.message || "Lỗi khi thêm địa chỉ!");
+      }
+      addressData.id = response.data.id; // Assuming the API returns the new address ID
     }
 
+    // If setting as default, unset other addresses' default status
     if (newAddress.value.isDefault) {
       addresses.value.forEach((addr) => (addr.isDefault = false));
     }
 
+    // Add to local addresses list
     addresses.value.push({
-      id: response.data.id,
+      id: addressData.id || null, // Use server ID if available
       ...newAddress.value,
       isEditing: false,
       districts: [],
@@ -930,6 +894,7 @@ const addAddress = async () => {
     // Move to the newly added address
     currentAddressIndex.value = addresses.value.length - 1;
 
+    // Reset form
     newAddress.value = {
       diaChiCuThe: "",
       thanhPho: "",
@@ -948,7 +913,7 @@ const addAddress = async () => {
   } catch (error) {
     toastNotification.value.addToast({
       type: "error",
-      message: error.message || "Lỗi khi lưu địa chỉ!",
+      message: error.message || "Lỗi khi thêm địa chỉ!",
     });
   }
 };
@@ -1005,9 +970,11 @@ const saveEditedAddress = async (index) => {
   };
 
   try {
-    const response = await UpdateKhachHangDiaChi(address.id, addressData);
-    if (!response.success) {
-      throw new Error(response.message || "Lỗi khi cập nhật địa chỉ!");
+    if (isEditMode.value && address.id) {
+      const response = await UpdateKhachHangDiaChi(address.id, addressData);
+      if (!response.success) {
+        throw new Error(response.message || "Lỗi khi cập nhật địa chỉ!");
+      }
     }
 
     if (address.isDefault) {
@@ -1096,9 +1063,11 @@ const deleteAddress = async (index) => {
 const setDefaultAddress = async (index) => {
   const address = addresses.value[index];
   try {
-    const response = await SetMacDinhDiaChi(address.id, true);
-    if (!response.success) {
-      throw new Error(response.message || "Lỗi khi đặt địa chỉ mặc định!");
+    if (isEditMode.value && address.id) {
+      const response = await SetMacDinhDiaChi(address.id, true);
+      if (!response.success) {
+        throw new Error(response.message || "Lỗi khi đặt địa chỉ mặc định!");
+      }
     }
 
     addresses.value.forEach((addr, i) => {
@@ -1138,6 +1107,13 @@ const submitCustomer = () => {
     });
     return;
   }
+   if (!/^[\p{L}\s]+$/u.test(customer.value.tenKH)) {
+    toastNotification.value.addToast({
+      type: "error",
+      message: "Tên khách hàng không được chứa số!",
+    });
+    return;
+  }
   if (!customer.value.soDienThoai || !customer.value.soDienThoai.trim()) {
     toastNotification.value.addToast({
       type: "error",
@@ -1145,10 +1121,80 @@ const submitCustomer = () => {
     });
     return;
   }
+  if (!/^[0-9]{10}$/.test(customer.value.soDienThoai)) {
+    toastNotification.value.addToast({
+      type: "error",
+      message: "Số điện thoại phải là 10 chữ số!",
+    });
+    return;
+  }
   if (!customer.value.email || !customer.value.email.trim()) {
     toastNotification.value.addToast({
       type: "error",
       message: "Vui lòng nhập email!",
+    });
+    return;
+  }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customer.value.email)) {
+    toastNotification.value.addToast({
+      type: "error",
+      message: "Vui lòng nhập email hợp lệ!",
+    });
+    return;
+  }
+  // Validate addresses
+  for (const address of addresses.value) {
+    if (!address.diaChiCuThe.trim()) {
+      toastNotification.value.addToast({
+        type: "error",
+        message: "Vui lòng nhập địa chỉ cụ thể cho tất cả các địa chỉ!",
+      });
+      return;
+    }
+    if (!address.thanhPho) {
+      toastNotification.value.addToast({
+        type: "error",
+        message: "Vui lòng chọn tỉnh/thành phố cho tất cả các địa chỉ!",
+      });
+      return;
+    }
+    if (!address.quan) {
+      toastNotification.value.addToast({
+        type: "error",
+        message: "Vui lòng chọn quận/huyện cho tất cả các địa chỉ!",
+      });
+      return;
+    }
+    if (!address.phuong) {
+      toastNotification.value.addToast({
+        type: "error",
+        message: "Vui lòng chọn xã/phường cho tất cả các địa chỉ!",
+      });
+      return;
+    }
+  }
+  if (!customer.value.gioiTinh) {
+    toastNotification.value.addToast({
+      type: "error",
+      message: "Vui lòng chọn giới tính!",
+    });
+    return;
+  }
+  if (customer.value.ngaySinh) {
+    const today = new Date();
+    const birthDate = new Date(customer.value.ngaySinh);
+    if (birthDate > today) {
+      toastNotification.value.addToast({
+        type: "error",
+        message: "Ngày sinh không được trong tương lai!",
+      });
+      return;
+    }
+  }
+  if (addresses.value.length === 0) {
+    toastNotification.value.addToast({
+      type: "error",
+      message: "Vui lòng thêm ít nhất một địa chỉ!",
     });
     return;
   }
@@ -1165,8 +1211,10 @@ const submitCustomer = () => {
 const saveCustomer = async () => {
   isNotificationLoading.value = true;
   try {
+    // Select default address or first address if no default is set
     const defaultAddress =
       addresses.value.find((addr) => addr.isDefault) || addresses.value[0] || {};
+
     const customerData = {
       id: customer.value.id,
       tenKH: customer.value.tenKH,
@@ -1180,6 +1228,16 @@ const saveCustomer = async () => {
       quan: defaultAddress.quan || "",
       phuong: defaultAddress.phuong || "",
       macDinh: defaultAddress.isDefault || false,
+      // Only include diaChiList for new customer
+      diaChiList: isEditMode.value
+        ? []
+        : addresses.value.map((addr) => ({
+            diaChiCuThe: addr.diaChiCuThe,
+            thanhPho: addr.thanhPho,
+            quan: addr.quan,
+            phuong: addr.phuong,
+            macDinh: addr.isDefault,
+          })),
     };
 
     if (customer.value.imageFile) {
@@ -1193,7 +1251,13 @@ const saveCustomer = async () => {
       if (!customer.value.id) {
         throw new Error("ID khách hàng không hợp lệ, không thể cập nhật!");
       }
+      // Update customer
       response = await UpdateKhachHang(customer.value.id, customerData);
+      if (!response.success) {
+        throw new Error(response.message || "Lỗi khi cập nhật khách hàng!");
+      }
+
+      // Update or add addresses
       for (const address of addresses.value) {
         const addressData = {
           id: address.id,
@@ -1204,7 +1268,9 @@ const saveCustomer = async () => {
           phuong: address.phuong,
           macDinh: address.isDefault,
         };
+
         if (address.id) {
+          // Update existing address
           const addressResponse = await UpdateKhachHangDiaChi(
             address.id,
             addressData
@@ -1215,53 +1281,44 @@ const saveCustomer = async () => {
             );
           }
         } else {
+          // Add new address
           const addressResponse = await addDiaChi(addressData);
           if (!addressResponse.success) {
             throw new Error(addressResponse.message || "Lỗi khi thêm địa chỉ!");
           }
-          address.id = addressResponse.data.id;
+          address.id = addressResponse.data.id; // Update local address ID
         }
       }
     } else {
+      // Add new customer with addresses
       response = await addKhanhHang(customerData);
       if (response.success) {
         customer.value.id = response.data.id;
-        for (const address of addresses.value) {
-          const addressData = {
-            idKhachHang: customer.value.id,
-            diaChiCuThe: address.diaChiCuThe,
-            thanhPho: address.thanhPho,
-            quan: address.quan,
-            phuong: address.phuong,
-            macDinh: address.isDefault,
-          };
-          const addressResponse = await addDiaChi(addressData);
-          if (!addressResponse.success) {
-            throw new Error(addressResponse.message || "Lỗi khi thêm địa chỉ!");
-          }
-          address.id = addressResponse.data.id;
+        // Update address IDs if returned by API
+        if (response.data.diaChiList && response.data.diaChiList.length > 0) {
+          addresses.value.forEach((addr, index) => {
+            addr.id = response.data.diaChiList[index]?.id || null;
+          });
         }
+      } else {
+        throw new Error(response.message || "Lỗi khi thêm khách hàng!");
       }
     }
 
-    if (response.success) {
-      toastNotification.value.addToast({
-        type: "success",
-        message: isEditMode.value
-          ? "Cập nhật khách hàng thành công!"
-          : "Thêm khách hàng thành công!",
-      });
-      setTimeout(() => {
-        resetForm();
-        goBack();
-      }, 1500);
-    } else {
-      throw new Error(response.message || "Lỗi khi lưu khách hàng!");
-    }
+    toastNotification.value.addToast({
+      type: "success",
+      message: isEditMode.value
+        ? "Cập nhật khách hàng thành công!"
+        : "Thêm khách hàng và địa chỉ thành công!",
+    });
+    setTimeout(() => {
+      resetForm();
+      goBack();
+    }, 1500);
   } catch (error) {
     toastNotification.value.addToast({
       type: "error",
-      message: error.message || "Lỗi khi lưu khách hàng!",
+      message: error.message || "Lỗi khi lưu khách hàng hoặc địa chỉ!",
     });
   } finally {
     isNotificationLoading.value = false;
@@ -1361,126 +1418,6 @@ onMounted(async () => {
 
 .gradient-custom-teal {
   background: linear-gradient(135deg, #34d399, #10b981);
-}
-
-/* Image Upload Styles */
-.employee-image-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.image-upload-wrapper {
-  position: relative;
-  width: 160px;
-  height: 160px;
-  margin-bottom: 12px;
-}
-
-.image-preview {
-  width: 100%;
-  height: 100%;
-  border-radius: 50%;
-  border: 4px solid #e2e8f0;
-  overflow: hidden;
-  cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  background: #f8fafc;
-  position: relative;
-}
-
-.image-preview:hover {
-  border-color: #34d399;
-  box-shadow: 0 0 0 4px rgba(52, 211, 153, 0.1);
-  transform: scale(1.02);
-}
-
-.employee-avatar {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  transition: transform 0.3s ease;
-}
-
-.image-preview:hover .employee-avatar {
-  transform: scale(1.1);
-}
-
-.image-placeholder {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-  color: #64748b;
-  text-align: center;
-  padding: 30px;
-}
-
-.upload-icon {
-  font-size: 2.5rem;
-  margin-bottom: 8px;
-  color: #94a3b8;
-}
-
-.upload-text {
-  font-weight: 600;
-  font-size: 1rem;
-  margin-bottom: 4px;
-  display: block;
-}
-
-.upload-subtext {
-  font-size: 0.75rem;
-  color: #94a3b8;
-}
-
-.upload-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(52, 211, 153, 0.9);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  opacity: 0;
-  cursor: pointer;
-  transition: opacity 0.3s ease;
-}
-
-.upload-overlay i {
-  font-size: 2rem;
-  color: white;
-}
-
-.image-preview:hover .upload-overlay {
-  opacity: 1;
-}
-
-.remove-image-btn {
-  position: absolute;
-  top: -8px;
-  right: -8px;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: #ef4444;
-  color: white;
-  border: 2px solid white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  font-size: 0.8rem;
-}
-
-.remove-image-btn:hover {
-  background: #dc2626;
-  transform: scale(1.1);
 }
 
 /* Form Styles */
