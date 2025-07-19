@@ -265,7 +265,7 @@ const routes = [
       { 
         path: "/khachHang/form/:id?", 
         name: "KhachHangForm", 
-        component: "KhachHangForm", 
+        component: KhachHangForm, 
         props: true,
         meta: {
           title: "Form khách hàng",
