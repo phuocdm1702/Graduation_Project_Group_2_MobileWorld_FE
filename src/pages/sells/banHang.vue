@@ -25,9 +25,9 @@
                       <span class="input-group-text bg-white">
                         <i class="bi bi-search text-muted"></i>
                       </span>
-                      <input type="text" class="form-control shadow-none" placeholder="Tìm kiếm hóa đơn..."
+                      <input type="text" class="form-control search-input" placeholder="Tìm kiếm hóa đơn..."
                         :value="invoiceSearchQuery" @input="debouncedInvoiceSearch($event.target.value)"
-                        style="background: rgba(255, 255, 255, 0.95)" />
+                        />
                     </div>
                   </div>
                   <button class="btn btn-light px-4 py-2 fw-semibold add-bill-btn text-dark"
@@ -96,7 +96,7 @@
                   <span class="input-group-text bg-light border-end-0">
                     <i class="bi bi-search text-teal"></i>
                   </span>
-                  <input type="text" class="form-control shadow-none border-start-0"
+                  <input type="text" class="form-control search-input border-start-0"
                     placeholder="Tìm kiếm khách hàng, sdt..." v-model="searchCustomer"
                     @input="debouncedCustomerSearch($event.target.value)" style="
                       border-radius: 0 0.5rem 0.5rem 0;
@@ -113,7 +113,7 @@
                     <span class="input-group-text bg-light border-end-0">
                       <i class="bi bi-person text-teal"></i>
                     </span>
-                    <input v-model="customer.name" type="text" class="form-control shadow-none border-start-0"
+                    <input v-model="customer.name" type="text" class="form-control search-input border-start-0"
                       placeholder="Tên khách hàng" disabled style="
                         border-radius: 0 0.5rem 0.5rem 0;
                         transition: all 0.3s ease;
@@ -128,7 +128,7 @@
                     <span class="input-group-text bg-light border-end-0">
                       <i class="bi bi-telephone text-teal"></i>
                     </span>
-                    <input v-model="customer.phone" type="tel" class="form-control shadow-none border-start-0"
+                    <input v-model="customer.phone" type="tel" class="form-control search-input border-start-0"
                       placeholder="Số điện thoại" disabled style="
                         border-radius: 0 0.5rem 0.5rem 0;
                         transition: all 0.3s ease;
@@ -257,13 +257,14 @@
             <div class="card-body p-4">
               <!-- Thanh tìm kiếm và bộ lọc -->
               <div class="row g-3 mb-4">
-                <div class="col-md-3">
-                  <input v-model="cartSearchQuery" type="text" class="form-control shadow-none"
+                <div class="col-md-3 search-input-wrapper">
+                  <i class="bi bi-search search-icon"></i>
+                  <input v-model="cartSearchQuery" type="text" class="form-control search-input" style="padding-left: 2rem;"
                     placeholder="Tìm sản phẩm, IMEI..." @input="debouncedCartSearch($event.target.value)"
-                    style="background: rgba(255, 255, 255, 0.95)" />
+                    />
                 </div>
                 <div class="col-md-3">
-                  <select v-model="cartFilterColor" class="form-select shadow-none">
+                  <select v-model="cartFilterColor" class="form-select search-input">
                     <option value="">Tất cả màu</option>
                     <option v-for="color in uniqueCartColors" :key="color" :value="color">
                       {{ color }}
@@ -271,7 +272,7 @@
                   </select>
                 </div>
                 <div class="col-md-3">
-                  <select v-model="cartFilterRam" class="form-select shadow-none">
+                  <select v-model="cartFilterRam" class="form-select search-input">
                     <option value="">Tất cả RAM</option>
                     <option v-for="ram in uniqueCartRams" :key="ram" :value="ram">
                       {{ ram }}
@@ -279,7 +280,7 @@
                   </select>
                 </div>
                 <div class="col-md-3">
-                  <select v-model="cartFilterStorage" class="form-select shadow-none">
+                  <select v-model="cartFilterStorage" class="form-select search-input">
                     <option value="">Tất cả bộ nhớ</option>
                     <option v-for="storage in uniqueCartStorages" :key="storage" :value="storage">
                       {{ storage }}
@@ -395,13 +396,14 @@
         <FilterTableSection title="Danh Sách Sản Phẩm" icon="bi bi-table" class="flex-fill">
           <div class="mt-4" style="flex: 1;">
             <div class="row g-3 p-2">
-              <div class="col-md-3">
-                <input :value="productSearchQuery" type="text" class="form-control shadow-none"
+              <div class="col-md-3 search-input-wrapper">
+                <i class="bi bi-search search-icon"></i>
+                <input :value="productSearchQuery" type="text" class="form-control search-input" style="padding-left: 2rem;"
                   placeholder="Tìm kiếm sản phẩm..." @input="debouncedProductSearch($event.target.value)"
-                  style="background: rgba(255, 255, 255, 0.95)" />
+                  />
               </div>
               <div class="col-md-3">
-                <select v-model="filterColor" class="form-select shadow-none">
+                <select v-model="filterColor" class="form-select search-input">
                   <option value="">Tất cả màu</option>
                   <option v-for="color in uniqueColors" :key="color" :value="color">
                     {{ color }}
@@ -409,7 +411,7 @@
                 </select>
               </div>
               <div class="col-md-3">
-                <select v-model="filterRam" class="form-select shadow-none">
+                <select v-model="filterRam" class="form-select search-input">
                   <option value="">Tất cả RAM</option>
                   <option v-for="ram in uniqueRams" :key="ram" :value="ram">
                     {{ ram }}
@@ -417,7 +419,7 @@
                 </select>
               </div>
               <div class="col-md-3">
-                <select v-model="filterStorage" class="form-select shadow-none">
+                <select v-model="filterStorage" class="form-select search-input">
                   <option value="">Tất cả bộ nhớ</option>
                   <option v-for="storage in uniqueStorages" :key="storage" :value="storage">
                     {{ storage }}
@@ -508,7 +510,7 @@
                           <span class="input-group-text bg-light border-end-0">
                             <i class="bi bi-person text-teal"></i>
                           </span>
-                          <input v-model="customer.name" type="text" class="form-control shadow-none border-start-0"
+                          <input v-model="customer.name" type="text" class="form-control search-input border-start-0"
                             placeholder="Nhập tên người nhận" :disabled="!isReceiverEditable" style="
                               border-radius: 0 0.5rem 0.5rem 0;
                               transition: all 0.3s ease;
@@ -523,7 +525,7 @@
                           <span class="input-group-text bg-light border-end-0">
                             <i class="bi bi-telephone text-teal"></i>
                           </span>
-                          <input v-model="customer.phone" type="tel" class="form-control shadow-none border-start-0"
+                          <input v-model="customer.phone" type="tel" class="form-control search-input border-start-0"
                             placeholder="Nhập số điện thoại" :disabled="!isReceiverEditable" style="
                               border-radius: 0 0.5rem 0.5rem 0;
                               transition: all 0.3s ease;
@@ -538,7 +540,7 @@
                           <span class="input-group-text bg-light border-end-0">
                             <i class="bi bi-geo-alt text-teal"></i>
                           </span>
-                          <select v-model="customer.city" class="form-select shadow-none border-start-0"
+                          <select v-model="customer.city" class="form-select search-input border-start-0"
                             @change="handleCustomerProvinceChange" style="
                               border-radius: 0 0.5rem 0.5rem 0;
                               transition: all 0.3s ease;
@@ -560,7 +562,7 @@
                           <span class="input-group-text bg-light border-end-0">
                             <i class="bi bi-geo text-teal"></i>
                           </span>
-                          <select v-model="customer.district" class="form-select shadow-none border-start-0"
+                          <select v-model="customer.district" class="form-select search-input border-start-0"
                             @change="handleCustomerDistrictChange" style="
                               border-radius: 0 0.5rem 0.5rem 0;
                               transition: all 0.3s ease;
@@ -580,7 +582,7 @@
                           <span class="input-group-text bg-light border-end-0">
                             <i class="bi bi-geo-fill text-teal"></i>
                           </span>
-                          <select v-model="customer.ward" class="form-select shadow-none border-start-0" style="
+                          <select v-model="customer.ward" class="form-select search-input border-start-0" style="
                               border-radius: 0 0.5rem 0.5rem 0;
                               transition: all 0.3s ease;
                             ">
@@ -600,7 +602,7 @@
                           <span class="input-group-text bg-light border-end-0">
                             <i class="bi bi-house-door text-teal"></i>
                           </span>
-                          <input v-model="customer.address" type="text" class="form-control shadow-none border-start-0"
+                          <input v-model="customer.address" type="text" class="form-control search-input border-start-0"
                             placeholder="Nhập địa chỉ cụ thể (số nhà, tên đường,...)" :disabled="!isReceiverEditable"
                             style="
                               border-radius: 0 0.5rem 0.5rem 0;
@@ -628,7 +630,7 @@
                             <i class="bi bi-truck text-teal"></i>
                           </span>
                           <input v-model.number="shippingFee" type="number"
-                            class="form-control shadow-none border-start-0" placeholder="Nhập phí vận chuyển (VND)"
+                            class="form-control search-input border-start-0" placeholder="Nhập phí vận chuyển (VND)"
                             min="0" :disabled="!isReceiverEditable" style="
                               border-radius: 0 0.5rem 0.5rem 0;
                               transition: all 0.3s ease;
@@ -720,9 +722,9 @@
                     <!-- Alternative Vouchers -->
                     <div v-if="activeTab === 'alternative'" class="voucher-carousel position-relative">
                       <div class="mb-3">
-                        <input v-model="alternativeSearchQuery" type="text" class="form-control shadow-none"
+                        <input v-model="alternativeSearchQuery" type="text" class="form-control search-input"
                           placeholder="Tìm kiếm mã giảm giá..." @input="debouncedAlternativeSearch($event.target.value)"
-                          style="background: rgba(255, 255, 255, 0.95)" />
+                          />
                       </div>
                       <div class="d-flex gap-3 overflow-x-hidden pb-2" ref="alternativeCarousel">
                         <div v-for="(discount, index) in filteredAlternativeDiscountsComputed" :key="discount.id"
@@ -883,12 +885,12 @@
                   <div v-if="paymentMethod === 'both'" class="row g-3 mt-3">
                     <div class="col-md-6">
                       <label class="form-label fw-medium text-dark">Tiền chuyển khoản</label>
-                      <input v-model.number="tienChuyenKhoan" type="number" class="form-control shadow-none"
+                      <input v-model.number="tienChuyenKhoan" type="number" class="form-control search-input"
                         placeholder="Nhập số tiền chuyển khoản" min="0" />
                     </div>
                     <div class="col-md-6">
                       <label class="form-label fw-medium text-dark">Tiền mặt</label>
-                      <input v-model.number="tienMat" type="number" class="form-control shadow-none"
+                      <input v-model.number="tienMat" type="number" class="form-control search-input"
                         placeholder="Nhập số tiền mặt" min="0" />
                     </div>
                   </div>
@@ -1179,14 +1181,14 @@
                   <label class="form-label fw-medium text-dark mb-2">
                     Tên khách hàng <span class="text-danger">*</span>
                   </label>
-                  <input v-model="newCustomer.name" type="text" class="form-control shadow-none"
+                  <input v-model="newCustomer.name" type="text" class="form-control search-input"
                     placeholder="Nhập tên khách hàng" />
                 </div>
                 <div class="col-md-6">
                   <label class="form-label fw-medium text-dark mb-2">
                     Số điện thoại <span class="text-danger">*</span>
                   </label>
-                  <input v-model="newCustomer.phone" type="tel" class="form-control shadow-none"
+                  <input v-model="newCustomer.phone" type="tel" class="form-control search-input"
                     placeholder="Nhập số điện thoại" />
                 </div>
               </div>
@@ -1359,6 +1361,31 @@ export default defineComponent({
   background: #ef4444;
   color: white;
   border-color: #ef4444;
+}
+
+.search-input-wrapper {
+  position: relative;
+}
+
+.search-icon {
+  position: absolute;
+  left: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #6c757d;
+  z-index: 2;
+}
+
+.search-input {
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  font-size: 0.9rem;
+}
+
+.search-input:focus {
+  border-color: #34d399;
+  box-shadow: 0 0 10px rgba(52, 211, 153, 0.2);
 }
 
 .btn-close-custom {
