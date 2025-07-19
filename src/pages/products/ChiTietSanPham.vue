@@ -16,7 +16,7 @@
                 <i class="bi bi-search search-icon"></i>
                 <input v-model.trim="searchKeyword" @input="debouncedSearch" type="text"
                   placeholder="Tìm kiếm theo IMEI, tên, mã sản phẩm, màu sắc, RAM, ROM, giá..."
-                  class="form-control search-input" />
+                  class="form-control search-input" style="padding-left: 2.5rem;"/>
               </div>
             </div>
           </div>
@@ -53,7 +53,7 @@
           <div class="col-lg-4 col-md-6">
             <div class="filter-group">
               <label class="filter-label">Màu Sắc</label>
-              <select v-model="searchFilters.idMauSac" @change="searchProductDetails" class="form-control search-input">
+              <select v-model="searchFilters.idMauSac" @change="searchProductDetails" class="form-select search-input">
                 <option value="">Tất cả</option>
                 <option v-for="option in mauSacOptions" :key="option.id" :value="option.id">
                   {{ option.mauSac }}
@@ -67,7 +67,7 @@
             <div class="filter-group">
               <label class="filter-label">ROM</label>
               <select v-model="searchFilters.idBoNhoTrong" @change="searchProductDetails"
-                class="form-control search-input">
+                class="form-select search-input">
                 <option value="">Tất cả</option>
                 <option v-for="option in boNhoTrongOptions" :key="option.id" :value="option.id">
                   {{ option.dungLuongBoNhoTrong }}
@@ -80,7 +80,7 @@
           <div class="col-lg-4 col-md-6">
             <div class="filter-group">
               <label class="filter-label">RAM</label>
-              <select v-model="searchFilters.idRam" @change="searchProductDetails" class="form-control search-input">
+              <select v-model="searchFilters.idRam" @change="searchProductDetails" class="form-select search-input">
                 <option value="">Tất cả</option>
                 <option v-for="option in ramOptions" :key="option.id" :value="option.id">
                   {{ option.dungLuongRam }}
@@ -276,7 +276,7 @@
               <div class="search-input-wrapper">
                 <i class="bi bi-search search-icon"></i>
                 <input v-model.trim="imeiSearchKeyword" @input="debouncedImeiSearch" type="text"
-                  placeholder="Nhập IMEI để tìm kiếm..." class="form-control search-input" />
+                  placeholder="Nhập IMEI để tìm kiếm..." class="form-select search-input" />
               </div>
             </div>
             <div class="imei-count">
@@ -960,18 +960,15 @@ export default {
 }
 
 .search-input {
-  padding-left: 2.5rem;
-  border: 2px solid rgba(52, 211, 153, 0.1);
+  border: 1px solid #dee2e6;
   border-radius: 8px;
   transition: all 0.2s ease;
   font-size: 0.9rem;
-  background: #f8f9fa;
 }
 
 .search-input:focus {
   border-color: #34d399;
   box-shadow: 0 0 10px rgba(52, 211, 153, 0.2);
-  outline: none;
 }
 
 .status-radio-group {

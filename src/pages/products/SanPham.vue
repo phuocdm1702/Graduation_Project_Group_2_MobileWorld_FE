@@ -16,7 +16,7 @@
               <div class="search-input-wrapper">
                 <i class="bi bi-search search-icon"></i>
                 <input v-model.trim="keyword" @input="debouncedSearch" type="text"
-                  placeholder="Tìm kiếm theo tên sản phẩm..." class="form-control search-input" />
+                  placeholder="Tìm kiếm theo tên sản phẩm..." class="form-control search-input" style="padding-left: 2.5rem;" />
               </div>
             </div>
           </div>
@@ -25,7 +25,7 @@
           <div class="col-lg-4 col-md-6">
             <div class="filter-group">
               <label class="filter-label">Hãng</label>
-              <select v-model="filters.idNhaSanXuat" @change="searchProducts" class="form-control search-input">
+              <select v-model="filters.idNhaSanXuat" @change="searchProducts" class="form-select search-input">
                 <option value="">Tất cả</option>
                 <option v-for="option in nhaSanXuatOptions" :key="option.id" :value="option.id">
                   {{ option.nhaSanXuat }}
@@ -38,7 +38,7 @@
           <div class="col-lg-4 col-md-6">
             <div class="filter-group">
               <label class="filter-label">Hệ Điều Hành</label>
-              <select v-model="filters.idHeDieuHanh" @change="searchProducts" class="form-control search-input">
+              <select v-model="filters.idHeDieuHanh" @change="searchProducts" class="form-select search-input">
                 <option value="">Tất cả</option>
                 <option v-for="option in heDieuHanhOptions" :key="option.id" :value="option.id">
                   {{ option.heDieuHanh }} {{ option.phienBan }}
@@ -51,7 +51,7 @@
           <div class="col-lg-4 col-md-6">
             <div class="filter-group">
               <label class="filter-label">Công nghệ màn hình</label>
-              <select v-model="filters.idCongNgheManHinh" @change="searchProducts" class="form-control search-input">
+              <select v-model="filters.idCongNgheManHinh" @change="searchProducts" class="form-select search-input">
                 <option value="">Tất cả</option>
                 <option v-for="option in congNgheManHinhOptions" :key="option.id" :value="option.id">
                   {{ option.chuanManHinh }} {{ option.congNgheManHinh }}
@@ -66,7 +66,7 @@
           <div class="col-lg-4 col-md-6">
             <div class="filter-group">
               <label class="filter-label">Pin</label>
-              <select v-model="filters.idPin" @change="searchProducts" class="form-control search-input">
+              <select v-model="filters.idPin" @change="searchProducts" class="form-select search-input">
                 <option value="">Tất cả</option>
                 <option v-for="option in pinOptions" :key="option.id" :value="option.id">
                   {{ option.loaiPin }} {{ option.dungLuongPin }}
@@ -632,12 +632,10 @@ export default defineComponent({
 }
 
 .search-input {
-  padding-left: 2.5rem;
   border: 2px solid rgba(52, 211, 153, 0.1);
   border-radius: 8px;
   transition: all 0.2s ease;
   font-size: 0.9rem;
-  background: #f8f9fa;
 }
 
 .search-input:focus {

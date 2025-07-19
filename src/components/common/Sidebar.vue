@@ -1111,7 +1111,6 @@ onUnmounted(() => {
 .modal-btn:hover {
   background: #f0fdf4;
   color: #16a34a;
-  transform: translateX(4px);
 }
 
 .modal-btn i {
@@ -1125,11 +1124,6 @@ onUnmounted(() => {
 
 .modal-btn.logout:hover {
   background: #15803d;
-  transform: translateX(4px);
-}
-
-.modal-btn:hover i {
-  transform: scale(1.1);
 }
 
 .modal-fade-enter-active,
