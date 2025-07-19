@@ -332,6 +332,7 @@ import {
   ShoppingCartIcon,
   TagIcon,
   ChartBarIcon,
+  ChatBubbleLeftRightIcon
 } from '@heroicons/vue/24/outline';
 
 const uiStore = useUiStore();
@@ -409,6 +410,11 @@ const menuItems = ref([
     isOpen: false,
   },
   { name: 'Thống kê', path: '/thongKe', icon: ChartBarIcon },
+  { 
+    name: 'Hỗ trợ khách hàng', 
+    path: '/chatInterface', 
+    icon: ChatBubbleLeftRightIcon 
+  },
 ]);
 
 const isActive = (path) => {

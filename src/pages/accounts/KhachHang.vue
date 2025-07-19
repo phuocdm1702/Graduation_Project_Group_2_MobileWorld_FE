@@ -182,14 +182,14 @@ const filteredCustomers = computed(() => {
   return customers.value.filter((customer) => {
     const searchText = keyword.value.toLowerCase();
     const matchesSearch =
-      customer.ma.toLowerCase().includes(searchText) ||
-      customer.ten.toLowerCase().includes(searchText) ||
-      customer.idTaiKhoan.email.toLowerCase().includes(searchText) ||
-      customer.idTaiKhoan.soDienThoai.includes(searchText);
+      (customer.ma || "").toLowerCase().includes(searchText) ||
+      (customer.ten || "").toLowerCase().includes(searchText) ||
+      (customer.idTaiKhoan?.email || "").toLowerCase().includes(searchText) ||
+      (customer.idTaiKhoan?.soDienThoai || "").includes(searchText);
     const matchesStatus =
       statusFilter.value === "tat-ca" ||
-      (statusFilter.value === "Kích hoạt" && customer.idTaiKhoan.deleted) ||
-      (statusFilter.value === "Hủy kích hoạt" && !customer.idTaiKhoan.deleted);
+      (statusFilter.value === "Kích hoạt" && customer.idTaiKhoan?.deleted) ||
+      (statusFilter.value === "Hủy kích hoạt" && !customer.idTaiKhoan?.deleted);
     return matchesSearch && matchesStatus;
   });
 });

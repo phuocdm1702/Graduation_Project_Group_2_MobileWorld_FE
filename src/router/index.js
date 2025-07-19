@@ -24,6 +24,7 @@ const NhanVien = () => import("@/pages/accounts/NhanVien.vue");
 const NhanVienForm = () => import("@/pages/accounts/NhanVienForm.vue");
 const KhachHang = () => import("@/pages/accounts/KhachHang.vue");
 const KhachHangForm = () => import("@/pages/accounts/KhachHangForm.vue");
+const ChatInterface = () => import("@/pages/customerSupport/ChatInterface.vue");
 const ThongKe = () => import("@/pages/statistics/ThongKe.vue");
 const Login = () => import("@/pages/auth/Login.vue");
 const NotFound = () => import("@/pages/NotFound.vue");
@@ -267,11 +268,23 @@ const routes = [
         component: KhachHangForm, 
         props: true,
         meta: {
-          title: "Form khách hàng", // Sẽ được xử lý động trong component
+          title: "Form khách hàng",
           breadcrumb: [
             { name: "Trang chủ", path: "/trangChu" },
             { name: "Khách hàng", path: "/khachHang" },
             { name: "Form khách hàng", path: "/khachHang/form" }
+          ]
+        }
+      },
+      { 
+        path: "/chatInterface", 
+        name: "ChatInterface", 
+        component: ChatInterface,
+        meta: {
+          title: "Hệ thống chat khách hàng",
+          breadcrumb: [
+            { name: "Trang chủ", path: "/trangChu" },
+            { name: "Hỗ trợ khách hàng", path: "/chatInterface" }
           ]
         }
       },
