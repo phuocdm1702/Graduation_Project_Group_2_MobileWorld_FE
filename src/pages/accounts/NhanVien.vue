@@ -1,7 +1,11 @@
 <template>
   <div class="container-fluid py-4">
-    <HeaderCard title="Quản Lý Nhân Viên" badgeText="Hệ Thống POS" badgeClass="gradient-custom-teal"
-      :backgroundOpacity="0.95" />
+    <HeaderCard
+      title="Quản Lý Nhân Viên"
+      badgeText="Hệ Thống POS"
+      badgeClass="gradient-custom-teal"
+      :backgroundOpacity="0.95"
+    />
 
     <!-- Filter Section -->
     <FilterTableSection title="Bộ Lọc Tìm Kiếm" icon="bi bi-funnel">
@@ -12,8 +16,13 @@
               <label class="filter-label">Tìm kiếm</label>
               <div class="search-input-wrapper">
                 <i class="bi bi-search search-icon"></i>
-                <input type="text" class="form-control search-input" placeholder="Mã, tên, email, SĐT..."
-                  v-model="keyword" @keyup.enter="debouncedSearch($event.target.value)" />
+                <input
+                  type="text"
+                  class="form-control search-input"
+                  placeholder="Mã, tên, email, SĐT..."
+                  v-model="keyword"
+                  @keyup.enter="debouncedSearch($event.target.value)"
+                />
               </div>
             </div>
           </div>
@@ -22,15 +31,30 @@
               <label class="filter-label">Trạng thái</label>
               <div class="radio-group">
                 <label class="radio-label">
-                  <input type="radio" value="tat-ca" v-model="statusFilter" class="radio-input" />
+                  <input
+                    type="radio"
+                    value="tat-ca"
+                    v-model="statusFilter"
+                    class="radio-input"
+                  />
                   Tất cả
                 </label>
                 <label class="radio-label">
-                  <input type="radio" value="true" v-model="statusFilter" class="radio-input" />
+                  <input
+                    type="radio"
+                    value="true"
+                    v-model="statusFilter"
+                    class="radio-input"
+                  />
                   Đang làm
                 </label>
                 <label class="radio-label">
-                  <input type="radio" value="false" v-model="statusFilter" class="radio-input" />
+                  <input
+                    type="radio"
+                    value="false"
+                    v-model="statusFilter"
+                    class="radio-input"
+                  />
                   Đã nghỉ
                 </label>
               </div>
@@ -43,8 +67,11 @@
               <div class="filter-stats">
                 <div class="stat-item d-flex gap-2">
                   <span class="stat-label">Tổng số nhân viên:</span>
-                  <span class="stat-value" style="color: #15803d; font-weight: bold">{{ filteredEmployees.length
-                    }}</span>
+                  <span
+                    class="stat-value"
+                    style="color: #15803d; font-weight: bold"
+                    >{{ filteredEmployees.length }}</span
+                  >
                 </div>
               </div>
             </div>
@@ -61,7 +88,13 @@
             </button>
             <label for="import-excel" class="btn btn-action cursor-pointer">
               Nhập từ Excel
-              <input id="import-excel" type="file" accept=".xlsx, .xls" class="d-none" @change="handleExcelUpload" />
+              <input
+                id="import-excel"
+                type="file"
+                accept=".xlsx, .xls"
+                class="d-none"
+                @change="handleExcelUpload"
+              />
             </label>
             <button class="btn btn-action" @click="downloadTemplate">
               Tải mẫu Excel
@@ -75,14 +108,20 @@
     <FilterTableSection title="Danh Sách Nhân Viên" icon="bi bi-table">
       <div class="table-header">
         <div class="table-title-wrapper">
-          <span class="table-count">{{ filteredEmployees.length }} nhân viên</span>
+          <span class="table-count"
+            >{{ filteredEmployees.length }} nhân viên</span
+          >
         </div>
       </div>
 
       <div class="table-body">
         <!-- Table View -->
         <div class="animate__animated animate__zoomIn">
-          <DataTable :headers="headers" :data="filteredEmployees" :pageSizeOptions="[5, 10, 15, 20, 30, 40, 50]">
+          <DataTable
+            :headers="headers"
+            :data="filteredEmployees"
+            :pageSizeOptions="[5, 10, 15, 20, 30, 40, 50]"
+          >
             <template #stt="{ item, index }">
               {{ index + 1 }}
             </template>
@@ -92,7 +131,7 @@
               </div>
             </template>
             <template #tenNhanVien="{ item }">
-                <span class="employee-name">{{ item.tenNhanVien }}</span>
+              <span class="employee-name">{{ item.tenNhanVien }}</span>
             </template>
             <template #email="{ item }">
               <div class="email-cell">
@@ -101,7 +140,9 @@
             </template>
             <template #soDienThoai="{ item }">
               <div class="email-cell">
-                <span class="email-text">{{ item.idTaiKhoan.soDienThoai }}</span>
+                <span class="email-text">{{
+                  item.idTaiKhoan.soDienThoai
+                }}</span>
               </div>
             </template>
             <template #diaChi="{ item }">
@@ -110,20 +151,35 @@
               </div>
             </template>
             <template #trangThai="{ item }">
-              <span class="status-badge" :class="getStatusBadgeClass(item.idTaiKhoan.deleted)">
+              <span
+                class="status-badge"
+                :class="getStatusBadgeClass(item.idTaiKhoan.deleted)"
+              >
                 {{ item.idTaiKhoan.deleted ? "Đang làm" : "Đã nghỉ" }}
               </span>
             </template>
             <template #actions="{ item }">
               <div class="action-buttons-cell d-flex gap-2">
                 <label class="switch">
-                  <input type="checkbox" :checked="item.idTaiKhoan.deleted" @change="toggleEmployeeStatus(item)" />
+                  <input
+                    type="checkbox"
+                    :checked="item.idTaiKhoan.deleted"
+                    @change="toggleEmployeeStatus(item)"
+                  />
                   <span class="slider round"></span>
                 </label>
-                <button class="btn btn-sm btn-table" @click="editEmployee(item)" title="Chỉnh sửa">
+                <button
+                  class="btn btn-sm btn-table"
+                  @click="editEmployee(item)"
+                  title="Chỉnh sửa"
+                >
                   <i class="bi bi-pencil-fill"></i>
                 </button>
-                <button class="btn btn-sm btn-table" @click="confirmDeleteEmployee(item)" title="Xóa">
+                <button
+                  class="btn btn-sm btn-table"
+                  @click="confirmDeleteEmployee(item)"
+                  title="Xóa"
+                >
                   <i class="bi bi-trash-fill"></i>
                 </button>
               </div>
@@ -133,9 +189,15 @@
       </div>
     </FilterTableSection>
 
-    <NotificationModal ref="notificationModal" :type="notificationType" :message="notificationMessage"
-      :isLoading="isNotificationLoading" :onConfirm="notificationOnConfirm" :onCancel="notificationOnCancel"
-      @close="resetNotification" />
+    <NotificationModal
+      ref="notificationModal"
+      :type="notificationType"
+      :message="notificationMessage"
+      :isLoading="isNotificationLoading"
+      :onConfirm="notificationOnConfirm"
+      :onCancel="notificationOnCancel"
+      @close="resetNotification"
+    />
     <ToastNotification ref="toastNotification" />
   </div>
 </template>
@@ -149,7 +211,12 @@ import NotificationModal from "@/components/common/NotificationModal.vue";
 import ToastNotification from "@/components/common/ToastNotification.vue";
 import HeaderCard from "@/components/common/HeaderCard.vue";
 import FilterTableSection from "@/components/common/FilterTableSection.vue";
-import { fetchNhanVien, Search, trangThai, importNhanVien } from "../../store/modules/employees/nhanVien";
+import {
+  fetchNhanVien,
+  Search,
+  trangThai,
+  importNhanVien,
+} from "../../store/modules/employees/nhanVien";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
 
@@ -168,19 +235,36 @@ const toastNotification = ref(null);
 
 const employees = ref([]);
 
+// const filteredEmployees = computed(() => {
+//   return employees.value.filter((employee) => {
+//     const searchText = keyword.value.toLowerCase();
+//     const matchesSearch =
+//       employee.ma.toLowerCase().includes(searchText) ||
+//       employee.tenNhanVien.toLowerCase().includes(searchText) ||
+//       employee.email.toLowerCase().includes(searchText) ||
+//       employee.soDienThoai.includes(searchText);
+//     const matchesStatus =
+//       statusFilter.value === "tat-ca" ||
+//       employee.idTaiKhoan.deleted === (statusFilter.value === "true");
+//     return matchesSearch && matchesStatus;
+//   });
+// });
 const filteredEmployees = computed(() => {
-  return employees.value.filter((employee) => {
-    const searchText = keyword.value.toLowerCase();
-    const matchesSearch =
-      employee.ma.toLowerCase().includes(searchText) ||
-      employee.tenNhanVien.toLowerCase().includes(searchText) ||
-      employee.email.toLowerCase().includes(searchText) ||
-      employee.soDienThoai.includes(searchText);
-    const matchesStatus =
-      statusFilter.value === "tat-ca" ||
-      employee.idTaiKhoan.deleted === (statusFilter.value === "true");
-    return matchesSearch && matchesStatus;
-  });
+  return employees.value
+    .filter((employee) => {
+      const searchText = keyword.value.toLowerCase();
+      const matchesSearch =
+        (employee.ma || "").toLowerCase().includes(searchText) ||
+        (employee.tenNhanVien || "").toLowerCase().includes(searchText) ||
+        (employee.idTaiKhoan?.email || "").toLowerCase().includes(searchText) ||
+        (employee.idTaiKhoan?.soDienThoai || "").includes(searchText);
+      const matchesStatus =
+        statusFilter.value === "tat-ca" ||
+        employee.idTaiKhoan.deleted === (statusFilter.value === "true");
+      return matchesSearch && matchesStatus;
+    })
+    .slice()
+    .reverse(); // Đảo ngược danh sách
 });
 
 const formatAddress = (employee) => {
@@ -190,8 +274,8 @@ const formatAddress = (employee) => {
     employee.diaChiCuThe || "",
     employee.phuong || "",
     employee.quan || "",
-    employee.thanhPho || ""
-  ].filter(part => part && part.trim() !== "");
+    employee.thanhPho || "",
+  ].filter((part) => part && part.trim() !== "");
 
   return parts.length > 0 ? parts.join(", ") : "Chưa có dữ liệu";
 };
@@ -291,10 +375,10 @@ const toggleEmployeeStatus = async (employee) => {
       employees.value = employees.value.map((e) =>
         e.id === employee.id
           ? {
-            ...e,
-            trangThai: newStatus,
-            idTaiKhoan: { ...e.idTaiKhoan, deleted: newDeleted },
-          }
+              ...e,
+              trangThai: newStatus,
+              idTaiKhoan: { ...e.idTaiKhoan, deleted: newDeleted },
+            }
           : e
       );
 
@@ -339,14 +423,14 @@ const exportExcel = () => {
       "Số Điện Thoại": employee.idTaiKhoan?.soDienThoai || "Chưa có dữ liệu",
       "Ngày Sinh": employee.ngaySinh
         ? new Date(employee.ngaySinh).toLocaleDateString("vi-VN", {
-          day: "2-digit",
-          month: "2-digit",
-          year: "numeric",
-        })
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+          })
         : "Chưa có dữ liệu",
       "Địa Chỉ Cụ Thể": employee.diaChiCuThe || "Chưa có dữ liệu",
-      "Phường": employee.phuong || "Chưa có dữ liệu",
-      "Quận": employee.quan || "Chưa có dữ liệu",
+      Phường: employee.phuong || "Chưa có dữ liệu",
+      Quận: employee.quan || "Chưa có dữ liệu",
       "Thành Phố": employee.thanhPho || "Chưa có dữ liệu",
       "Trạng Thái": employee.idTaiKhoan?.deleted ? "Đang làm" : "Đã nghỉ",
     }));
@@ -387,8 +471,13 @@ const exportExcel = () => {
       }
     }
 
-    const excelBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
-    const timestamp = new Date().toLocaleString("vi-VN").replace(/[:/,\s]/g, "-");
+    const excelBuffer = XLSX.write(workbook, {
+      bookType: "xlsx",
+      type: "array",
+    });
+    const timestamp = new Date()
+      .toLocaleString("vi-VN")
+      .replace(/[:/,\s]/g, "-");
     const data = new Blob([excelBuffer], { type: "application/octet-stream" });
     saveAs(data, `Danh_Sach_Nhan_Vien_${timestamp}.xlsx`);
 
@@ -465,7 +554,10 @@ const downloadTemplate = () => {
       };
     }
 
-    const excelBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
+    const excelBuffer = XLSX.write(workbook, {
+      bookType: "xlsx",
+      type: "array",
+    });
     const data = new Blob([excelBuffer], { type: "application/octet-stream" });
     saveAs(data, "Template_Nhan_Vien.xlsx");
 
@@ -506,10 +598,17 @@ const handleExcelUpload = async (event) => {
     reader.onload = async (e) => {
       try {
         const data = new Uint8Array(e.target.result);
-        const workbook = XLSX.read(data, { type: "array", cellDates: true, dateNF: "dd/mm/yyyy" });
+        const workbook = XLSX.read(data, {
+          type: "array",
+          cellDates: true,
+          dateNF: "dd/mm/yyyy",
+        });
         const sheetName = workbook.SheetNames[0];
         const worksheet = workbook.Sheets[sheetName];
-        const jsonData = XLSX.utils.sheet_to_json(worksheet, { raw: false, dateNF: "dd/mm/yyyy" });
+        const jsonData = XLSX.utils.sheet_to_json(worksheet, {
+          raw: false,
+          dateNF: "dd/mm/yyyy",
+        });
 
         const parseExcelDate = (value) => {
           if (!value) return null;
@@ -543,7 +642,9 @@ const handleExcelUpload = async (event) => {
 
         const nhanViens = jsonData.map((row, index) => {
           if (!row["Mã Nhân Viên"] || !row["Tên Nhân Viên"]) {
-            throw new Error(`Dòng ${index + 2}: Thiếu Mã Nhân Viên hoặc Tên Nhân Viên`);
+            throw new Error(
+              `Dòng ${index + 2}: Thiếu Mã Nhân Viên hoặc Tên Nhân Viên`
+            );
           }
 
           const employeeData = {
@@ -633,7 +734,6 @@ const handleExcelUpload = async (event) => {
 }
 
 @keyframes gentleGlow {
-
   0%,
   100% {
     box-shadow: 0 0 5px rgba(52, 211, 153, 0.3);
@@ -715,7 +815,7 @@ const handleExcelUpload = async (event) => {
 }
 
 .radio-input:checked::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 50%;
   left: 50%;
@@ -890,11 +990,11 @@ const handleExcelUpload = async (event) => {
   border-radius: 50%;
 }
 
-input:checked+.slider {
+input:checked + .slider {
   background-color: #34d399;
 }
 
-input:checked+.slider:before {
+input:checked + .slider:before {
   transform: translateX(20px);
 }
 
@@ -903,7 +1003,7 @@ input:checked+.slider:before {
   margin-right: -0.5rem;
 }
 
-.row.g-4>[class*="col-"] {
+.row.g-4 > [class*="col-"] {
   padding-left: 0.5rem;
   padding-right: 0.5rem;
 }
@@ -937,7 +1037,7 @@ input:checked+.slider:before {
     margin-right: -0.25rem;
   }
 
-  .row.g-4>[class*="col-"] {
+  .row.g-4 > [class*="col-"] {
     padding-left: 0.25rem;
     padding-right: 0.25rem;
   }
