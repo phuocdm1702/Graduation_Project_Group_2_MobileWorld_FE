@@ -276,7 +276,7 @@
               <div class="search-input-wrapper">
                 <i class="bi bi-search search-icon"></i>
                 <input v-model.trim="imeiSearchKeyword" @input="debouncedImeiSearch" type="text"
-                  placeholder="Nhập IMEI để tìm kiếm..." class="form-select search-input" />
+                  placeholder="Nhập IMEI để tìm kiếm..." class="form-control search-input" style="padding-left: 2.5rem;"/>
               </div>
             </div>
             <div class="imei-count">
@@ -438,7 +438,7 @@ export default {
       { text: '#', value: 'checkbox' },
       { text: 'STT', value: 'stt' },
       { text: 'Ảnh', value: 'imageUrl' }, // Thêm cột ảnh
-      { text: 'Mã SP', value: 'maSanPham' },
+      { text: 'Mã CTSP', value: 'maSanPham' },
       { text: 'Tên SP', value: 'tenSanPham' },
       { text: 'IMEI', value: 'imei' },
       { text: 'Màu Sắc', value: 'mauSac' },
