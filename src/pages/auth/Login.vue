@@ -1,6 +1,7 @@
 <template>
   <div class="login-container">
-    <!-- Background Elements -->
+    <ToastNotification ref="toast" />
+
     <div class="bg-shapes">
       <div class="shape shape-1"></div>
       <div class="shape shape-2"></div>
@@ -65,7 +66,7 @@
                   id="username"
                   class="form-input"
                   v-model="username"
-                  placeholder="Enter your username"
+                  placeholder="Nhập tên đăng nhập hoặc email"
                   required
                   :disabled="isLoading"
                 />
@@ -82,7 +83,7 @@
                   id="password"
                   class="form-input"
                   v-model="password"
-                  placeholder="Enter your password"
+                  placeholder="Nhập mật khẩu"
                   required
                   :disabled="isLoading"
                 />
@@ -161,9 +162,14 @@
 import { useAuthStore } from '@/store/modules/auth';
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
+import axios from 'axios';
+import ToastNotification from '../../components/common/ToastNotification.vue';
 
 export default {
   name: 'ModernLogin',
+  components: {
+    ToastNotification,
+  },
   setup() {
     const username = ref('');
     const password = ref('');
@@ -173,25 +179,59 @@ export default {
     const rememberMe = ref(false);
     const authStore = useAuthStore();
     const router = useRouter();
+    const toast = ref(null); 
 
     const handleLogin = async () => {
       isLoading.value = true;
       error.value = '';
 
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 500));
+      try {
+        const payload = {
+          tenDangNhap: username.value.trim(),
+          matKhau: password.value,
+          email: ''
+        };
+        const response = await axios.post('http://localhost:8080/tai-khoan/dang-nhap', payload, {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
 
-      const validUsername = 'admin';
-      const validPassword = '123456';
-
-      if (username.value === validUsername && password.value === validPassword) {
-        authStore.login({ username: username.value });
-        router.push('/trangChu');
-      } else {
-        error.value = 'Invalid username or password. Please try again.';
+        if (response.status === 200) {
+          authStore.login({ username: username.value });
+          if (rememberMe.value) {
+            localStorage.setItem('username', username.value); 
+          }
+          // Gọi toast thành công
+          if (toast.value) {
+            toast.value.addToast({
+              type: 'success',
+              message: 'Đăng nhập thành công! Đang chuyển hướng...',
+              duration: 3000,
+            });
+          }
+          // Trì hoãn chuyển hướng
+          setTimeout(() => {
+            router.push('/trangChu');
+          }, 1000);
+        }
+      } catch (error) {
+        // Gọi toast lỗi
+        if (toast.value) {
+          toast.value.addToast({
+            type: 'error',
+            message: error.response?.data || 'Tên đăng nhập hoặc mật khẩu không đúng. Vui lòng thử lại.',
+            duration: 5000,
+          });
+        }
+        if (error.response) {
+          error.value = error.response.data || 'Tên đăng nhập hoặc mật khẩu không đúng. Vui lòng thử lại.';
+        } else {
+          error.value = 'Không thể kết nối đến server. Vui lòng thử lại sau.';
+        }
+      } finally {
+        isLoading.value = false;
       }
-
-      isLoading.value = false;
     };
 
     return { 
@@ -201,7 +241,8 @@ export default {
       isLoading, 
       showPassword,
       rememberMe,
-      handleLogin 
+      handleLogin,
+      toast, // Trả về ref toast
     };
   },
 };
