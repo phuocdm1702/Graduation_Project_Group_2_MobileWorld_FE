@@ -6,9 +6,7 @@
       badgeClass="gradient-custom-teal"
       :backgroundOpacity="0.95"
     />
-
     <div class="row">
-      <!-- Form Phiếu Giảm Giá -->
       <div class="col-lg-6">
         <FilterTableSection
           :title="
@@ -151,45 +149,80 @@
           </form>
         </FilterTableSection>
       </div>
-
-      <!-- Chọn Khách Hàng và Khách Hàng Đã Chọn -->
       <div class="col-lg-6 customer-container">
-        <FilterTableSection title="Chọn Khách Hàng" icon="bi bi-people" class="customer-section">
+        <FilterTableSection
+          title="Chọn Khách Hàng"
+          icon="bi bi-people"
+          class="customer-section"
+        >
           <div class="p-3" :class="{ 'disabled-section': !formData.riengTu }">
             <div class="mb-3">
               <label class="filter-label">Tìm kiếm khách hàng</label>
-              <div class="search-input-wrapper">
-                <i class="bi bi-search search-icon"></i>
-                <input
-                  v-model="searchCustomer"
-                  type="text"
-                  class="form-control search-input"
-                  placeholder="Tìm theo mã hoặc tên..."
-                  @input="debouncedSearchCustomer"
+              <div class="filter-group d-flex gap-2">
+                <div class="search-input-wrapper flex-grow-1">
+                  <i class="bi bi-search search-icon"></i>
+                  <input
+                    v-model="searchCustomer"
+                    type="text"
+                    class="form-control search-input"
+                    placeholder="Tìm theo mã hoặc tên..."
+                    @input="debouncedSearchCustomer"
+                    :disabled="!formData.riengTu"
+                  />
+                </div>
+                <select
+                  v-model="gioiTinhFilter"
+                  class="form-control gender-filter"
                   :disabled="!formData.riengTu"
-                />
+                  style="width: 33%; min-width: 120px"
+                >
+                  <option value="">Tất cả</option>
+                  <option value="true">Nam</option>
+                  <option value="false">Nữ</option>
+                </select>
               </div>
             </div>
             <div
               class="customer-list"
               style="max-height: 250px; overflow-y: auto"
             >
-              <div
-                v-for="customer in filteredCustomers"
-                :key="customer.id"
-                class="customer-item d-flex justify-content-between align-items-center p-2 mb-2"
-                :class="{ selected: selectedCustomers.includes(customer.id) }"
-                @click="
-                  formData.riengTu && toggleCustomerSelection(customer.id)
-                "
-              >
-                <span>{{ customer.ma }} - {{ customer.ten }}</span>
-                <span>{{ customer.gioiTinh == 1 ? 'Nam' : 'Nữ' }}</span>
-              </div>
+              <table class="table table-striped">
+                <thead>
+                  <tr>
+                    <th>Mã KH</th>
+                    <th>Tên Khách Hàng</th>
+                    <th>Giới tính</th>
+                    <th>Ngày sinh</th>
+                    <th>Tổng số lần mua</th>
+                    <th>Lần mua gần nhất</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr
+                    v-for="customer in filteredCustomers"
+                    :key="customer.id"
+                    class="customer-item"
+                    :class="{
+                      selected: selectedCustomers.includes(customer.id),
+                    }"
+                    @click="
+                      formData.riengTu && toggleCustomerSelection(customer.id)
+                    "
+                  >
+                    <td>{{ customer.ma }}</td>
+                    <td>{{ customer.ten }}</td>
+                    <td>{{ customer.gioiTinh ? "Nam" : "Nữ" }}</td>
+                    <td>{{ formatDate(customer.ngaySinh) }}</td>
+                    <td>{{ customer.totalOrders || 0 }}</td>
+                    <td>
+                      {{ formatDate(customer.lastOrderDate) || "Chưa có" }}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
           </div>
         </FilterTableSection>
-
         <FilterTableSection
           title="Khách Hàng Đã Chọn"
           icon="bi bi-check-circle"
@@ -210,10 +243,11 @@
                 <tr
                   v-for="customer in selectedCustomersData"
                   :key="customer.id"
+                  class="customer-item selected"
                 >
                   <td>{{ customer.ma }}</td>
                   <td>{{ customer.ten }}</td>
-                  <td>{{ customer.gioiTinh == 1 ? 'Nam' : 'Nữ' }}</td>
+                  <td>{{ customer.gioiTinh ? "Nam" : "Nữ" }}</td>
                   <td>{{ formatDate(customer.ngaySinh) }}</td>
                   <td>
                     <button
@@ -238,7 +272,6 @@
         </FilterTableSection>
       </div>
     </div>
-
     <ToastNotification ref="toastNotification" />
   </div>
 </template>
@@ -256,6 +289,7 @@ import {
   addVoucher,
   getVoucherDetail,
   updateVoucher,
+  filterCustomersByGioiTinh, // Thêm import hàm mới
 } from "../../store/modules/promotions/phieuGiamGia";
 
 export default {
@@ -269,7 +303,6 @@ export default {
     const router = useRouter();
     const route = useRoute();
 
-    // Form Data
     const formData = ref({
       ma: "",
       tenPhieuGiamGia: "",
@@ -286,6 +319,7 @@ export default {
     });
 
     const searchCustomer = ref("");
+    const gioiTinhFilter = ref("");
     const customers = ref([]);
     const selectedCustomers = ref([]);
     const toastNotification = ref(null);
@@ -314,18 +348,17 @@ export default {
       },
     });
 
-    // Computed
     const isEditMode = computed(() => !!route.params.id);
 
     const filteredCustomers = computed(() => {
       return customers.value.filter((customer) => {
-        const maKhachHang = customer.maKhachHang || "";
+        const maKhachHang = customer.ma || "";
         const tenKhachHang = customer.ten || "";
         const searchTerm = searchCustomer.value.toLowerCase();
-        return (
+        const matchesSearch =
           maKhachHang.toLowerCase().includes(searchTerm) ||
-          tenKhachHang.toLowerCase().includes(searchTerm)
-        );
+          tenKhachHang.toLowerCase().includes(searchTerm);
+        return matchesSearch;
       });
     });
 
@@ -335,7 +368,6 @@ export default {
       );
     });
 
-    // Generate random code for ma field
     const generateRandomCode = () => {
       const characters =
         "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
@@ -347,7 +379,6 @@ export default {
       return randomCode;
     };
 
-    // Set random code when not in edit mode
     onMounted(() => {
       if (!isEditMode.value) {
         formData.value.ma = generateRandomCode();
@@ -356,7 +387,6 @@ export default {
       loadVoucherData();
     });
 
-    // Watch for changes in riengTu or selectedCustomers to update soLuongDung
     watch(
       () => [formData.value.riengTu, selectedCustomers.value],
       ([riengTu, selectedCustomers]) => {
@@ -374,7 +404,28 @@ export default {
       { deep: true }
     );
 
-    // Methods
+    watch(gioiTinhFilter, () => {
+      debouncedSearchCustomer(searchCustomer.value);
+    });
+
+    const filterCustomersByGioiTinhWrapper = async (gioiTinh) => {
+      try {
+        const response = await filterCustomersByGioiTinh(gioiTinh);
+        customers.value = response.data || [];
+        if (!response.data) {
+          toastNotification.value.addToast({
+            type: "warning",
+            message: "Không tìm thấy khách hàng theo giới tính!",
+          });
+        }
+      } catch (error) {
+        toastNotification.value.addToast({
+          type: "error",
+          message: `Lỗi khi lọc khách hàng theo giới tính: ${error.message}`,
+        });
+      }
+    };
+
     const formatDate = (date) => {
       if (!date) return "";
       return new Date(date).toLocaleDateString("vi-VN");
@@ -416,7 +467,6 @@ export default {
             customerIds: voucher.customerIds || [],
           };
           selectedCustomers.value = voucher.customerIds || [];
-          // Ensure soLuongDung is updated based on riengTu and selected customers
           if (formData.value.riengTu) {
             formData.value.soLuongDung = selectedCustomers.value.length;
           }
@@ -431,10 +481,16 @@ export default {
 
     const debouncedSearchCustomer = debounce(async (value) => {
       searchCustomer.value = value;
-      if (value.trim() && formData.value.riengTu) {
+      if (formData.value.riengTu) {
         try {
-          const response = await searchCustomers(value);
-          customers.value = response.data;
+          if (value.trim()) {
+            const response = await searchCustomers(value);
+            customers.value = response.data;
+          } else if (gioiTinhFilter.value !== "") {
+            await filterCustomersByGioiTinhWrapper(gioiTinhFilter.value);
+          } else {
+            await loadCustomers();
+          }
         } catch (error) {
           toastNotification.value.addToast({
             type: "error",
@@ -442,7 +498,7 @@ export default {
           });
         }
       } else {
-        loadCustomers();
+        await loadCustomers();
       }
     }, 300);
 
@@ -467,8 +523,19 @@ export default {
       });
     };
 
+    const updateSoTienGiamToiDa = (event) => {
+      const rawValue =
+        parseFloat(event.target.value.replace(/[^0-9]/g, "")) || 0;
+      formData.value.soTienGiamToiDa = rawValue;
+    };
+
+    const updateHoaDonToiThieu = (event) => {
+      const rawValue =
+        parseFloat(event.target.value.replace(/[^0-9]/g, "")) || 0;
+      formData.value.hoaDonToiThieu = rawValue;
+    };
+
     const submitForm = async () => {
-      // Validation
       if (
         !formData.value.ma ||
         !formData.value.tenPhieuGiamGia ||
@@ -487,7 +554,6 @@ export default {
         });
         return;
       }
-
       if (
         formData.value.riengTu &&
         (!formData.value.customerIds || formData.value.customerIds.length === 0)
@@ -498,7 +564,6 @@ export default {
         });
         return;
       }
-
       const payload = {
         ma: formData.value.ma,
         tenPhieuGiamGia: formData.value.tenPhieuGiamGia,
@@ -519,7 +584,6 @@ export default {
         riengTu: formData.value.riengTu ? 1 : 0,
         customerIds: formData.value.riengTu ? formData.value.customerIds : [],
       };
-
       try {
         if (isEditMode.value) {
           await updateVoucher(route.params.id, payload);
@@ -552,6 +616,7 @@ export default {
     return {
       formData,
       searchCustomer,
+      gioiTinhFilter,
       customers,
       selectedCustomers,
       toastNotification,
@@ -561,6 +626,8 @@ export default {
       debouncedSearchCustomer,
       toggleCustomerSelection,
       removeCustomer,
+      updateSoTienGiamToiDa,
+      updateHoaDonToiThieu,
       submitForm,
       goBack,
       formatDate,
@@ -633,28 +700,34 @@ export default {
   overflow-y: auto;
 }
 
+/* Style cho hàng khách hàng */
 .customer-item {
-  background: #fff;
+  background: #fff; /* Màu nền mặc định */
   border: 1px solid rgba(52, 211, 153, 0.1);
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.2s ease;
+  color: #1f3a44; /* Màu chữ mặc định */
 }
 
-.customer-item:hover,
-.customer-item.selected {
-  background: #34d399;
-  color: white;
-}
-
+/* Vô hiệu hóa khi không chọn riêng tư */
 .disabled-section .customer-item {
   cursor: not-allowed;
   opacity: 0.6;
 }
+.customer-item:hover {
+  background: #e6fff6; /* Màu khi hover */
+  color: #16a34a;
+}
 
+.customer-item.selected {
+  background: #34d399 !important; /* Màu khi đã chọn */
+  color: #fff !important;
+  border-color: #16a34a;
+}
 .disabled-section .customer-item:hover {
-  background: #fff;
-  color: inherit;
+  background: #fff; /* Không đổi màu khi hover trong trạng thái disabled */
+  color: #1f3a44;
 }
 
 .btn-action {
@@ -743,27 +816,6 @@ export default {
   white-space: nowrap;
 }
 
-.table th:nth-child(1),
-.table td:nth-child(1) {
-  width: 20%;
-}
-.table th:nth-child(2),
-.table td:nth-child(2) {
-  width: 30%;
-}
-.table th:nth-child(3),
-.table td:nth-child(3) {
-  width: 15%;
-}
-.table th:nth-child(4),
-.table td:nth-child(4) {
-  width: 20%;
-}
-.table th:nth-child(5),
-.table td:nth-child(5) {
-  width: 15%;
-}
-
 /* Scrollbar Styling */
 .customer-list::-webkit-scrollbar,
 .table-container::-webkit-scrollbar {
@@ -785,6 +837,31 @@ export default {
 .customer-list::-webkit-scrollbar-thumb:hover,
 .table-container::-webkit-scrollbar-thumb:hover {
   background: #16a34a;
+}
+
+.customer-list .table th:nth-child(1),
+.customer-list .table td:nth-child(1) {
+  width: 15%; /* Mã KH */
+}
+.customer-list .table th:nth-child(2),
+.customer-list .table td:nth-child(2) {
+  width: 20%; /* Tên Khách Hàng */
+}
+.customer-list .table th:nth-child(3),
+.customer-list .table td:nth-child(3) {
+  width: 10%; /* Giới tính */
+}
+.customer-list .table th:nth-child(4),
+.customer-list .table td:nth-child(4) {
+  width: 15%; /* Ngày sinh */
+}
+.customer-list .table th:nth-child(5),
+.customer-list .table td:nth-child(5) {
+  width: 20%; /* Tổng số lần mua */
+}
+.customer-list .table th:nth-child(6),
+.customer-list .table td:nth-child(6) {
+  width: 20%; /* Lần mua gần nhất */
 }
 
 @media (max-width: 768px) {
