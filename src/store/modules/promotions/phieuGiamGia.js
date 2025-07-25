@@ -34,6 +34,12 @@ export const filterVouchers = (filters, page = 0, size = 10) => {
   return apiService.get(`${baseURL}/filter`, { params: { ...filters, page, size } });
 };
 
+export const filterCustomersByGioiTinh = (gioiTinh) => {
+  return apiService.get(`${baseURL}/filter-kh-by-gioitinh`, {
+    params: { gioiTinh: gioiTinh === "" ? null : gioiTinh },
+  });
+};
+
 export const getVoucherDetail = (id) => {
   return apiService.get(`${baseURL}/${id}`);
 };

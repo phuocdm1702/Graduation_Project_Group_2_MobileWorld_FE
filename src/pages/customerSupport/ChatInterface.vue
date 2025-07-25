@@ -197,19 +197,22 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, nextTick, watch } from 'vue'
+import { ref, computed, onMounted, nextTick, watch, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { Modal } from 'bootstrap'
 import HeaderCard from "@/components/common/HeaderCard.vue"
 import ToastNotification from "@/components/common/ToastNotification.vue"
-import { fetchKhachHang } from "../../store/modules/customers/khachHang"
+import { Stomp } from '@stomp/stompjs'
+import SockJS from 'sockjs-client'
+import axios from 'axios'
 
 const router = useRouter()
 const toastNotification = ref(null)
 const defaultAvatar = 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png'
 const fileInput = ref(null)
 const imageInput = ref(null)
-
+const stompClient = ref(null)
+const isConnecting = ref(false);
 // Data
 const customers = ref([])
 const searchKeyword = ref('')
@@ -217,41 +220,7 @@ const activeCustomer = ref(null)
 const messages = ref([])
 const newMessage = ref('')
 const isScrolling = ref(false)
-
-// Messages Container reference
 const messagesContainer = ref(null)
-
-// Mock data for demonstration with varied messages
-const mockMessages = {
-  'KH001': [
-    { type: 'text', text: 'Xin chào, tôi cần hỗ trợ về đơn hàng số 12345', sender: 'customer', time: new Date(Date.now() - 3600000) },
-    { type: 'text', text: 'Chào bạn, tôi có thể giúp gì cho bạn?', sender: 'employee', time: new Date(Date.now() - 3500000) },
-    { type: 'text', text: 'Đơn hàng của tôi khi nào sẽ được giao?', sender: 'customer', time: new Date(Date.now() - 3400000) },
-    { type: 'file', name: 'invoice_12345.pdf', url: '/files/invoice_12345.pdf', sender: 'employee', time: new Date(Date.now() - 3350000) },
-    { type: 'text', text: 'Đơn hàng của bạn sẽ được giao trong vòng 2 ngày tới', sender: 'employee', time: new Date(Date.now() - 3300000) },
-    { type: 'image', name: 'product_image.jpg', url: 'https://via.placeholder.com/150', sender: 'customer', time: new Date(Date.now() - 3200000) },
-    { type: 'text', text: 'Cảm ơn bạn, tôi sẽ chờ!', sender: 'customer', time: new Date(Date.now() - 3100000) },
-  ],
-  'KH002': [
-    { type: 'text', text: 'Tôi muốn hỏi về sản phẩm mới', sender: 'customer', time: new Date(Date.now() - 7200000) },
-    { type: 'text', text: 'Chào bạn, sản phẩm mới đã có hàng chưa?', sender: 'customer', time: new Date(Date.now() - 7100000) },
-    { type: 'image', name: 'new_product.jpg', url: 'https://via.placeholder.com/200', sender: 'employee', time: new Date(Date.now() - 7050000) },
-    { type: 'text', text: 'Chào bạn, sản phẩm đã có hàng và sẵn sàng giao', sender: 'employee', time: new Date(Date.now() - 7000000) },
-    { type: 'text', text: 'Tuyệt vời! Giá bao nhiêu vậy?', sender: 'customer', time: new Date(Date.now() - 6900000) },
-  ],
-  'KH003': [
-    { type: 'text', text: 'Tôi cần hủy đơn hàng số 67890', sender: 'customer', time: new Date(Date.now() - 1800000) },
-    { type: 'text', text: 'Chào bạn, vui lòng cung cấp lý do hủy đơn', sender: 'employee', time: new Date(Date.now() - 1700000) },
-    { type: 'file', name: 'cancel_request.docx', url: '/files/cancel_request.docx', sender: 'customer', time: new Date(Date.now() - 1600000) },
-    { type: 'text', text: 'Đã nhận, chúng tôi sẽ xử lý trong 24 giờ', sender: 'employee', time: new Date(Date.now() - 1500000) },
-  ],
-  'KH004': [
-    { type: 'text', text: 'Chào, tôi muốn kiểm tra trạng thái bảo hành', sender: 'customer', time: new Date(Date.now() - 5000000) },
-    { type: 'text', text: 'Vui lòng gửi mã sản phẩm để tôi kiểm tra', sender: 'employee', time: new Date(Date.now() - 4900000) },
-    { type: 'text', text: 'Mã là PRD789', sender: 'customer', time: new Date(Date.now() - 4800000) },
-    { type: 'image', name: 'warranty_card.jpg', url: 'https://via.placeholder.com/150', sender: 'customer', time: new Date(Date.now() - 4700000) },
-  ]
-}
 
 // Computed
 const filteredCustomerList = computed(() => {
@@ -268,28 +237,58 @@ const filterCustomers = () => {
   // Debounce could be added here for performance
 }
 
-const selectCustomer = (customer) => {
-  // Force reactive update
-  activeCustomer.value = null
-  nextTick(() => {
-    activeCustomer.value = customer
-    // Load messages for this customer
-    messages.value = [...(mockMessages[customer.ma] || [])]
-    // Mark messages as read
-    markMessagesAsRead(customer.id)
-    // Scroll to bottom with delay to ensure DOM is updated
-    nextTick(() => {
-      setTimeout(() => {
-        scrollToBottom()
-      }, 100)
+const selectCustomer = async (customer) => {
+  if (activeCustomer.value && stompClient.value && stompClient.value.connected) {
+    stompClient.value.unsubscribe(`/topic/customer/${activeCustomer.value.id}`);
+  }
+  activeCustomer.value = null;
+  await nextTick();
+  activeCustomer.value = customer;
+  await loadMessages(customer.id);
+  markMessagesAsRead(customer.id);
+  await nextTick();
+  scrollToBottom();
+  if (stompClient.value && stompClient.value.connected) {
+    subscribeToCustomerTopic();
+  } else {
+    connectWebSocket();
+  }
+};
+
+const subscribeToCustomerTopic = () => {
+  if (stompClient.value && stompClient.value.connected && activeCustomer.value) {
+    stompClient.value.subscribe(`/topic/customer/${activeCustomer.value.id}`, (message) => {
+      const msg = JSON.parse(message.body);
+      messages.value.push({
+        sender: msg.sender,
+        text: msg.text,
+        type: msg.type,
+        time: msg.time,
+        url: msg.url,
+        name: msg.name
+      });
+      scrollToBottom();
+    });
+  }
+};
+
+const loadMessages = async (customerId) => {
+  try {
+    const response = await axios.get(`http://localhost:8080/api/messages/${customerId}`)
+    messages.value = response.data || []
+  } catch (error) {
+    toastNotification.value.addToast({
+      type: 'error',
+      message: 'Lỗi khi tải lịch sử tin nhắn'
     })
-  })
+    console.error('Error fetching messages:', error)
+  }
 }
 
 const getLastMessagePreview = (customerId) => {
   const customer = customers.value.find(c => c.id === customerId)
   if (!customer) return ''
-  const lastMsg = (mockMessages[customer.ma] || []).slice(-1)[0]
+  const lastMsg = messages.value.slice(-1)[0]
   if (!lastMsg) return 'Chưa có tin nhắn'
   if (lastMsg.type === 'text') return lastMsg.text
   if (lastMsg.type === 'image') return 'Đã gửi một ảnh'
@@ -298,52 +297,72 @@ const getLastMessagePreview = (customerId) => {
 }
 
 const getLastMessageTime = (customerId) => {
-  const customer = customers.value.find(c => c.id === customerId)
-  if (!customer) return null
-  const lastMsg = (mockMessages[customer.ma] || []).slice(-1)[0]
+  const lastMsg = messages.value.slice(-1)[0]
   return lastMsg ? lastMsg.time : null
 }
 
 const hasUnreadMessages = (customerId) => {
-  // In a real app, this would check for unread messages
+  // In a real app, this would check for unread messages from server
   return false
 }
 
 const getUnreadCount = (customerId) => {
-  // In a real app, this would return the count of unread messages
+  // In a real app, this would return the count of unread messages from server
   return 0
 }
 
 const markMessagesAsRead = (customerId) => {
-  // In a real app, this would mark messages as read
+  // In a real app, this would send a request to mark messages as read
+}
+
+const connectWebSocket = () => {
+  if (isConnecting.value || (stompClient.value && stompClient.value.connected)) return;
+  isConnecting.value = true;
+
+  const socket = new SockJS('http://localhost:8080/chat-sockjs');
+  stompClient.value = Stomp.over(socket);
+  stompClient.value.connect({}, () => {
+    isConnecting.value = false;
+    console.log('WebSocket connected for employee');
+    if (activeCustomer.value) {
+      subscribeToCustomerTopic();
+    }
+  }, (error) => {
+    isConnecting.value = false;
+    toastNotification.value.addToast({
+      type: 'error',
+      message: 'Lỗi kết nối WebSocket'
+    });
+    console.error('WebSocket connection error:', error);
+    setTimeout(() => connectWebSocket(), 2000);
+  });
 }
 
 const sendMessage = () => {
-  if (!newMessage.value.trim() || !activeCustomer.value) return
-  
+  if (!newMessage.value.trim() || !activeCustomer.value) return;
+
   const message = {
     type: 'text',
     text: newMessage.value,
     sender: 'employee',
-    time: new Date()
-  }
-  
-  // Add to local messages
-  messages.value.push(message)
-  
-  // In a real app, this would send to server
-  if (!mockMessages[activeCustomer.value.ma]) {
-    mockMessages[activeCustomer.value.ma] = []
-  }
-  mockMessages[activeCustomer.value.ma].push(message)
-  
-  // Clear input and scroll to bottom
-  newMessage.value = ''
-  nextTick(() => {
+    time: new Date().toISOString(),
+    customerId: activeCustomer.value.id
+  };
+
+  messages.value.push({ ...message, sender: 'outgoing' });
+  if (stompClient.value && stompClient.value.connected) {
+    stompClient.value.send(`/app/chat/employee/${activeCustomer.value.id}`, JSON.stringify(message));
+  } else {
+    connectWebSocket();
     setTimeout(() => {
-      scrollToBottom(true)
-    }, 50)
-  })
+      if (stompClient.value && stompClient.value.connected) {
+        stompClient.value.send(`/app/chat/employee/${activeCustomer.value.id}`, JSON.stringify(message));
+      }
+    }, 1000);
+  }
+
+  newMessage.value = '';
+  scrollToBottom();
 }
 
 const scrollToBottom = (smooth = false) => {
@@ -359,7 +378,7 @@ const scrollToBottom = (smooth = false) => {
 
 const formatTime = (time) => {
   if (!time) return ''
-  return time.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
+  return new Date(time).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
 }
 
 const showCustomerInfo = () => {
@@ -377,7 +396,20 @@ const goToCustomerDetail = () => {
 
 const downloadChatHistory = () => {
   if (!activeCustomer.value) return
-  
+  const csvContent = [
+    ['Thời gian', 'Người gửi', 'Loại', 'Nội dung/Tên tệp'],
+    ...messages.value.map(msg => [
+      new Date(msg.time).toLocaleString('vi-VN'),
+      msg.sender,
+      msg.type,
+      msg.type === 'text' ? msg.text : `${msg.name} (${msg.url})`
+    ])
+  ].map(row => row.join(',')).join('\n')
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+  const link = document.createElement('a')
+  link.href = URL.createObjectURL(blob)
+  link.download = `chat_history_${activeCustomer.value.ma}.csv`
+  link.click()
   toastNotification.value.addToast({
     type: 'success',
     message: `Đã tải lịch sử chat với ${activeCustomer.value.ten || 'N/A'}`
@@ -394,32 +426,31 @@ const handleFileUpload = (event) => {
     return
   }
 
-  // Create a URL for the file (in a real app, this would be uploaded to a server)
-  const fileUrl = URL.createObjectURL(file)
-  const message = {
-    type: 'file',
-    name: file.name,
-    url: fileUrl,
-    sender: 'employee',
-    time: new Date()
-  }
+  const formData = new FormData()
+  formData.append('file', file)
+  formData.append('customerId', activeCustomer.value.id)
+  formData.append('sender', 'employee')
 
-  // Add to local messages
-  messages.value.push(message)
-  
-  // Update mockMessages
-  if (!mockMessages[activeCustomer.value.ma]) {
-    mockMessages[activeCustomer.value.ma] = []
-  }
-  mockMessages[activeCustomer.value.ma].push(message)
-
-  // Show toast notification
-  toastNotification.value.addToast({
-    type: 'info',
-    message: `Đã gửi tệp: ${file.name}`
+  axios.post('http://localhost:8080/api/upload/file', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  }).then(response => {
+    const message = response.data
+    messages.value.push(message)
+    if (stompClient.value && stompClient.value.connected) {
+      stompClient.value.send(`/app/chat/customer/${activeCustomer.value.id}`, JSON.stringify(message))
+    }
+    toastNotification.value.addToast({
+      type: 'info',
+      message: `Đã gửi tệp: ${file.name}`
+    })
+  }).catch(error => {
+    toastNotification.value.addToast({
+      type: 'error',
+      message: 'Lỗi khi gửi tệp'
+    })
+    console.error('File upload error:', error)
   })
 
-  // Reset input and scroll to bottom
   event.target.value = ''
   nextTick(() => {
     setTimeout(() => {
@@ -438,7 +469,6 @@ const handleImageUpload = (event) => {
     return
   }
 
-  // Validate image type
   if (!file.type.startsWith('image/')) {
     toastNotification.value.addToast({
       type: 'error',
@@ -447,32 +477,31 @@ const handleImageUpload = (event) => {
     return
   }
 
-  // Create a URL for the image (in a real app, this would be uploaded to a server)
-  const imageUrl = URL.createObjectURL(file)
-  const message = {
-    type: 'image',
-    name: file.name,
-    url: imageUrl,
-    sender: 'employee',
-    time: new Date()
-  }
+  const formData = new FormData()
+  formData.append('image', file)
+  formData.append('customerId', activeCustomer.value.id)
+  formData.append('sender', 'employee')
 
-  // Add to local messages
-  messages.value.push(message)
-  
-  // Update mockMessages
-  if (!mockMessages[activeCustomer.value.ma]) {
-    mockMessages[activeCustomer.value.ma] = []
-  }
-  mockMessages[activeCustomer.value.ma].push(message)
-
-  // Show toast notification
-  toastNotification.value.addToast({
-    type: 'info',
-    message: `Đã gửi ảnh: ${file.name}`
+  axios.post('http://localhost:8080/api/upload/image', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  }).then(response => {
+    const message = response.data
+    messages.value.push(message)
+    if (stompClient.value && stompClient.value.connected) {
+      stompClient.value.send(`/app/chat/customer/${activeCustomer.value.id}`, JSON.stringify(message))
+    }
+    toastNotification.value.addToast({
+      type: 'info',
+      message: `Đã gửi ảnh: ${file.name}`
+    })
+  }).catch(error => {
+    toastNotification.value.addToast({
+      type: 'error',
+      message: 'Lỗi khi gửi ảnh'
+    })
+    console.error('Image upload error:', error)
   })
 
-  // Reset input and scroll to bottom
   event.target.value = ''
   nextTick(() => {
     setTimeout(() => {
@@ -492,16 +521,6 @@ const getStatusBadgeClass = (status) => {
   }
 }
 
-// Watch for messages changes to auto-scroll
-watch(messages, () => {
-  nextTick(() => {
-    setTimeout(() => {
-      scrollToBottom()
-    }, 100)
-  })
-}, { deep: true })
-
-// Handle scroll events to prevent auto-scroll when user is scrolling manually
 const handleScroll = () => {
   isScrolling.value = true
   clearTimeout(handleScroll.timeout)
@@ -513,8 +532,8 @@ const handleScroll = () => {
 // Lifecycle
 onMounted(async () => {
   try {
-    const data = await fetchKhachHang()
-    customers.value = data.map(customer => ({
+    const response = await axios.get('http://localhost:8080/api/customers')
+    customers.value = response.data.map(customer => ({
       ...customer,
       ma: customer.ma || 'N/A',
       ten: customer.ten || 'N/A',
@@ -524,8 +543,6 @@ onMounted(async () => {
         deleted: false
       }
     }))
-
-    // Add scroll event listener to messages container
     nextTick(() => {
       if (messagesContainer.value) {
         messagesContainer.value.addEventListener('scroll', handleScroll)
@@ -537,6 +554,23 @@ onMounted(async () => {
       message: 'Lỗi khi tải dữ liệu khách hàng'
     })
     console.error('Error fetching customers:', error)
+  }
+})
+
+// Watch for messages changes to auto-scroll
+watch(() => activeCustomer.value, (newCustomer, oldCustomer) => {
+  if (oldCustomer && stompClient.value && stompClient.value.connected) {
+    stompClient.value.unsubscribe(`/topic/customer/${oldCustomer.id}`);
+  }
+  if (newCustomer && stompClient.value && stompClient.value.connected) {
+    subscribeToCustomerTopic();
+  }
+});
+
+// Disconnect WebSocket when component unmounts
+onUnmounted(() => {
+  if (stompClient.value) {
+    stompClient.value.disconnect()
   }
 })
 </script>
