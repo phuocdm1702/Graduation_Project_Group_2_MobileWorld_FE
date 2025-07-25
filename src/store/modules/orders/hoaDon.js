@@ -6,6 +6,7 @@ export const useHoaDonStore = defineStore('hoaDon', {
     state: () => ({
         invoices: [],
         invoiceDetail: null,
+        imelList: [], // Thêm state mới để lưu danh sách IMEI
         isLoading: false,
         error: null,
         page: 0,
@@ -164,6 +165,28 @@ export const useHoaDonStore = defineStore('hoaDon', {
             }
         },
 
+        async fetchImelList({ page = 0, size = 5 } = {}) {
+            this.isLoading = true;
+            try {
+                const params = { page, size };
+                const response = await apiService.get('/api/hoa-don/hoa-don-chi-tiet/imel', { params });
+                const { content, totalElements } = response.data;
+
+                this.imelList = content.map(item => ({
+                    id: item.id,
+                    imei: item.imel, // Ánh xạ đúng từ imel
+                    maImel: item.ma, // Thêm maSanPhamChiTiet nếu cần
+                    status: item.deleted === false ? 'Còn hàng' : 'Đã bán', // Suy ra trạng thái từ deleted
+                }));
+                this.totalElements = totalElements;
+            } catch (error) {
+                this.error = error.message || 'Không thể tải danh sách IMEI';
+                console.error('Lỗi khi gọi API danh sách IMEI:', error);
+            } finally {
+                this.isLoading = false;
+            }
+        },
+
         // GET API down HoaDon
         async printInvoice(id) {
             this.isLoading = true;
@@ -301,6 +324,7 @@ export const useHoaDonStore = defineStore('hoaDon', {
     getters: {
         getInvoices: (state) => state.invoices,
         getInvoiceDetail: (state) => state.invoiceDetail,
+        getImelList: (state) => state.imelList, // Thêm getter để truy cập danh sách IMEI
         getIsLoading: (state) => state.isLoading,
         getError: (state) => state.error,
         getTotalElements: (state) => state.totalElements,

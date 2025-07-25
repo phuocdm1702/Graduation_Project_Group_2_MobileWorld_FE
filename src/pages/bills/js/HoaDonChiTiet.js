@@ -5,6 +5,7 @@ import HeaderCard from '@/components/common/HeaderCard.vue';
 import FilterTableSection from '@/components/common/FilterTableSection.vue';
 import NotificationModal from '@/components/common/NotificationModal.vue';
 import ToastNotification from '@/components/common/ToastNotification.vue';
+import DataTable from '@/components/common/DataTable.vue';
 
 export default {
   name: 'InvoiceDetail',
@@ -13,6 +14,7 @@ export default {
     FilterTableSection,
     NotificationModal,
     ToastNotification,
+    DataTable,
   },
   setup() {
     const route = useRoute();
@@ -30,22 +32,27 @@ export default {
     );
     const discount = ref(0);
     const isIMEIModalVisible = ref(false);
+    const isConfirmIMEIModalVisible = ref(false);
     const isAddProductModalVisible = ref(false);
     const isUpdateModalVisible = ref(false);
     const isDivinationModalVisible = ref(false);
     const selectedProduct = ref(null);
     const newIMEI = ref('');
+    const searchIMEI = ref('');
     const newProduct = ref({
       name: '',
       price: 0,
       quantity: 1,
       image: '',
-      imei: ''
+      imei: '',
+      ram: '',
+      capacity: '',
+      color: '',
     });
     const activeTab = ref('order');
     const divinationResult = ref({
       title: 'Chưa có quẻ',
-      description: 'Nhấn "Lấy Quẻ Mới" để nhận gợi ý.'
+      description: 'Nhấn "Lấy Quẻ Mới" để nhận gợi ý.',
     });
     const notificationType = ref('confirm');
     const notificationMessage = ref('');
@@ -54,6 +61,11 @@ export default {
     const notificationOnCancel = ref(() => { });
     const notificationModal = ref(null);
     const toastNotification = ref(null);
+
+    // State cho phân trang IMEI
+    const imeiCurrentPage = ref(1);
+    const imeiItemsPerPage = ref(99999999);
+    const imeiPageSizeOptions = ref([5, 10, 15, 20, 50]);
 
     // Computed properties
     const orderInfo = computed(() => [
@@ -72,6 +84,32 @@ export default {
       { label: 'Ghi chú:', value: invoice.value.ghiChu || 'Không có', icon: 'bi bi-sticky', key: 'ghiChu' },
     ]);
 
+    const filteredIMEIs = computed(() => {
+      const imeiList = hoaDonStore.getImelList;
+      if (!searchIMEI.value) return imeiList;
+      return imeiList.filter(imeiObj =>
+        imeiObj.imei ? imeiObj.imei.toLowerCase().includes(searchIMEI.value.toLowerCase()) : false
+      );
+    });
+
+    const totalIMEIPages = computed(() => {
+      return Math.ceil(filteredIMEIs.value.length / imeiItemsPerPage.value);
+    });
+
+    const paginatedIMEIs = computed(() => {
+      const start = (imeiCurrentPage.value - 1) * imeiItemsPerPage.value;
+      const end = start + imeiItemsPerPage.value;
+      return filteredIMEIs.value.slice(start, end);
+    });
+
+    const imeiHeaders = ref([
+      { text: 'STT', value: 'stt' },
+      { text: 'Mã IMEI', value: 'maImel' },
+      { text: 'IMEI', value: 'imei' },
+      { text: 'Trạng thái', value: 'status', formatter: (value) => value || 'N/A' },
+      { text: 'Thao tác', value: 'actions' },
+    ]);
+
     // Methods
     const updateTimelineStatuses = () => {
       if (invoice.value.loaiDon === 'trực tiếp') {
@@ -81,56 +119,8 @@ export default {
             time: invoice.value.ngayTao || 'Đang chờ',
             icon: 'bi bi-check-circle',
             completed: true,
-            current: true
-          }
-        ];
-      } else {
-        const status = invoice.value.trangThai;
-        // Update timeline for "Đã hủy" case
-        if (status === 'Đã hủy') {
-          timelineStatuses.value[3] = {
-            title: 'Đã hủy',
-            time: invoice.value.ngayTao || 'Đang chờ',
-            icon: 'bi bi-x-circle',
-            completed: false,
-            current: true
-          };
-        } else {
-          timelineStatuses.value[3] = {
-            title: 'Hoàn thành',
-            time: invoice.value.ngayTao || 'Đang chờ',
-            icon: 'bi bi-check-circle',
-            completed: false,
-            current: false
-          };
-        }
-
-        // Update completed and current status
-        timelineStatuses.value.forEach((item, index) => {
-          item.completed = false;
-          item.current = false;
-          item.time = invoice.value.ngayTao || 'Đang chờ';
-          if (item.title === status) {
-            item.current = true;
-            item.completed = true;
-          } else if (status !== 'Đã hủy' && index < timelineStatuses.value.findIndex(s => s.title === status)) {
-            item.completed = true;
-          }
-        });
-      }
-    };
-
-    // Watch invoice.loaiDon to update timelineStatuses reactively
-    watch(() => invoice.value.loaiDon, (newLoaiDon) => {
-      if (newLoaiDon === 'trực tiếp') {
-        timelineStatuses.value = [
-          {
-            title: 'Hoàn thành',
-            time: invoice.value.ngayTao || 'Đang chờ',
-            icon: 'bi bi-check-circle',
-            completed: true,
-            current: true
-          }
+            current: true,
+          },
         ];
       } else {
         timelineStatuses.value = [
@@ -139,21 +129,69 @@ export default {
           { title: 'Đang giao', time: 'Đang chờ', icon: 'bi bi-truck', completed: false, current: false },
           { title: 'Hoàn thành', time: 'Đang chờ', icon: 'bi bi-check-circle', completed: false, current: false },
         ];
-        updateTimelineStatuses();
+
+        const status = invoice.value.trangThai;
+        if (status === 'Đã hủy') {
+          timelineStatuses.value = [
+            {
+              title: 'Đã hủy',
+              time: invoice.value.ngayTao || 'Đang chờ',
+              icon: 'bi bi-x-circle',
+              completed: false,
+              current: true,
+            },
+          ];
+        } else {
+          timelineStatuses.value.forEach((item, index) => {
+            item.completed = false;
+            item.current = false;
+            item.time = invoice.value.ngayTao || 'Đang chờ';
+            if (item.title === status) {
+              item.current = true;
+              item.completed = true;
+            } else if (index < timelineStatuses.value.findIndex(s => s.title === status)) {
+              item.completed = true;
+            }
+          });
+        }
       }
+    };
+
+    watch(() => invoice.value.loaiDon, (newLoaiDon) => {
+      updateTimelineStatuses();
     }, { immediate: true });
 
-    // Fetch invoice detail on mount
+    watch(() => invoice.value.trangThai, () => {
+      updateTimelineStatuses();
+    });
+
+    watch(() => hoaDonStore.getImelList, (newImelList) => {
+      console.log('ImelList updated:', newImelList);
+      products.value = products.value.map(product => ({
+        ...product,
+        imeiList: product.imei ? product.imei.split(', ').map(imei => ({
+          imei,
+          status: newImelList.find(i => i.imei === imei)?.status || 'pending',
+        })) : [],
+      }));
+    }, { deep: true });
+
     onMounted(async () => {
       if (invoiceId.value) {
         await hoaDonStore.fetchInvoiceDetail(invoiceId.value);
         if (hoaDonStore.getInvoiceDetail) {
           invoice.value = hoaDonStore.getInvoiceDetail;
-          products.value = hoaDonStore.getInvoiceDetail.products;
+          products.value = hoaDonStore.getInvoiceDetail.products.map(product => ({
+            ...product,
+            imeiList: product.imei ? product.imei.split(', ').map(imei => ({
+              imei,
+              status: hoaDonStore.getImelList.find(i => i.imei === imei)?.status || 'pending',
+            })) : [],
+          }));
           payments.value = hoaDonStore.getInvoiceDetail.payments;
           history.value = hoaDonStore.getInvoiceDetail.history;
           discount.value = totalPrice.value - invoice.value.tongTienSauGiam;
-          // TimelineStatuses will be updated by the watch above
+          updateTimelineStatuses();
         }
         if (hoaDonStore.getError) {
           toastNotification.value.addToast({
@@ -165,7 +203,6 @@ export default {
       }
     });
 
-    // Methods
     const formatPrice = (price) => {
       return new Intl.NumberFormat('vi-VN', {
         style: 'currency',
@@ -195,7 +232,7 @@ export default {
       return {
         'Chờ xác nhận': 'badge-waiting',
         'Chờ giao hàng': 'badge-waiting',
-        'Đang giao': 'badge-waiting',
+        'Đang giao': 'badge-delivering',
         'Hoàn thành': 'badge-completed',
         'Đã hủy': 'badge-canceled',
       }[status] || 'badge-secondary';
@@ -211,6 +248,22 @@ export default {
       }[status] || 'bi bi-info-circle';
     };
 
+    const getIMEIStatusClass = (status) => {
+      return {
+        'Còn hàng': 'imei-status-valid',
+        'Đã bán': 'imei-status-invalid',
+        'pending': 'imei-status-pending',
+      }[status] || 'imei-status-pending';
+    };
+
+    const getIMEIStatusIcon = (status) => {
+      return {
+        'Còn hàng': 'bi bi-check-circle-fill',
+        'Đã bán': 'bi bi-x-circle-fill',
+        'pending': 'bi bi-hourglass-split',
+      }[status] || 'bi bi-hourglass-split';
+    };
+
     const getBadgeClass = (key, value) => {
       if (key === 'loaiDon') return getTypeBadgeClass(value);
       if (key === 'trangThai') return getStatusBadgeClass(value);
@@ -222,7 +275,7 @@ export default {
     };
 
     const showIMEIModal = (item) => {
-      selectedProduct.value = item;
+      selectedProduct.value = { ...item };
       isIMEIModalVisible.value = true;
     };
 
@@ -234,10 +287,12 @@ export default {
 
     const addIMEI = () => {
       if (newIMEI.value && selectedProduct.value) {
-        const currentIMEIs = selectedProduct.value.imei ? selectedProduct.value.imei.split(', ') : [];
-        if (!currentIMEIs.includes(newIMEI.value)) {
-          currentIMEIs.push(newIMEI.value);
-          selectedProduct.value.imei = currentIMEIs.join(', ');
+        const currentIMEIs = selectedProduct.value.imeiList || [];
+        if (!currentIMEIs.some(i => i.imei === newIMEI.value)) {
+          const status = hoaDonStore.getImelList.find(i => i.imei === newIMEI.value)?.status || 'pending';
+          currentIMEIs.push({ imei: newIMEI.value, status });
+          selectedProduct.value.imeiList = currentIMEIs;
+          selectedProduct.value.imei = currentIMEIs.map(i => i.imei).join(', ');
           newIMEI.value = '';
           toastNotification.value.addToast({
             type: 'success',
@@ -254,19 +309,31 @@ export default {
       }
     };
 
-    const saveIMEIChanges = () => {
-      toastNotification.value.addToast({
-        type: 'success',
-        message: 'Đã lưu thay đổi IMEI',
-        duration: 3000,
-      });
+    const saveIMEIChanges = async () => {
+      const productIndex = products.value.findIndex(p => p.id === selectedProduct.value.id);
+      if (productIndex !== -1) {
+        products.value[productIndex].imei = selectedProduct.value.imeiList.map(i => i.imei).join(', ');
+        products.value[productIndex].imeiList = [...selectedProduct.value.imeiList];
+        history.value.push({
+          id: Date.now(),
+          action: `Cập nhật IMEI cho sản phẩm ${selectedProduct.value.name}`,
+          employee: 'Hệ thống',
+          timestamp: new Date().toLocaleString('vi-VN'),
+          status: 'completed',
+        });
+        toastNotification.value.addToast({
+          type: 'success',
+          message: 'Đã lưu thay đổi IMEI',
+          duration: 3000,
+        });
+      }
       closeIMEIModal();
     };
 
     const deleteIMEI = (imei) => {
       if (selectedProduct.value) {
-        const currentIMEIs = selectedProduct.value.imei.split(', ').filter(i => i !== imei);
-        selectedProduct.value.imei = currentIMEIs.join(', ');
+        selectedProduct.value.imeiList = selectedProduct.value.imeiList.filter(i => i.imei !== imei);
+        selectedProduct.value.imei = selectedProduct.value.imeiList.map(i => i.imei).join(', ');
         toastNotification.value.addToast({
           type: 'success',
           message: `Đã xóa IMEI ${imei}`,
@@ -275,20 +342,109 @@ export default {
       }
     };
 
+    const scanQRForIMEI = async () => {
+      try {
+        const scannedIMEI = '123456789012345';
+        newIMEI.value = scannedIMEI;
+        searchIMEI.value = scannedIMEI;
+        await hoaDonStore.fetchImelList({ page: 0, size: 999999 });
+        const imeiStatus = hoaDonStore.getImelList.find(i => i.imei === scannedIMEI)?.status;
+        if (imeiStatus === 'Còn hàng') {
+          addIMEI();
+        } else {
+          toastNotification.value.addToast({
+            type: 'warning',
+            message: `IMEI ${scannedIMEI} không khả dụng`,
+            duration: 3000,
+          });
+        }
+      } catch (error) {
+        toastNotification.value.addToast({
+          type: 'error',
+          message: 'Lỗi khi quét QR code',
+          duration: 3000,
+        });
+      }
+    };
+
+    const showConfirmIMEIModal = async (item) => {
+      selectedProduct.value = { ...item };
+      isConfirmIMEIModalVisible.value = true;
+      searchIMEI.value = '';
+      imeiCurrentPage.value = 1; // Reset về trang đầu tiên
+      await hoaDonStore.fetchImelList({ page: 0, size: 999999 });
+      if (hoaDonStore.getError) {
+        toastNotification.value.addToast({
+          type: 'error',
+          message: hoaDonStore.getError,
+          duration: 5000,
+        });
+      } else if (hoaDonStore.getImelList.length === 0) {
+        toastNotification.value.addToast({
+          type: 'warning',
+          message: 'Không có IMEI nào khả dụng cho sản phẩm này',
+          duration: 5000,
+        });
+      }
+    };
+
+    const closeConfirmIMEIModal = () => {
+      isConfirmIMEIModalVisible.value = false;
+      selectedProduct.value = null;
+      searchIMEI.value = '';
+      imeiCurrentPage.value = 1; // Reset trang
+    };
+
+    const selectIMEI = (imei) => {
+      if (selectedProduct.value) {
+        const status = hoaDonStore.getImelList.find(i => i.imei === imei)?.status || 'pending';
+        if (status === 'Còn hàng') {
+          selectedProduct.value.imei = imei;
+          selectedProduct.value.imeiList = [{ imei, status }];
+          const productIndex = products.value.findIndex(p => p.id === selectedProduct.value.id);
+          if (productIndex !== -1) {
+            products.value[productIndex] = { ...selectedProduct.value };
+          }
+          toastNotification.value.addToast({
+            type: 'success',
+            message: `Đã chọn IMEI ${imei} cho sản phẩm ${selectedProduct.value.name}`,
+            duration: 3000,
+          });
+          closeConfirmIMEIModal();
+        } else {
+          toastNotification.value.addToast({
+            type: 'warning',
+            message: `IMEI ${imei} không khả dụng`,
+            duration: 3000,
+          });
+        }
+      }
+    };
+
     const showAddProductModal = () => {
       isAddProductModalVisible.value = true;
+      newProduct.value = { name: '', price: 0, quantity: 1, image: '', imei: '', ram: '', capacity: '', color: '' };
     };
 
     const closeAddProductModal = () => {
       isAddProductModalVisible.value = false;
-      newProduct.value = { name: '', price: 0, quantity: 1, image: '', imei: '' };
+      newProduct.value = { name: '', price: 0, quantity: 1, image: '', imei: '', ram: '', capacity: '', color: '' };
     };
 
     const addProduct = () => {
-      if (newProduct.value.name && newProduct.value.price) {
-        products.value.push({
-          id: products.value.length + 1,
-          ...newProduct.value
+      if (newProduct.value.name && newProduct.value.price && newProduct.value.ram && newProduct.value.capacity && newProduct.value.color) {
+        const newProductData = {
+          id: Date.now(),
+          ...newProduct.value,
+          imeiList: newProduct.value.imei ? [{ imei: newProduct.value.imei, status: 'pending' }] : [],
+        };
+        products.value.push(newProductData);
+        history.value.push({
+          id: Date.now(),
+          action: `Thêm sản phẩm ${newProduct.value.name}`,
+          employee: 'Hệ thống',
+          timestamp: new Date().toLocaleString('vi-VN'),
+          status: 'completed',
         });
         toastNotification.value.addToast({
           type: 'success',
@@ -299,7 +455,7 @@ export default {
       } else {
         toastNotification.value.addToast({
           type: 'warning',
-          message: 'Vui lòng nhập đầy đủ thông tin sản phẩm',
+          message: 'Vui lòng nhập đầy đủ thông tin sản phẩm (Tên, Giá, RAM, Dung lượng, Màu sắc)',
           duration: 3000,
         });
       }
@@ -314,27 +470,36 @@ export default {
       isUpdateModalVisible.value = false;
     };
 
-    const saveUpdateChanges = () => {
-      // Add to history if status changed
-      if (history.value[history.value.length - 1]?.action !== `Cập nhật trạng thái: ${invoice.value.trangThai}`) {
-        history.value.push({
-          id: history.value.length + 1,
-          action: `Cập nhật trạng thái: ${invoice.value.trangThai}`,
-          employee: 'Hệ thống',
-          timestamp: new Date().toLocaleString('vi-VN'),
-          status: 'completed'
-        });
+    const saveUpdateChanges = async () => {
+      if (invoice.value.trangThai !== history.value[history.value.length - 1]?.action?.split(': ')[1]) {
+        const trangThaiNumber = hoaDonStore.mapStatusToNumber(invoice.value.trangThai);
+        const result = await hoaDonStore.updateInvoiceStatus(
+          invoice.value.id,
+          trangThaiNumber,
+          null
+        );
+        if (result.success) {
+          history.value.push({
+            id: Date.now(),
+            action: `Cập nhật trạng thái: ${invoice.value.trangThai}`,
+            employee: 'Hệ thống',
+            timestamp: new Date().toLocaleString('vi-VN'),
+            status: 'completed',
+          });
+          toastNotification.value.addToast({
+            type: 'success',
+            message: 'Đã cập nhật thông tin hóa đơn thành công',
+            duration: 3000,
+          });
+        } else {
+          toastNotification.value.addToast({
+            type: 'error',
+            message: result.message,
+            duration: 3000,
+          });
+        }
       }
-
-      // Update timeline
       updateTimelineStatuses();
-
-      toastNotification.value.addToast({
-        type: 'success',
-        message: 'Đã cập nhật thông tin hóa đơn thành công',
-        duration: 3000,
-      });
-
       closeUpdateModal();
     };
 
@@ -351,8 +516,8 @@ export default {
       const divinations = [
         {
           title: 'Quét QR',
-          description: 'Chức Năng Đang Phát Triển!'
-        }
+          description: 'Chức Năng Đang Phát Triển!',
+        },
       ];
       divinationResult.value = divinations[Math.floor(Math.random() * divinations.length)];
     };
@@ -364,6 +529,13 @@ export default {
         isNotificationLoading.value = true;
         setTimeout(() => {
           products.value = products.value.filter((p) => p.id !== item.id);
+          history.value.push({
+            id: Date.now(),
+            action: `Xóa sản phẩm ${item.name}`,
+            employee: 'Hệ thống',
+            timestamp: new Date().toLocaleString('vi-VN'),
+            status: 'completed',
+          });
           isNotificationLoading.value = false;
           toastNotification.value.addToast({
             type: 'success',
@@ -373,7 +545,9 @@ export default {
           resetNotification();
         }, 500);
       };
-      notificationOnCancel.value = () => { };
+      notificationOnCancel.value = () => {
+        resetNotification();
+      };
       isNotificationLoading.value = false;
       notificationModal.value.openModal();
     };
@@ -387,54 +561,9 @@ export default {
       });
     };
 
-    // const changeStatus = (status) => {
-    //   if (invoice.value.loaiDon === 'trực tiếp') {
-    //     toastNotification.value.addToast({
-    //       type: 'error',
-    //       message: 'Không thể thay đổi trạng thái cho đơn trực tiếp',
-    //       duration: 3000,
-    //     });
-    //     return;
-    //   }
-    //   if (invoice.value.trangThai === 'Hoàn thành' || invoice.value.trangThai === 'Đã hủy') {
-    //     toastNotification.value.addToast({
-    //       type: 'error',
-    //       message: 'Không thể thay đổi trạng thái từ trạng thái hiện tại',
-    //       duration: 3000,
-    //     });
-    //     return;
-    //   }
-
-    //   notificationType.value = 'confirm';
-    //   notificationMessage.value = `Bạn có chắc chắn muốn thay đổi trạng thái thành "${status}"?`;
-    //   notificationOnConfirm.value = () => {
-    //     isNotificationLoading.value = true;
-    //     setTimeout(() => {
-    //       invoice.value.trangThai = status;
-    //       updateTimelineStatuses();
-    //       history.value.push({
-    //         id: history.value.length + 1,
-    //         action: `Cập nhật trạng thái: ${status}`,
-    //         employee: 'Hệ thống',
-    //         timestamp: new Date().toLocaleString('vi-VN'),
-    //         status: 'completed'
-    //       });
-    //       toastNotification.value.addToast({
-    //         type: 'success',
-    //         message: `Cập nhật trạng thái thành công: ${status}`,
-    //         duration: 3000,
-    //       });
-    //       isNotificationLoading.value = false;
-    //       resetNotification();
-    //     }, 500);
-    //   };
-    //   notificationOnCancel.value = () => {
-    //     resetNotification();
-    //   };
-    //   isNotificationLoading.value = false;
-    //   notificationModal.value.openModal();
-    // };
-
+    const checkAllProductsHaveIMEI = () => {
+      return products.value.every(product => product.imei && product.imei.trim() !== '' && product.imeiList.every(i => i.status === 'Còn hàng'));
+    };
 
     const changeStatus = async (status) => {
       if (invoice.value.loaiDon === 'trực tiếp') {
@@ -453,6 +582,14 @@ export default {
         });
         return;
       }
+      if (status === 'Chờ giao hàng' && !checkAllProductsHaveIMEI()) {
+        toastNotification.value.addToast({
+          type: 'warning',
+          message: 'Vui lòng chọn và xác nhận IMEI hợp lệ cho tất cả sản phẩm trước khi chuyển sang trạng thái "Chờ giao hàng"',
+          duration: 5000,
+        });
+        return;
+      }
 
       notificationType.value = 'confirm';
       notificationMessage.value = `Bạn có chắc chắn muốn thay đổi trạng thái thành "${status}"?`;
@@ -463,11 +600,18 @@ export default {
           const result = await hoaDonStore.updateInvoiceStatus(
             invoice.value.id,
             trangThaiNumber,
-            null // idNhanVien, có thể lấy từ thông tin người dùng đang đăng nhập
+            null
           );
           if (result.success) {
             invoice.value.trangThai = status;
             updateTimelineStatuses();
+            history.value.push({
+              id: Date.now(),
+              action: `Cập nhật trạng thái: ${status}`,
+              employee: 'Hệ thống',
+              timestamp: new Date().toLocaleString('vi-VN'),
+              status: 'completed',
+            });
             toastNotification.value.addToast({
               type: 'success',
               message: `Cập nhật trạng thái thành công: ${status}`,
@@ -506,6 +650,29 @@ export default {
       notificationOnCancel.value = () => { };
     };
 
+    const resetIMEIFilters = () => {
+      searchIMEI.value = '';
+      imeiCurrentPage.value = 1;
+    };
+
+    const debouncedSearchIMEI = (value) => {
+      searchIMEI.value = value;
+      imeiCurrentPage.value = 1;
+    };
+
+    const getRowClass = (item) => {
+      return item.status === 'Còn hàng' ? 'table-row-valid' : 'table-row-invalid';
+    };
+
+    const updateIMEIPage = (page) => {
+      imeiCurrentPage.value = page;
+    };
+
+    const updateIMEIItemsPerPage = (value) => {
+      imeiItemsPerPage.value = value;
+      imeiCurrentPage.value = 1; // Reset về trang đầu tiên
+    };
+
     return {
       invoice,
       products,
@@ -515,11 +682,15 @@ export default {
       totalPrice,
       discount,
       isIMEIModalVisible,
+      isConfirmIMEIModalVisible,
       isAddProductModalVisible,
       isUpdateModalVisible,
       isDivinationModalVisible,
       selectedProduct,
       newIMEI,
+      searchIMEI,
+      filteredIMEIs,
+      paginatedIMEIs,
       newProduct,
       activeTab,
       divinationResult,
@@ -532,12 +703,19 @@ export default {
       toastNotification,
       orderInfo,
       customerInfo,
+      imeiHeaders,
+      imeiCurrentPage,
+      imeiItemsPerPage,
+      imeiPageSizeOptions,
+      totalIMEIPages,
       formatPrice,
       truncateIMEI,
       getTypeBadgeClass,
       getTypeIcon,
       getStatusBadgeClass,
       getStatusIcon,
+      getIMEIStatusClass,
+      getIMEIStatusIcon,
       getBadgeClass,
       getPaymentTime,
       showIMEIModal,
@@ -545,6 +723,10 @@ export default {
       addIMEI,
       saveIMEIChanges,
       deleteIMEI,
+      scanQRForIMEI,
+      showConfirmIMEIModal,
+      closeConfirmIMEIModal,
+      selectIMEI,
       showAddProductModal,
       closeAddProductModal,
       addProduct,
@@ -558,7 +740,12 @@ export default {
       printInvoice,
       resetNotification,
       updateTimelineStatuses,
-      changeStatus
+      changeStatus,
+      resetIMEIFilters,
+      debouncedSearchIMEI,
+      getRowClass,
+      updateIMEIPage,
+      updateIMEIItemsPerPage,
     };
   },
 };
