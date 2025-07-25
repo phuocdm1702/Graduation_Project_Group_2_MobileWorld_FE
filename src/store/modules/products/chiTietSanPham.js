@@ -165,6 +165,7 @@ export const getProducts = () => {
   return apiService.get('/san-pham/all');
 };
 
+// Lấy chi tiết sản phẩm theo ID sản phẩm
 export const getChiTietSanPhamBySanPhamId = (id) => {
   return apiService.get(`/api/chi-tiet-san-pham/${id}`);
 };
@@ -279,7 +280,7 @@ export const addChiTietSanPham = async (data, images, existingImageUrls = []) =>
     } else if (error.message.includes('Network Error')) {
       throw new Error('Lỗi kết nối mạng. Vui lòng kiểm tra kết nối internet.');
     } else if (error.message.includes('timeout')) {
-      throw new Error('Yêu cầu quá pim quá thời gian chờ. Vui lòng thử lại.');
+      throw new Error('Yêu cầu quá thời gian chờ. Vui lòng thử lại.');
     } else {
       throw new Error(`Lỗi khi thêm chi tiết sản phẩm: ${error.message}`);
     }
@@ -292,18 +293,12 @@ export const updateChiTietSanPham = async (id, data, images, existingImageUrls =
     const formData = new FormData();
 
     // Validate input data
-    if (!id || id <= 0) {
-      throw new Error('ID sản phẩm không hợp lệ');
-    }
     if (!data.tenSanPham || !data.tenSanPham.trim()) {
       throw new Error('Tên sản phẩm không được để trống');
     }
-    if (!data.variants || !Array.isArray(data.variants) || data.variants.length === 0) {
-      throw new Error('Danh sách biến thể không được để trống');
+    if (!data.variants || !Array.isArray(data.variants) || data.variants.length !== 1) {
+      throw new Error('Chỉ được cung cấp một biến thể để cập nhật chi tiết sản phẩm');
     }
-
-    // Thêm ID sản phẩm
-    formData.append('id', id);
 
     // Validate and add images
     if (images && images.length > 0) {
@@ -332,46 +327,31 @@ export const updateChiTietSanPham = async (id, data, images, existingImageUrls =
 
     // Thêm các trường cấp cao
     formData.append('tenSanPham', data.tenSanPham);
-    formData.append('idNhaSanXuat', data.idNhaSanXuat || '');
-    formData.append('idPin', data.idPin || '');
-    formData.append('idCongNgheManHinh', data.idCongNgheManHinh || '');
-    formData.append('idHoTroBoNhoNgoai', data.idHoTroBoNhoNgoai || '');
-    formData.append('idCpu', data.idCpu || '');
-    formData.append('idGpu', data.idGpu || '');
-    formData.append('idCumCamera', data.idCumCamera || '');
-    formData.append('idHeDieuHanh', data.idHeDieuHanh || '');
-    formData.append('idChiSoKhangBuiVaNuoc', data.idChiSoKhangBuiVaNuoc || '');
-    formData.append('idThietKe', data.idThietKe || '');
-    formData.append('idSim', data.idSim || '');
-    formData.append('idHoTroCongNgheSac', data.idHoTroCongNgheSac || '');
-    formData.append('idCongNgheMang', data.idCongNgheMang || '');
     formData.append('ghiChu', data.ghiChu || '');
 
-    // Thêm các trường trong mảng variants
-    data.variants.forEach((variant, index) => {
-      if (!variant.idMauSac || !variant.idRam || !variant.idBoNhoTrong || !variant.donGia) {
-        throw new Error(`Biến thể ${index + 1} không hợp lệ: Thiếu thông tin bắt buộc`);
-      }
-      if (!variant.imeiList || !Array.isArray(variant.imeiList) || variant.imeiList.length === 0) {
-        throw new Error(`Biến thể ${index + 1} không hợp lệ: Thiếu danh sách IMEI`);
-      }
-      
-      formData.append(`variants[${index}].idMauSac`, variant.idMauSac);
-      formData.append(`variants[${index}].idRam`, variant.idRam);
-      formData.append(`variants[${index}].idBoNhoTrong`, variant.idBoNhoTrong);
-      formData.append(`variants[${index}].donGia`, variant.donGia);
-      
-      variant.imeiList.forEach((imei, imeiIndex) => {
-        if (!imei || typeof imei !== 'string' || imei.length !== 15 || !/^\d{15}$/.test(imei)) {
-          throw new Error(`IMEI "${imei}" tại biến thể ${index + 1} không hợp lệ - phải là 15 chữ số`);
-        }
-        formData.append(`variants[${index}].imeiList[${imeiIndex}]`, imei);
-      });
-    });
+    // Thêm các trường trong biến thể
+    const variant = data.variants[0];
+    if (!variant.idMauSac || !variant.idRam || !variant.idBoNhoTrong || !variant.donGia) {
+      throw new Error('Biến thể không hợp lệ: Thiếu thông tin bắt buộc');
+    }
+    if (!variant.imeiList || !Array.isArray(variant.imeiList) || variant.imeiList.length !== 1) {
+      throw new Error('Biến thể không hợp lệ: Chỉ được cung cấp một IMEI');
+    }
+
+    formData.append('variants[0].idMauSac', variant.idMauSac);
+    formData.append('variants[0].idRam', variant.idRam);
+    formData.append('variants[0].idBoNhoTrong', variant.idBoNhoTrong);
+    formData.append('variants[0].donGia', variant.donGia);
+
+    const imei = variant.imeiList[0];
+    if (!imei || typeof imei !== 'string' || imei.length !== 15 || !/^\d{15}$/.test(imei)) {
+      throw new Error(`IMEI "${imei}" không hợp lệ - phải là 15 chữ số`);
+    }
+    formData.append('variants[0].imeiList[0]', imei);
 
     // Log FormData entries for debugging (only in development)
     if (process.env.NODE_ENV === 'development') {
-      console.log('FormData entries:');
+      console.log('FormData entries for update:');
       for (const [key, value] of formData.entries()) {
         console.log(`${key}:`, value instanceof File ? `File: ${value.name} (${value.size} bytes)` : value);
       }
@@ -384,7 +364,7 @@ export const updateChiTietSanPham = async (id, data, images, existingImageUrls =
       },
       timeout: 30000, // 30 second timeout
     });
-    
+
     return response;
   } catch (error) {
     console.error('Error in updateChiTietSanPham:', {
@@ -393,12 +373,14 @@ export const updateChiTietSanPham = async (id, data, images, existingImageUrls =
       status: error.response?.status,
       stack: error.stack
     });
-    
+
     // Provide more specific error messages
     if (error.response?.status === 500) {
       throw new Error(`Lỗi server: ${error.response?.data?.message || 'Có lỗi xảy ra trên server'}`);
     } else if (error.response?.status === 400) {
       throw new Error(`Dữ liệu không hợp lệ: ${error.response?.data?.message || 'Kiểm tra lại thông tin đã nhập'}`);
+    } else if (error.response?.status === 404) {
+      throw new Error('Không tìm thấy chi tiết sản phẩm để cập nhật');
     } else if (error.message.includes('Network Error')) {
       throw new Error('Lỗi kết nối mạng. Vui lòng kiểm tra kết nối internet.');
     } else if (error.message.includes('timeout')) {

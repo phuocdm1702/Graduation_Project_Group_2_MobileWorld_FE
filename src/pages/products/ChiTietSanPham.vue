@@ -16,7 +16,7 @@
                 <i class="bi bi-search search-icon"></i>
                 <input v-model.trim="searchKeyword" @input="debouncedSearch" type="text"
                   placeholder="Tìm kiếm theo IMEI, tên, mã sản phẩm, màu sắc, RAM, ROM, giá..."
-                  class="form-control search-input" style="padding-left: 2.5rem;"/>
+                  class="form-control search-input" style="padding-left: 2.5rem;" />
               </div>
             </div>
           </div>
@@ -95,8 +95,8 @@
               <label class="filter-label">Trạng Thái</label>
               <div class="status-radio-group">
                 <div class="form-check form-check-inline">
-                  <input class="form-check-input" type="radio" v-model="searchFilters.status" value=""
-                    id="statusAll" @change="searchProductDetails">
+                  <input class="form-check-input" type="radio" v-model="searchFilters.status" value="" id="statusAll"
+                    @change="searchProductDetails">
                   <label class="form-check-label" for="statusAll">Tất cả</label>
                 </div>
                 <div class="form-check form-check-inline">
@@ -235,10 +235,10 @@
             <div class="product-card-body">
               <div class="d-flex justify-content-between">
                 <img :src="detail.imageUrl" alt="Product Image" class="product-card-image" />
-              <div class="product-info">
-                <div class="product-name">{{ detail.tenSanPham }}</div>
-                <div class="product-detail">Màu sắc: {{ detail.mauSac || 'N/A' }}</div>
-              </div>
+                <div class="product-info">
+                  <div class="product-name">{{ detail.tenSanPham }}</div>
+                  <div class="product-detail">Màu sắc: {{ detail.mauSac || 'N/A' }}</div>
+                </div>
               </div>
               <div class="product-details">
                 <div class="detail-row">
@@ -276,7 +276,8 @@
               <div class="search-input-wrapper">
                 <i class="bi bi-search search-icon"></i>
                 <input v-model.trim="imeiSearchKeyword" @input="debouncedImeiSearch" type="text"
-                  placeholder="Nhập IMEI để tìm kiếm..." class="form-control search-input" style="padding-left: 2.5rem;"/>
+                  placeholder="Nhập IMEI để tìm kiếm..." class="form-control search-input"
+                  style="padding-left: 2.5rem;" />
               </div>
             </div>
             <div class="imei-count">
@@ -343,7 +344,8 @@
                 <button class="page-link" @click="sharedCurrentPage = page">{{ page }}</button>
               </li>
               <li class="page-item" :class="{ disabled: sharedCurrentPage === sharedTotalPages }">
-                <button class="page-link" @click="sharedCurrentPage++" :disabled="sharedCurrentPage === sharedTotalPages">
+                <button class="page-link" @click="sharedCurrentPage++"
+                  :disabled="sharedCurrentPage === sharedTotalPages">
                   <i class="bi bi-chevron-right"></i>
                 </button>
               </li>
@@ -494,7 +496,7 @@ export default {
       if (searchFilters.value.status) {
         filtered = filtered.filter(
           (item) => (searchFilters.value.status === 'Hoạt động' && !item.deleted) ||
-                    (searchFilters.value.status === 'Đã Bán' && item.deleted)
+            (searchFilters.value.status === 'Đã Bán' && item.deleted)
         );
       }
 
@@ -539,7 +541,7 @@ export default {
       if (searchFilters.value.status) {
         filtered = filtered.filter(
           (item) => (searchFilters.value.status === 'Hoạt động' && !item.deleted) ||
-                    (searchFilters.value.status === 'Đã Bán' && item.deleted)
+            (searchFilters.value.status === 'Đã Bán' && item.deleted)
         );
       }
 
@@ -697,18 +699,10 @@ export default {
     };
 
     const editProductDetail = (item) => {
-      console.log('Navigating with id:', route.params.id);
-      if (!route.params.id) {
-        toast.value?.addToast({
-          type: 'error',
-          message: 'Không tìm thấy ID sản phẩm để điều hướng',
-          duration: 5000,
-        });
-        return;
-      }
       router.push({
         name: 'EditChiTietSanPham',
         params: { id: route.params.id },
+        query: { imei: item.imei }
       }).catch((error) => {
         console.error('Lỗi điều hướng:', error);
         toast.value?.addToast({
@@ -919,6 +913,7 @@ export default {
 }
 
 @keyframes gentleGlow {
+
   0%,
   100% {
     box-shadow: 0 0 5px rgba(52, 211, 153, 0.3);
@@ -1303,7 +1298,8 @@ export default {
   transform: translate(-50%, -50%) scale(1.1);
 }
 
-.product-image, .product-card-image {
+.product-image,
+.product-card-image {
   width: 60px;
   height: 65px;
 }
@@ -1384,21 +1380,25 @@ export default {
   cursor: pointer;
 }
 
-.imei-list-container::-webkit-scrollbar, .table-product::-webkit-scrollbar {
+.imei-list-container::-webkit-scrollbar,
+.table-product::-webkit-scrollbar {
   width: 6px;
 }
 
-.imei-list-container::-webkit-scrollbar-track, .table-product::-webkit-scrollbar-track {
+.imei-list-container::-webkit-scrollbar-track,
+.table-product::-webkit-scrollbar-track {
   background: #f8f9fa;
   border-radius: 3px;
 }
 
-.imei-list-container::-webkit-scrollbar-thumb, .table-product::-webkit-scrollbar-thumb {
+.imei-list-container::-webkit-scrollbar-thumb,
+.table-product::-webkit-scrollbar-thumb {
   background: #34d399;
   border-radius: 3px;
 }
 
-.imei-list-container::-webkit-scrollbar-thumb:hover, .table-product::-webkit-scrollbar-thumb:hover {
+.imei-list-container::-webkit-scrollbar-thumb:hover,
+.table-product::-webkit-scrollbar-thumb:hover {
   background: #16a34a;
 }
 
