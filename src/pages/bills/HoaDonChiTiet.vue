@@ -85,10 +85,12 @@
             style="--animate-delay: 0.4s;">
             <div class="product-card-content">
               <div class="product-image">
-                <img :src="product.image || '/assets/placeholder-product.png'" alt="Product Image" class="product-img" />
+                <img :src="product.image || '/assets/placeholder-product.png'" alt="Product Image"
+                  class="product-img" />
               </div>
               <div class="product-details">
-                <h6 class="product-name">{{ product.name }} {{ product.color }} {{ product.ram }} {{ product.capacity }}</h6>
+                <h6 class="product-name">{{ product.name }} {{ product.color }} {{ product.ram }} {{ product.capacity }}
+                </h6>
                 <div class="product-price">
                   <span class="price-amount">{{ formatPrice(product.price) }}</span>
                   <span class="quantity">x{{ product.quantity || 1 }}</span>
@@ -102,6 +104,9 @@
             <div class="product-card-actions">
               <button class="btn btn-sm btn-view" @click="showIMEIModal(product)" title="Xem IMEI">
                 Xem IMEI
+              </button>
+              <button class="btn btn-sm btn-confirm" @click="showConfirmIMEIModal(product)" title="Xác nhận IMEI">
+                Xác nhận
               </button>
               <button class="btn btn-sm btn-delete" @click="removeProduct(product)" title="Xóa sản phẩm">
                 Xóa
@@ -265,7 +270,7 @@
       <div class="modal-container glass-modal animate__animated animate__zoomIn">
         <div class="modal-header">
           <h5 class="modal-title">
-            <i class="bi bi-upc-scan me-2"></i> IMEI của {{ selectedProduct?.name }}
+            <i class="bi bi-upc-scan me-2"></i> Quản Lý IMEI - {{ selectedProduct?.name }}
           </h5>
           <button class="btn-close-glass" @click="closeIMEIModal">
             <i class="bi bi-x-lg"></i>
@@ -274,21 +279,27 @@
         <div class="modal-body imei-container">
           <div class="imei-input mb-3">
             <div class="input-group">
-              <input v-model="newIMEI" type="text" class="form-control" placeholder="Tìm kiếm hoặc thêm imei"
+              <input v-model="newIMEI" type="text" class="form-control" placeholder="Nhập hoặc quét IMEI"
                 @keyup.enter="addIMEI" />
-              <button class="btn btn-action" @click="addIMEI">
+              <button class="btn btn-action" @click="scanQRForIMEI" title="Quét QR">
+                <i class="bi bi-qr-code-scan me-1"></i>
+              </button>
+              <button class="btn btn-action" @click="addIMEI" :disabled="!newIMEI">
                 <i class="bi bi-plus-circle me-1"></i>
               </button>
             </div>
           </div>
-          <div v-if="selectedProduct?.imei" class="imei-list">
-            <div v-for="imei in selectedProduct.imei.split(', ')" :key="imei"
+          <div v-if="selectedProduct?.imeiList?.length" class="imei-list">
+            <div v-for="(imeiObj, index) in selectedProduct.imeiList" :key="imeiObj.imei"
               class="imei-item animate__animated animate__fadeIn">
               <div class="imei-content">
-                <i class="bi bi-qr-code me-3"></i>
-                <span class="imei-code">{{ imei }}</span>
+                <i :class="getIMEIStatusIcon(imeiObj.status)" class="me-3"></i>
+                <span class="imei-code">{{ imeiObj.imei }}</span>
+                <span class="imei-status-badge" :class="getIMEIStatusClass(imeiObj.status)">
+                  {{ imeiObj.status }}
+                </span>
               </div>
-              <button class="btn btn-sm btn-delete" @click="deleteIMEI(imei)" title="Xóa IMEI">
+              <button class="btn btn-sm btn-delete" @click="deleteIMEI(imeiObj.imei)" title="Xóa IMEI">
                 <i class="bi bi-x-lg"></i>
               </button>
             </div>
@@ -304,6 +315,96 @@
           </button>
           <button class="btn btn-action" @click="saveIMEIChanges">
             Lưu
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Confirm IMEI Modal -->
+    <div v-if="isConfirmIMEIModalVisible" class="modal-backdrop-blur" @click.self="closeConfirmIMEIModal">
+      <div class="modal-container glass-modal animate__animated animate__zoomIn">
+        <div class="modal-header">
+          <h5 class="modal-title">
+            <i class="bi bi-check-circle me-2"></i> Xác Nhận IMEI - {{ selectedProduct?.name }}
+          </h5>
+          <button class="btn-close-glass" @click="closeConfirmIMEIModal">
+            <i class="bi bi-x-lg"></i>
+          </button>
+        </div>
+        <div class="modal-body">
+          <!-- Filter Section -->
+          <FilterTableSection title="Tìm kiếm IMEI" icon="bi bi-funnel">
+            <div class="m-5">
+              <div class="row g-4 align-items-end">
+                <div class="col-lg-12">
+                  <div class="search-group">
+                    <label class="filter-label">Tìm kiếm IMEI</label>
+                    <div class="search-input-wrapper">
+                      <i class="bi bi-search search-icon"></i>
+                      <input type="text" class="form-control search-input" placeholder="Nhập mã IMEI..."
+                        v-model="searchIMEI" @input="debouncedSearchIMEI($event.target.value)" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="filter-actions mt-3">
+                <div class="filter-stats">
+                  <div class="stat-item">
+                    <span class="stat-label">Tổng số IMEI:</span>
+                    <span class="stat-value">{{ filteredIMEIs.length }}</span>
+                  </div>
+                </div>
+                <div class="action-buttons">
+                  <button class="btn btn-action" @click="scanQRForIMEI" title="Quét QR">
+                    Quét QR
+                  </button>
+                  <button class="btn btn-reset" @click="resetIMEIFilters">
+                    Đặt lại
+                  </button>
+                </div>
+              </div>
+            </div>
+          </FilterTableSection>
+
+          <!-- Table Section -->
+          <FilterTableSection title="Danh sách IMEI" icon="bi bi-table">
+            <div class="table-header">
+              <div class="table-title-wrapper">
+                <span class="table-count">{{ filteredIMEIs.length }} IMEI</span>
+              </div>
+            </div>
+            <div class="table-body">
+              <DataTable title="" :headers="imeiHeaders" :data="paginatedIMEIs" :pageSizeOptions="imeiPageSizeOptions"
+                :currentPage="imeiCurrentPage" :itemsPerPage="imeiItemsPerPage" :rowClass="getRowClass"
+                @update:currentPage="updateIMEIPage" @update:itemsPerPage="updateIMEIItemsPerPage">
+                <template #stt="{ globalIndex }">
+                  {{ globalIndex + 1 }}
+                </template>
+                <template #maImel="{ item }">
+                  <span class="ma-imel-code" :class="{ 'text-muted': !item.maImel }">{{ item.maImel || 'N/A' }}</span>
+                </template>
+                <template #imei="{ item }">
+                  <span class="imei-code">{{ item.imei || 'N/A' }}</span>
+                </template>
+                <template #status="{ item }">
+                  <span class="imei-status-badge" :class="getIMEIStatusClass(item.status)">
+                    {{ item.status || 'N/A' }}
+                  </span>
+                </template>
+                <template #actions="{ item }">
+                  <div class="action-buttons-cell">
+                    <button class="btn btn-sm btn-action" @click="selectIMEI(item.imei)" title="Chọn IMEI">
+                      <i class="bi bi-check-circle"></i>
+                    </button>
+                  </div>
+                </template>
+              </DataTable>
+            </div>
+          </FilterTableSection>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-reset" @click="closeConfirmIMEIModal">
+            Đóng
           </button>
         </div>
       </div>
@@ -435,7 +536,7 @@ export default {
 </script>
 
 <style scoped>
-/* Existing styles with added scroll for history timeline */
+/* Existing styles */
 .history-timeline.history-scrollable {
   max-height: 300px;
   overflow-y: auto;
@@ -456,7 +557,6 @@ export default {
   border-radius: 3px;
 }
 
-/* Previous scroll styles for products list */
 .products-list {
   max-height: 500px;
   overflow-y: auto;
@@ -476,19 +576,16 @@ export default {
   border-radius: 3px;
 }
 
-/* Clickable cursor for timeline steps */
 .timeline-step {
   cursor: pointer;
 }
 
-/* Disabled button styles */
 .btn-action:disabled {
   background: #6c757d;
   cursor: not-allowed;
   opacity: 0.6;
 }
 
-/* Single status timeline styling */
 .timeline-container.single-status {
   justify-content: center;
 }
@@ -497,12 +594,81 @@ export default {
   display: none;
 }
 
-/* Existing styles... */
+/* Updated styles for IMEI modal */
+.imei-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.5rem;
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(52, 211, 153, 0.2);
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.imei-item:hover {
+  background: rgba(52, 211, 153, 0.1);
+  box-shadow: 0 2px 8px rgba(52, 211, 153, 0.15);
+}
+
+.imei-content {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  gap: 0.75rem;
+}
+
+.imei-status-badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: capitalize;
+}
+
+.imei-status-valid {
+  background: rgba(52, 211, 153, 0.2);
+  color: #16a34a;
+}
+
+.imei-status-invalid {
+  background: rgba(220, 53, 69, 0.2);
+  color: #dc3545;
+}
+
+.imei-status-pending {
+  background: rgba(255, 193, 7, 0.2);
+  color: #ffc107;
+}
+
+/* New styles for Confirm IMEI button */
+.btn-confirm {
+  background: #17a2b8;
+  color: white;
+  border: none;
+}
+
+.btn-confirm:hover {
+  background: #138496;
+  color: white;
+  box-shadow: 0 0 10px rgba(23, 162, 184, 0.3);
+}
+
+.imei-index {
+  width: 30px;
+  font-weight: 600;
+  color: #1f3a44;
+  margin-right: 0.5rem;
+}
+
+/* Existing styles */
 @keyframes fadeInUp {
   from {
     opacity: 0;
     transform: translateY(15px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -514,6 +680,7 @@ export default {
     opacity: 0;
     transform: scale(0.97);
   }
+
   to {
     opacity: 1;
     transform: scale(1);
@@ -521,9 +688,12 @@ export default {
 }
 
 @keyframes gentleGlow {
-  0%, 100% {
+
+  0%,
+  100% {
     box-shadow: 0 0 5px rgba(52, 211, 153, 0.3);
   }
+
   50% {
     box-shadow: 0 0 12px rgba(52, 211, 153, 0.5);
   }
@@ -534,10 +704,12 @@ export default {
     transform: scale(1);
     box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.7);
   }
+
   70% {
     transform: scale(1.05);
     box-shadow: 0 0 0 10px rgba(220, 53, 69, 0);
   }
+
   100% {
     transform: scale(1);
     box-shadow: 0 0 0 0 rgba(220, 53, 69, 0);
@@ -1161,7 +1333,7 @@ export default {
   border: 1px solid rgba(52, 211, 153, 0.1);
   border-radius: 16px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-  max-width: 500px;
+  max-width: 800px;
   width: 100%;
   max-height: 90vh;
   overflow-y: auto;
@@ -1328,10 +1500,12 @@ export default {
 }
 
 @media (max-width: 992px) {
+
   .flex-child.flex-history,
   .flex-child.flex-summary {
     flex: 1 1 100%;
   }
+
   .col-lg-6 {
     flex: 1 1 100%;
     max-width: 100%;
@@ -1343,6 +1517,7 @@ export default {
     flex-direction: column;
     gap: 2rem;
   }
+
   .timeline-container::before {
     top: 0;
     left: 50%;
@@ -1351,61 +1526,77 @@ export default {
     height: 100%;
     transform: translateX(-50%);
   }
+
   .timeline-step {
     text-align: left;
     margin: 0;
   }
+
   .step-circle {
     margin: 0 0 0.5rem 0;
   }
+
   .step-content {
     padding-left: 1rem;
   }
+
   .info-row {
     flex-direction: column;
     align-items: flex-start;
     gap: 0.25rem;
   }
+
   .info-value {
     text-align: left;
   }
+
   .products-list {
     grid-template-columns: 1fr;
   }
+
   .product-card-content {
     flex-direction: column;
     align-items: flex-start;
   }
+
   .product-image {
     width: 100%;
     height: 150px;
   }
+
   .product-card-actions {
     justify-content: flex-start;
   }
+
   .summary-header {
     flex-direction: column;
     align-items: flex-start;
   }
+
   .detail-item {
     flex-direction: column;
     align-items: flex-start;
     gap: 0.5rem;
   }
+
   .detail-value {
     text-align: left;
   }
+
   .history-timeline {
     padding-left: 1rem;
   }
+
   .history-dot {
     width: 10px;
     height: 10px;
     left: -5px;
   }
+
   .history-content {
     padding-left: 0.75rem;
   }
+
   .glass-modal {
     width: 90%;
   }
@@ -1417,5 +1608,16 @@ export default {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+.ma-imel-code {
+  font-family: 'Monaco', 'Menlo', monospace;
+  font-weight: 600;
+  color: #1f3a44;
+  font-size: 0.9rem;
+}
+
+.ma-imel-code.text-muted {
+  color: #6c757d;
 }
 </style>
