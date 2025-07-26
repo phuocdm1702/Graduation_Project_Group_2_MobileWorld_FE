@@ -334,7 +334,7 @@
         <div class="modal-body">
           <!-- Filter Section -->
           <FilterTableSection title="Tìm kiếm IMEI" icon="bi bi-funnel">
-            <div class="m-5">
+            <div class="m-4">
               <div class="row g-4 align-items-end">
                 <div class="col-lg-12">
                   <div class="search-group">
@@ -347,19 +347,19 @@
                   </div>
                 </div>
               </div>
-              <div class="filter-actions mt-3">
+              <div class="filter-actions mt-3 d-flex justify-content-between align-items-center">
                 <div class="filter-stats">
                   <div class="stat-item">
                     <span class="stat-label">Tổng số IMEI:</span>
                     <span class="stat-value">{{ filteredIMEIs.length }}</span>
                   </div>
                 </div>
-                <div class="action-buttons">
+                <div class="action-buttons d-flex gap-2">
                   <button class="btn btn-action" @click="scanQRForIMEI" title="Quét QR">
-                    Quét QR
+                    <i class="bi bi-qr-code-scan me-1"></i> Quét QR
                   </button>
                   <button class="btn btn-reset" @click="resetIMEIFilters">
-                    Đặt lại
+                    <i class="bi bi-arrow-counterclockwise me-1"></i> Đặt lại
                   </button>
                 </div>
               </div>
@@ -369,19 +369,20 @@
           <!-- Table Section -->
           <FilterTableSection title="Danh sách IMEI" icon="bi bi-table">
             <div class="table-header">
-              <div class="table-title-wrapper">
+              <!-- <div class="table-title-wrapper">
                 <span class="table-count">{{ filteredIMEIs.length }} IMEI</span>
-              </div>
+              </div> -->
             </div>
             <div class="table-body">
-              <DataTable title="" :headers="imeiHeaders" :data="paginatedIMEIs" :pageSizeOptions="imeiPageSizeOptions"
-                :currentPage="imeiCurrentPage" :itemsPerPage="imeiItemsPerPage" :rowClass="getRowClass"
-                @update:currentPage="updateIMEIPage" @update:itemsPerPage="updateIMEIItemsPerPage">
+              <DataTable title="" :headers="imeiHeaders" :data="filteredIMEIs"
+                :pageSizeOptions="[5, 10, 15, 20, 30, 40, 50]" :rowClass="getRowClass">
                 <template #stt="{ globalIndex }">
                   {{ globalIndex + 1 }}
                 </template>
                 <template #maImel="{ item }">
-                  <span class="ma-imel-code" :class="{ 'text-muted': !item.maImel }">{{ item.maImel || 'N/A' }}</span>
+                  <span class="ma-imel-code" :class="{ 'text-muted': !item.maImel }">
+                    {{ item.maImel || 'N/A' }}
+                  </span>
                 </template>
                 <template #imei="{ item }">
                   <span class="imei-code">{{ item.imei || 'N/A' }}</span>
@@ -393,8 +394,9 @@
                 </template>
                 <template #actions="{ item }">
                   <div class="action-buttons-cell">
-                    <button class="btn btn-sm btn-action" @click="selectIMEI(item.imei)" title="Chọn IMEI">
-                      <i class="bi bi-check-circle"></i>
+                    <button class="btn btn-sm btn-action" @click="selectIMEI(item.imei)" title="Chọn IMEI"
+                      :disabled="item.status !== 'Còn hàng'">
+                      <i class="bi bi-check-circle"></i> Chọn
                     </button>
                   </div>
                 </template>
@@ -404,7 +406,7 @@
         </div>
         <div class="modal-footer">
           <button class="btn btn-reset" @click="closeConfirmIMEIModal">
-            Đóng
+            <i class="bi bi-x-circle me-1"></i> Đóng
           </button>
         </div>
       </div>
