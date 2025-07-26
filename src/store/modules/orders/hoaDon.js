@@ -197,16 +197,20 @@ export const useHoaDonStore = defineStore('hoaDon', {
                     responseType: 'blob',
                 });
 
+                // Tìm hóa đơn để lấy thông tin loaiDon
+                const invoice = this.invoices.find(inv => inv.id === id) || this.invoiceDetail;
+                const loaiDonText = invoice?.loaiDon === 'trực tiếp' ? 'tại quầy' : 'online';
+
                 const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
                 const link = document.createElement('a');
                 link.href = url;
-                link.setAttribute('download', `hoa_don_${id}.pdf`);
+                link.setAttribute('download', `hoa_don_client_${id}_${loaiDonText}.pdf`);
                 document.body.appendChild(link);
                 link.click();
                 document.body.removeChild(link);
                 window.URL.revokeObjectURL(url);
 
-                return { success: true, message: `Đã tải hóa đơn ${id} thành công` };
+                return { success: true, message: `Đã tải hóa đơn ${loaiDonText} ${id} thành công` };
             } catch (error) {
                 this.error = error.message || 'Không thể tải file PDF hóa đơn';
                 console.error('Lỗi khi gọi API in hóa đơn:', error);
