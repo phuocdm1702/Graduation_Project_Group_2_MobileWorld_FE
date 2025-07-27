@@ -256,14 +256,6 @@ export default {
       }[status] || 'imei-status-pending';
     };
 
-    const getIMEIStatusIcon = (status) => {
-      return {
-        'Còn hàng': 'bi bi-check-circle-fill',
-        'Đã bán': 'bi bi-x-circle-fill',
-        'pending': 'bi bi-hourglass-split',
-      }[status] || 'bi bi-hourglass-split';
-    };
-
     const getBadgeClass = (key, value) => {
       if (key === 'loaiDon') return getTypeBadgeClass(value);
       if (key === 'trangThai') return getStatusBadgeClass(value);
@@ -715,7 +707,6 @@ export default {
       getStatusBadgeClass,
       getStatusIcon,
       getIMEIStatusClass,
-      getIMEIStatusIcon,
       getBadgeClass,
       getPaymentTime,
       showIMEIModal,

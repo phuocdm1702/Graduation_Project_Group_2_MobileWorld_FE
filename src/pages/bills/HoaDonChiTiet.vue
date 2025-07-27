@@ -105,7 +105,7 @@
               <button class="btn btn-sm btn-view" @click="showIMEIModal(product)" title="Xem IMEI">
                 Xem IMEI
               </button>
-              <button class="btn btn-sm btn-confirm" @click="showConfirmIMEIModal(product)" title="Xác nhận IMEI">
+              <button class="btn btn-sm btn-view" @click="showConfirmIMEIModal(product)" title="Xác nhận IMEI">
                 Xác nhận
               </button>
               <button class="btn btn-sm btn-delete" @click="removeProduct(product)" title="Xóa sản phẩm">
@@ -270,7 +270,7 @@
       <div class="modal-container glass-modal animate__animated animate__zoomIn">
         <div class="modal-header">
           <h5 class="modal-title">
-            <i class="bi bi-upc-scan me-2"></i> Quản Lý IMEI - {{ selectedProduct?.name }}
+            IMEI - {{ selectedProduct?.name }}
           </h5>
           <button class="btn-close-glass" @click="closeIMEIModal">
             <i class="bi bi-x-lg"></i>
@@ -281,20 +281,13 @@
             <div class="input-group">
               <input v-model="newIMEI" type="text" class="form-control" placeholder="Nhập hoặc quét IMEI"
                 @keyup.enter="addIMEI" />
-              <button class="btn btn-action" @click="scanQRForIMEI" title="Quét QR">
-                <i class="bi bi-qr-code-scan me-1"></i>
-              </button>
-              <button class="btn btn-action" @click="addIMEI" :disabled="!newIMEI">
-                <i class="bi bi-plus-circle me-1"></i>
-              </button>
             </div>
           </div>
           <div v-if="selectedProduct?.imeiList?.length" class="imei-list">
             <div v-for="(imeiObj, index) in selectedProduct.imeiList" :key="imeiObj.imei"
               class="imei-item animate__animated animate__fadeIn">
               <div class="imei-content">
-                <i :class="getIMEIStatusIcon(imeiObj.status)" class="me-3"></i>
-                <span class="imei-code">{{ imeiObj.imei }}</span>
+                <span class="imei-code">IMEI: {{ imeiObj.imei }}</span>
                 <span class="imei-status-badge" :class="getIMEIStatusClass(imeiObj.status)">
                   {{ imeiObj.status }}
                 </span>
@@ -325,24 +318,22 @@
       <div class="modal-container glass-modal animate__animated animate__zoomIn">
         <div class="modal-header">
           <h5 class="modal-title">
-            <i class="bi bi-check-circle me-2"></i> Xác Nhận IMEI - {{ selectedProduct?.name }}
+            Xác Nhận IMEI - {{ selectedProduct?.name }}
           </h5>
           <button class="btn-close-glass" @click="closeConfirmIMEIModal">
             <i class="bi bi-x-lg"></i>
           </button>
         </div>
         <div class="modal-body">
-          <!-- Filter Section -->
-          <FilterTableSection title="Tìm kiếm IMEI" icon="bi bi-funnel">
             <div class="m-4">
               <div class="row g-4 align-items-end">
                 <div class="col-lg-12">
                   <div class="search-group">
-                    <label class="filter-label">Tìm kiếm IMEI</label>
+                    <label class="filter-label">Tìm kiếm</label>
                     <div class="search-input-wrapper">
                       <i class="bi bi-search search-icon"></i>
-                      <input type="text" class="form-control search-input" placeholder="Nhập mã IMEI..."
-                        v-model="searchIMEI" @input="debouncedSearchIMEI($event.target.value)" />
+                      <input type="text" class="form-control search-input" placeholder="Nhập mã IMEI hoặc IMEI..."
+                        v-model="searchIMEI" @input="debouncedSearchIMEI($event.target.value)" style="padding-left: 2.5rem;"/>
                     </div>
                   </div>
                 </div>
@@ -350,24 +341,22 @@
               <div class="filter-actions mt-3 d-flex justify-content-between align-items-center">
                 <div class="filter-stats">
                   <div class="stat-item">
-                    <span class="stat-label">Tổng số IMEI:</span>
+                    <span class="stat-label">Tổng số IMEI: </span>
                     <span class="stat-value">{{ filteredIMEIs.length }}</span>
                   </div>
                 </div>
                 <div class="action-buttons d-flex gap-2">
                   <button class="btn btn-action" @click="scanQRForIMEI" title="Quét QR">
-                    <i class="bi bi-qr-code-scan me-1"></i> Quét QR
+                    Quét QR
                   </button>
                   <button class="btn btn-reset" @click="resetIMEIFilters">
-                    <i class="bi bi-arrow-counterclockwise me-1"></i> Đặt lại
+                    Đặt lại
                   </button>
                 </div>
               </div>
             </div>
-          </FilterTableSection>
 
           <!-- Table Section -->
-          <FilterTableSection title="Danh sách IMEI" icon="bi bi-table">
             <div class="table-header">
               <!-- <div class="table-title-wrapper">
                 <span class="table-count">{{ filteredIMEIs.length }} IMEI</span>
@@ -394,19 +383,18 @@
                 </template>
                 <template #actions="{ item }">
                   <div class="action-buttons-cell">
-                    <button class="btn btn-sm btn-action" @click="selectIMEI(item.imei)" title="Chọn IMEI"
+                    <button class="btn btn-sm btn-table" @click="selectIMEI(item.imei)" title="Chọn IMEI"
                       :disabled="item.status !== 'Còn hàng'">
-                      <i class="bi bi-check-circle"></i> Chọn
+                      <i class="bi bi-plus-circle"></i>
                     </button>
                   </div>
                 </template>
               </DataTable>
             </div>
-          </FilterTableSection>
         </div>
         <div class="modal-footer">
           <button class="btn btn-reset" @click="closeConfirmIMEIModal">
-            <i class="bi bi-x-circle me-1"></i> Đóng
+            Đóng
           </button>
         </div>
       </div>
@@ -617,16 +605,29 @@ export default {
 .imei-content {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   flex: 1;
   gap: 0.75rem;
+  margin: 0 1rem;
 }
 
 .imei-status-badge {
   padding: 0.25rem 0.75rem;
   border-radius: 12px;
-  font-size: 0.75rem;
+  font-size: 0.85rem;
   font-weight: 500;
   text-transform: capitalize;
+}
+
+.btn-table {
+  color: #1f3a44;
+  font-size: 1.2rem;
+  border: none;
+}
+
+.btn-table:hover {
+  color: #16a34a;
+  text-shadow: 0 0 15px rgba(52, 211, 153, 0.3);
 }
 
 .imei-status-valid {
@@ -645,17 +646,6 @@ export default {
 }
 
 /* New styles for Confirm IMEI button */
-.btn-confirm {
-  background: #17a2b8;
-  color: white;
-  border: none;
-}
-
-.btn-confirm:hover {
-  background: #138496;
-  color: white;
-  box-shadow: 0 0 10px rgba(23, 162, 184, 0.3);
-}
 
 .imei-index {
   width: 30px;
@@ -1351,7 +1341,7 @@ export default {
 }
 
 .modal-body {
-  padding: 1rem;
+  padding: .5rem;
 }
 
 .modal-footer {
@@ -1499,6 +1489,39 @@ export default {
   flex: 1 1 32%;
   display: flex;
   flex-direction: column;
+}
+
+.search-input-wrapper {
+  position: relative;
+}
+
+.search-icon {
+  position: absolute;
+  left: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #6c757d;
+  z-index: 2;
+}
+
+.filter-label {
+  display: block;
+  font-weight: 600;
+  color: #1f3a44;
+  margin-bottom: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.stat-label {
+  font-size: 0.875rem;
+  color: #1f3a44;
+  font-weight: 500;
+}
+
+.stat-value {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1f3a44;
 }
 
 @media (max-width: 992px) {

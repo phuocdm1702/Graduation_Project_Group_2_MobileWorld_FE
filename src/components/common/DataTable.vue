@@ -316,7 +316,7 @@ table {
 }
 
 .table-responsive {
-  max-height: 450px;
+  max-height: 350px;
   overflow-y: auto;
   /* Add horizontal scroll for very wide tables */
   overflow-x: auto;

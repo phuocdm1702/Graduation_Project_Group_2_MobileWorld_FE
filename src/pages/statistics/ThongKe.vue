@@ -70,14 +70,14 @@
         <div class="filter-actions mt-4">
           <div class="row g-3">
             <div class="col-lg-12">
-              <div class="filter-stats d-flex">
-                <div class="stat-item me-4">
+              <div class="filter-stats d-flex gap-4">
+                                <div class="stat-item d-flex gap-1">
+                  <span class="stat-label">Số đơn hàng:</span>
+                  <span class="stat-value text-success">{{ totalOrders }}</span>
+                </div>
+                <div class="stat-item d-flex gap-1">
                   <span class="stat-label">Tổng doanh thu:</span>
                   <span class="stat-value text-success">{{ formatCurrency(totalRevenue) }}</span>
-                </div>
-                <div class="stat-item me-4">
-                  <span class="stat-label">Số đơn hàng:</span>
-                  <span class="stat-value">{{ totalOrders }}</span>
                 </div>
 <!--                <div class="stat-item">-->
 <!--                  <span class="stat-label">Tăng trưởng:</span>-->
@@ -596,29 +596,19 @@ export default {
   align-items: center;
 }
 
-.stat-item {
-  display: flex;
-  flex-direction: column;
-}
-
 .stat-label {
-  font-size: 0.875rem;
   color: #1f3a44;
   font-weight: 500;
 }
 
-.stat-value {
-  font-size: 1rem;
-  font-weight: 600;
-  color: #1f3a44;
-}
-
 .stat-value.text-success {
-  color: #16a34a !important;
+  color: rgb(21, 128, 61) !important;
+  font-weight: bold;
 }
 
 .stat-value.text-danger {
   color: #dc3545 !important;
+  font-weight: bold;
 }
 
 .filter-actions {
