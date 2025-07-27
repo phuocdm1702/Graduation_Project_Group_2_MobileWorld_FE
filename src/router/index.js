@@ -339,7 +339,19 @@ const router = createRouter({
 
 router.beforeEach((to, from, next) => {
   const authStore = useAuthStore();
+
+  // Khôi phục trạng thái auth từ localStorage (đồng bộ)
+  const savedAuth = localStorage.getItem('auth');
+  if (savedAuth) {
+    const authData = JSON.parse(savedAuth);
+    if (authData.isAuthenticated && authData.user) {
+      authStore.login(authData.user);
+    }
+  }
+
   console.log('Route to:', to.name, 'Authenticated:', authStore.isAuthenticated);
+
+  // Nếu route yêu cầu đăng nhập và chưa đăng nhập
   if (to.meta.requiresAuth && !authStore.isAuthenticated) {
     console.log('Redirecting to login');
     next('/auth/login');
