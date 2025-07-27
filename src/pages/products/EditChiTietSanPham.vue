@@ -82,11 +82,11 @@
           <!-- Action Buttons -->
           <div class="col-md-12">
             <div class="action-buttons d-flex gap-3">
-              <button type="submit" class="btn btn-action" :disabled="isLoading">
-                {{ isLoading ? 'Đang Lưu...' : 'Lưu' }}
-              </button>
               <button type="button" class="btn btn-action btn-outline" @click="goBack">
                 Hủy
+              </button>
+              <button type="submit" class="btn btn-action" :disabled="isLoading">
+                {{ isLoading ? 'Đang Lưu...' : 'Lưu' }}
               </button>
             </div>
           </div>
@@ -350,6 +350,7 @@ export default {
 
 .action-buttons {
   display: flex;
+  justify-content: flex-end;
   gap: 0.5rem;
 }
 
