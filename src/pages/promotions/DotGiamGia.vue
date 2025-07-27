@@ -1,6 +1,7 @@
 <template>
   <div class="container-fluid py-4">
-    <HeaderCard title="Quản Lý Đợt Giảm Giá" badgeText="Hệ Thống POS" badgeClass="gradient-custom-teal" :backgroundOpacity="0.95" />
+    <HeaderCard title="Quản Lý Đợt Giảm Giá" badgeText="Hệ Thống POS" badgeClass="gradient-custom-teal"
+      :backgroundOpacity="0.95" />
 
     <!-- Filter Section -->
     <FilterTableSection title="Bộ Lọc Tìm Kiếm" icon="bi bi-funnel">
@@ -12,7 +13,9 @@
               <label class="filter-label">Tìm kiếm đợt giảm giá</label>
               <div class="search-input-wrapper">
                 <i class="bi bi-search search-icon"></i>
-                <input type="text" class="form-control search-input" placeholder="Mã đợt, tên đợt..." v-model="searchQuery" @input="debouncedSearch($event.target.value)" />
+                <input type="text" class="form-control search-input" style="padding-left: 2.5rem;"
+                  placeholder="Mã đợt, tên đợt..." v-model="searchQuery"
+                  @input="debouncedSearch($event.target.value)" />
               </div>
             </div>
           </div>
@@ -21,7 +24,7 @@
           <div class="col-lg-4 col-md-6">
             <div class="filter-group">
               <label class="filter-label">Loại giảm giá</label>
-              <select v-model="filterType" class="form-control date-input">
+              <select v-model="filterType" class="form-select search-input">
                 <option value="">Tất cả loại giảm giá</option>
                 <option value="Phần trăm">Phần trăm</option>
                 <option value="Tiền mặt">Tiền mặt</option>
@@ -33,7 +36,7 @@
           <div class="col-lg-4 col-md-6">
             <div class="filter-group">
               <label class="filter-label">Trạng thái</label>
-              <select v-model="filterStatus" class="form-control date-input">
+              <select v-model="filterStatus" class="form-select search-input">
                 <option value="">Tất cả trạng thái</option>
                 <option value="0">Đang diễn ra</option>
                 <option value="1">Sắp diễn ra</option>
@@ -64,11 +67,9 @@
                   left: `${(saleValueMin / maxGiaTriGiamGia) * 100}%`,
                   width: `${((saleValueMax - saleValueMin) / maxGiaTriGiamGia) * 100}%`
                 }"></div>
-                <div class="slider-thumb"
-                  :style="{ left: `${(saleValueMin / maxGiaTriGiamGia) * 100}%` }"
+                <div class="slider-thumb" :style="{ left: `${(saleValueMin / maxGiaTriGiamGia) * 100}%` }"
                   @mousedown="(e) => startDrag('saleValueMin', e)"></div>
-                <div class="slider-thumb"
-                  :style="{ left: `${(saleValueMax / maxGiaTriGiamGia) * 100}%` }"
+                <div class="slider-thumb" :style="{ left: `${(saleValueMax / maxGiaTriGiamGia) * 100}%` }"
                   @mousedown="(e) => startDrag('saleValueMax', e)"></div>
                 <input type="range" v-model.number="saleValueMin" :min="0" :max="saleValueMax"
                   class="absolute opacity-0 w-full h-full" />
@@ -92,11 +93,9 @@
                   left: `${(minOrderMin / maxSoTienGiamToiDa) * 100}%`,
                   width: `${((minOrderMax - minOrderMin) / maxSoTienGiamToiDa) * 100}%`
                 }"></div>
-                <div class="slider-thumb"
-                  :style="{ left: `${(minOrderMin / maxSoTienGiamToiDa) * 100}%` }"
+                <div class="slider-thumb" :style="{ left: `${(minOrderMin / maxSoTienGiamToiDa) * 100}%` }"
                   @mousedown="(e) => startDrag('minOrderMin', e)"></div>
-                <div class="slider-thumb"
-                  :style="{ left: `${(minOrderMax / maxSoTienGiamToiDa) * 100}%` }"
+                <div class="slider-thumb" :style="{ left: `${(minOrderMax / maxSoTienGiamToiDa) * 100}%` }"
                   @mousedown="(e) => startDrag('minOrderMax', e)"></div>
                 <input type="range" v-model.number="minOrderMin" :min="0" :max="minOrderMax"
                   class="absolute opacity-0 w-full h-full" @change="fetchMaxValues" />
@@ -128,11 +127,7 @@
 
     <!-- Table Section -->
     <FilterTableSection title="Danh Sách Đợt Giảm Giá" icon="bi bi-table">
-      <DataTable
-          :headers="headers"
-          :data="dataTable"
-          :page-size-options="[5, 10, 15, 20]"
-      >
+      <DataTable :headers="headers" :data="dataTable" :page-size-options="[5, 10, 15, 20]">
         <template #stt="{ globalIndex }">
           {{ globalIndex + 1 }}
         </template>
@@ -144,10 +139,11 @@
         </template>
         <template #giaTriGiamGia="{ item }">
           {{ item.giaTriGiamGia }}%
-          <div v-if="item.soTienGiamToiDa" class="text-muted">Số tiền giảm tối đa: {{ formatPrice(item.soTienGiamToiDa) }}</div>
+          <div v-if="item.soTienGiamToiDa" class="text-muted">Số tiền giảm tối đa: {{ formatPrice(item.soTienGiamToiDa)
+            }}</div>
         </template>
         <template #loaiGiamGiaApDung="{ item }">
-          <span class="badge" :class="item.loaiGiamGiaApDung === 'Tiền mặt' ? 'badge-cash' : 'badge-percent'">
+          <span class="status-badge" :class="item.loaiGiamGiaApDung === 'Tiền mặt' ? 'badge-cash' : 'badge-percent'">
             {{ item.loaiGiamGiaApDung }}
           </span>
         </template>
@@ -164,16 +160,10 @@
         </template>
         <template #actions="{ item }">
           <div class="action-buttons-cell d-flex justify-content-center gap-2">
-            <button class="btn btn-sm btn-table"
-                    @click="viewUpdate(item)"
-                    title="Chỉnh sửa">
+            <button class="btn btn-sm btn-table" @click="viewUpdate(item)" title="Chỉnh sửa">
               <i class="bi bi-pencil-fill"></i>
             </button>
-            <button
-                class="btn btn-sm btn-table"
-                @click="showDeleteConfirm(item.id)"
-                title="Xóa"
-            >
+            <button class="btn btn-sm btn-table" @click="showDeleteConfirm(item.id)" title="Xóa">
               <i class="bi bi-trash-fill"></i>
             </button>
           </div>
@@ -182,15 +172,8 @@
     </FilterTableSection>
 
     <ToastNotification ref="toast" />
-    <NotificationModal
-        ref="notificationModal"
-        :type="modalType"
-        :message="confirmMessage"
-        :confirmText="'Xác nhận'"
-        :onConfirm="executeConfirmedAction"
-        :onCancel="closeConfirmModal"
-        :isLoading="isLoading"
-    />
+    <NotificationModal ref="notificationModal" :type="modalType" :message="confirmMessage" :confirmText="'Xác nhận'"
+      :onConfirm="executeConfirmedAction" :onCancel="closeConfirmModal" :isLoading="isLoading" />
   </div>
 </template>
 
@@ -257,7 +240,7 @@ const startDrag = (type, event) => {
   const updateValue = (e) => {
     const rect = slider.getBoundingClientRect();
     const pos = (e.clientX - rect.left) / rect.width;
-    
+
     if (type === 'saleValueMin') {
       const newValue = Math.round(pos * maxGiaTriGiamGia.value);
       if (newValue < saleValueMax.value) {
@@ -397,14 +380,19 @@ watch([searchQuery, filterType, filterStatus, startDate, endDate, saleValue, min
   z-index: 2;
 }
 
-.search-input,
+.search-input {
+  border: 2px solid rgba(52, 211, 153, 0.1);
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  font-size: 0.9rem;
+}
+
 .date-input {
   padding-left: 2.5rem;
   border: 2px solid rgba(52, 211, 153, 0.1);
   border-radius: 8px;
   transition: all 0.2s ease;
   font-size: 0.9rem;
-  background: #f8f9fa;
   flex: 1;
   min-width: 0;
 }
@@ -478,7 +466,7 @@ watch([searchQuery, filterType, filterStatus, startDate, endDate, saleValue, min
   border: none;
 }
 
-.badge, .status-badge {
+.status-badge {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -486,37 +474,36 @@ watch([searchQuery, filterType, filterStatus, startDate, endDate, saleValue, min
   border-radius: 12px;
   font-size: 0.85rem;
   font-weight: 500;
-  min-width: 100px;
   text-align: center;
-  white-space: nowrap;
 }
 
 .badge-cash {
   border: 1px solid #34d399;
-  padding: .5rem 1rem;
   color: #34d399;
   background: transparent;
 }
 
 .badge-percent {
   border: 1px solid #059669;
-  padding: .45rem 1rem;
   color: #059669;
   background: transparent;
 }
 
 .badge-active {
   background: #28a745;
+  border: 1px solid #28a745;
   color: white;
 }
 
 .badge-pending {
   background: #f59e0b;
+  border: 1px solid #f59e0b;
   color: white;
 }
 
 .badge-inactive {
   background: #dc3545;
+  border: 1px solid #dc3545;
   color: white;
 }
 

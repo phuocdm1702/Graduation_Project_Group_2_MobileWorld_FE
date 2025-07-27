@@ -66,13 +66,13 @@
           <!-- Stats Section -->
           <div class="row g-3">
             <div class="col-lg-12">
-              <div class="filter-stats d-flex">
-                <div class="stat-item me-4">
-                  <span class="stat-label">Tổng số hóa đơn:</span>
-                  <span class="stat-value">{{ filteredInvoices.length }}</span>
+              <div class="filter-stats d-flex gap-4">
+                <div class="stat-item d-flex gap-2">
+                  <span class="stat-label">Tổng số hóa đơn: </span>
+                  <span class="stat-value text-success">{{ filteredInvoices.length }}</span>
                 </div>
                 <div class="stat-item">
-                  <span class="stat-label">Tổng giá trị:</span>
+                  <span class="stat-label">Tổng giá trị: </span>
                   <span class="stat-value text-success">{{ formatPrice(totalValue) }}</span>
                 </div>
               </div>
@@ -430,25 +430,14 @@ export default {
   align-items: center;
 }
 
-.stat-item {
-  display: flex;
-  flex-direction: column;
-}
-
 .stat-label {
-  font-size: 0.875rem;
   color: #1f3a44;
   font-weight: 500;
 }
 
-.stat-value {
-  font-size: 1rem;
-  font-weight: 600;
-  color: #1f3a44;
-}
-
 .stat-value.text-success {
-  color: #16a34a !important;
+  color: rgb(21, 128, 61) !important;
+  font-weight: bold;
 }
 
 /* Existing styles */

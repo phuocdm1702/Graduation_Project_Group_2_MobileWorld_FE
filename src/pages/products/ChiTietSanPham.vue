@@ -119,9 +119,9 @@
           <div class="row g-3">
             <div class="col-lg-12">
               <div class="filter-stats d-flex">
-                <div class="stat-item me-4">
+                <div class="stat-item d-flex gap-2">
                   <span class="stat-label">Tổng số chi tiết:</span>
-                  <span class="stat-value">{{ filteredProductDetails.length }}</span>
+                  <span class="stat-value" style="color: rgb(21, 128, 61); font-weight: bold;">{{ filteredProductDetails.length }}</span>
                 </div>
               </div>
             </div>
@@ -999,21 +999,9 @@ export default {
   align-items: center;
 }
 
-.stat-item {
-  display: flex;
-  flex-direction: column;
-}
-
 .stat-label {
-  font-size: 0.875rem;
   color: #1f3a44;
   font-weight: 500;
-}
-
-.stat-value {
-  font-size: 1rem;
-  font-weight: 600;
-  color: #1f3a44;
 }
 
 .action-buttons {

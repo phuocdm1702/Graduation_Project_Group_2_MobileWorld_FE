@@ -20,6 +20,7 @@
                 <input
                   type="text"
                   class="form-control search-input"
+                  style="padding-left: 2.5rem;"
                   placeholder="Mã phiếu, tên phiếu..."
                   v-model="searchQuery"
                   @input="debouncedSearch($event.target.value)"
@@ -32,7 +33,7 @@
           <div class="col-lg-4 col-md-6">
             <div class="filter-group">
               <label class="filter-label">Loại phiếu</label>
-              <select v-model="filterType" class="form-control date-input">
+              <select v-model="filterType" class="form-select search-input">
                 <option value="">Tất cả loại phiếu</option>
                 <option value="Phần trăm">Phần trăm</option>
                 <option value="Tiền mặt">Tiền mặt</option>
@@ -44,7 +45,7 @@
           <div class="col-lg-4 col-md-6">
             <div class="filter-group">
               <label class="filter-label">Trạng thái</label>
-              <select v-model="filterStatus" class="form-control date-input">
+              <select v-model="filterStatus" class="form-select search-input">
                 <option value="">Tất cả trạng thái</option>
                 <option value="Hoạt động">Đang diễn ra</option>
                 <option value="Không hoạt động">Không hoạt động</option>
@@ -661,16 +662,21 @@ export default {
   z-index: 2;
 }
 
-.search-input,
 .date-input {
   padding-left: 2.5rem;
   border: 2px solid rgba(52, 211, 153, 0.1);
   border-radius: 8px;
   transition: all 0.2s ease;
   font-size: 0.9rem;
-  background: #f8f9fa;
   flex: 1;
   min-width: 0;
+}
+
+.search-input {
+  border: 2px solid rgba(52, 211, 153, 0.1);
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  font-size: 0.9rem;
 }
 
 .search-input:focus,
