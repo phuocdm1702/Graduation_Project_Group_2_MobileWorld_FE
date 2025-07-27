@@ -28,6 +28,7 @@ const ChatInterface = () => import("@/pages/customerSupport/ChatInterface.vue");
 const ThongKe = () => import("@/pages/statistics/ThongKe.vue");
 const Login = () => import("@/pages/auth/Login.vue");
 const NotFound = () => import("@/pages/NotFound.vue");
+const ThongTin = () => import("@/pages/accounts/ThongTinAccounts.vue")
 
 const routes = [
   {
@@ -297,6 +298,18 @@ const routes = [
           breadcrumb: [
             { name: "Trang chủ", path: "/trangChu" },
             { name: "Thống kê", path: "/thongKe" }
+          ]
+        }
+      },
+      { 
+        path: "/account-info", 
+        name: "Thongtin", 
+        component: ThongTin,
+        meta: {
+          title: "Thông Tin",
+          breadcrumb: [
+            { name: "Trang chủ", path: "/trangChu" },
+            { name: "Thông Tin", path: "/account-info" }
           ]
         }
       },

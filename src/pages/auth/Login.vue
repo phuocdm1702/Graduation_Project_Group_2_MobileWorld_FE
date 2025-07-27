@@ -53,10 +53,16 @@
         <div class="form-container">
           <div class="form-header">
             <h2 class="form-title">Sign In</h2>
-            <p class="form-subtitle">Access your account to continue</p>
+            <p class="form-subtitle" v-if="!authStore.isAuthenticated">
+              Access your account to continue
+            </p>
+            <p class="form-subtitle" v-else>
+              You are logged in as {{ authStore.user?.username }}. 
+              <button class="logout-button" @click="handleLogout">Log out</button>
+            </p>
           </div>
 
-          <form @submit.prevent="handleLogin" class="login-form">
+          <form @submit.prevent="handleLogin" class="login-form" v-if="!authStore.isAuthenticated">
             <div class="form-group">
               <label for="username" class="form-label">Username</label>
               <div class="input-container">
@@ -160,7 +166,7 @@
 
 <script>
 import { useAuthStore } from '@/store/modules/auth';
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import axios from 'axios';
 import ToastNotification from '../../components/common/ToastNotification.vue';
@@ -179,9 +185,71 @@ export default {
     const rememberMe = ref(false);
     const authStore = useAuthStore();
     const router = useRouter();
-    const toast = ref(null); 
+    const toast = ref(null);
+
+    // Khôi phục trạng thái đăng nhập từ localStorage
+    const initializeAuth = () => {
+      const savedAuth = localStorage.getItem('auth');
+      if (savedAuth) {
+        const authData = JSON.parse(savedAuth);
+        if (authData.isAuthenticated && authData.user) {
+          authStore.login(authData.user);
+        }
+      }
+    };
+
+    // Kiểm tra trạng thái đăng nhập khi component được tải
+    onMounted(() => {
+      // Khôi phục trạng thái từ localStorage
+      initializeAuth();
+
+      // Kiểm tra username trong localStorage cho "Remember me"
+      const savedUsername = localStorage.getItem('username');
+      if (savedUsername) {
+        username.value = savedUsername;
+        rememberMe.value = true;
+      }
+
+      // Kiểm tra token với server (nếu có)
+      const token = localStorage.getItem('authToken');
+      if (token && !authStore.isAuthenticated) {
+        isLoading.value = true;
+        axios
+          .get('http://localhost:8080/tai-khoan/kiem-tra-token', {
+            headers: { Authorization: `Bearer ${token}` },
+          })
+          .then((response) => {
+            if (response.status === 200) {
+              authStore.login({ username: response.data.username });
+              localStorage.setItem('auth', JSON.stringify({
+                isAuthenticated: true,
+                user: { username: response.data.username },
+              }));
+            }
+          })
+          .catch(() => {
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('auth');
+            authStore.logout();
+          })
+          .finally(() => {
+            isLoading.value = false;
+          });
+      }
+    });
 
     const handleLogin = async () => {
+      if (authStore.isAuthenticated) {
+        if (toast.value) {
+          toast.value.addToast({
+            type: 'info',
+            message: 'Bạn đã đăng nhập. Vui lòng đăng xuất để đăng nhập tài khoản khác.',
+            duration: 3000,
+          });
+        }
+        return;
+      }
+
       isLoading.value = true;
       error.value = '';
 
@@ -189,7 +257,7 @@ export default {
         const payload = {
           tenDangNhap: username.value.trim(),
           matKhau: password.value,
-          email: ''
+          email: '',
         };
         const response = await axios.post('http://localhost:8080/tai-khoan/dang-nhap', payload, {
           headers: {
@@ -198,10 +266,25 @@ export default {
         });
 
         if (response.status === 200) {
-          authStore.login({ username: username.value });
+          // Giả sử server trả về token và username
+          const { token, username: responseUsername } = response.data; // Điều chỉnh theo response thực tế
+          const user = { username: responseUsername };
+          authStore.login(user);
+
+          // Lưu trạng thái vào localStorage
+          localStorage.setItem('auth', JSON.stringify({
+            isAuthenticated: true,
+            user,
+          }));
+
           if (rememberMe.value) {
-            localStorage.setItem('username', username.value); 
+            localStorage.setItem('username', responseUsername);
+            if (token) localStorage.setItem('authToken', token);
+          } else {
+            localStorage.removeItem('username');
+            localStorage.removeItem('authToken');
           }
+
           // Gọi toast thành công
           if (toast.value) {
             toast.value.addToast({
@@ -210,27 +293,40 @@ export default {
               duration: 3000,
             });
           }
-          // Trì hoãn chuyển hướng
-          setTimeout(() => {
-            router.push('/trangChu');
-          }, 1000);
+
+          // Chuyển hướng sang trang chủ
+          router.push('/trangChu');
         }
       } catch (error) {
         // Gọi toast lỗi
         if (toast.value) {
           toast.value.addToast({
             type: 'error',
-            message: error.response?.data || 'Tên đăng nhập hoặc mật khẩu không đúng. Vui lòng thử lại.',
+            message: error.response?.data?.message || 'Tên đăng nhập hoặc mật khẩu không đúng. Vui lòng thử lại.',
             duration: 5000,
           });
         }
         if (error.response) {
-          error.value = error.response.data || 'Tên đăng nhập hoặc mật khẩu không đúng. Vui lòng thử lại.';
+          error.value = error.response.data?.message || 'Tên đăng nhập hoặc mật khẩu không đúng. Vui lòng thử lại.';
         } else {
           error.value = 'Không thể kết nối đến server. Vui lòng thử lại sau.';
         }
       } finally {
         isLoading.value = false;
+      }
+    };
+
+    const handleLogout = () => {
+      authStore.logout();
+      localStorage.removeItem('auth');
+      localStorage.removeItem('authToken');
+      localStorage.removeItem('username');
+      if (toast.value) {
+        toast.value.addToast({
+          type: 'success',
+          message: 'Đăng xuất thành công!',
+          duration: 3000,
+        });
       }
     };
 
@@ -242,13 +338,32 @@ export default {
       showPassword,
       rememberMe,
       handleLogin,
-      toast, // Trả về ref toast
+      handleLogout,
+      toast,
+      authStore,
     };
   },
 };
 </script>
 
 <style scoped>
+/* Thêm style cho nút đăng xuất */
+.logout-button {
+  background: none;
+  border: none;
+  color: #dc2626;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 0;
+  margin-left: 0.5rem;
+}
+
+.logout-button:hover {
+  color: #b91c1c;
+}
+
+/* Giữ nguyên phần style còn lại như bạn đã cung cấp */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
 * {
