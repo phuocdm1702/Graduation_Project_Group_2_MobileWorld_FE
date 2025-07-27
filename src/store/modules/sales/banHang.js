@@ -513,12 +513,32 @@ export default {
     const fetchPendingInvoices = async () => {
       try {
         const response = await apiService.get("/api/hoa-don-cho");
-        pendingInvoices.value = response.data.map((hd) => ({
-          id: hd.id,
-          ma: hd.ma,
-          status: hd.trangThai === 0 ? "Chờ xử lý" : "Khác",
-          items: [],
-        }));
+        pendingInvoices.value = await Promise.all(
+          response.data.map(async (hd) => {
+            // Gọi API để lấy chi tiết giỏ hàng cho từng hóa đơn
+            const cartResponse = await apiService.get(
+              `/api/gio-hang/data/${hd.id}`
+            );
+            const items = cartResponse.data.chiTietGioHangDTOS.map((item) => ({
+              id: item.chiTietSanPhamId,
+              name: item.tenSanPham,
+              color: item.mauSac,
+              ram: item.ram,
+              storage: item.boNhoTrong,
+              imei: item.maImel,
+              originalPrice: Number(item.giaBanGoc) || Number(item.giaBan) || 0,
+              currentPrice: Number(item.giaBan) || 0,
+              quantity: item.soLuong,
+              ghiChuGia: item.ghiChuGia || "",
+            }));
+            return {
+              id: hd.id,
+              ma: hd.ma,
+              status: hd.trangThai === 0 ? "Chờ xử lý" : "Khác",
+              items: items,
+            };
+          })
+        );
       } catch (error) {
         showToast("error", "Lỗi khi tải hóa đơn chờ");
       }
@@ -567,7 +587,7 @@ export default {
           originalPrice: Number(item.giaBanGoc) || Number(item.giaBan) || 0,
           currentPrice: Number(item.giaBan) || 0,
           quantity: item.soLuong,
-          ghiChuGia: item.ghiChuGia || "", // Thêm ghiChuGia
+          ghiChuGia: item.ghiChuGia || "",
         }));
         const index = pendingInvoices.value.findIndex(
           (inv) => inv.id === invoice.id
@@ -575,14 +595,13 @@ export default {
         if (index !== -1) {
           pendingInvoices.value[index].items = cartItems.value;
         }
-        // Hiển thị thông báo giá thay đổi (Nếu đổi giá Maybe thôi)
         cartItems.value.forEach((item) => {
           if (item.ghiChuGia) {
             showToast("warning", item.ghiChuGia);
           }
         });
         showToast("info", `Đã tải hóa đơn ${invoice.ma}`);
-        await applyBestDiscount(); // Áp dụng PGG tốt nhất
+        await applyBestDiscount();
       } catch (error) {
         showToast("error", "Lỗi khi tải giỏ hàng");
       }
@@ -809,7 +828,6 @@ export default {
         const latestInitialPrice =
           Number(productData.giaBanBanDau) || latestPrice;
 
-        // Kiểm tra thay đổi giá so với giá ban đầu
         if (latestInitialPrice !== selectedProduct.value.giaBan) {
           const ghiChuGia = `Giá sản phẩm ${
             selectedProduct.value.tenSanPham
@@ -875,19 +893,20 @@ export default {
           }
         });
 
-        const invoice = pendingInvoices.value.find(
+        const invoiceIndex = pendingInvoices.value.findIndex(
           (inv) => inv.id === activeInvoiceId.value
         );
-        if (!invoice) {
+        if (invoiceIndex === -1) {
           const newInvoice = {
             id: activeInvoiceId.value,
             ma: `HD${activeInvoiceId.value}`,
-            status: "Chờ",
-            items: [],
+            status: "Chờ xử lý",
+            items: cartItems.value,
           };
           pendingInvoices.value.push(newInvoice);
+        } else {
+          pendingInvoices.value[invoiceIndex].items = cartItems.value;
         }
-        invoice.items = cartItems.value;
 
         closeIMEIModal();
         showToast(
@@ -895,7 +914,7 @@ export default {
           `Đã thêm sản phẩm ${selectedProduct.value.tenSanPham} vào giỏ hàng`
         );
         await applyBestDiscount();
-        await fetchProducts(); // Làm mới danh sách sản phẩm
+        await fetchProducts();
       } catch (error) {
         showToast(
           "error",
@@ -931,10 +950,12 @@ export default {
           quantity: item.soLuong,
           ghiChuGia: item.ghiChuGia || "",
         }));
-        const invoice = pendingInvoices.value.find(
+        const invoiceIndex = pendingInvoices.value.findIndex(
           (inv) => inv.id === activeInvoiceId.value
         );
-        if (invoice) invoice.items = cartItems.value;
+        if (invoiceIndex !== -1) {
+          pendingInvoices.value[invoiceIndex].items = cartItems.value;
+        }
         if (imeiArray.length === 0) {
           closeCartIMEIModal();
         }
@@ -945,7 +966,7 @@ export default {
         });
         showToast("success", `Đã xóa IMEI ${imei}`);
         await applyBestDiscount();
-        await fetchProducts(); // Làm mới danh sách sản phẩm
+        await fetchProducts();
       } catch (error) {
         showToast("error", error.response?.data?.message || "Lỗi khi xóa IMEI");
       }
