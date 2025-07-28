@@ -160,51 +160,105 @@ const error = ref('');
 const showPassword = ref(false);
 const showSensitiveInfo = ref(false);
 
-// Initialize form data
 const formData = ref({
-  username: authStore.user?.username || '',
-  phone: authStore.user?.phone || '',
-  email: authStore.user?.email || '',
-  password: '********', // Placeholder for obscured password
-  secretKey: '********', // Placeholder for obscured secret key
-  status: authStore.user?.status || 'Hoạt động',
+  username: '',
+  phone: '',
+  email: '',
+  password: '********',
+  secretKey: '********',
+  status: 'Hoạt động',
 });
 
-// Fetch user info on mount
 onMounted(async () => {
   if (!authStore.isAuthenticated) {
-    router.push('/auth/login');
-    return;
+    const savedAuth = localStorage.getItem('auth');
+    if (savedAuth) {
+      const authData = JSON.parse(savedAuth);
+      if (authData.isAuthenticated && authData.user?.username) {
+        console.log('Restoring auth from localStorage:', authData);
+        authStore.login(authData.user);
+      } else {
+        console.log('Invalid auth data in localStorage, redirecting to login');
+        router.push('/auth/login');
+        return;
+      }
+    } else {
+      console.log('No auth data in localStorage, redirecting to login');
+      router.push('/auth/login');
+      return;
+    }
   }
 
   try {
     isLoading.value = true;
-    const token = localStorage.getItem('authToken');
-    if (token) {
-      const response = await axios.get('http://localhost:8080/tai-khoan/thong-tin', {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (response.status === 200) {
-        const userData = {
-          username: response.data.tenDangNhap || response.data.username || formData.value.username,
-          phone: response.data.sdt || response.data.phone || '',
-          email: response.data.email || '',
-          password: '********', // Password not fetched for security
-          secretKey: '********', // Secret key not fetched for security
-          status: response.data.trangThai === true || response.data.trangThai === 'Hoạt động'
-            ? 'Hoạt động'
-            : 'Đã nghỉ',
-        };
-        authStore.updateUser(userData);
-        formData.value = { ...userData };
-        localStorage.setItem('auth', JSON.stringify({
-          isAuthenticated: true,
-          user: userData,
-        }));
+    let token = localStorage.getItem('authToken');
+    const username = authStore.user?.username;
+
+    // Làm sạch token: chỉ lấy phần JWT
+    if (token && token.includes('eyJ')) {
+      const match = token.match(/eyJ[a-zA-Z0-9._-]+/);
+      if (match) {
+        token = match[0];
+        console.log('Cleaned token:', token);
+        localStorage.setItem('authToken', token); // Ghi đè token sạch vào localStorage
+      } else {
+        throw new Error('Token không hợp lệ trong localStorage');
       }
     }
+
+    if (!token || !username) {
+      const savedAuth = localStorage.getItem('auth');
+      if (savedAuth) {
+        const authData = JSON.parse(savedAuth);
+        if (authData.user?.username) {
+          console.log('Using fallback username from localStorage:', authData.user.username);
+          formData.value = {
+            username: authData.user.username,
+            phone: authData.user.phone || '',
+            email: authData.user.email || '',
+            password: authData.user.password || '********',
+            secretKey: '********',
+            status: authData.user.status || 'Hoạt động',
+          };
+          error.value = 'Không thể tải thông tin chi tiết từ server. Hiển thị dữ liệu tạm thời.';
+          if (toast.value) {
+            toast.value.addToast({
+              type: 'warning',
+              message: error.value,
+              duration: 5000,
+            });
+          }
+          return;
+        }
+      }
+      throw new Error('Không tìm thấy token hoặc tên đăng nhập.');
+    }
+
+    const response = await axios.get(`http://localhost:8080/tai-khoan/thong-tin/${username}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+
+    if (response.status === 200) {
+      const userData = {
+        username: response.data.tenDangNhap || response.data.username || username,
+        phone: response.data.soDienThoai || response.data.phone || '',
+        email: response.data.email || '',
+        password: response.data.matKhau || '********',
+        secretKey: '********',
+        status: response.data.deleted === false ? 'Hoạt động' : 'Đã nghỉ',
+      };
+      formData.value = { ...userData };
+      localStorage.setItem('auth', JSON.stringify({
+        isAuthenticated: true,
+        user: userData,
+      }));
+    } else {
+      throw new Error('API trả về mã trạng thái không mong đợi: ' + response.status);
+    }
   } catch (err) {
-    error.value = 'Không thể tải thông tin người dùng. Vui lòng thử lại.';
+    console.error('Error fetching user info:', err);
+    error.value = err.response?.data?.message || 'Không thể tải thông tin người dùng. Vui lòng thử lại.';
     if (toast.value) {
       toast.value.addToast({
         type: 'error',
@@ -212,13 +266,20 @@ onMounted(async () => {
         duration: 5000,
       });
     }
+    if (err.response?.status === 401) {
+      console.log('Unauthorized, redirecting to login');
+      authStore.logout();
+      localStorage.removeItem('auth');
+      localStorage.removeItem('authToken');
+      router.push('/auth/login');
+    }
   } finally {
     isLoading.value = false;
   }
 });
 
-// Handle logout
 const handleLogout = () => {
+  console.log('Logging out');
   authStore.logout();
   localStorage.removeItem('auth');
   localStorage.removeItem('authToken');
