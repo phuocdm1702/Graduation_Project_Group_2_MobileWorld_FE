@@ -98,7 +98,10 @@ export const useHoaDonStore = defineStore('hoaDon', {
                     maNhanVien: response.data.maNhanVien,
                     tenNhanVien: response.data.tenNhanVien,
                     products: response.data.sanPhamChiTietInfos.map(product => ({
-                        id: product.maSanPham,
+                        chiTietSanPhamId: product.chiTietSanPhamId, // Thêm trường này
+                        id: product.chiTietSanPhamId, // Sử dụng chiTietSanPhamId làm id
+                        maSanPham: product.maSanPham, // Giữ maSanPham để hiển thị
+                        maHinhSanPhamChiTiet: product.maHinhSanPhamChiTiet, // Thêm mã ChiTietSanPham
                         name: product.tenSanPham,
                         imei: product.imel,
                         ram: product.dungLuongRam,
@@ -287,6 +290,62 @@ export const useHoaDonStore = defineStore('hoaDon', {
             } catch (error) {
                 this.error = error.message || 'Không thể cập nhật trạng thái hóa đơn';
                 console.error('Lỗi khi cập nhật trạng thái:', error);
+                return { success: false, message: this.error };
+            } finally {
+                this.isLoading = false;
+            }
+        },
+
+        async confirmAndAssignIMEI(idHD, imelMap) {
+            this.isLoading = true;
+            this.error = null;
+
+            try {
+                const response = await apiService.post(`/api/client/hoa-don/xac-nhan-imei/${idHD}`, imelMap);
+                const updatedInvoice = response.data;
+
+                if (this.invoiceDetail && this.invoiceDetail.id === idHD) {
+                    this.invoiceDetail = {
+                        ...this.invoiceDetail,
+                        trangThai: this.mapStatus(updatedInvoice.trangThai),
+                        products: updatedInvoice.sanPhamChiTietInfos.map(product => ({
+                            chiTietSanPhamId: product.chiTietSanPhamId,
+                            id: product.chiTietSanPhamId,
+                            maSanPham: product.maSanPham,
+                            maHinhSanPhamChiTiet: product.maHinhSanPhamChiTiet,
+                            name: product.tenSanPham,
+                            imei: product.imel,
+                            ram: product.dungLuongRam,
+                            capacity: product.dungLuongBoNhoTrong,
+                            color: product.mauSac,
+                            price: product.giaBan,
+                            quantity: 1,
+                            image: product.duongDan,
+                        })),
+                        history: updatedInvoice.lichSuHoaDonInfos.map(history => ({
+                            id: history.ma,
+                            code: history.ma,
+                            invoice: updatedInvoice.maHoaDon,
+                            employee: updatedInvoice.maNhanVien,
+                            action: history.hanhDong,
+                            timestamp: this.formatDate(history.thoiGian),
+                            status: 'completed',
+                        })),
+                    };
+                }
+
+                const invoiceIndex = this.invoices.findIndex(inv => inv.id === idHD);
+                if (invoiceIndex !== -1) {
+                    this.invoices[invoiceIndex] = {
+                        ...this.invoices[invoiceIndex],
+                        trangThaiFormatted: this.mapStatus(updatedInvoice.trangThai),
+                    };
+                }
+
+                return { success: true, data: updatedInvoice };
+            } catch (error) {
+                this.error = error.message || 'Không thể xác nhận và gán IMEI';
+                console.error('Lỗi khi gọi API xác nhận IMEI:', error);
                 return { success: false, message: this.error };
             } finally {
                 this.isLoading = false;
