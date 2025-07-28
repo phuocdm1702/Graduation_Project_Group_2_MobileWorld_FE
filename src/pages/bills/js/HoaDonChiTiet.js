@@ -387,22 +387,34 @@ export default {
       imeiCurrentPage.value = 1; // Reset trang
     };
 
-    const selectIMEI = (imei) => {
+    const selectIMEI = async (imei) => {
       if (selectedProduct.value) {
         const status = hoaDonStore.getImelList.find(i => i.imei === imei)?.status || 'pending';
         if (status === 'Còn hàng') {
-          selectedProduct.value.imei = imei;
-          selectedProduct.value.imeiList = [{ imei, status }];
-          const productIndex = products.value.findIndex(p => p.id === selectedProduct.value.id);
-          if (productIndex !== -1) {
-            products.value[productIndex] = { ...selectedProduct.value };
+          const imelMap = {};
+          imelMap[selectedProduct.value.chiTietSanPhamId] = imei; // Sử dụng chiTietSanPhamId
+          const result = await hoaDonStore.confirmAndAssignIMEI(invoice.value.id, imelMap);
+
+          if (result.success) {
+            selectedProduct.value.imei = imei;
+            selectedProduct.value.imeiList = [{ imei, status }];
+            const productIndex = products.value.findIndex(p => p.chiTietSanPhamId === selectedProduct.value.chiTietSanPhamId);
+            if (productIndex !== -1) {
+              products.value[productIndex] = { ...selectedProduct.value };
+            }
+            toastNotification.value.addToast({
+              type: 'success',
+              message: `Đã xác nhận và gán IMEI ${imei} cho sản phẩm ${selectedProduct.value.name}`,
+              duration: 3000,
+            });
+            closeConfirmIMEIModal();
+          } else {
+            toastNotification.value.addToast({
+              type: 'error',
+              message: result.message,
+              duration: 3000,
+            });
           }
-          toastNotification.value.addToast({
-            type: 'success',
-            message: `Đã chọn IMEI ${imei} cho sản phẩm ${selectedProduct.value.name}`,
-            duration: 3000,
-          });
-          closeConfirmIMEIModal();
         } else {
           toastNotification.value.addToast({
             type: 'warning',
