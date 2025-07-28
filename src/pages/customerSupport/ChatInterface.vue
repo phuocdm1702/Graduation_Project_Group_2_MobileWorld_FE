@@ -77,7 +77,7 @@
             <!-- Messages Container - Scrollable -->
             <div class="messages-wrapper">
               <div class="messages-container" ref="messagesContainer">
-                <div v-for="(message, index) in messages" :key="index" 
+                <div v-for="(message, index) in messages[activeCustomer.id] || []" :key="index" 
                   class="message" 
                   :class="{ 'outgoing': message.sender === 'employee', 'incoming': message.sender === 'customer' }">
                   <div class="message-content">
@@ -212,12 +212,13 @@ const defaultAvatar = 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png'
 const fileInput = ref(null)
 const imageInput = ref(null)
 const stompClient = ref(null)
-const isConnecting = ref(false);
+const isConnecting = ref(false)
+
 // Data
 const customers = ref([])
 const searchKeyword = ref('')
 const activeCustomer = ref(null)
-const messages = ref([])
+const messages = ref({}) // Change to object to store messages per customerId
 const newMessage = ref('')
 const isScrolling = ref(false)
 const messagesContainer = ref(null)
@@ -259,7 +260,10 @@ const subscribeToCustomerTopic = () => {
   if (stompClient.value && stompClient.value.connected && activeCustomer.value) {
     stompClient.value.subscribe(`/topic/customer/${activeCustomer.value.id}`, (message) => {
       const msg = JSON.parse(message.body);
-      messages.value.push({
+      if (!messages.value[activeCustomer.value.id]) {
+        messages.value[activeCustomer.value.id] = [];
+      }
+      messages.value[activeCustomer.value.id].push({
         sender: msg.sender,
         text: msg.text,
         type: msg.type,
@@ -274,46 +278,48 @@ const subscribeToCustomerTopic = () => {
 
 const loadMessages = async (customerId) => {
   try {
-    const response = await axios.get(`http://localhost:8080/api/messages/${customerId}`)
-    messages.value = response.data || []
+    const response = await axios.get(`http://localhost:8080/api/messages/${customerId}`);
+    messages.value[customerId] = response.data || [];
+    scrollToBottom();
   } catch (error) {
     toastNotification.value.addToast({
       type: 'error',
       message: 'Lỗi khi tải lịch sử tin nhắn'
-    })
-    console.error('Error fetching messages:', error)
+    });
+    console.error('Error fetching messages:', error);
+    messages.value[customerId] = []; // Initialize as empty if error
   }
-}
+};
 
 const getLastMessagePreview = (customerId) => {
-  const customer = customers.value.find(c => c.id === customerId)
-  if (!customer) return ''
-  const lastMsg = messages.value.slice(-1)[0]
-  if (!lastMsg) return 'Chưa có tin nhắn'
-  if (lastMsg.type === 'text') return lastMsg.text
-  if (lastMsg.type === 'image') return 'Đã gửi một ảnh'
-  if (lastMsg.type === 'file') return `Đã gửi tệp: ${lastMsg.name}`
-  return 'Chưa có tin nhắn'
-}
+  const customerMessages = messages.value[customerId] || [];
+  const lastMsg = customerMessages.slice(-1)[0];
+  if (!lastMsg) return 'Chưa có tin nhắn';
+  if (lastMsg.type === 'text') return lastMsg.text;
+  if (lastMsg.type === 'image') return 'Đã gửi một ảnh';
+  if (lastMsg.type === 'file') return `Đã gửi tệp: ${lastMsg.name}`;
+  return 'Chưa có tin nhắn';
+};
 
 const getLastMessageTime = (customerId) => {
-  const lastMsg = messages.value.slice(-1)[0]
-  return lastMsg ? lastMsg.time : null
-}
+  const customerMessages = messages.value[customerId] || [];
+  const lastMsg = customerMessages.slice(-1)[0];
+  return lastMsg ? lastMsg.time : null;
+};
 
 const hasUnreadMessages = (customerId) => {
   // In a real app, this would check for unread messages from server
-  return false
-}
+  return false;
+};
 
 const getUnreadCount = (customerId) => {
   // In a real app, this would return the count of unread messages from server
-  return 0
-}
+  return 0;
+};
 
 const markMessagesAsRead = (customerId) => {
   // In a real app, this would send a request to mark messages as read
-}
+};
 
 const connectWebSocket = () => {
   if (isConnecting.value || (stompClient.value && stompClient.value.connected)) return;
@@ -336,7 +342,7 @@ const connectWebSocket = () => {
     console.error('WebSocket connection error:', error);
     setTimeout(() => connectWebSocket(), 2000);
   });
-}
+};
 
 const sendMessage = () => {
   if (!newMessage.value.trim() || !activeCustomer.value) return;
@@ -344,12 +350,15 @@ const sendMessage = () => {
   const message = {
     type: 'text',
     text: newMessage.value,
-    sender: 'employee',
+    sender: 'employee', // Ensure sender is 'employee' for outgoing
     time: new Date().toISOString(),
     customerId: activeCustomer.value.id
   };
 
-  messages.value.push({ ...message, sender: 'outgoing' });
+  if (!messages.value[activeCustomer.value.id]) {
+    messages.value[activeCustomer.value.id] = [];
+  }
+  messages.value[activeCustomer.value.id].push(message);
   if (stompClient.value && stompClient.value.connected) {
     stompClient.value.send(`/app/chat/employee/${activeCustomer.value.id}`, JSON.stringify(message));
   } else {
@@ -363,176 +372,183 @@ const sendMessage = () => {
 
   newMessage.value = '';
   scrollToBottom();
-}
+};
 
 const scrollToBottom = (smooth = false) => {
   if (messagesContainer.value && !isScrolling.value) {
-    const container = messagesContainer.value
+    const container = messagesContainer.value;
     const scrollOptions = {
       top: container.scrollHeight,
       behavior: smooth ? 'smooth' : 'auto'
-    }
-    container.scrollTo(scrollOptions)
+    };
+    container.scrollTo(scrollOptions);
   }
-}
+};
 
 const formatTime = (time) => {
-  if (!time) return ''
-  return new Date(time).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
-}
+  if (!time) return '';
+  return new Date(time).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+};
 
 const showCustomerInfo = () => {
-  const modal = new Modal(document.getElementById('customerInfoModal'))
-  modal.show()
-}
+  const modal = new Modal(document.getElementById('customerInfoModal'));
+  modal.show();
+};
 
 const goToCustomerDetail = () => {
   if (activeCustomer.value) {
-    router.push(`/khachHang/form/${activeCustomer.value.id}`)
-    const modal = Modal.getInstance(document.getElementById('customerInfoModal'))
-    modal.hide()
+    router.push(`/khachHang/form/${activeCustomer.value.id}`);
+    const modal = Modal.getInstance(document.getElementById('customerInfoModal'));
+    modal.hide();
   }
-}
+};
 
 const downloadChatHistory = () => {
-  if (!activeCustomer.value) return
+  if (!activeCustomer.value) return;
+  const customerMessages = messages.value[activeCustomer.value.id] || [];
   const csvContent = [
     ['Thời gian', 'Người gửi', 'Loại', 'Nội dung/Tên tệp'],
-    ...messages.value.map(msg => [
+    ...customerMessages.map(msg => [
       new Date(msg.time).toLocaleString('vi-VN'),
       msg.sender,
       msg.type,
       msg.type === 'text' ? msg.text : `${msg.name} (${msg.url})`
     ])
-  ].map(row => row.join(',')).join('\n')
-  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
-  const link = document.createElement('a')
-  link.href = URL.createObjectURL(blob)
-  link.download = `chat_history_${activeCustomer.value.ma}.csv`
-  link.click()
+  ].map(row => row.join(',')).join('\n');
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = `chat_history_${activeCustomer.value.ma}.csv`;
+  link.click();
   toastNotification.value.addToast({
     type: 'success',
     message: `Đã tải lịch sử chat với ${activeCustomer.value.ten || 'N/A'}`
-  })
-}
+  });
+};
 
 const handleFileUpload = (event) => {
-  const file = event.target.files[0]
+  const file = event.target.files[0];
   if (!file || !activeCustomer.value) {
     toastNotification.value.addToast({
       type: 'error',
       message: 'Vui lòng chọn tệp và khách hàng trước khi gửi'
-    })
-    return
+    });
+    return;
   }
 
-  const formData = new FormData()
-  formData.append('file', file)
-  formData.append('customerId', activeCustomer.value.id)
-  formData.append('sender', 'employee')
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('customerId', activeCustomer.value.id);
+  formData.append('sender', 'employee');
 
   axios.post('http://localhost:8080/api/upload/file', formData, {
     headers: { 'Content-Type': 'multipart/form-data' }
   }).then(response => {
-    const message = response.data
-    messages.value.push(message)
+    const message = response.data;
+    if (!messages.value[activeCustomer.value.id]) {
+      messages.value[activeCustomer.value.id] = [];
+    }
+    messages.value[activeCustomer.value.id].push(message);
     if (stompClient.value && stompClient.value.connected) {
-      stompClient.value.send(`/app/chat/customer/${activeCustomer.value.id}`, JSON.stringify(message))
+      stompClient.value.send(`/app/chat/customer/${activeCustomer.value.id}`, JSON.stringify(message));
     }
     toastNotification.value.addToast({
       type: 'info',
       message: `Đã gửi tệp: ${file.name}`
-    })
+    });
   }).catch(error => {
     toastNotification.value.addToast({
       type: 'error',
       message: 'Lỗi khi gửi tệp'
-    })
-    console.error('File upload error:', error)
-  })
+    });
+    console.error('File upload error:', error);
+  });
 
-  event.target.value = ''
+  event.target.value = '';
   nextTick(() => {
     setTimeout(() => {
-      scrollToBottom(true)
-    }, 50)
-  })
-}
+      scrollToBottom(true);
+    }, 50);
+  });
+};
 
 const handleImageUpload = (event) => {
-  const file = event.target.files[0]
+  const file = event.target.files[0];
   if (!file || !activeCustomer.value) {
     toastNotification.value.addToast({
       type: 'error',
       message: 'Vui lòng chọn ảnh và khách hàng trước khi gửi'
-    })
-    return
+    });
+    return;
   }
 
   if (!file.type.startsWith('image/')) {
     toastNotification.value.addToast({
       type: 'error',
       message: 'Vui lòng chọn một tệp ảnh'
-    })
-    return
+    });
+    return;
   }
 
-  const formData = new FormData()
-  formData.append('image', file)
-  formData.append('customerId', activeCustomer.value.id)
-  formData.append('sender', 'employee')
+  const formData = new FormData();
+  formData.append('image', file);
+  formData.append('customerId', activeCustomer.value.id);
+  formData.append('sender', 'employee');
 
   axios.post('http://localhost:8080/api/upload/image', formData, {
     headers: { 'Content-Type': 'multipart/form-data' }
   }).then(response => {
-    const message = response.data
-    messages.value.push(message)
+    const message = response.data;
+    if (!messages.value[activeCustomer.value.id]) {
+      messages.value[activeCustomer.value.id] = [];
+    }
+    messages.value[activeCustomer.value.id].push(message);
     if (stompClient.value && stompClient.value.connected) {
-      stompClient.value.send(`/app/chat/customer/${activeCustomer.value.id}`, JSON.stringify(message))
+      stompClient.value.send(`/app/chat/customer/${activeCustomer.value.id}`, JSON.stringify(message));
     }
     toastNotification.value.addToast({
       type: 'info',
       message: `Đã gửi ảnh: ${file.name}`
-    })
+    });
   }).catch(error => {
     toastNotification.value.addToast({
       type: 'error',
       message: 'Lỗi khi gửi ảnh'
-    })
-    console.error('Image upload error:', error)
-  })
+    });
+    console.error('Image upload error:', error);
+  });
 
-  event.target.value = ''
+  event.target.value = '';
   nextTick(() => {
     setTimeout(() => {
-      scrollToBottom(true)
-    }, 50)
-  })
-}
+      scrollToBottom(true);
+    }, 50);
+  });
+};
 
 const getStatusClass = (status) => {
-  return status ? 'status-online' : 'status-offline'
-}
+  return status ? 'status-online' : 'status-offline';
+};
 
 const getStatusBadgeClass = (status) => {
   return {
     'badge-waiting': status === true,
     'badge-canceled': status === false
-  }
-}
+  };
+};
 
 const handleScroll = () => {
-  isScrolling.value = true
-  clearTimeout(handleScroll.timeout)
+  isScrolling.value = true;
+  clearTimeout(handleScroll.timeout);
   handleScroll.timeout = setTimeout(() => {
-    isScrolling.value = false
-  }, 150)
-}
+    isScrolling.value = false;
+  }, 150);
+};
 
 // Lifecycle
 onMounted(async () => {
   try {
-    const response = await axios.get('http://localhost:8080/api/customers')
+    const response = await axios.get('http://localhost:8080/api/customers');
     customers.value = response.data.map(customer => ({
       ...customer,
       ma: customer.ma || 'N/A',
@@ -542,20 +558,20 @@ onMounted(async () => {
         soDienThoai: '',
         deleted: false
       }
-    }))
+    }));
     nextTick(() => {
       if (messagesContainer.value) {
-        messagesContainer.value.addEventListener('scroll', handleScroll)
+        messagesContainer.value.addEventListener('scroll', handleScroll);
       }
-    })
+    });
   } catch (error) {
     toastNotification.value.addToast({
       type: 'error',
       message: 'Lỗi khi tải dữ liệu khách hàng'
-    })
-    console.error('Error fetching customers:', error)
+    });
+    console.error('Error fetching customers:', error);
   }
-})
+});
 
 // Watch for messages changes to auto-scroll
 watch(() => activeCustomer.value, (newCustomer, oldCustomer) => {
@@ -570,9 +586,9 @@ watch(() => activeCustomer.value, (newCustomer, oldCustomer) => {
 // Disconnect WebSocket when component unmounts
 onUnmounted(() => {
   if (stompClient.value) {
-    stompClient.value.disconnect()
+    stompClient.value.disconnect();
   }
-})
+});
 </script>
 
 <style scoped>
