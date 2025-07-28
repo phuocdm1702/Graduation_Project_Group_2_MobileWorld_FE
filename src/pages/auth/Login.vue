@@ -1,6 +1,7 @@
 <template>
   <div class="login-container">
     <ToastNotification ref="toast" />
+    
 
     <div class="bg-shapes">
       <div class="shape shape-1"></div>
@@ -187,30 +188,25 @@ export default {
     const router = useRouter();
     const toast = ref(null);
 
-    // Khôi phục trạng thái đăng nhập từ localStorage
     const initializeAuth = () => {
       const savedAuth = localStorage.getItem('auth');
       if (savedAuth) {
         const authData = JSON.parse(savedAuth);
-        if (authData.isAuthenticated && authData.user) {
+        if (authData.isAuthenticated && authData.user?.username) {
           authStore.login(authData.user);
         }
       }
     };
 
-    // Kiểm tra trạng thái đăng nhập khi component được tải
     onMounted(() => {
-      // Khôi phục trạng thái từ localStorage
       initializeAuth();
 
-      // Kiểm tra username trong localStorage cho "Remember me"
       const savedUsername = localStorage.getItem('username');
       if (savedUsername) {
         username.value = savedUsername;
         rememberMe.value = true;
       }
 
-      // Kiểm tra token với server (nếu có)
       const token = localStorage.getItem('authToken');
       if (token && !authStore.isAuthenticated) {
         isLoading.value = true;
@@ -219,7 +215,7 @@ export default {
             headers: { Authorization: `Bearer ${token}` },
           })
           .then((response) => {
-            if (response.status === 200) {
+            if (response.status === 200 && response.data.username) {
               authStore.login({ username: response.data.username });
               localStorage.setItem('auth', JSON.stringify({
                 isAuthenticated: true,
@@ -227,10 +223,12 @@ export default {
               }));
             }
           })
-          .catch(() => {
-            localStorage.removeItem('authToken');
-            localStorage.removeItem('auth');
-            authStore.logout();
+          .catch((err) => {
+            if (err.response?.status === 401) {
+              localStorage.removeItem('authToken');
+              localStorage.removeItem('auth');
+              authStore.logout();
+            }
           })
           .finally(() => {
             isLoading.value = false;
@@ -266,51 +264,83 @@ export default {
         });
 
         if (response.status === 200) {
-          // Giả sử server trả về token và username
-          const { token, username: responseUsername } = response.data; // Điều chỉnh theo response thực tế
-          const user = { username: responseUsername };
-          authStore.login(user);
+          // Xử lý token linh hoạt: chuỗi hoặc JSON { "token": "..." }
+          let token = response.data;
+          if (typeof token === 'object' && token.token) {
+            token = token.token;
+          } else if (typeof token === 'string' && token.includes('eyJ')) {
+            // Làm sạch token nếu có chuỗi thừa
+            const match = token.match(/eyJ[a-zA-Z0-9._-]+/);
+            if (match) {
+              token = match[0];
+            }
+          }
 
-          // Lưu trạng thái vào localStorage
-          localStorage.setItem('auth', JSON.stringify({
-            isAuthenticated: true,
-            user,
-          }));
+          if (!token || typeof token !== 'string' || !token.startsWith('eyJ')) {
+            throw new Error('Token không hợp lệ từ API');
+          }
 
-          if (rememberMe.value) {
-            localStorage.setItem('username', responseUsername);
-            if (token) localStorage.setItem('authToken', token);
+          const responseUsername = username.value.trim();
+          const userResponse = await axios.get(`http://localhost:8080/tai-khoan/thong-tin/${responseUsername}`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+
+          if (userResponse.status === 200) {
+            const user = {
+              username: responseUsername,
+              phone: userResponse.data.soDienThoai || '',
+              email: userResponse.data.email || '',
+              password: userResponse.data.matKhau || '********',
+              status: userResponse.data.deleted === false ? 'Hoạt động' : 'Đã nghỉ',
+            };
+            authStore.login(user);
+            localStorage.setItem('auth', JSON.stringify({
+              isAuthenticated: true,
+              user,
+            }));
+            localStorage.setItem('authToken', token);
+            if (rememberMe.value) {
+              localStorage.setItem('username', responseUsername);
+            } else {
+              localStorage.removeItem('username');
+            }
+            if (toast.value) {
+              toast.value.addToast({
+                type: 'success',
+                message: 'Đăng nhập thành công! Đang chuyển hướng...',
+                duration: 3000,
+              });
+            }
+             setTimeout(() => {
+    router.push('/trangChu');
+  }, 2000);
           } else {
-            localStorage.removeItem('username');
-            localStorage.removeItem('authToken');
+            throw new Error('Không thể lấy thông tin người dùng sau khi đăng nhập.');
           }
-
-          // Gọi toast thành công
-          if (toast.value) {
-            toast.value.addToast({
-              type: 'success',
-              message: 'Đăng nhập thành công! Đang chuyển hướng...',
-              duration: 3000,
-            });
-          }
-
-          // Chuyển hướng sang trang chủ
-          router.push('/trangChu');
+        } else {
+          throw new Error('API trả về mã trạng thái không mong đợi: ' + response.status);
         }
       } catch (error) {
-        // Gọi toast lỗi
+        let errorMessage = 'Tên đăng nhập hoặc mật khẩu không đúng. Vui lòng thử lại.';
+        if (error.response) {
+          if (error.response.status === 400) {
+            errorMessage = error.response.data.message || 'Thông tin đăng nhập không hợp lệ.';
+          } else if (error.response.status === 401) {
+            errorMessage = 'Tên đăng nhập hoặc mật khẩu không đúng.';
+          } else if (error.response.status === 500) {
+            errorMessage = 'Lỗi server. Vui lòng thử lại sau.';
+          }
+        } else if (error.message === 'Token không hợp lệ từ API') {
+          errorMessage = 'Lỗi xác thực token. Vui lòng liên hệ quản trị viên.';
+        }
         if (toast.value) {
           toast.value.addToast({
             type: 'error',
-            message: error.response?.data?.message || 'Tên đăng nhập hoặc mật khẩu không đúng. Vui lòng thử lại.',
+            message: errorMessage,
             duration: 5000,
           });
         }
-        if (error.response) {
-          error.value = error.response.data?.message || 'Tên đăng nhập hoặc mật khẩu không đúng. Vui lòng thử lại.';
-        } else {
-          error.value = 'Không thể kết nối đến server. Vui lòng thử lại sau.';
-        }
+        error.value = errorMessage;
       } finally {
         isLoading.value = false;
       }
@@ -328,6 +358,7 @@ export default {
           duration: 3000,
         });
       }
+      router.push('/auth/login');
     };
 
     return { 
@@ -347,7 +378,6 @@ export default {
 </script>
 
 <style scoped>
-/* Thêm style cho nút đăng xuất */
 .logout-button {
   background: none;
   border: none;
@@ -363,7 +393,6 @@ export default {
   color: #b91c1c;
 }
 
-/* Giữ nguyên phần style còn lại như bạn đã cung cấp */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
 * {
@@ -382,7 +411,6 @@ export default {
   justify-content: center;
 }
 
-/* Background Shapes */
 .bg-shapes {
   position: absolute;
   top: 0;
@@ -425,7 +453,6 @@ export default {
   animation-delay: 4s;
 }
 
-/* Floating Particles */
 .floating-particles {
   position: absolute;
   width: 100%;
@@ -446,7 +473,6 @@ export default {
   animation-delay: -4s;
 }
 
-/* Loading Overlay */
 .loading-overlay {
   position: fixed;
   top: 0;
@@ -481,7 +507,6 @@ export default {
   font-weight: 500;
 }
 
-/* Main Content Layout */
 .login-content {
   position: relative;
   z-index: 2;
@@ -498,7 +523,6 @@ export default {
   gap: 5rem;
 }
 
-/* Brand Section */
 .brand-section {
   display: flex;
   align-items: center;
@@ -527,7 +551,7 @@ export default {
 }
 
 .logo-icon img {
-    width: 200px;
+  width: 200px;
   height: 200px;
 }
 
@@ -568,7 +592,6 @@ export default {
   color: #34d399;
 }
 
-/* Form Section */
 .form-section {
   display: flex;
   align-items: center;
@@ -598,7 +621,6 @@ export default {
   font-size: 0.95rem;
 }
 
-/* Form Styling */
 .login-form {
   display: flex;
   flex-direction: column;
@@ -689,7 +711,6 @@ export default {
   transition: width 0.3s ease;
 }
 
-/* Form Options */
 .form-options {
   display: flex;
   justify-content: space-between;
@@ -735,7 +756,6 @@ export default {
   font-weight: bold;
 }
 
-/* Error Message */
 .error-message {
   background: #fef2f2;
   border: 1px solid #fecaca;
@@ -749,7 +769,6 @@ export default {
   animation: shake 0.5s ease-in-out;
 }
 
-/* Submit Button */
 .submit-button {
   background: linear-gradient(135deg, #34d399, #60a5fa);
   color: white;
@@ -802,7 +821,6 @@ export default {
   transform: translateX(4px);
 }
 
-/* Loading Dots */
 .loading-dots {
   display: flex;
   gap: 4px;
@@ -819,7 +837,6 @@ export default {
 .loading-dots span:nth-child(1) { animation-delay: -0.32s; }
 .loading-dots span:nth-child(2) { animation-delay: -0.16s; }
 
-/* Form Footer */
 .form-footer {
   margin-top: 2rem;
   text-align: center;
@@ -846,7 +863,6 @@ export default {
   pointer-events: none;
 }
 
-/* Social Login */
 .social-login {
   border-top: 1px solid #e5e7eb;
   padding-top: 2rem;
@@ -905,7 +921,6 @@ export default {
   transform: none;
 }
 
-/* Animations */
 @keyframes float {
   0%, 100% { transform: translateY(0px) rotate(0deg); }
   50% { transform: translateY(-20px) rotate(180deg); }
@@ -964,7 +979,6 @@ export default {
   }
 }
 
-/* Responsive Design */
 @media (max-width: 768px) {
   .login-content {
     grid-template-columns: 1fr;
@@ -1021,7 +1035,6 @@ export default {
   }
 }
 
-/* Generate random positions for particles */
 .particle:nth-child(1) { left: 10%; animation-duration: 8s; }
 .particle:nth-child(2) { left: 20%; animation-duration: 7s; }
 .particle:nth-child(3) { left: 30%; animation-duration: 9s; }
