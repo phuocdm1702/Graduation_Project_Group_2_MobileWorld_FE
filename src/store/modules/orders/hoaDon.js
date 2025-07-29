@@ -168,27 +168,27 @@ export const useHoaDonStore = defineStore('hoaDon', {
             }
         },
 
-        async fetchImelList({ page = 0, size = 5 } = {}) {
-            this.isLoading = true;
-            try {
-                const params = { page, size };
-                const response = await apiService.get('/api/hoa-don/hoa-don-chi-tiet/imel', { params });
-                const { content, totalElements } = response.data;
+        async fetchImelList({ page = 0, size = 5, chiTietSanPhamId } = {}) {
+    this.isLoading = true;
+    try {
+        const params = { page, size, chiTietSanPhamId };
+        const response = await apiService.get('/api/hoa-don/hoa-don-chi-tiet/imel', { params });
+        const { content, totalElements } = response.data;
 
-                this.imelList = content.map(item => ({
-                    id: item.id,
-                    imei: item.imel, // Ánh xạ đúng từ imel
-                    maImel: item.ma, // Thêm maSanPhamChiTiet nếu cần
-                    status: item.deleted === false ? 'Còn hàng' : 'Đã bán', // Suy ra trạng thái từ deleted
-                }));
-                this.totalElements = totalElements;
-            } catch (error) {
-                this.error = error.message || 'Không thể tải danh sách IMEI';
-                console.error('Lỗi khi gọi API danh sách IMEI:', error);
-            } finally {
-                this.isLoading = false;
-            }
-        },
+        this.imelList = content.map(item => ({
+            id: item.id,
+            imei: item.imel,
+            maImel: item.ma,
+            status: item.deleted === false ? 'Còn hàng' : 'Đã bán',
+        }));
+        this.totalElements = totalElements;
+    } catch (error) {
+        this.error = error.message || 'Không thể tải danh sách IMEI';
+        console.error('Lỗi khi gọi API danh sách IMEI:', error);
+    } finally {
+        this.isLoading = false;
+    }
+},
 
         // GET API down HoaDon
         async printInvoice(id) {
