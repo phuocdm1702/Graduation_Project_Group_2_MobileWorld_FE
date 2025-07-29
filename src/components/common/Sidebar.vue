@@ -354,13 +354,14 @@ const isMobile = ref(window.innerWidth <= 768);
 // Main menu items for navbar (limited to key items for mobile)
 const mainMenuItems = computed(() => [
   { name: 'Trang chủ', path: '/trangChu', icon: HomeIcon },
+  { name: 'Thống kê', path: '/thongKe', icon: ChartBarIcon },
   { name: 'Bán Hàng', path: '/banHang', icon: ShoppingCartIcon },
   { name: 'Hóa đơn', path: '/hoaDon', icon: DocumentTextIcon },
-  { name: 'Thống kê', path: '/thongKe', icon: ChartBarIcon },
 ]);
 
 const menuItems = ref([
   { name: 'Trang chủ', path: '/trangChu', icon: HomeIcon },
+  { name: 'Thống kê', path: '/thongKe', icon: ChartBarIcon },
   { name: 'Bán Hàng', path: '/banHang', icon: ShoppingCartIcon },
   { name: 'Quản Lý Hóa đơn', path: '/hoaDon', icon: DocumentTextIcon },
   { 
@@ -389,6 +390,16 @@ const menuItems = ref([
     ],
     isOpen: false,
   },
+    { 
+    name: 'Quản Lý Giảm giá',
+    path: '/quanLyGiamGia',
+    icon: TagIcon,
+    children: [
+      { name: 'Phiếu giảm giá', path: '/phieuGiamGia' },
+      { name: 'Đợt giảm giá', path: '/dotGiamGia' },
+    ],
+    isOpen: false,
+  },
   { 
     name: 'Quản Lý Tài khoản',
     path: '/quanLyTaiKhoan',
@@ -399,17 +410,6 @@ const menuItems = ref([
     ],
     isOpen: false,
   },
-  { 
-    name: 'Quản Lý Giảm giá',
-    path: '/quanLyGiamGia',
-    icon: TagIcon,
-    children: [
-      { name: 'Phiếu giảm giá', path: '/phieuGiamGia' },
-      { name: 'Đợt giảm giá', path: '/dotGiamGia' },
-    ],
-    isOpen: false,
-  },
-  { name: 'Thống kê', path: '/thongKe', icon: ChartBarIcon },
   { 
     name: 'Hỗ trợ khách hàng', 
     path: '/chatInterface', 

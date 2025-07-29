@@ -170,6 +170,11 @@ export const getChiTietSanPhamBySanPhamId = (id) => {
   return apiService.get(`/api/chi-tiet-san-pham/${id}`);
 };
 
+// Kiểm tra IMEI có tồn tại không
+export const checkImelExists = (imei) => {
+  return apiService.get(`/api/imel/check?imei=${imei}`);
+};
+
 // Thêm chi tiết sản phẩm
 export const addChiTietSanPham = async (data, images, existingImageUrls = []) => {
   try {
@@ -287,14 +292,13 @@ export const addChiTietSanPham = async (data, images, existingImageUrls = []) =>
   }
 };
 
-// Cập nhật chi tiết sản phẩm
 export const updateChiTietSanPham = async (id, data, images, existingImageUrls = []) => {
   try {
     const formData = new FormData();
 
     // Validate input data
-    if (!data.tenSanPham || !data.tenSanPham.trim()) {
-      throw new Error('Tên sản phẩm không được để trống');
+    if (!id || id <= 0) {
+      throw new Error('ID chi tiết sản phẩm không hợp lệ');
     }
     if (!data.variants || !Array.isArray(data.variants) || data.variants.length !== 1) {
       throw new Error('Chỉ được cung cấp một biến thể để cập nhật chi tiết sản phẩm');
@@ -326,7 +330,7 @@ export const updateChiTietSanPham = async (id, data, images, existingImageUrls =
     }
 
     // Thêm các trường cấp cao
-    formData.append('tenSanPham', data.tenSanPham);
+    formData.append('id', id);
     formData.append('ghiChu', data.ghiChu || '');
 
     // Thêm các trường trong biến thể
@@ -338,23 +342,20 @@ export const updateChiTietSanPham = async (id, data, images, existingImageUrls =
       throw new Error('Biến thể không hợp lệ: Chỉ được cung cấp một IMEI');
     }
 
-    formData.append('variants[0].idMauSac', variant.idMauSac);
-    formData.append('variants[0].idRam', variant.idRam);
-    formData.append('variants[0].idBoNhoTrong', variant.idBoNhoTrong);
-    formData.append('variants[0].donGia', variant.donGia);
-
     const imei = variant.imeiList[0];
     if (!imei || typeof imei !== 'string' || imei.length !== 15 || !/^\d{15}$/.test(imei)) {
       throw new Error(`IMEI "${imei}" không hợp lệ - phải là 15 chữ số`);
     }
+    formData.append('variants[0].idMauSac', variant.idMauSac);
+    formData.append('variants[0].idRam', variant.idRam);
+    formData.append('variants[0].idBoNhoTrong', variant.idBoNhoTrong);
+    formData.append('variants[0].donGia', variant.donGia);
     formData.append('variants[0].imeiList[0]', imei);
 
-    // Log FormData entries for debugging (only in development)
-    if (process.env.NODE_ENV === 'development') {
-      console.log('FormData entries for update:');
-      for (const [key, value] of formData.entries()) {
-        console.log(`${key}:`, value instanceof File ? `File: ${value.name} (${value.size} bytes)` : value);
-      }
+    // Log FormData entries for debugging
+    console.log('FormData entries for update:');
+    for (const [key, value] of formData.entries()) {
+      console.log(`${key}:`, value instanceof File ? `File: ${value.name} (${value.size} bytes)` : value);
     }
 
     // Gửi yêu cầu
@@ -362,7 +363,7 @@ export const updateChiTietSanPham = async (id, data, images, existingImageUrls =
       headers: {
         'Content-Type': 'multipart/form-data',
       },
-      timeout: 30000, // 30 second timeout
+      timeout: 30000,
     });
 
     return response;
@@ -371,14 +372,13 @@ export const updateChiTietSanPham = async (id, data, images, existingImageUrls =
       message: error.message,
       response: error.response?.data,
       status: error.response?.status,
-      stack: error.stack
+      stack: error.stack,
     });
 
     // Provide more specific error messages
-    if (error.response?.status === 500) {
-      throw new Error(`Lỗi server: ${error.response?.data?.message || 'Có lỗi xảy ra trên server'}`);
-    } else if (error.response?.status === 400) {
-      throw new Error(`Dữ liệu không hợp lệ: ${error.response?.data?.message || 'Kiểm tra lại thông tin đã nhập'}`);
+    if (error.response?.status === 400) {
+      const message = error.response?.data?.message || 'Kiểm tra lại thông tin đã nhập';
+      throw new Error(`Dữ liệu không hợp lệ: ${message}`);
     } else if (error.response?.status === 404) {
       throw new Error('Không tìm thấy chi tiết sản phẩm để cập nhật');
     } else if (error.message.includes('Network Error')) {
