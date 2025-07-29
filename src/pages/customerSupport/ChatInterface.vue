@@ -1,7 +1,11 @@
 <template>
   <div class="container-fluid py-4">
-    <HeaderCard title="Hỗ Trợ Khách Hàng" badgeText="Hệ Thống POS" badgeClass="gradient-custom-teal" 
-      :backgroundOpacity="0.95" />
+    <HeaderCard
+      title="Hỗ Trợ Khách Hàng"
+      badgeText="Hệ Thống POS"
+      badgeClass="gradient-custom-teal"
+      :backgroundOpacity="0.95"
+    />
 
     <!-- Main Chat Container -->
     <div class="chat-container animate__animated animate__fadeIn">
@@ -14,31 +18,51 @@
               <div class="search-group">
                 <div class="search-input-wrapper">
                   <i class="bi bi-search search-icon"></i>
-                  <input type="text" class="form-control search-input" placeholder="Tìm kiếm khách hàng..." 
-                    v-model="searchKeyword" @input="filterCustomers" />
+                  <input
+                    type="text"
+                    class="form-control search-input"
+                    placeholder="Tìm kiếm khách hàng..."
+                    v-model="searchKeyword"
+                    @input="filterCustomers"
+                  />
                 </div>
               </div>
             </div>
 
             <!-- Customer List -->
             <div class="customer-list">
-              <div v-for="customer in filteredCustomerList" :key="customer.id" 
-                class="customer-item" 
-                :class="{ 'active': activeCustomer?.id === customer.id }"
-                @click="selectCustomer(customer)">
+              <div
+                v-for="customer in filteredCustomerList"
+                :key="customer.id"
+                class="customer-item"
+                :class="{ active: activeCustomer?.id === customer.id }"
+                @click="selectCustomer(customer)"
+              >
                 <div class="customer-avatar">
-                  <img :src="customer.anhKhachHang || defaultAvatar" alt="Avatar" class="avatar-img">
-                  <span class="status-badge" :class="getStatusClass(customer.idTaiKhoan?.deleted)"></span>
+                  <img
+                    :src="customer.anhKhachHang || defaultAvatar"
+                    alt="Avatar"
+                    class="avatar-img"
+                  />
+                  <span
+                    class="status-badge"
+                    :class="getStatusClass(customer.idTaiKhoan?.deleted)"
+                  ></span>
                 </div>
                 <div class="customer-info">
-                  <div class="customer-name">{{ customer.ten || 'N/A' }}</div>
+                  <div class="customer-name">{{ customer.ten || "N/A" }}</div>
                   <div class="customer-last-msg">
                     {{ getLastMessagePreview(customer.id) }}
                   </div>
                 </div>
                 <div class="customer-meta">
-                  <div class="last-time">{{ formatTime(getLastMessageTime(customer.id)) }}</div>
-                  <div v-if="hasUnreadMessages(customer.id)" class="unread-badge">
+                  <div class="last-time">
+                    {{ formatTime(getLastMessageTime(customer.id)) }}
+                  </div>
+                  <div
+                    v-if="hasUnreadMessages(customer.id)"
+                    class="unread-badge"
+                  >
                     {{ getUnreadCount(customer.id) }}
                   </div>
                 </div>
@@ -54,21 +78,38 @@
             <div class="chat-header">
               <div class="chat-user-info">
                 <div class="user-avatar">
-                  <img :src="activeCustomer.anhKhachHang || defaultAvatar" alt="Avatar" class="avatar-img">
-                  <span class="status-badge" :class="getStatusClass(activeCustomer.idTaiKhoan?.deleted)"></span>
+                  <img
+                    :src="activeCustomer.anhKhachHang || defaultAvatar"
+                    alt="Avatar"
+                    class="avatar-img"
+                  />
+                  <span
+                    class="status-badge"
+                    :class="getStatusClass(activeCustomer.idTaiKhoan?.deleted)"
+                  ></span>
                 </div>
                 <div class="user-details">
-                  <div class="user-name">{{ activeCustomer.ten || 'N/A' }}</div>
+                  <div class="user-name">{{ activeCustomer.ten || "N/A" }}</div>
                   <div class="user-status">
-                    {{ activeCustomer.idTaiKhoan?.deleted ? 'Online' : 'Offline' }}
+                    {{
+                      activeCustomer.idTaiKhoan?.deleted ? "Online" : "Offline"
+                    }}
                   </div>
                 </div>
               </div>
               <div class="chat-actions">
-                <button class="btn btn-sm btn-table" title="Thông tin khách hàng" @click="showCustomerInfo">
+                <button
+                  class="btn btn-sm btn-table"
+                  title="Thông tin khách hàng"
+                  @click="showCustomerInfo"
+                >
                   <i class="bi bi-info-circle-fill"></i>
                 </button>
-                <button class="btn btn-sm btn-table" title="Tải lịch sử chat" @click="downloadChatHistory">
+                <button
+                  class="btn btn-sm btn-table"
+                  title="Tải lịch sử chat"
+                  @click="downloadChatHistory"
+                >
                   <i class="bi bi-download"></i>
                 </button>
               </div>
@@ -77,22 +118,50 @@
             <!-- Messages Container - Scrollable -->
             <div class="messages-wrapper">
               <div class="messages-container" ref="messagesContainer">
-                <div v-for="(message, index) in messages[activeCustomer.id] || []" :key="index" 
-                  class="message" 
-                  :class="{ 'outgoing': message.sender === 'employee', 'incoming': message.sender === 'customer' }">
+                <div
+                  v-for="(message, index) in messages"
+                  :key="index"
+                  class="message"
+                  :class="{
+                    outgoing: message.sender === 'employee',
+                    incoming: message.sender === 'customer',
+                  }"
+                >
                   <div class="message-content">
-                    <div v-if="message.type === 'text'" class="message-text">{{ message.text }}</div>
-                    <div v-else-if="message.type === 'image'" class="message-image">
-                      <img :src="message.url" alt="Sent image" class="chat-image">
-                      <div class="message-time">{{ formatTime(message.time) }}</div>
+                    <div v-if="message.type === 'text'" class="message-text">
+                      {{ message.text }}
                     </div>
-                    <div v-else-if="message.type === 'file'" class="message-file">
-                      <a :href="message.url" :download="message.name" class="file-link">
+                    <div
+                      v-else-if="message.type === 'image'"
+                      class="message-image"
+                    >
+                      <img
+                        :src="message.url"
+                        alt="Sent image"
+                        class="chat-image"
+                      />
+                      <div class="message-time">
+                        {{ formatTime(message.time) }}
+                      </div>
+                    </div>
+                    <div
+                      v-else-if="message.type === 'file'"
+                      class="message-file"
+                    >
+                      <a
+                        :href="message.url"
+                        :download="message.name"
+                        class="file-link"
+                      >
                         <i class="bi bi-file-earmark"></i> {{ message.name }}
                       </a>
-                      <div class="message-time">{{ formatTime(message.time) }}</div>
+                      <div class="message-time">
+                        {{ formatTime(message.time) }}
+                      </div>
                     </div>
-                    <div v-if="message.type === 'text'" class="message-time">{{ formatTime(message.time) }}</div>
+                    <div v-if="message.type === 'text'" class="message-time">
+                      {{ formatTime(message.time) }}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -101,20 +170,40 @@
             <!-- Message Input - Fixed -->
             <div class="message-input">
               <div class="input-group">
-                <input type="text" class="form-control" placeholder="Nhập tin nhắn..." 
-                  v-model="newMessage" @keyup.enter="sendMessage">
-                <button class="btn btn-action" @click="sendMessage" :disabled="!newMessage.trim()">
+                <input
+                  type="text"
+                  class="form-control"
+                  placeholder="Nhập tin nhắn..."
+                  v-model="newMessage"
+                  @keyup.enter="sendMessage"
+                />
+                <button
+                  class="btn btn-action"
+                  @click="sendMessage"
+                  :disabled="!newMessage.trim()"
+                >
                   <i class="bi bi-send-fill"></i>
                 </button>
               </div>
               <div class="input-actions">
                 <label class="btn btn-sm btn-table" title="Gửi file">
                   <i class="bi bi-paperclip"></i>
-                  <input type="file" class="d-none" ref="fileInput" @change="handleFileUpload">
+                  <input
+                    type="file"
+                    class="d-none"
+                    ref="fileInput"
+                    @change="handleFileUpload"
+                  />
                 </label>
                 <label class="btn btn-sm btn-table" title="Gửi ảnh">
                   <i class="bi bi-image"></i>
-                  <input type="file" accept="image/*" class="d-none" ref="imageInput" @change="handleImageUpload">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    class="d-none"
+                    ref="imageInput"
+                    @change="handleImageUpload"
+                  />
                 </label>
               </div>
             </div>
@@ -133,58 +222,97 @@
     </div>
 
     <!-- Customer Info Modal -->
-    <div class="modal fade" id="customerInfoModal" tabindex="-1" aria-hidden="true">
+    <div
+      class="modal fade"
+      id="customerInfoModal"
+      tabindex="-1"
+      aria-hidden="true"
+    >
       <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
           <div class="modal-header">
             <h5 class="modal-title">Thông tin khách hàng</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
           </div>
           <div class="modal-body" v-if="activeCustomer">
             <div class="customer-info-modal">
               <div class="info-avatar">
-                <img :src="activeCustomer.anhKhachHang || defaultAvatar" alt="Avatar" class="avatar-img-lg">
+                <img
+                  :src="activeCustomer.anhKhachHang || defaultAvatar"
+                  alt="Avatar"
+                  class="avatar-img-lg"
+                />
               </div>
               <div class="info-details">
                 <div class="info-row">
                   <span class="info-label">Mã KH:</span>
-                  <span class="info-value">{{ activeCustomer.ma || 'N/A' }}</span>
+                  <span class="info-value">{{
+                    activeCustomer.ma || "N/A"
+                  }}</span>
                 </div>
                 <div class="info-row">
                   <span class="info-label">Họ tên:</span>
-                  <span class="info-value">{{ activeCustomer.ten || 'N/A' }}</span>
+                  <span class="info-value">{{
+                    activeCustomer.ten || "N/A"
+                  }}</span>
                 </div>
                 <div class="info-row">
                   <span class="info-label">SĐT:</span>
-                  <span class="info-value">{{ activeCustomer.idTaiKhoan?.soDienThoai || 'N/A' }}</span>
+                  <span class="info-value">{{
+                    activeCustomer.idTaiKhoan?.soDienThoai || "N/A"
+                  }}</span>
                 </div>
                 <div class="info-row">
                   <span class="info-label">Email:</span>
-                  <span class="info-value">{{ activeCustomer.idTaiKhoan?.email || 'N/A' }}</span>
+                  <span class="info-value">{{
+                    activeCustomer.idTaiKhoan?.email || "N/A"
+                  }}</span>
                 </div>
                 <div class="info-row">
                   <span class="info-label">Địa chỉ:</span>
-                  <span class="info-value" v-if="activeCustomer.idDiaChiKhachHang">
-                    {{ activeCustomer.idDiaChiKhachHang.diaChiCuThe || 'N/A' }}, 
-                    {{ activeCustomer.idDiaChiKhachHang.phuong || 'N/A' }}, 
-                    {{ activeCustomer.idDiaChiKhachHang.quan || 'N/A' }}, 
-                    {{ activeCustomer.idDiaChiKhachHang.thanhPho || 'N/A' }}
+                  <span
+                    class="info-value"
+                    v-if="activeCustomer.idDiaChiKhachHang"
+                  >
+                    {{ activeCustomer.idDiaChiKhachHang.diaChiCuThe || "N/A" }},
+                    {{ activeCustomer.idDiaChiKhachHang.phuong || "N/A" }},
+                    {{ activeCustomer.idDiaChiKhachHang.quan || "N/A" }},
+                    {{ activeCustomer.idDiaChiKhachHang.thanhPho || "N/A" }}
                   </span>
                   <span class="info-value" v-else>Không có địa chỉ</span>
                 </div>
                 <div class="info-row">
                   <span class="info-label">Trạng thái:</span>
-                  <span class="info-value status-badge" 
-                    :class="getStatusBadgeClass(activeCustomer.idTaiKhoan?.deleted)">
-                    {{ activeCustomer.idTaiKhoan?.deleted ? "Kích Hoạt" : "Đã Hủy" }}
+                  <span
+                    class="info-value status-badge"
+                    :class="
+                      getStatusBadgeClass(activeCustomer.idTaiKhoan?.deleted)
+                    "
+                  >
+                    {{
+                      activeCustomer.idTaiKhoan?.deleted
+                        ? "Kích Hoạt"
+                        : "Đã Hủy"
+                    }}
                   </span>
                 </div>
               </div>
             </div>
           </div>
           <div class="modal-footer">
-            <button type="button" class="btn btn-reset" data-bs-dismiss="modal">Đóng</button>
-            <button type="button" class="btn btn-action" @click="goToCustomerDetail">
+            <button type="button" class="btn btn-reset" data-bs-dismiss="modal">
+              Đóng
+            </button>
+            <button
+              type="button"
+              class="btn btn-action"
+              @click="goToCustomerDetail"
+            >
               <i class="bi bi-box-arrow-up-right me-1"></i> Chi tiết
             </button>
           </div>
@@ -197,49 +325,59 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, nextTick, watch, onUnmounted } from 'vue'
-import { useRouter } from 'vue-router'
-import { Modal } from 'bootstrap'
-import HeaderCard from "@/components/common/HeaderCard.vue"
-import ToastNotification from "@/components/common/ToastNotification.vue"
-import { Stomp } from '@stomp/stompjs'
-import SockJS from 'sockjs-client'
-import axios from 'axios'
+import { ref, computed, onMounted, nextTick, watch, onUnmounted } from "vue";
+import { useRouter } from "vue-router";
+import { Modal } from "bootstrap";
+import HeaderCard from "@/components/common/HeaderCard.vue";
+import ToastNotification from "@/components/common/ToastNotification.vue";
+import Stomp from "webstomp-client";
+import SockJS from "sockjs-client";
+import axios from "axios";
 
-const router = useRouter()
-const toastNotification = ref(null)
-const defaultAvatar = 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png'
-const fileInput = ref(null)
-const imageInput = ref(null)
-const stompClient = ref(null)
-const isConnecting = ref(false)
-
+const router = useRouter();
+const toastNotification = ref(null);
+const defaultAvatar = "https://cdn-icons-png.flaticon.com/512/3135/3135715.png";
+const fileInput = ref(null);
+const imageInput = ref(null);
+const stompClient = ref(null);
+const isConnecting = ref(false);
 // Data
-const customers = ref([])
-const searchKeyword = ref('')
-const activeCustomer = ref(null)
-const messages = ref({}) // Change to object to store messages per customerId
-const newMessage = ref('')
-const isScrolling = ref(false)
-const messagesContainer = ref(null)
+const customers = ref([]);
+const searchKeyword = ref("");
+const activeCustomer = ref(null);
+const messages = ref([]);
+const newMessage = ref("");
+const isScrolling = ref(false);
+const messagesContainer = ref(null);
+const messagesMap = ref({}); // { [customerId]: [messages] }
+const isSending = ref(false);
 
 // Computed
 const filteredCustomerList = computed(() => {
-  if (!searchKeyword.value) return customers.value
-  return customers.value.filter(customer => 
-    (customer.ten || '').toLowerCase().includes(searchKeyword.value.toLowerCase()) ||
-    (customer.ma || '').toLowerCase().includes(searchKeyword.value.toLowerCase()) ||
-    (customer.idTaiKhoan?.soDienThoai || '').includes(searchKeyword.value)
-  )
-})
+  if (!searchKeyword.value) return customers.value;
+  return customers.value.filter(
+    (customer) =>
+      (customer.ten || "")
+        .toLowerCase()
+        .includes(searchKeyword.value.toLowerCase()) ||
+      (customer.ma || "")
+        .toLowerCase()
+        .includes(searchKeyword.value.toLowerCase()) ||
+      (customer.idTaiKhoan?.soDienThoai || "").includes(searchKeyword.value)
+  );
+});
 
 // Methods
 const filterCustomers = () => {
   // Debounce could be added here for performance
-}
+};
 
 const selectCustomer = async (customer) => {
-  if (activeCustomer.value && stompClient.value && stompClient.value.connected) {
+  if (
+    activeCustomer.value &&
+    stompClient.value &&
+    stompClient.value.connected
+  ) {
     stompClient.value.unsubscribe(`/topic/customer/${activeCustomer.value.id}`);
   }
   activeCustomer.value = null;
@@ -257,53 +395,58 @@ const selectCustomer = async (customer) => {
 };
 
 const subscribeToCustomerTopic = () => {
-  if (stompClient.value && stompClient.value.connected && activeCustomer.value) {
-    stompClient.value.subscribe(`/topic/customer/${activeCustomer.value.id}`, (message) => {
-      const msg = JSON.parse(message.body);
-      if (!messages.value[activeCustomer.value.id]) {
-        messages.value[activeCustomer.value.id] = [];
+  if (
+    stompClient.value &&
+    stompClient.value.connected &&
+    activeCustomer.value
+  ) {
+    stompClient.value.subscribe(
+      `/topic/customer/${activeCustomer.value.id}`,
+      (message) => {
+        const msg = JSON.parse(message.body);
+        messages.value.push({
+          sender: msg.sender,
+          text: msg.text,
+          type: msg.type,
+          time: msg.time,
+          url: msg.url,
+          name: msg.name,
+        });
+        scrollToBottom();
       }
-      messages.value[activeCustomer.value.id].push({
-        sender: msg.sender,
-        text: msg.text,
-        type: msg.type,
-        time: msg.time,
-        url: msg.url,
-        name: msg.name
-      });
-      scrollToBottom();
-    });
+    );
   }
 };
 
 const loadMessages = async (customerId) => {
   try {
-    const response = await axios.get(`http://localhost:8080/api/messages/${customerId}`);
-    messages.value[customerId] = response.data || [];
-    scrollToBottom();
+    const response = await axios.get(
+      `http://localhost:8080/api/messages/${customerId}`
+    );
+    messagesMap.value[customerId] = response.data || [];
+    messages.value = messagesMap.value[customerId]; // để chat box vẫn hoạt động như cũ
   } catch (error) {
     toastNotification.value.addToast({
-      type: 'error',
-      message: 'Lỗi khi tải lịch sử tin nhắn'
+      type: "error",
+      message: "Lỗi khi tải lịch sử tin nhắn",
     });
-    console.error('Error fetching messages:', error);
-    messages.value[customerId] = []; // Initialize as empty if error
+    console.error("Error fetching messages:", error);
   }
 };
 
 const getLastMessagePreview = (customerId) => {
-  const customerMessages = messages.value[customerId] || [];
-  const lastMsg = customerMessages.slice(-1)[0];
-  if (!lastMsg) return 'Chưa có tin nhắn';
-  if (lastMsg.type === 'text') return lastMsg.text;
-  if (lastMsg.type === 'image') return 'Đã gửi một ảnh';
-  if (lastMsg.type === 'file') return `Đã gửi tệp: ${lastMsg.name}`;
-  return 'Chưa có tin nhắn';
+  const msgs = messagesMap.value[customerId] || [];
+  const lastMsg = msgs.slice(-1)[0];
+  if (!lastMsg) return "Chưa có tin nhắn";
+  if (lastMsg.type === "text") return lastMsg.text;
+  if (lastMsg.type === "image") return "Đã gửi một ảnh";
+  if (lastMsg.type === "file") return `Đã gửi tệp: ${lastMsg.name}`;
+  return "Chưa có tin nhắn";
 };
 
 const getLastMessageTime = (customerId) => {
-  const customerMessages = messages.value[customerId] || [];
-  const lastMsg = customerMessages.slice(-1)[0];
+  const msgs = messagesMap.value[customerId] || [];
+  const lastMsg = msgs.slice(-1)[0];
   return lastMsg ? lastMsg.time : null;
 };
 
@@ -322,56 +465,65 @@ const markMessagesAsRead = (customerId) => {
 };
 
 const connectWebSocket = () => {
-  if (isConnecting.value || (stompClient.value && stompClient.value.connected)) return;
+  if (isConnecting.value || (stompClient.value && stompClient.value.connected))
+    return;
   isConnecting.value = true;
 
-  const socket = new SockJS('http://localhost:8080/chat-sockjs');
+  const socket = new SockJS("http://localhost:8080/chat-sockjs");
   stompClient.value = Stomp.over(socket);
-  stompClient.value.connect({}, () => {
-    isConnecting.value = false;
-    console.log('WebSocket connected for employee');
-    if (activeCustomer.value) {
-      subscribeToCustomerTopic();
+  stompClient.value.connect(
+    {},
+    () => {
+      isConnecting.value = false;
+      console.log("WebSocket connected for employee");
+      if (activeCustomer.value) {
+        subscribeToCustomerTopic();
+      }
+    },
+    (error) => {
+      isConnecting.value = false;
+      toastNotification.value.addToast({
+        type: "error",
+        message: "Lỗi kết nối WebSocket",
+      });
+      console.error("WebSocket connection error:", error);
+      setTimeout(() => connectWebSocket(), 2000);
     }
-  }, (error) => {
-    isConnecting.value = false;
-    toastNotification.value.addToast({
-      type: 'error',
-      message: 'Lỗi kết nối WebSocket'
-    });
-    console.error('WebSocket connection error:', error);
-    setTimeout(() => connectWebSocket(), 2000);
-  });
+  );
 };
 
 const sendMessage = () => {
   if (!newMessage.value.trim() || !activeCustomer.value) return;
+  isSending.value = true;
 
   const message = {
-    type: 'text',
+    type: "text",
     text: newMessage.value,
-    sender: 'employee', // Ensure sender is 'employee' for outgoing
+    sender: "employee", // Sửa thành 'customer' nếu muốn giống ChatBox.vue
     time: new Date().toISOString(),
-    customerId: activeCustomer.value.id
+    customerId: activeCustomer.value.id,
   };
 
-  if (!messages.value[activeCustomer.value.id]) {
-    messages.value[activeCustomer.value.id] = [];
-  }
-  messages.value[activeCustomer.value.id].push(message);
   if (stompClient.value && stompClient.value.connected) {
-    stompClient.value.send(`/app/chat/employee/${activeCustomer.value.id}`, JSON.stringify(message));
+    stompClient.value.send(
+      `/app/chat/employee/${activeCustomer.value.id}`,
+      JSON.stringify(message) // Đảm bảo dùng JSON.stringify ở đây!
+    );
   } else {
     connectWebSocket();
     setTimeout(() => {
       if (stompClient.value && stompClient.value.connected) {
-        stompClient.value.send(`/app/chat/employee/${activeCustomer.value.id}`, JSON.stringify(message));
+        stompClient.value.send(
+          `/app/chat/customer/${activeCustomer.value.id}`,
+          JSON.stringify(message) // Đảm bảo dùng JSON.stringify ở đây!
+        );
       }
     }, 1000);
   }
 
-  newMessage.value = '';
+  newMessage.value = "";
   scrollToBottom();
+  isSending.value = false;
 };
 
 const scrollToBottom = (smooth = false) => {
@@ -379,50 +531,56 @@ const scrollToBottom = (smooth = false) => {
     const container = messagesContainer.value;
     const scrollOptions = {
       top: container.scrollHeight,
-      behavior: smooth ? 'smooth' : 'auto'
+      behavior: smooth ? "smooth" : "auto",
     };
     container.scrollTo(scrollOptions);
   }
 };
 
 const formatTime = (time) => {
-  if (!time) return '';
-  return new Date(time).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+  if (!time) return "";
+  return new Date(time).toLocaleTimeString("vi-VN", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 };
 
 const showCustomerInfo = () => {
-  const modal = new Modal(document.getElementById('customerInfoModal'));
+  const modal = new Modal(document.getElementById("customerInfoModal"));
   modal.show();
 };
 
 const goToCustomerDetail = () => {
   if (activeCustomer.value) {
     router.push(`/khachHang/form/${activeCustomer.value.id}`);
-    const modal = Modal.getInstance(document.getElementById('customerInfoModal'));
+    const modal = Modal.getInstance(
+      document.getElementById("customerInfoModal")
+    );
     modal.hide();
   }
 };
 
 const downloadChatHistory = () => {
   if (!activeCustomer.value) return;
-  const customerMessages = messages.value[activeCustomer.value.id] || [];
   const csvContent = [
-    ['Thời gian', 'Người gửi', 'Loại', 'Nội dung/Tên tệp'],
-    ...customerMessages.map(msg => [
-      new Date(msg.time).toLocaleString('vi-VN'),
+    ["Thời gian", "Người gửi", "Loại", "Nội dung/Tên tệp"],
+    ...messages.value.map((msg) => [
+      new Date(msg.time).toLocaleString("vi-VN"),
       msg.sender,
       msg.type,
-      msg.type === 'text' ? msg.text : `${msg.name} (${msg.url})`
-    ])
-  ].map(row => row.join(',')).join('\n');
-  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-  const link = document.createElement('a');
+      msg.type === "text" ? msg.text : `${msg.name} (${msg.url})`,
+    ]),
+  ]
+    .map((row) => row.join(","))
+    .join("\n");
+  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+  const link = document.createElement("a");
   link.href = URL.createObjectURL(blob);
   link.download = `chat_history_${activeCustomer.value.ma}.csv`;
   link.click();
   toastNotification.value.addToast({
-    type: 'success',
-    message: `Đã tải lịch sử chat với ${activeCustomer.value.ten || 'N/A'}`
+    type: "success",
+    message: `Đã tải lịch sử chat với ${activeCustomer.value.ten || "N/A"}`,
   });
 };
 
@@ -430,41 +588,44 @@ const handleFileUpload = (event) => {
   const file = event.target.files[0];
   if (!file || !activeCustomer.value) {
     toastNotification.value.addToast({
-      type: 'error',
-      message: 'Vui lòng chọn tệp và khách hàng trước khi gửi'
+      type: "error",
+      message: "Vui lòng chọn tệp và khách hàng trước khi gửi",
     });
     return;
   }
 
   const formData = new FormData();
-  formData.append('file', file);
-  formData.append('customerId', activeCustomer.value.id);
-  formData.append('sender', 'employee');
+  formData.append("file", file);
+  formData.append("customerId", activeCustomer.value.id);
+  formData.append("sender", "employee");
 
-  axios.post('http://localhost:8080/api/upload/file', formData, {
-    headers: { 'Content-Type': 'multipart/form-data' }
-  }).then(response => {
-    const message = response.data;
-    if (!messages.value[activeCustomer.value.id]) {
-      messages.value[activeCustomer.value.id] = [];
-    }
-    messages.value[activeCustomer.value.id].push(message);
-    if (stompClient.value && stompClient.value.connected) {
-      stompClient.value.send(`/app/chat/customer/${activeCustomer.value.id}`, JSON.stringify(message));
-    }
-    toastNotification.value.addToast({
-      type: 'info',
-      message: `Đã gửi tệp: ${file.name}`
+  axios
+    .post("http://localhost:8080/api/upload/file", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    })
+    .then((response) => {
+      const message = response.data;
+      messages.value.push(message);
+      if (stompClient.value && stompClient.value.connected) {
+        stompClient.value.send(
+          `/app/chat/customer/${activeCustomer.value.id}`,
+          JSON.stringify(message)
+        );
+      }
+      toastNotification.value.addToast({
+        type: "info",
+        message: `Đã gửi tệp: ${file.name}`,
+      });
+    })
+    .catch((error) => {
+      toastNotification.value.addToast({
+        type: "error",
+        message: "Lỗi khi gửi tệp",
+      });
+      console.error("File upload error:", error);
     });
-  }).catch(error => {
-    toastNotification.value.addToast({
-      type: 'error',
-      message: 'Lỗi khi gửi tệp'
-    });
-    console.error('File upload error:', error);
-  });
 
-  event.target.value = '';
+  event.target.value = "";
   nextTick(() => {
     setTimeout(() => {
       scrollToBottom(true);
@@ -476,49 +637,52 @@ const handleImageUpload = (event) => {
   const file = event.target.files[0];
   if (!file || !activeCustomer.value) {
     toastNotification.value.addToast({
-      type: 'error',
-      message: 'Vui lòng chọn ảnh và khách hàng trước khi gửi'
+      type: "error",
+      message: "Vui lòng chọn ảnh và khách hàng trước khi gửi",
     });
     return;
   }
 
-  if (!file.type.startsWith('image/')) {
+  if (!file.type.startsWith("image/")) {
     toastNotification.value.addToast({
-      type: 'error',
-      message: 'Vui lòng chọn một tệp ảnh'
+      type: "error",
+      message: "Vui lòng chọn một tệp ảnh",
     });
     return;
   }
 
   const formData = new FormData();
-  formData.append('image', file);
-  formData.append('customerId', activeCustomer.value.id);
-  formData.append('sender', 'employee');
+  formData.append("image", file);
+  formData.append("customerId", activeCustomer.value.id);
+  formData.append("sender", "employee");
 
-  axios.post('http://localhost:8080/api/upload/image', formData, {
-    headers: { 'Content-Type': 'multipart/form-data' }
-  }).then(response => {
-    const message = response.data;
-    if (!messages.value[activeCustomer.value.id]) {
-      messages.value[activeCustomer.value.id] = [];
-    }
-    messages.value[activeCustomer.value.id].push(message);
-    if (stompClient.value && stompClient.value.connected) {
-      stompClient.value.send(`/app/chat/customer/${activeCustomer.value.id}`, JSON.stringify(message));
-    }
-    toastNotification.value.addToast({
-      type: 'info',
-      message: `Đã gửi ảnh: ${file.name}`
+  axios
+    .post("http://localhost:8080/api/upload/image", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    })
+    .then((response) => {
+      const message = response.data;
+      messages.value.push(message);
+      if (stompClient.value && stompClient.value.connected) {
+        stompClient.value.send(
+          `/app/chat/customer/${activeCustomer.value.id}`,
+          JSON.stringiy(message)
+        );
+      }
+      toastNotification.value.addToast({
+        type: "info",
+        message: `Đã gửi ảnh: ${file.name}`,
+      });
+    })
+    .catch((error) => {
+      toastNotification.value.addToast({
+        type: "error",
+        message: "Lỗi khi gửi ảnh",
+      });
+      console.error("Image upload error:", error);
     });
-  }).catch(error => {
-    toastNotification.value.addToast({
-      type: 'error',
-      message: 'Lỗi khi gửi ảnh'
-    });
-    console.error('Image upload error:', error);
-  });
 
-  event.target.value = '';
+  event.target.value = "";
   nextTick(() => {
     setTimeout(() => {
       scrollToBottom(true);
@@ -527,13 +691,13 @@ const handleImageUpload = (event) => {
 };
 
 const getStatusClass = (status) => {
-  return status ? 'status-online' : 'status-offline';
+  return status ? "status-online" : "status-offline";
 };
 
 const getStatusBadgeClass = (status) => {
   return {
-    'badge-waiting': status === true,
-    'badge-canceled': status === false
+    "badge-waiting": status === true,
+    "badge-canceled": status === false,
   };
 };
 
@@ -548,40 +712,43 @@ const handleScroll = () => {
 // Lifecycle
 onMounted(async () => {
   try {
-    const response = await axios.get('http://localhost:8080/api/customers');
-    customers.value = response.data.map(customer => ({
+    const response = await axios.get("http://localhost:8080/api/customers");
+    customers.value = response.data.map((customer) => ({
       ...customer,
-      ma: customer.ma || 'N/A',
-      ten: customer.ten || 'N/A',
+      ma: customer.ma || "N/A",
+      ten: customer.ten || "N/A",
       idTaiKhoan: customer.idTaiKhoan || {
-        email: '',
-        soDienThoai: '',
-        deleted: false
-      }
+        email: "",
+        soDienThoai: "",
+        deleted: false,
+      },
     }));
     nextTick(() => {
       if (messagesContainer.value) {
-        messagesContainer.value.addEventListener('scroll', handleScroll);
+        messagesContainer.value.addEventListener("scroll", handleScroll);
       }
     });
   } catch (error) {
     toastNotification.value.addToast({
-      type: 'error',
-      message: 'Lỗi khi tải dữ liệu khách hàng'
+      type: "error",
+      message: "Lỗi khi tải dữ liệu khách hàng",
     });
-    console.error('Error fetching customers:', error);
+    console.error("Error fetching customers:", error);
   }
 });
 
 // Watch for messages changes to auto-scroll
-watch(() => activeCustomer.value, (newCustomer, oldCustomer) => {
-  if (oldCustomer && stompClient.value && stompClient.value.connected) {
-    stompClient.value.unsubscribe(`/topic/customer/${oldCustomer.id}`);
+watch(
+  () => activeCustomer.value,
+  (newCustomer, oldCustomer) => {
+    if (oldCustomer && stompClient.value && stompClient.value.connected) {
+      stompClient.value.unsubscribe(`/topic/customer/${oldCustomer.id}`);
+    }
+    if (newCustomer && stompClient.value && stompClient.value.connected) {
+      subscribeToCustomerTopic();
+    }
   }
-  if (newCustomer && stompClient.value && stompClient.value.connected) {
-    subscribeToCustomerTopic();
-  }
-});
+);
 
 // Disconnect WebSocket when component unmounts
 onUnmounted(() => {
@@ -602,7 +769,8 @@ onUnmounted(() => {
 }
 
 /* Sidebar and Chat Layout */
-.sidebar-col, .chat-col {
+.sidebar-col,
+.chat-col {
   height: 100%;
   overflow: hidden;
 }
@@ -644,8 +812,8 @@ onUnmounted(() => {
 .search-icon {
   position: absolute;
   left: 1rem;
-  top: .9rem;
-  transform: translateY(-.5rem);
+  top: 0.9rem;
+  transform: translateY(-0.5rem);
   color: #6c757d;
   z-index: 2;
 }
@@ -683,12 +851,12 @@ onUnmounted(() => {
 .avatar-img {
   width: 40px;
   height: 40px;
-  border-radius: .5rem;
+  border-radius: 0.5rem;
   object-fit: cover;
 }
 
 .status-badge {
-  border-radius: .5rem;
+  border-radius: 0.5rem;
   border: 2px solid white;
 }
 
@@ -742,7 +910,7 @@ onUnmounted(() => {
   font-size: 0.7rem;
   width: 18px;
   height: 18px;
-  border-radius: .5rem;
+  border-radius: 0.5rem;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -804,7 +972,7 @@ onUnmounted(() => {
 .avatar-img {
   width: 45px;
   height: 45px;
-  border-radius: .5rem;
+  border-radius: 0.5rem;
   object-fit: cover;
 }
 
@@ -866,7 +1034,7 @@ onUnmounted(() => {
 .message-text {
   background: white;
   padding: 8px 12px;
-  border-radius: .5rem;
+  border-radius: 0.5rem;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   word-wrap: break-word;
   font-size: 0.9rem;
@@ -980,7 +1148,7 @@ onUnmounted(() => {
 .input-group .form-control {
   flex: 1;
   border: 2px solid rgba(52, 211, 153, 0.1);
-  border-radius: .5rem;
+  border-radius: 0.5rem;
   padding: 12px 16px;
   font-size: 0.9rem;
   transition: all 0.2s ease;
@@ -995,9 +1163,9 @@ onUnmounted(() => {
   background: linear-gradient(135deg, #34d399, #10b981);
   border: none;
   color: white;
-  border-radius: .5rem;
-padding: 12px 16px;
-    font-size: 0.9rem;
+  border-radius: 0.5rem;
+  padding: 12px 16px;
+  font-size: 0.9rem;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1022,7 +1190,7 @@ padding: 12px 16px;
 }
 
 .input-actions .btn {
-  border-radius: .5rem;
+  border-radius: 0.5rem;
   width: 36px;
   height: 36px;
   display: flex;
@@ -1043,7 +1211,7 @@ padding: 12px 16px;
 .avatar-img-lg {
   width: 80px;
   height: 80px;
-  border-radius: .5rem;
+  border-radius: 0.5rem;
   object-fit: cover;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
@@ -1132,11 +1300,11 @@ padding: 12px 16px;
   .chat-container {
     height: calc(100vh - 150px);
   }
-  
+
   .sidebar-col {
     display: none;
   }
-  
+
   .sidebar-col.show {
     display: block;
     position: absolute;
@@ -1147,41 +1315,41 @@ padding: 12px 16px;
     z-index: 1000;
     background: white;
   }
-  
+
   .message-content {
     max-width: 85%;
   }
-  
+
   .chat-header {
     padding: 12px 16px;
   }
-  
+
   .messages-container {
     padding: 16px;
   }
-  
+
   .message-input {
     padding: 12px 16px;
   }
-  
+
   .user-name {
     font-size: 0.9rem;
   }
-  
+
   .user-status {
     font-size: 0.7rem;
   }
-  
+
   .input-group .form-control {
     padding: 10px 14px;
     font-size: 0.85rem;
   }
-  
+
   .btn-action {
     width: 40px;
     height: 40px;
   }
-  
+
   .input-actions .btn {
     width: 32px;
     height: 32px;
@@ -1193,25 +1361,25 @@ padding: 12px 16px;
     border-radius: 0;
     height: calc(100vh - 120px);
   }
-  
+
   .customer-name {
     font-size: 0.9rem;
   }
-  
+
   .customer-last-msg {
     font-size: 0.75rem;
   }
-  
+
   .message-text {
     font-size: 0.85rem;
     padding: 10px 14px;
   }
-  
+
   .avatar-img {
     width: 35px;
     height: 35px;
   }
-  
+
   .chat-header .avatar-img {
     width: 40px;
     height: 40px;
@@ -1233,14 +1401,18 @@ padding: 12px 16px;
   height: 20px;
   border: 2px solid #f3f3f3;
   border-top: 2px solid #34d399;
-  border-radius: .5rem;
+  border-radius: 0.5rem;
   animation: spin 1s linear infinite;
   margin-right: 8px;
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 /* Focus States */
@@ -1259,11 +1431,11 @@ padding: 12px 16px;
   .message-text {
     border: 2px solid currentColor;
   }
-  
+
   .customer-item.active {
     border-left-width: 4px;
   }
-  
+
   .status-badge {
     border-width: 3px;
   }
@@ -1274,11 +1446,11 @@ padding: 12px 16px;
   .message {
     animation: none;
   }
-  
+
   .messages-container {
     scroll-behavior: auto;
   }
-  
+
   * {
     transition: none !important;
   }
