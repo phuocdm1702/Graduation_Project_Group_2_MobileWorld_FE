@@ -360,25 +360,29 @@ export default {
     };
 
     const showConfirmIMEIModal = async (item) => {
-      selectedProduct.value = { ...item };
-      isConfirmIMEIModalVisible.value = true;
-      searchIMEI.value = '';
-      imeiCurrentPage.value = 1; // Reset về trang đầu tiên
-      await hoaDonStore.fetchImelList({ page: 0, size: 999999 });
-      if (hoaDonStore.getError) {
+    selectedProduct.value = { ...item };
+    isConfirmIMEIModalVisible.value = true;
+    searchIMEI.value = '';
+    imeiCurrentPage.value = 1; // Reset về trang đầu tiên
+    await hoaDonStore.fetchImelList({ 
+        page: 0, 
+        size: 999999, 
+        chiTietSanPhamId: selectedProduct.value.chiTietSanPhamId 
+    });
+    if (hoaDonStore.getError) {
         toastNotification.value.addToast({
-          type: 'error',
-          message: hoaDonStore.getError,
-          duration: 5000,
+            type: 'error',
+            message: hoaDonStore.getError,
+            duration: 5000,
         });
-      } else if (hoaDonStore.getImelList.length === 0) {
+    } else if (hoaDonStore.getImelList.length === 0) {
         toastNotification.value.addToast({
-          type: 'warning',
-          message: 'Không có IMEI nào khả dụng cho sản phẩm này',
-          duration: 5000,
+            type: 'warning',
+            message: 'Không có IMEI nào khả dụng cho sản phẩm này',
+            duration: 5000,
         });
-      }
-    };
+    }
+};
 
     const closeConfirmIMEIModal = () => {
       isConfirmIMEIModalVisible.value = false;
