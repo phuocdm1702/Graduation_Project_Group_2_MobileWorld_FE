@@ -105,7 +105,8 @@ import { useRoute, useRouter } from 'vue-router';
 import HeaderCard from '@/components/common/HeaderCard.vue';
 import FilterTableSection from '@/components/common/FilterTableSection.vue';
 import ToastNotification from '@/components/common/ToastNotification.vue';
-import { getChiTietSanPhamBySanPhamId, getMauSac, getRam, getBoNhoTrong, updateChiTietSanPham } from '@/store/modules/products/chiTietSanPham';
+import { getChiTietSanPhamBySanPhamId, getMauSac, getRam, getBoNhoTrong, updateChiTietSanPham, checkImelExists } from '@/store/modules/products/chiTietSanPham';
+import apiService from '@/services/api';
 
 export default {
   name: 'EditChiTietSanPham',
@@ -120,6 +121,7 @@ export default {
     const toast = ref(null);
     const isLoading = ref(false);
     const formData = ref({
+      id: null, // ID của chi tiết sản phẩm
       tenSanPham: '',
       ghiChu: '',
       variants: [{
@@ -135,6 +137,7 @@ export default {
     const boNhoTrongOptions = ref([]);
     const existingImageUrl = ref('');
     const images = ref([]);
+    const originalImei = ref('');
 
     const loadFilterOptions = async () => {
       try {
@@ -152,7 +155,7 @@ export default {
       } catch (error) {
         toast.value?.addToast({
           type: 'error',
-          message: 'Lỗi khi tải bộ lọc: ' + (error.response?.data?.error || error.message),
+          message: 'Lỗi khi tải bộ lọc: ' + (error.response?.data?.message || error.message),
           duration: 3000,
         });
         console.error('Lỗi khi tải bộ lọc:', error);
@@ -162,14 +165,18 @@ export default {
     const fetchProductDetail = async () => {
       try {
         isLoading.value = true;
+        console.log('Fetching product details for idSanPham:', route.params.id, 'and IMEI:', route.query.imei);
         const response = await getChiTietSanPhamBySanPhamId(route.params.id);
         console.log('API Response:', response.data);
         const productDetail = response.data.find(item => item.imei === route.query.imei);
         console.log('Selected Product Detail:', productDetail);
         if (!productDetail) {
-          throw new Error('Không tìm thấy chi tiết sản phẩm');
+          throw new Error(`Không tìm thấy chi tiết sản phẩm với IMEI: ${route.query.imei}`);
         }
+        // Lấy ID chi tiết sản phẩm từ API
+        const chiTietSanPhamId = await getChiTietSanPhamIdByImei(route.query.imei);
         formData.value = {
+          id: chiTietSanPhamId,
           tenSanPham: productDetail.tenSanPham || '',
           ghiChu: productDetail.ghiChu || '',
           variants: [{
@@ -180,12 +187,15 @@ export default {
             imeiList: [productDetail.imei || ''],
           }],
         };
+        originalImei.value = productDetail.imei || '';
         existingImageUrl.value = productDetail.imageUrl || '';
         console.log('Form Data after fetch:', JSON.stringify(formData.value));
+        console.log('Original IMEI:', originalImei.value);
+        console.log('ChiTietSanPham ID:', formData.value.id);
       } catch (error) {
         toast.value?.addToast({
           type: 'error',
-          message: 'Không thể tải chi tiết sản phẩm: ' + (error.response?.data?.error || error.message),
+          message: 'Không thể tải chi tiết sản phẩm: ' + (error.response?.data?.message || error.message),
           duration: 5000,
         });
         console.error('Error fetching product detail:', error);
@@ -194,10 +204,21 @@ export default {
       }
     };
 
+    const getChiTietSanPhamIdByImei = async (imei) => {
+      try {
+        const response = await apiService.get(`/api/chi-tiet-san-pham/find-by-imei?imei=${imei}`);
+        console.log('ChiTietSanPham ID Response:', response.data);
+        return response.data.id;
+      } catch (error) {
+        console.error('Error fetching ChiTietSanPham ID by IMEI:', error);
+        throw new Error('Không thể tìm ID chi tiết sản phẩm cho IMEI: ' + imei);
+      }
+    };
+
     const handleImageChange = (event) => {
       const files = event.target.files;
       if (files && files.length > 0) {
-        images.value = [files[0]]; // Chỉ cho phép một ảnh
+        images.value = [files[0]];
       }
     };
 
@@ -207,6 +228,14 @@ export default {
         toast.value?.addToast({
           type: 'error',
           message: 'Tên sản phẩm không được để trống',
+          duration: 3000,
+        });
+        return false;
+      }
+      if (!formData.value.id) {
+        toast.value?.addToast({
+          type: 'error',
+          message: 'ID chi tiết sản phẩm không hợp lệ',
           duration: 3000,
         });
         return false;
@@ -255,6 +284,23 @@ export default {
       return true;
     };
 
+    const checkImei = async (imei) => {
+      try {
+        console.log('Checking IMEI:', imei);
+        const response = await checkImelExists(imei);
+        console.log('Check IMEI response:', response.data);
+        return response.data.exists;
+      } catch (error) {
+        console.error('Lỗi khi kiểm tra IMEI:', error);
+        toast.value?.addToast({
+          type: 'error',
+          message: 'Lỗi khi kiểm tra IMEI: ' + (error.response?.data?.message || error.message),
+          duration: 3000,
+        });
+        throw new Error('Không thể kiểm tra IMEI');
+      }
+    };
+
     const handleSubmit = async () => {
       if (!validateFormData()) {
         return;
@@ -262,21 +308,40 @@ export default {
       try {
         isLoading.value = true;
         console.log('Submitting Form Data:', JSON.stringify(formData.value));
+        const newImei = formData.value.variants[0].imeiList[0];
+        if (newImei !== originalImei.value) {
+          console.log('IMEI đã thay đổi, kiểm tra trùng lặp');
+          const imeiExists = await checkImei(newImei);
+          if (imeiExists) {
+            toast.value?.addToast({
+              type: 'error',
+              message: `IMEI ${newImei} đã tồn tại trong hệ thống`,
+              duration: 3000,
+            });
+            return;
+          }
+        } else {
+          console.log('IMEI không thay đổi, bỏ qua kiểm tra trùng lặp');
+        }
         const response = await updateChiTietSanPham(
-          route.params.id,
+          formData.value.id,
           formData.value,
           images.value,
           existingImageUrl.value ? [existingImageUrl.value] : []
         );
         toast.value?.addToast({
           type: 'success',
-          message: 'Cập nhật chi tiết sản phẩm thành công',
-          duration: 2000,
+          message: `Cập nhật chi tiết sản phẩm ${formData.value.tenSanPham} thành công!`,
+          duration: 3000,
         });
-        router.push({ name: 'ChiTietSanPham', params: { id: route.params.id } });
+        setTimeout(() => {
+          router.push({ name: 'ChiTietSanPham', params: { id: route.params.id } });
+        }, 1000); // Delay navigation to ensure toast is visible
       } catch (error) {
         let errorMessage = 'Lỗi khi cập nhật chi tiết sản phẩm';
-        if (error.response?.status === 400) {
+        if (error.message === 'Không thể kiểm tra IMEI') {
+          errorMessage = 'Không thể kiểm tra IMEI. Vui lòng thử lại sau.';
+        } else if (error.response?.status === 400) {
           errorMessage = error.response.data?.message || 'Dữ liệu không hợp lệ: Kiểm tra lại thông tin đã nhập';
         } else if (error.response?.status === 404) {
           errorMessage = 'Không tìm thấy chi tiết sản phẩm';
@@ -303,6 +368,14 @@ export default {
     onMounted(async () => {
       await loadFilterOptions();
       await fetchProductDetail();
+      if (!formData.value.id) {
+        console.warn('ChiTietSanPham ID is empty after fetch');
+        toast.value?.addToast({
+          type: 'error',
+          message: 'Không thể tải ID chi tiết sản phẩm. Vui lòng kiểm tra lại.',
+          duration: 3000,
+        });
+      }
     });
 
     return {

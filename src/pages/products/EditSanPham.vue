@@ -15,7 +15,7 @@
               <div class="filter-group">
                 <label class="filter-label">Mã Sản Phẩm</label>
                 <input v-model.trim="product.ma" type="text" class="form-control search-input"
-                  placeholder="Nhập mã sản phẩm..." required />
+                  placeholder="Nhập mã sản phẩm..." required :disabled="true"/>
               </div>
             </div>
             <!-- Product Name -->
@@ -30,7 +30,7 @@
             <div class="col-lg-6 col-md-12">
               <div class="filter-group">
                 <label class="filter-label">Hãng</label>
-                <select v-model="product.idNhaSanXuat" class="form-control search-input" required>
+                <select v-model="product.idNhaSanXuat" class="form-select search-input" required>
                   <option value="">Chọn hãng</option>
                   <option v-for="option in nhaSanXuatOptions" :key="option.id" :value="option.id">
                     {{ option.nhaSanXuat }}
@@ -42,7 +42,7 @@
             <div class="col-lg-6 col-md-12">
               <div class="filter-group">
                 <label class="filter-label">Hệ Điều Hành</label>
-                <select v-model="product.idHeDieuHanh" class="form-control search-input" required>
+                <select v-model="product.idHeDieuHanh" class="form-select search-input" required>
                   <option value="">Chọn hệ điều hành</option>
                   <option v-for="option in heDieuHanhOptions" :key="option.id" :value="option.id">
                     {{ option.heDieuHanh }} {{ option.phienBan }}
@@ -54,7 +54,7 @@
             <div class="col-lg-6 col-md-12">
               <div class="filter-group">
                 <label class="filter-label">Công nghệ màn hình</label>
-                <select v-model="product.congNgheManHinhId" class="form-control search-input" required>
+                <select v-model="product.congNgheManHinhId" class="form-select search-input" required>
                   <option value="">Chọn công nghệ màn hình</option>
                   <option v-for="option in congNgheManHinhOptions" :key="option.id" :value="option.id">
                     {{ option.chuanManHinh }} {{ option.congNgheManHinh }} {{ option.doPhanGiai }} {{ option.tanSoQuet
@@ -67,7 +67,7 @@
             <div class="col-lg-6 col-md-12">
               <div class="filter-group">
                 <label class="filter-label">Pin</label>
-                <select v-model="product.idPin" class="form-control search-input" required>
+                <select v-model="product.idPin" class="form-select search-input" required>
                   <option value="">Chọn loại pin</option>
                   <option v-for="option in pinOptions" :key="option.id" :value="option.id">
                     {{ option.loaiPin }} {{ option.dungLuongPin }}
@@ -79,7 +79,7 @@
             <div class="col-lg-6 col-md-12">
               <div class="filter-group">
                 <label class="filter-label">CPU</label>
-                <select v-model="product.idCpu" class="form-control search-input" required>
+                <select v-model="product.idCpu" class="form-select search-input" required>
                   <option value="">Chọn CPU</option>
                   <option v-for="option in cpuOptions" :key="option.id" :value="option.id">
                     {{ option.tenCpu }}
@@ -91,7 +91,7 @@
             <div class="col-lg-6 col-md-12">
               <div class="filter-group">
                 <label class="filter-label">GPU</label>
-                <select v-model="product.idGpu" class="form-control search-input" required>
+                <select v-model="product.idGpu" class="form-select search-input" required>
                   <option value="">Chọn GPU</option>
                   <option v-for="option in gpuOptions" :key="option.id" :value="option.id">
                     {{ option.tenGpu }}
@@ -103,7 +103,7 @@
             <div class="col-lg-6 col-md-12">
               <div class="filter-group">
                 <label class="filter-label">Cụm Camera</label>
-                <select v-model="product.idCumCamera" class="form-control search-input" required>
+                <select v-model="product.idCumCamera" class="form-select search-input" required>
                   <option value="">Chọn cụm camera</option>
                   <option v-for="option in cumCameraOptions" :key="option.id" :value="option.id">
                     {{ option.thongSoCameraSau }} / {{ option.thongSoCameraTruoc }}
@@ -115,7 +115,7 @@
             <div class="col-lg-6 col-md-12">
               <div class="filter-group">
                 <label class="filter-label">Thiết Kế</label>
-                <select v-model="product.idThietKe" class="form-control search-input" required>
+                <select v-model="product.idThietKe" class="form-select search-input" required>
                   <option value="">Chọn thiết kế</option>
                   <option v-for="option in thietKeOptions" :key="option.id" :value="option.id">
                     {{ option.chatLieuKhung }} / {{ option.chatLieuMatLung }}
@@ -127,7 +127,7 @@
             <div class="col-lg-6 col-md-12">
               <div class="filter-group">
                 <label class="filter-label">SIM</label>
-                <select v-model="product.idSim" class="form-control search-input" required>
+                <select v-model="product.idSim" class="form-select search-input" required>
                   <option value="">Chọn loại SIM</option>
                   <option v-for="option in simOptions" :key="option.id" :value="option.id">
                     {{ option.cacLoaiSimHoTro }}
@@ -139,7 +139,7 @@
             <div class="col-lg-6 col-md-12">
               <div class="filter-group">
                 <label class="filter-label">Công nghệ mạng</label>
-                <select v-model="product.idCongNgheMang" class="form-control search-input" required>
+                <select v-model="product.idCongNgheMang" class="form-select search-input" required>
                   <option value="">Chọn công nghệ mạng</option>
                   <option v-for="option in congNgheMangOptions" :key="option.id" :value="option.id">
                     {{ option.tenCongNgheMang }}
@@ -151,7 +151,7 @@
             <div class="col-lg-6 col-md-12">
               <div class="filter-group">
                 <label class="filter-label">Chỉ số kháng bụi và nước</label>
-                <select v-model="product.idChiSoKhangBuiVaNuoc" class="form-control search-input">
+                <select v-model="product.idChiSoKhangBuiVaNuoc" class="form-select search-input">
                   <option value="">Chọn chỉ số kháng bụi và nước</option>
                   <option v-for="option in chiSoKhangBuiVaNuocOptions" :key="option.id" :value="option.id">
                     {{ option.tenChiSo }}
@@ -162,7 +162,7 @@
             <div class="col-lg-6 col-md-12">
               <div class="filter-group">
                 <label class="filter-label">Hỗ trợ bộ nhớ ngoài</label>
-                <select v-model="product.idHoTroBoNhoNgoai" class="form-control search-input">
+                <select v-model="product.idHoTroBoNhoNgoai" class="form-select search-input">
                   <option value="">Chọn hỗ trợ bộ nhớ ngoài</option>
                   <option v-for="option in hoTroBoNhoNgoaiOptions" :key="option.id" :value="option.id">
                     {{ option.hoTroBoNhoNgoai }}
@@ -173,7 +173,7 @@
             <div class="col-lg-6 col-md-12">
               <div class="filter-group">
                 <label class="filter-label">Công nghệ sạc</label>
-                <select v-model="product.hoTroCongNgheSacId" class="form-control search-input">
+                <select v-model="product.hoTroCongNgheSacId" class="form-select search-input">
                   <option value="">Chọn công nghệ sạc</option>
                   <option v-for="option in hoTroCongNgheSacOptions" :key="option.id" :value="option.id">
                     {{ option.congNgheHoTro }} {{ option.congSac }}
@@ -644,12 +644,10 @@ export default defineComponent({
 }
 
 .search-input {
-  padding-left: 1rem;
-  border: 2px solid rgba(52, 211, 153, 0.1);
+  border: 1px solid #dee2e6;
   border-radius: 8px;
   transition: all 0.2s ease;
   font-size: 0.9rem;
-  background: #f8f9fa;
 }
 
 .search-input:focus {
