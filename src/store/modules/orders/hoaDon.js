@@ -1,4 +1,3 @@
-// File: hoaDon.js
 import { defineStore } from 'pinia';
 import { apiService } from '@/services/api';
 
@@ -6,7 +5,7 @@ export const useHoaDonStore = defineStore('hoaDon', {
     state: () => ({
         invoices: [],
         invoiceDetail: null,
-        imelList: [], // Thêm state mới để lưu danh sách IMEI
+        imelList: [],
         isLoading: false,
         error: null,
         page: 0,
@@ -19,12 +18,11 @@ export const useHoaDonStore = defineStore('hoaDon', {
             startDate: null,
             endDate: null,
             trangThai: null,
-            loaiDon: null, // Thêm loaiDon vào filters
+            loaiDon: null,
         },
     }),
 
     actions: {
-        // GET API view HoaDon
         async fetchInvoices({ page = this.page, size = this.size } = {}) {
             this.isLoading = true;
             this.page = page;
@@ -57,7 +55,7 @@ export const useHoaDonStore = defineStore('hoaDon', {
                     giamGia: item.soTienGiamToiDa,
                     ngayTao: this.formatDate(item.ngayTao),
                     loaiDon: item.loaiDon,
-                    trangThaiFormatted: this.mapStatus(item.trangThai), // Sử dụng mapStatus
+                    trangThaiFormatted: this.mapStatus(item.trangThai),
                 }));
                 this.totalElements = totalElements;
             } catch (error) {
@@ -73,7 +71,6 @@ export const useHoaDonStore = defineStore('hoaDon', {
             this.fetchInvoices();
         },
 
-        // GET API Detail
         async fetchInvoiceDetail(id) {
             this.isLoading = true;
             this.error = null;
@@ -84,7 +81,7 @@ export const useHoaDonStore = defineStore('hoaDon', {
                     id: response.data.id,
                     ma: response.data.maHoaDon,
                     loaiDon: response.data.loaiDon,
-                    trangThai: this.mapStatus(response.data.trangThai), // Sử dụng mapStatus
+                    trangThai: this.mapStatus(response.data.trangThai),
                     idPhieuGiamGia: { ma: response.data.maGiamGia || 'Không có' },
                     ngayTao: this.formatDate(response.data.ngayTao),
                     idKhachHang: {
@@ -97,20 +94,26 @@ export const useHoaDonStore = defineStore('hoaDon', {
                     phiVanChuyen: response.data.phiVanChuyen,
                     maNhanVien: response.data.maNhanVien,
                     tenNhanVien: response.data.tenNhanVien,
-                    products: response.data.sanPhamChiTietInfos.map(product => ({
-                        chiTietSanPhamId: product.chiTietSanPhamId, // Thêm trường này
-                        id: product.chiTietSanPhamId, // Sử dụng chiTietSanPhamId làm id
-                        maSanPham: product.maSanPham, // Giữ maSanPham để hiển thị
-                        maHinhSanPhamChiTiet: product.maHinhSanPhamChiTiet, // Thêm mã ChiTietSanPham
-                        name: product.tenSanPham,
-                        imei: product.imel,
-                        ram: product.dungLuongRam,
-                        capacity: product.dungLuongBoNhoTrong,
-                        color: product.mauSac,
-                        price: product.giaBan,
-                        quantity: 1,
-                        image: product.duongDan,
-                    })),
+                    products: response.data.sanPhamChiTietInfos.map(product => {
+                        if (!product.idSanPham) {
+                            console.warn('Missing idSanPham for product:', product);
+                        }
+                        return {
+                            chiTietSanPhamId: product.chiTietSanPhamId,
+                            idSanPham: product.idSanPham,
+                            id: product.chiTietSanPhamId,
+                            maSanPham: product.maSanPham,
+                            maHinhSanPhamChiTiet: product.maHinhSanPhamChiTiet,
+                            name: product.tenSanPham,
+                            imei: product.imel,
+                            ram: product.dungLuongRam,
+                            capacity: product.dungLuongBoNhoTrong,
+                            color: product.mauSac,
+                            price: product.giaBan,
+                            quantity: 1,
+                            image: product.duongDan,
+                        };
+                    }),
                     payments: response.data.thanhToanInfos.map(payment => ({
                         id: payment.maHinhThucThanhToan,
                         code: payment.maHinhThucThanhToan,
@@ -139,7 +142,6 @@ export const useHoaDonStore = defineStore('hoaDon', {
             }
         },
 
-        // GET API by ID
         async fetchInvoiceById(ma) {
             this.isLoading = true;
             this.error = null;
@@ -155,7 +157,7 @@ export const useHoaDonStore = defineStore('hoaDon', {
                     phiVanChuyen: response.data.phiVanChuyen,
                     ngayTao: this.formatDate(response.data.ngayTao),
                     loaiDon: response.data.loaiDon,
-                    trangThaiFormatted: this.mapStatus(response.data.trangThai), // Sử dụng mapStatus
+                    trangThaiFormatted: this.mapStatus(response.data.trangThai),
                 };
                 this.invoices = [invoice, ...this.invoices.filter((inv) => inv.ma !== ma)];
                 this.totalElements = this.invoices.length;
@@ -168,29 +170,39 @@ export const useHoaDonStore = defineStore('hoaDon', {
             }
         },
 
-        async fetchImelList({ page = 0, size = 5, chiTietSanPhamId } = {}) {
-    this.isLoading = true;
-    try {
-        const params = { page, size, chiTietSanPhamId };
-        const response = await apiService.get('/api/hoa-don/hoa-don-chi-tiet/imel', { params });
-        const { content, totalElements } = response.data;
+        async fetchImelList({ page = 0, size = 100, idSanPham, chiTietSanPhamId } = {}) {
+            this.isLoading = true;
+            try {
+                if (!idSanPham || !chiTietSanPhamId) {
+                    throw new Error('idSanPham and chiTietSanPhamId are required');
+                }
+                const params = { page, size, idSanPham, chiTietSanPhamId };
+                console.log('Fetching IMEI list with params:', params);
+                const response = await apiService.get('/api/hoa-don/hoa-don-chi-tiet/imel', { params });
+                const { content, totalElements } = response.data;
 
-        this.imelList = content.map(item => ({
-            id: item.id,
-            imei: item.imel,
-            maImel: item.ma,
-            status: item.deleted === false ? 'Còn hàng' : 'Đã bán',
-        }));
-        this.totalElements = totalElements;
-    } catch (error) {
-        this.error = error.message || 'Không thể tải danh sách IMEI';
-        console.error('Lỗi khi gọi API danh sách IMEI:', error);
-    } finally {
-        this.isLoading = false;
-    }
-},
+                this.imelList = content.map(item => ({
+                    id: item.id,
+                    imei: item.imel,
+                    maImel: item.ma,
+                    status: item.deleted === false ? 'Còn hàng' : 'Đã bán',
+                    ram: item.dungLuongRam,
+                    capacity: item.dungLuongBoNhoTrong,
+                    price: item.giaBan,
+                    color: item.mauSac
+                }));
+                this.totalElements = totalElements;
+            } catch (error) {
+                this.error = error.message || 'Không thể tải danh sách IMEI';
+                console.error('Lỗi khi gọi API danh sách IMEI:', error);
+                if (error.response) {
+                    console.error('Response data:', error.response.data);
+                }
+            } finally {
+                this.isLoading = false;
+            }
+        },
 
-        // GET API down HoaDon
         async printInvoice(id) {
             this.isLoading = true;
             this.error = null;
@@ -200,7 +212,6 @@ export const useHoaDonStore = defineStore('hoaDon', {
                     responseType: 'blob',
                 });
 
-                // Tìm hóa đơn để lấy thông tin loaiDon
                 const invoice = this.invoices.find(inv => inv.id === id) || this.invoiceDetail;
                 const loaiDonText = invoice?.loaiDon === 'trực tiếp' ? 'tại quầy' : 'online';
 
@@ -223,7 +234,6 @@ export const useHoaDonStore = defineStore('hoaDon', {
             }
         },
 
-        // GET API export Excel
         async exportExcel() {
             this.isLoading = true;
             this.error = null;
@@ -264,7 +274,6 @@ export const useHoaDonStore = defineStore('hoaDon', {
             }
         },
 
-        // Trong actions của useHoaDonStore
         async updateInvoiceStatus(id, trangThai, idNhanVien = null) {
             this.isLoading = true;
             this.error = null;
@@ -273,7 +282,6 @@ export const useHoaDonStore = defineStore('hoaDon', {
                 const response = await apiService.put(`/api/hoa-don/${id}/update-status`, null, {
                     params: { trangThai, idNhanVien }
                 });
-                // Cập nhật invoiceDetail nếu hóa đơn đang được xem
                 if (this.invoiceDetail && this.invoiceDetail.id === id) {
                     this.invoiceDetail.trangThai = this.mapStatus(response.data.trangThai);
                     this.invoiceDetail.history.push({
@@ -310,6 +318,7 @@ export const useHoaDonStore = defineStore('hoaDon', {
                         trangThai: this.mapStatus(updatedInvoice.trangThai),
                         products: updatedInvoice.sanPhamChiTietInfos.map(product => ({
                             chiTietSanPhamId: product.chiTietSanPhamId,
+                            idSanPham: product.idSanPham,
                             id: product.chiTietSanPhamId,
                             maSanPham: product.maSanPham,
                             maHinhSanPhamChiTiet: product.maHinhSanPhamChiTiet,
@@ -387,7 +396,7 @@ export const useHoaDonStore = defineStore('hoaDon', {
     getters: {
         getInvoices: (state) => state.invoices,
         getInvoiceDetail: (state) => state.invoiceDetail,
-        getImelList: (state) => state.imelList, // Thêm getter để truy cập danh sách IMEI
+        getImelList: (state) => state.imelList,
         getIsLoading: (state) => state.isLoading,
         getError: (state) => state.error,
         getTotalElements: (state) => state.totalElements,
