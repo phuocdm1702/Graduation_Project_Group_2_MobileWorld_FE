@@ -361,6 +361,94 @@ export const useHoaDonStore = defineStore('hoaDon', {
             }
         },
 
+        async selectIMEI({ imei, selectedProduct, invoiceId, products }) {
+            this.isLoading = true;
+            this.error = null;
+
+            try {
+                if (!imei || typeof imei !== 'string' || imei.trim() === '') {
+                    throw new Error('IMEI không hợp lệ');
+                }
+                if (!selectedProduct || !selectedProduct.chiTietSanPhamId || !selectedProduct.idSanPham) {
+                    throw new Error('Thông tin sản phẩm không đầy đủ');
+                }
+
+                const imeiData = this.imelList.find(i => i.imei === imei);
+                if (!imeiData || imeiData.status !== 'Còn hàng') {
+                    throw new Error(`IMEI ${imei} không khả dụng`);
+                }
+
+                // Step 1: Fetch idImel
+                const idImelResponse = await apiService.get(`/api/chi-tiet-san-pham/find-id-imel-by-imei?imei=${imei}`);
+                const idImel = idImelResponse.data?.idImel;
+                if (!idImel) {
+                    throw new Error('Không tìm thấy idImel cho IMEI này');
+                }
+
+                // Step 2: Create new product using selectedProduct and imeiData
+                const newProduct = {
+                    chiTietSanPhamId: selectedProduct.chiTietSanPhamId,
+                    idSanPham: selectedProduct.idSanPham,
+                    id: selectedProduct.id,
+                    maSanPham: imeiData.maImel || selectedProduct.maSanPham || 'N/A',
+                    maHinhSanPhamChiTiet: imeiData.maHinhSanPhamChiTiet || selectedProduct.maHinhSanPhamChiTiet || 'N/A',
+                    name: imeiData.name || selectedProduct.name || 'Sản phẩm không xác định',
+                    imei: imei,
+                    ram: imeiData.ram || selectedProduct.ram || 'N/A',
+                    capacity: imeiData.capacity || selectedProduct.capacity || 'N/A',
+                    color: imeiData.color || selectedProduct.color || 'N/A',
+                    price: imeiData.price || selectedProduct.price || 0,
+                    quantity: 1,
+                    image: imeiData.image || selectedProduct.image || '/assets/placeholder-product.png',
+                    imeiList: [{ imei, status: 'Còn hàng' }],
+                };
+
+                // Step 3: Replace product
+                const productIndex = products.findIndex(p => p.chiTietSanPhamId === selectedProduct.chiTietSanPhamId);
+                if (productIndex === -1) {
+                    throw new Error('Không tìm thấy sản phẩm để thay thế');
+                }
+
+                // Step 4: Assign IMEI to invoice
+                const imelMap = { [newProduct.chiTietSanPhamId]: imei };
+                const result = await apiService.post(`/api/hoa-don/xac-nhan-imei/${invoiceId}`, imelMap);
+
+                if (result.status === 200) {
+                    // Update products in invoiceDetail
+                    if (this.invoiceDetail && this.invoiceDetail.id === invoiceId) {
+                        this.invoiceDetail.products[productIndex] = newProduct;
+                        this.invoiceDetail.history.push({
+                            id: Date.now(),
+                            code: `LSHD_${Date.now()}`,
+                            invoice: this.invoiceDetail.ma,
+                            employee: 'Hệ thống',
+                            action: `Thay thế sản phẩm ${selectedProduct.name} bằng ${newProduct.name} với IMEI ${imei}`,
+                            timestamp: this.formatDate(new Date()),
+                            status: 'completed',
+                        });
+                    }
+
+                    return {
+                        success: true,
+                        message: `Đã thay thế sản phẩm và gán IMEI ${imei} cho ${newProduct.name}`,
+                        updatedProduct: newProduct,
+                    };
+                } else {
+                    throw new Error(result.data?.message || 'Lỗi khi gán IMEI');
+                }
+            } catch (error) {
+                this.error = error.message || 'Lỗi khi thay thế sản phẩm';
+                console.error('Error in selectIMEI:', error);
+                console.error('Error response:', error.response?.data);
+                return {
+                    success: false,
+                    message: error.response?.data?.message || error.message || 'Lỗi không xác định',
+                };
+            } finally {
+                this.isLoading = false;
+            }
+        },
+
         formatDate(dateString) {
             const date = new Date(dateString);
             const time = date.toLocaleTimeString('en-GB', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
