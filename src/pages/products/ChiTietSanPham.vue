@@ -177,9 +177,9 @@
             <template #checkbox="{ item }">
               <input type="checkbox" v-model="selectedImeis" :value="item.imei" />
             </template>
-            <template #stt="{ item, index }">
-              {{ (currentPage - 1) * pageSize + index + 1 }}
-            </template>
+          <template #stt="{ globalIndex }">
+            {{ globalIndex + 1 }}
+          </template>
             <template #imageUrl="{ item }">
               <img :src="item.imageUrl" alt="Product Image" class="product-image" />
             </template>

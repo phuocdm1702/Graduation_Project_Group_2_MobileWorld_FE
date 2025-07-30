@@ -122,9 +122,9 @@
             :data="filteredCustomers"
             :pageSizeOptions="[5, 10, 15, 20, 30, 40, 50]"
           >
-            <template #stt="{ item, index }">
-              {{ index + 1 }}
-            </template>
+          <template #stt="{ globalIndex }">
+            {{ globalIndex + 1 }}
+          </template>
             <template #ma="{ item }">
               <div class="code-cell">
                 <span class="code-text">{{ item.ma }}</span>

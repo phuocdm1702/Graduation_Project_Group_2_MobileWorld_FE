@@ -173,7 +173,7 @@
           </template>
           <template #actions="{ item }">
             <div class="action-buttons-cell">
-              <button class="btn btn-sm btn-table" @click="viewProduct(item)" title="Xem chi tiết">
+              <button class="btn btn-sm btn-table" :disabled="item.stockStatus === 'Hết hàng'" @click="viewProduct(item)" title="Xem chi tiết">
                 <i class="bi bi-eye-fill"></i>
               </button>
               <button class="btn btn-sm btn-table" @click="editProduct(item)" title="Chỉnh sửa">
