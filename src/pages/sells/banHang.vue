@@ -429,9 +429,9 @@
             </div>
             <DataTable title="" :headers="productHeaders" :data="filteredProducts"
               :pageSizeOptions="[5, 10, 15, 20, 30, 40, 50]" @scroll="handleScroll">
-              <template #stt="{ index }">
-                {{ index + 1 }}
-              </template>
+          <template #stt="{ globalIndex }">
+            {{ globalIndex + 1 }}
+          </template>
               <template #tenSanPham="{ item }">
                 <span class="text-muted">{{ item.tenSanPham }}</span>
               </template>

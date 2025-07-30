@@ -2,12 +2,8 @@
   <div class="container-fluid py-4">
     <!-- Breadcrumb -->
     <!-- Header Section -->
-    <HeaderCard
-        title="Thống Kê & Báo Cáo"
-        badgeText="Hệ Thống POS"
-        badgeClass="gradient-custom-teal"
-        :backgroundOpacity="0.95"
-    />
+    <HeaderCard title="Thống Kê & Báo Cáo" badgeText="Hệ Thống POS" badgeClass="gradient-custom-teal"
+      :backgroundOpacity="0.95" />
 
     <!-- Filter Section -->
     <FilterTableSection title="Bộ Lọc Thống Kê" icon="bi bi-funnel">
@@ -18,7 +14,7 @@
             <div class="filter-group">
               <label class="filter-label">Khoảng thời gian thống kê</label>
               <select v-model="filterType" class="form-control filter-select"
-                      @change="fetchData(); fetchRevenueChartData()">
+                @change="fetchData(); fetchRevenueChartData()">
                 <option value="day">Hôm nay</option>
                 <option value="week">Tuần này</option>
                 <option value="month">Tháng này</option>
@@ -33,13 +29,10 @@
             <div class="filter-group">
               <label class="filter-label">Thời gian tùy chọn</label>
               <div class="date-range-wrapper d-flex align-items-center">
-                <input type="date" v-model="startDate" class="form-control date-input"/>
+                <input type="date" v-model="startDate" class="form-control date-input" />
                 <span class="date-separator mx-2">đến</span>
-                <input type="date" v-model="endDate" class="form-control date-input"/>
-                <button
-                    @click="fetchData(); fetchRevenueChartData()"
-                    class="btn btn-action ms-2"
-                >
+                <input type="date" v-model="endDate" class="form-control date-input" />
+                <button @click="fetchData(); fetchRevenueChartData()" class="btn btn-action ms-2">
                   Lọc
                 </button>
               </div>
@@ -51,13 +44,9 @@
             <div class="filter-group">
               <label class="filter-label">Loại biểu đồ</label>
               <div class="chart-type-buttons">
-                <button
-                    v-for="type in chartTypes"
-                    :key="type.value"
-                    class="btn chart-type-btn"
-                    :class="{ 'active': selectedChartType === type.value }"
-                    @click="selectedChartType = type.value; updateRevenueChart()"
-                >
+                <button v-for="type in chartTypes" :key="type.value" class="btn chart-type-btn"
+                  :class="{ 'active': selectedChartType === type.value }"
+                  @click="selectedChartType = type.value; updateRevenueChart()">
                   <i :class="type.icon" class="me-2"></i>
                   {{ type.label }}
                 </button>
@@ -71,7 +60,7 @@
           <div class="row g-3">
             <div class="col-lg-12">
               <div class="filter-stats d-flex gap-4">
-                                <div class="stat-item d-flex gap-1">
+                <div class="stat-item d-flex gap-1">
                   <span class="stat-label">Số đơn hàng:</span>
                   <span class="stat-value text-success">{{ totalOrders }}</span>
                 </div>
@@ -79,12 +68,12 @@
                   <span class="stat-label">Tổng doanh thu:</span>
                   <span class="stat-value text-success">{{ formatCurrency(totalRevenue) }}</span>
                 </div>
-<!--                <div class="stat-item">-->
-<!--                  <span class="stat-label">Tăng trưởng:</span>-->
-<!--                  <span class="stat-value" :class="growthRate >= 0 ? 'text-success' : 'text-danger'">-->
-<!--                    {{ growthRate >= 0 ? '+' : '' }}{{ growthRate }}%-->
-<!--                  </span>-->
-<!--                </div>-->
+                <!--                <div class="stat-item">-->
+                <!--                  <span class="stat-label">Tăng trưởng:</span>-->
+                <!--                  <span class="stat-value" :class="growthRate >= 0 ? 'text-success' : 'text-danger'">-->
+                <!--                    {{ growthRate >= 0 ? '+' : '' }}{{ growthRate }}%-->
+                <!--                  </span>-->
+                <!--                </div>-->
               </div>
             </div>
           </div>
@@ -140,7 +129,7 @@
         <FilterTableSection title="Sản Phẩm Bán Chạy" icon="bi bi-trophy">
           <div class="top-products-container p-4">
             <div v-for="(product, index) in topProducts" :key="product.id"
-                 class="product-item d-flex align-items-center mb-3">
+              class="product-item d-flex align-items-center mb-3">
               <div class="product-rank me-3">
                 <span class="rank-number" :class="getRankClass(index)">{{ index + 1 }}</span>
               </div>
@@ -148,14 +137,15 @@
                 <div class="product-name fw-semibold">{{ product.productName }}</div>
                 <div class="product-stats">
                   <small class="text-muted">Đã bán: {{ product.soldQuantity }} | Giá: {{
-                      formatCurrency(product.price)
-                    }}</small>
+                    formatCurrency(product.price)
+                  }}</small>
                 </div>
               </div>
               <div class="product-progress">
                 <div class="progress" style="width: 60px; height: 4px;">
                   <div class="progress-bar bg-mint"
-                       :style="{ width: (product.soldQuantity / Math.max(...topProducts.map(p => p.soldQuantity)) * 100) + '%' }"></div>
+                    :style="{ width: (product.soldQuantity / Math.max(...topProducts.map(p => p.soldQuantity)) * 100) + '%' }">
+                  </div>
                 </div>
               </div>
             </div>
@@ -171,25 +161,19 @@
         <FilterTableSection title="Phân Bố Trạng Thái Đơn Hàng" icon="bi bi-pie-chart">
           <div class="chart-container p-4">
             <div class="d-flex justify-content-center gap-1 mb-4">
-              <button
-                  @click="chartFilterType = 'day'; fetchOrderStatusStats()"
-                  :class="['btn', chartFilterType === 'day' ? 'btn-primary' : 'btn-outline-secondary']"
-                  class="px-3 py-1 rounded-start"
-              >
+              <button @click="chartFilterType = 'day'; fetchOrderStatusStats()"
+                :class="['btn', chartFilterType === 'day' ? 'btn-primary' : 'btn-outline-secondary']"
+                class="px-3 py-1 rounded-start">
                 Ngày
               </button>
-              <button
-                  @click="chartFilterType = 'month'; fetchOrderStatusStats()"
-                  :class="['btn', chartFilterType === 'month' ? 'btn-primary' : 'btn-outline-secondary']"
-                  class="px-3 py-1"
-              >
+              <button @click="chartFilterType = 'month'; fetchOrderStatusStats()"
+                :class="['btn', chartFilterType === 'month' ? 'btn-primary' : 'btn-outline-secondary']"
+                class="px-3 py-1">
                 Tháng
               </button>
-              <button
-                  @click="chartFilterType = 'year'; fetchOrderStatusStats()"
-                  :class="['btn', chartFilterType === 'year' ? 'btn-primary' : 'btn-outline-secondary']"
-                  class="px-3 py-1 rounded-end"
-              >
+              <button @click="chartFilterType = 'year'; fetchOrderStatusStats()"
+                :class="['btn', chartFilterType === 'year' ? 'btn-primary' : 'btn-outline-secondary']"
+                class="px-3 py-1 rounded-end">
                 Năm
               </button>
             </div>
@@ -197,7 +181,7 @@
               {{ error }}
             </div>
             <div v-else-if="!orderStatusStats || Object.values(orderStatusStats).every(val => val === 0)"
-                 class="text-muted text-center mb-3">
+              class="text-muted text-center mb-3">
               Không có dữ liệu để hiển thị.
             </div>
             <canvas id="orderStatusChart" class="status-chart"></canvas>
@@ -232,11 +216,7 @@
 
     <!-- Detailed Statistics Table -->
     <FilterTableSection title="Bảng Thống Kê Chi Tiết" icon="bi bi-table">
-      <DataTable
-          :headers="detailedStatsHeaders"
-          :data="detailedStats"
-          :pageSizeOptions="[5, 10, 15]"
-      >
+      <DataTable :headers="detailedStatsHeaders" :data="detailedStats" :pageSizeOptions="[5, 10, 15]">
         <template v-slot:revenue="{ item }">
           {{ formatCurrency(item.revenue) }}
         </template>
@@ -262,19 +242,16 @@
       <div v-if="topProducts.length === 0" class="text-center text-gray-500 py-4">
         Không có dữ liệu sản phẩm bán chạy.
       </div>
-      <DataTable
-          v-else
-          :headers="[{value: 'index', text: '#'}, {value: 'imageUrl', text: 'Ảnh'}, {value: 'productName', text: 'Tên Sản Phẩm'}, {value: 'price', text: 'Giá Bán'}, {value: 'soldQuantity', text: 'Số Lượng Đã Bán'}]"
-          :data="topProducts"
-          :pageSizeOptions="[5, 10, 15]"
-      >
-        <template v-slot:index="{ index }">
-          {{ (currentPage * pageSize) + (index + 1) }}
+      <DataTable v-else
+        :headers="[{ value: 'stt', text: '#' }, { value: 'imageUrl', text: 'Ảnh' }, { value: 'productName', text: 'Tên Sản Phẩm' }, { value: 'price', text: 'Giá Bán' }, { value: 'soldQuantity', text: 'Số Lượng Đã Bán' }]"
+        :data="topProducts" :pageSizeOptions="[5, 10, 15]">
+        <template #stt="{ globalIndex }">
+          {{ globalIndex + 1 }}
         </template>
         <template v-slot:imageUrl="{ item }">
-            <span v-if="item.imageUrl && item.imageUrl.trim() !== ''">
-                <img :src="item.imageUrl" alt="Ảnh"  class="product-image"/>
-            </span>
+          <span v-if="item.imageUrl && item.imageUrl.trim() !== ''">
+            <img :src="item.imageUrl" alt="Ảnh" class="product-image" />
+          </span>
           <span v-else>N/A</span>
         </template>
         <template v-slot:productName="{ item }">
@@ -294,14 +271,11 @@
       <div v-if="sanPhamHetHang.length === 0" class="text-center text-gray-500 py-4">
         Không có dữ liệu sản phẩm sắp hết hàng.
       </div>
-      <DataTable
-          v-else
-          :headers="[{value: 'index', text: '#'}, {value: 'tenSanPham', text: 'Tên Sản Phẩm'}, {value: 'soLuong', text: 'Số Lượng'}]"
-          :data="sanPhamHetHang"
-          :pageSizeOptions="[5, 8, 10]"
-      >
-        <template v-slot:index="{ index }">
-          {{ (sanPhamHetHangCurrentPage * sanPhamHetHangPageSize) + (index + 1) }}
+      <DataTable v-else
+        :headers="[{ value: 'stt', text: '#' }, { value: 'tenSanPham', text: 'Tên Sản Phẩm' }, { value: 'soLuong', text: 'Số Lượng' }]"
+        :data="sanPhamHetHang" :pageSizeOptions="[5, 8, 10]">
+        <template #stt="{ globalIndex }">
+          {{ globalIndex + 1 }}
         </template>
         <template v-slot:tenSanPham="{ item }">
           {{ item.tenSanPham || 'N/A' }}
@@ -315,12 +289,12 @@
 </template>
 
 <script>
-import {ref, computed, watch} from 'vue';
-import {useRoute} from 'vue-router';
+import { ref, computed, watch } from 'vue';
+import { useRoute } from 'vue-router';
 import FilterTableSection from '@/components/common/FilterTableSection.vue';
 import HeaderCard from '@/components/common/HeaderCard.vue';
 import DataTable from '@/components/common/DataTable.vue';
-import {ThongKeJs} from '@/store/modules/statistics/ThongKe.js';
+import { ThongKeJs } from '@/store/modules/statistics/ThongKe.js';
 
 export default {
   name: 'ThongKe',
@@ -377,12 +351,12 @@ export default {
     });
 
     const detailedStatsHeaders = ref([
-      {text: 'Thời gian', value: 'period'},
-      {text: 'Doanh thu', value: 'revenue'},
-      {text: 'Số đơn hàng', value: 'orders'},
-      {text: 'Giá trị TB/đơn', value: 'avgOrder'},
-      {text: 'Tăng trưởng', value: 'growth'},
-      {text: 'Trạng thái', value: 'status'}
+      { text: 'Thời gian', value: 'period' },
+      { text: 'Doanh thu', value: 'revenue' },
+      { text: 'Số đơn hàng', value: 'orders' },
+      { text: 'Giá trị TB/đơn', value: 'avgOrder' },
+      { text: 'Tăng trưởng', value: 'growth' },
+      { text: 'Trạng thái', value: 'status' }
     ]);
 
     const detailedStats = computed(() => {
@@ -496,6 +470,7 @@ export default {
     opacity: 0;
     transform: translateY(15px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -507,6 +482,7 @@ export default {
     opacity: 0;
     transform: translateX(-15px);
   }
+
   to {
     opacity: 1;
     transform: translateX(0);
@@ -518,6 +494,7 @@ export default {
     opacity: 0;
     transform: scale(0.97);
   }
+
   to {
     opacity: 1;
     transform: scale(1);
@@ -814,10 +791,14 @@ export default {
 }
 
 .product-image {
-  width: 50px; /* Kích thước chiều rộng ảnh */
-  height: 50px; /* Kích thước chiều cao ảnh */
-  object-fit: cover; /* Đảm bảo ảnh không bị méo */
-  border-radius: 4px; /* Bo góc ảnh (tùy chọn) */
+  width: 50px;
+  /* Kích thước chiều rộng ảnh */
+  height: 50px;
+  /* Kích thước chiều cao ảnh */
+  object-fit: cover;
+  /* Đảm bảo ảnh không bị méo */
+  border-radius: 4px;
+  /* Bo góc ảnh (tùy chọn) */
 }
 
 .row.align-items-stretch {
@@ -825,23 +806,24 @@ export default {
   flex-wrap: wrap;
 }
 
-.row.align-items-stretch > .col-lg-8,
-.row.align-items-stretch > .col-lg-4,
-.row.align-items-stretch > .col-lg-6 {
+.row.align-items-stretch>.col-lg-8,
+.row.align-items-stretch>.col-lg-4,
+.row.align-items-stretch>.col-lg-6 {
   display: flex;
   flex-direction: column;
 }
 
-.row.align-items-stretch > .col-lg-8 > *,
-.row.align-items-stretch > .col-lg-4 > *,
-.row.align-items-stretch > .col-lg-6 > * {
+.row.align-items-stretch>.col-lg-8>*,
+.row.align-items-stretch>.col-lg-4>*,
+.row.align-items-stretch>.col-lg-6>* {
   flex-grow: 1;
 }
 
 @media (max-width: 992px) {
-  .row.align-items-stretch > .col-lg-4 {
+  .row.align-items-stretch>.col-lg-4 {
     margin-bottom: 1.5rem;
   }
+
   .chart-container {
     height: 350px;
   }
@@ -889,6 +871,7 @@ export default {
 }
 
 @media (max-width: 576px) {
+
   .chart-container,
   .top-products-container {
     height: 250px;
@@ -929,6 +912,7 @@ export default {
 }
 
 @media print {
+
   .filter-actions,
   .action-buttons {
     display: none !important;
