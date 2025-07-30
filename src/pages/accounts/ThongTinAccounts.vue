@@ -74,7 +74,7 @@
             type="text"
             id="status"
             class="form-control search-input"
-            :value="formData.status === 'Hoạt động' ? 'Hoạt động' : 'Đã nghỉ'"
+            :value="formData.status === 'Đã nghỉ' ? 'Hoạt động' : 'Đã nghỉ'"
             disabled
           />
         </div>
