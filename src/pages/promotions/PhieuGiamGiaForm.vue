@@ -105,6 +105,7 @@
                 type="date"
                 class="form-control date-input"
                 required
+                :min="today"
               />
             </div>
             <div class="mb-3">
@@ -114,6 +115,7 @@
                 type="date"
                 class="form-control date-input"
                 required
+                :min="formData.ngayBatDau || today"
               />
             </div>
             <div class="mb-3">
@@ -365,7 +367,7 @@ export default {
     const selectedCustomersData = computed(() => {
       return customers.value.filter((customer) =>
         selectedCustomers.value.includes(customer.id)
-      );
+      ); 
     });
 
     const generateRandomCode = () => {
@@ -536,6 +538,18 @@ export default {
     };
 
     const submitForm = async () => {
+      // Validate ngày bắt đầu và ngày kết thúc
+      if (
+        formData.value.ngayBatDau &&
+        formData.value.ngayKetThuc &&
+        new Date(formData.value.ngayKetThuc) <= new Date(formData.value.ngayBatDau)
+      ) {
+        toastNotification.value.addToast({
+          type: "error",
+          message: "Ngày kết thúc phải lớn hơn ngày bắt đầu!",
+        });
+        return;
+      }
       if (
         !formData.value.ma ||
         !formData.value.tenPhieuGiamGia ||
@@ -613,6 +627,8 @@ export default {
       router.push("/phieuGiamGia");
     };
 
+    const today = new Date().toISOString().split("T")[0];
+
     return {
       formData,
       searchCustomer,
@@ -631,6 +647,7 @@ export default {
       submitForm,
       goBack,
       formatDate,
+      today,
     };
   },
 };
