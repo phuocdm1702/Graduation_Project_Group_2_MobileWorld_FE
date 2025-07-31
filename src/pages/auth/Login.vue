@@ -237,114 +237,108 @@ export default {
     });
 
     const handleLogin = async () => {
-      if (authStore.isAuthenticated) {
+  if (authStore.isAuthenticated) {
+    if (toast.value) {
+      toast.value.addToast({
+        type: 'info',
+        message: 'Bạn đã đăng nhập. Vui lòng đăng xuất để đăng nhập tài khoản khác.',
+        duration: 3000,
+      });
+    }
+    return;
+  }
+
+  isLoading.value = true;
+  error.value = '';
+
+  try {
+    const payload = {
+      tenDangNhap: username.value.trim(),
+      matKhau: password.value,
+      email: '',
+    };
+    const response = await axios.post('http://localhost:8080/tai-khoan/dang-nhap', payload, {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (response.status === 200) {
+      // Log idNhanVien to console
+      console.log('ID Nhân viên:', response.data.idNhanVien);
+
+      // Xử lý token linh hoạt: chuỗi hoặc JSON { "token": "..." }
+      let token = response.data.token;
+      if (!token || typeof token !== 'string' || !token.startsWith('eyJ')) {
+        throw new Error('Token không hợp lệ từ API');
+      }
+
+      const responseUsername = username.value.trim();
+      const userResponse = await axios.get(`http://localhost:8080/tai-khoan/thong-tin/${responseUsername}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (userResponse.status === 200) {
+        const user = {
+          username: responseUsername,
+          phone: userResponse.data.soDienThoai || '',
+          email: userResponse.data.email || '',
+          password: userResponse.data.matKhau || '********',
+          status: userResponse.data.deleted === false ? 'Hoạt động' : 'Đã nghỉ',
+          idNhanVien: response.data.idNhanVien, // Optionally store idNhanVien in user object
+        };
+        authStore.login(user);
+        localStorage.setItem('auth', JSON.stringify({
+          isAuthenticated: true,
+          user,
+        }));
+        localStorage.setItem('authToken', token);
+        if (rememberMe.value) {
+          localStorage.setItem('username', responseUsername);
+        } else {
+          localStorage.removeItem('username');
+        }
         if (toast.value) {
           toast.value.addToast({
-            type: 'info',
-            message: 'Bạn đã đăng nhập. Vui lòng đăng xuất để đăng nhập tài khoản khác.',
+            type: 'success',
+            message: 'Đăng nhập thành công! Đang chuyển hướng...',
             duration: 3000,
           });
         }
-        return;
+        setTimeout(() => {
+          router.push('/trangChu');
+        }, 2000);
+      } else {
+        throw new Error('Không thể lấy thông tin người dùng sau khi đăng nhập.');
       }
-
-      isLoading.value = true;
-      error.value = '';
-
-      try {
-        const payload = {
-          tenDangNhap: username.value.trim(),
-          matKhau: password.value,
-          email: '',
-        };
-        const response = await axios.post('http://localhost:8080/tai-khoan/dang-nhap', payload, {
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        });
-
-        if (response.status === 200) {
-          // Xử lý token linh hoạt: chuỗi hoặc JSON { "token": "..." }
-          let token = response.data;
-          if (typeof token === 'object' && token.token) {
-            token = token.token;
-          } else if (typeof token === 'string' && token.includes('eyJ')) {
-            // Làm sạch token nếu có chuỗi thừa
-            const match = token.match(/eyJ[a-zA-Z0-9._-]+/);
-            if (match) {
-              token = match[0];
-            }
-          }
-
-          if (!token || typeof token !== 'string' || !token.startsWith('eyJ')) {
-            throw new Error('Token không hợp lệ từ API');
-          }
-
-          const responseUsername = username.value.trim();
-          const userResponse = await axios.get(`http://localhost:8080/tai-khoan/thong-tin/${responseUsername}`, {
-            headers: { Authorization: `Bearer ${token}` },
-          });
-
-          if (userResponse.status === 200) {
-            const user = {
-              username: responseUsername,
-              phone: userResponse.data.soDienThoai || '',
-              email: userResponse.data.email || '',
-              password: userResponse.data.matKhau || '********',
-              status: userResponse.data.deleted === false ? 'Hoạt động' : 'Đã nghỉ',
-            };
-            authStore.login(user);
-            localStorage.setItem('auth', JSON.stringify({
-              isAuthenticated: true,
-              user,
-            }));
-            localStorage.setItem('authToken', token);
-            if (rememberMe.value) {
-              localStorage.setItem('username', responseUsername);
-            } else {
-              localStorage.removeItem('username');
-            }
-            if (toast.value) {
-              toast.value.addToast({
-                type: 'success',
-                message: 'Đăng nhập thành công! Đang chuyển hướng...',
-                duration: 3000,
-              });
-            }
-             setTimeout(() => {
-    router.push('/trangChu');
-  }, 2000);
-          } else {
-            throw new Error('Không thể lấy thông tin người dùng sau khi đăng nhập.');
-          }
-        } else {
-          throw new Error('API trả về mã trạng thái không mong đợi: ' + response.status);
-        }
-      } catch (error) {
-        let errorMessage = 'Tên đăng nhập hoặc mật khẩu không đúng. Vui lòng thử lại.';
-        if (error.response) {
-          if (error.response.status === 400) {
-            errorMessage = error.response.data.message || 'Thông tin đăng nhập không hợp lệ.';
-          } else if (error.response.status === 401) {
-            errorMessage = 'Tên đăng nhập hoặc mật khẩu không đúng.';
-          } else if (error.response.status === 500) {
-            errorMessage = 'Lỗi server. Vui lòng thử lại sau.';
-          }
-        } else if (error.message === 'Token không hợp lệ từ API') {
-          errorMessage = 'Lỗi xác thực token. Vui lòng liên hệ quản trị viên.';
-        }
-        if (toast.value) {
-          toast.value.addToast({
-            type: 'error',
-            message: errorMessage,
-            duration: 5000,
-          });
-        }
-        error.value = errorMessage;
-      } finally {
-        isLoading.value = false;
+    } else {
+      throw new Error('API trả về mã trạng thái không mong đợi: ' + response.status);
+    }
+  } catch (error) {
+    let errorMessage = 'Tên đăng nhập hoặc mật khẩu không đúng. Vui lòng thử lại.';
+    if (error.response) {
+      if (error.response.status === 400) {
+        errorMessage = error.response.data.error || 'Thông tin đăng nhập không hợp lệ.';
+      } else if (error.response.status === 401) {
+        errorMessage = 'Tên đăng nhập hoặc mật khẩu không đúng.';
+      } else if (error.response.status === 500) {
+        errorMessage = 'Lỗi server. Vui lòng thử lại sau.';
       }
-    };
+    } else if (error.message === 'Token không hợp lệ từ API') {
+      errorMessage = 'Lỗi xác thực token. Vui lòng liên hệ quản trị viên.';
+    }
+    if (toast.value) {
+      toast.value.addToast({
+        type: 'error',
+        message: errorMessage,
+        duration: 5000,
+      });
+    }
+    error.value = errorMessage;
+  } finally {
+    isLoading.value = false;
+  }
+};
 
     const handleLogout = () => {
       authStore.logout();
