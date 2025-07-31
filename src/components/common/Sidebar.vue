@@ -411,6 +411,11 @@ const menuItems = ref([
     isOpen: false,
   },
   { 
+    name: 'Giao Ca', 
+    path: '/giao-ca', 
+    icon: ChartBarIcon 
+  },
+  { 
     name: 'Hỗ trợ khách hàng', 
     path: '/chatInterface', 
     icon: ChatBubbleLeftRightIcon 
