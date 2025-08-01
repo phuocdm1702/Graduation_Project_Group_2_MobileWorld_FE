@@ -443,7 +443,7 @@
             <div class="form-group mb-3">
               <label class="form-label">Loại đơn</label>
               <select v-model="invoice.loaiDon" class="form-select">
-                <option value="Online">Online</option>
+                <option value="online">online</option>
                 <option value="trực tiếp">trực tiếp</option>
               </select>
             </div>
