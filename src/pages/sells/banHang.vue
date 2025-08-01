@@ -921,17 +921,6 @@
                   " @click="confirmPayment">
                   <span class="fw-semibold">Thanh toán</span>
                 </button>
-                <!-- Customer Payment Button -->
-                <button class="btn w-100 py-3 mt-2" style="
-                    background: linear-gradient(135deg, #facc15, #f97316);
-                    color: white;
-                  " :disabled="!activeInvoiceId ||
-                    !cartItems ||
-                    cartItems.length === 0 ||
-                    isCreatingOrder
-                    " @click="goToCustomerPayment">
-                  <span class="fw-semibold">Thanh toán tại quầy (Khách hàng)</span>
-                </button>
               </div>
             </div>
           </div>
@@ -1283,30 +1272,7 @@ export default defineComponent({
       };
       this.$refs.notificationModal.openModal();
     },
-   goToCustomerPayment() {
-  this.$router.push({
-    name: "ThanhToanQuay",
-    params: {
-      invoiceId: this.activeInvoiceId
-    },
-    query: {
-      cartItems: JSON.stringify(this.cartItems),
-      selectedDiscount: JSON.stringify(this.selectedDiscount),
-      totalAmount: this.tongTien,
-      discount: this.discount,
-      shippingFee: this.shippingFee,
-      isDelivery: this.isDelivery.toString(),
-      customerName: this.customer.name,
-      customerPhone: this.customer.phone,
-      customerCity: this.customer.city,
-      customerDistrict: this.customer.district,
-      customerWard: this.customer.ward,
-      customerAddress: this.customer.address,
-      paymentMethod: this.paymentMethod,
-      selectedPaymentProvider: this.selectedPaymentProvider
-    }
-  });
-},
+
     scrollCarousel(direction) {
       if (this.activeTab === 'alternative') {
         if (direction === 'left' && this.currentAlternativeIndex > 0) {
