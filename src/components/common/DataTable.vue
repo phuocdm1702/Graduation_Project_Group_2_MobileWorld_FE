@@ -9,7 +9,17 @@
             <thead class="sticky-header">
               <tr class="text-muted small" style="background: rgba(52, 211, 153, 0.05);">
                 <th v-for="(header, index) in headers" :key="index" class="p-1">
-                  {{ header.text }}
+                  <slot
+                    v-if="header.value === 'checkbox'"
+                    :name="header.value"
+                    :item="null"
+                    :index="-1"
+                  >
+                    {{ header.text }}
+                  </slot>
+                  <template v-else>
+                    {{ header.text }}
+                  </template>
                 </th>
               </tr>
             </thead>
@@ -316,7 +326,7 @@ table {
 }
 
 .table-responsive {
-  max-height: 350px;
+  max-height: 450px;
   overflow-y: auto;
   /* Add horizontal scroll for very wide tables */
   overflow-x: auto;

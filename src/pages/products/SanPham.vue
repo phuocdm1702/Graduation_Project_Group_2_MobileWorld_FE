@@ -16,7 +16,8 @@
               <div class="search-input-wrapper">
                 <i class="bi bi-search search-icon"></i>
                 <input v-model.trim="keyword" @input="debouncedSearch" type="text"
-                  placeholder="Tìm kiếm theo tên sản phẩm..." class="form-control search-input" style="padding-left: 2.5rem;" />
+                  placeholder="Tìm kiếm theo tên sản phẩm..." class="form-control search-input"
+                  style="padding-left: 2.5rem;" />
               </div>
             </div>
           </div>
@@ -107,19 +108,24 @@
               <div class="filter-stats d-flex">
                 <div class="stat-item d-flex gap-2">
                   <span class="stat-label">Tổng số sản phẩm:</span>
-                  <span class="stat-value" style="color: rgb(21, 128, 61); font-weight: bold;">{{ sharedFilteredItems.length }}</span>
+                  <span class="stat-value" style="color: rgb(21, 128, 61); font-weight: bold;">{{
+                    sharedFilteredItems.length }}</span>
                 </div>
               </div>
             </div>
           </div>
 
           <div class="action-buttons">
-            <button class="btn btn-reset" @click="resetFilters">
-              Đặt lại bộ lọc
+            <button class="btn btn-action" @click="downloadSelectedProductsExcel"
+              :disabled="selectedProducts.length === 0" title="Tải danh sách sản phẩm Excel">
+              Tải Excel
             </button>
             <router-link to="/themChiTietSanPham" class="btn btn-action">
               Thêm chi tiết sản phẩm
             </router-link>
+            <button class="btn btn-reset" @click="resetFilters">
+              Đặt lại bộ lọc
+            </button>
           </div>
         </div>
       </div>
@@ -133,8 +139,12 @@
         </div>
       </div>
       <div class="table-body">
-        <DataTable title="" :headers="headers" :data="paginatedProducts"
-          :pageSizeOptions="[5, 10, 15, 20, 30, 40, 50]">
+        <DataTable title="" :headers="headers" :data="paginatedProducts" :pageSizeOptions="[5, 10, 15, 20, 30, 40, 50]"
+          @page-changed="handlePageChange" @items-per-page-changed="handleItemsPerPageChange">
+          <template #checkbox="{ item, index }">
+            <input v-if="index !== -1" type="checkbox" v-model="selectedProducts" :value="item.id" />
+            <input v-else type="checkbox" :checked="isAllSelected" @change="toggleSelectAll" title="Chọn tất cả" />
+          </template>
           <template #stt="{ globalIndex }">
             {{ globalIndex + 1 }}
           </template>
@@ -173,7 +183,8 @@
           </template>
           <template #actions="{ item }">
             <div class="action-buttons-cell">
-              <button class="btn btn-sm btn-table" :disabled="item.stockStatus === 'Hết hàng'" @click="viewProduct(item)" title="Xem chi tiết">
+              <button class="btn btn-sm btn-table" :disabled="item.stockStatus === 'Hết hàng'"
+                @click="viewProduct(item)" title="Xem chi tiết">
                 <i class="bi bi-eye-fill"></i>
               </button>
               <button class="btn btn-sm btn-table" @click="editProduct(item)" title="Chỉnh sửa">
@@ -201,6 +212,8 @@ import NotificationModal from "@/components/common/NotificationModal.vue";
 import ToastNotification from "@/components/common/ToastNotification.vue";
 import HeaderCard from "@/components/common/HeaderCard.vue";
 import FilterTableSection from "@/components/common/FilterTableSection.vue";
+import * as XLSX from "xlsx";
+import { saveAs } from "file-saver";
 
 // Import API services
 import {
@@ -237,18 +250,19 @@ export default defineComponent({
     const notificationModal = ref(null);
     const viewMode = ref("table");
     const currentPage = ref(1);
-    const sharedCurrentPage = ref(1); // For card view pagination
-    const itemsPerPage = ref(99999); // For DataTable
-    const sharedPageSize = ref(10); // For card view, updated to 12 items per page
+    const sharedCurrentPage = ref(1);
+    const itemsPerPage = ref(10);
+    const sharedPageSize = ref(10);
     const isLoading = ref(false);
     const totalElements = ref(0);
+    const selectedProducts = ref([]);
 
     // Notification state
     const notificationType = ref("confirm");
     const notificationMessage = ref("");
     const isNotificationLoading = ref(false);
-    const notificationOnConfirm = ref(() => {});
-    const notificationOnCancel = ref(() => {});
+    const notificationOnConfirm = ref(() => { });
+    const notificationOnCancel = ref(() => { });
 
     // State
     const keyword = ref("");
@@ -269,6 +283,7 @@ export default defineComponent({
 
     // Headers for DataTable
     const headers = ref([
+      { text: '', value: 'checkbox', isSelectAll: true },
       { text: "STT", value: "stt" },
       { text: "Tên Sản Phẩm", value: "tenSanPham" },
       { text: "Hãng", value: "tenNhaSanXuat" },
@@ -280,6 +295,29 @@ export default defineComponent({
       { text: "Trạng Thái", value: "stockStatus" },
       { text: "Thao Tác", value: "actions" },
     ]);
+
+    // Computed properties
+    const sharedFilteredItems = computed(() => {
+      return products.value || [];
+    });
+
+    const paginatedProducts = computed(() => {
+      const start = (currentPage.value - 1) * itemsPerPage.value;
+      const end = start + itemsPerPage.value;
+      return (products.value || []).slice(start, end).map((product, index) => ({
+        ...product,
+        stt: start + index + 1,
+        stockStatus: product.imeiCount > 0 ? "Còn hàng" : "Hết hàng",
+        priceRange: product.minPrice && product.maxPrice
+          ? `${formatPrice(product.minPrice)} - ${formatPrice(product.maxPrice)}`
+          : "Chưa có giá",
+      }));
+    });
+
+    const isAllSelected = computed(() => {
+      return paginatedProducts.value.length > 0 &&
+        paginatedProducts.value.every(item => selectedProducts.value.includes(item.id));
+    });
 
     // API Methods
     const loadProducts = async () => {
@@ -385,41 +423,6 @@ export default defineComponent({
       }
     };
 
-    // Computed properties
-    const sharedFilteredItems = computed(() => {
-      return products.value || [];
-    });
-
-    const sharedPaginatedItems = computed(() => {
-      const start = (sharedCurrentPage.value - 1) * sharedPageSize.value;
-      const end = start + sharedPageSize.value;
-      return sharedFilteredItems.value.slice(start, end).map((product, index) => ({
-        ...product,
-        stt: start + index + 1,
-        stockStatus: product.imeiCount > 0 ? "Còn hàng" : "Hết hàng",
-        priceRange: product.minPrice && product.maxPrice
-          ? `${formatPrice(product.minPrice)} - ${formatPrice(product.maxPrice)}`
-          : "Chưa có giá",
-      }));
-    });
-
-    const sharedTotalPages = computed(() =>
-      Math.ceil(sharedFilteredItems.value.length / sharedPageSize.value)
-    );
-
-    const paginatedProducts = computed(() => {
-      const start = (currentPage.value - 1) * itemsPerPage.value;
-      const end = start + itemsPerPage.value;
-      return (products.value || []).slice(start, end).map((product, index) => ({
-        ...product,
-        stt: start + index + 1,
-        stockStatus: product.imeiCount > 0 ? "Còn hàng" : "Hết hàng",
-        priceRange: product.minPrice && product.maxPrice
-          ? `${formatPrice(product.minPrice)} - ${formatPrice(product.maxPrice)}`
-          : "Chưa có giá",
-      }));
-    });
-
     // Methods
     const formatPrice = (price) => {
       if (price === null || price === undefined) return "0 ₫";
@@ -452,6 +455,7 @@ export default defineComponent({
       };
       currentPage.value = 1;
       sharedCurrentPage.value = 1;
+      selectedProducts.value = [];
       loadProducts();
 
       toastNotification.value?.addToast({
@@ -473,8 +477,8 @@ export default defineComponent({
       notificationType.value = "confirm";
       notificationMessage.value = "";
       isNotificationLoading.value = false;
-      notificationOnConfirm.value = () => {};
-      notificationOnCancel.value = () => {};
+      notificationOnConfirm.value = () => { };
+      notificationOnCancel.value = () => { };
     };
 
     const getStatusBadgeClass = (status) => {
@@ -499,6 +503,73 @@ export default defineComponent({
       loadProducts();
     };
 
+    const toggleSelectAll = () => {
+      if (isAllSelected.value) {
+        selectedProducts.value = [];
+      } else {
+        selectedProducts.value = paginatedProducts.value.map(item => item.id);
+      }
+    };
+
+    const downloadSelectedProductsExcel = async () => {
+      if (selectedProducts.value.length === 0) {
+        toastNotification.value?.addToast({
+          type: 'warning',
+          message: 'Vui lòng chọn ít nhất một sản phẩm để tải danh sách Excel',
+          duration: 2000,
+        });
+        return;
+      }
+
+      try {
+        const selectedItems = products.value.filter(item => selectedProducts.value.includes(item.id));
+        const data = selectedItems.map(item => ({
+          'Tên Sản Phẩm': item.tenSanPham || 'N/A',
+          'Hãng': item.tenNhaSanXuat || 'N/A',
+          'Hệ Điều Hành': `${item.heDieuHanh} ${item.phienBan}` || 'N/A',
+          'Màn Hình': item.congNgheManHinh || 'N/A',
+          'Pin': item.dungLuongPin || 'N/A',
+          'Số Lượng': item.imeiCount || '0',
+          'Khoảng Giá': item.minPrice && item.maxPrice
+            ? `${formatPrice(item.minPrice)} - ${formatPrice(item.maxPrice)}`
+            : 'Chưa có giá',
+          'Trạng Thái': item.imeiCount > 0 ? 'Còn hàng' : 'Hết hàng',
+        }));
+
+        const worksheet = XLSX.utils.json_to_sheet(data);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, 'Danh Sách Sản Phẩm');
+
+        // Đặt độ rộng cột
+        worksheet['!cols'] = [
+          { wch: 30 }, // Tên Sản Phẩm
+          { wch: 15 }, // Hãng
+          { wch: 20 }, // Hệ Điều Hành
+          { wch: 20 }, // Màn Hình
+          { wch: 15 }, // Pin
+          { wch: 10 }, // Số Lượng
+          { wch: 20 }, // Khoảng Giá
+          { wch: 15 }  // Trạng Thái
+        ];
+
+        const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+        const blob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+        saveAs(blob, 'danh_sach_san_pham.xlsx');
+
+        toastNotification.value?.addToast({
+          type: 'success',
+          message: `Đã tải xuống danh sách ${selectedProducts.value.length} sản phẩm dưới dạng Excel`,
+          duration: 2000,
+        });
+      } catch (error) {
+        toastNotification.value?.addToast({
+          type: 'error',
+          message: 'Lỗi khi tải xuống danh sách Excel: ' + error.message,
+          duration: 3000,
+        });
+      }
+    };
+
     // Watchers
     watch(keyword, debouncedSearch);
 
@@ -513,7 +584,7 @@ export default defineComponent({
     );
 
     watch(() => viewMode.value, () => {
-      sharedCurrentPage.value = 1; // Reset shared pagination when view mode changes
+      sharedCurrentPage.value = 1;
     });
 
     // Lifecycle
@@ -540,8 +611,6 @@ export default defineComponent({
       isLoading,
       totalElements,
       sharedFilteredItems,
-      sharedPaginatedItems,
-      sharedTotalPages,
       paginatedProducts,
       formatPrice,
       debouncedSearch,
@@ -553,6 +622,10 @@ export default defineComponent({
       getStatusBadgeClass,
       handlePageChange,
       handleItemsPerPageChange,
+      selectedProducts,
+      isAllSelected,
+      toggleSelectAll,
+      downloadSelectedProductsExcel,
       notificationType,
       notificationMessage,
       isNotificationLoading,
@@ -590,6 +663,7 @@ export default defineComponent({
 }
 
 @keyframes gentleGlow {
+
   0%,
   100% {
     box-shadow: 0 0 5px rgba(52, 211, 153, 0.3);
@@ -715,6 +789,11 @@ export default defineComponent({
   background: #16a34a;
   color: white;
   box-shadow: 0 0 15px rgba(52, 211, 153, 0.3);
+}
+
+.btn-action:disabled {
+  background: #6c757d;
+  cursor: not-allowed;
 }
 
 .table-header {

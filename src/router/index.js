@@ -19,7 +19,6 @@ const PhieuGiamGiaForm = () => import("@/pages/promotions/PhieuGiamGiaForm.vue")
 const DotGiamGia = () => import("@/pages/promotions/DotGiamGia.vue");
 const DotGiamGiaForm = () => import("@/pages/promotions/DotGiamGiaForm.vue");
 const BanHang = () => import("@/pages/sells/banHang.vue");
-const ThanhToanQuay = () => import("@/pages/sells/thanhToanQuay.vue");
 const NhanVien = () => import("@/pages/accounts/NhanVien.vue");
 const NhanVienForm = () => import("@/pages/accounts/NhanVienForm.vue");
 const KhachHang = () => import("@/pages/accounts/KhachHang.vue");
@@ -126,25 +125,6 @@ const routes = [
           breadcrumb: [
             { name: "Trang chủ", path: "/trangChu" },
             { name: "Bán hàng", path: "/banHang" }
-          ]
-        }
-      },
-      { 
-        path: "/thanh-toan-quay/:invoiceId", 
-        name: "ThanhToanQuay", 
-        component: ThanhToanQuay,
-        props: route => ({
-          invoiceId: route.params.invoiceId,
-          totalAmount: Number(route.query.totalAmount) || 0,
-          discount: Number(route.query.discount) || 0,
-          shippingFee: Number(route.query.shippingFee) || 0
-        }),
-        meta: {
-          title: "Thanh toán tại quầy",
-          breadcrumb: [
-            { name: "Trang chủ", path: "/trangChu" },
-            { name: "Bán hàng", path: "/banHang" },
-            { name: "Thanh toán tại quầy", path: "/thanh-toan-quay" }
           ]
         }
       },

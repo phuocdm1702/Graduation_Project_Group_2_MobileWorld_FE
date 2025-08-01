@@ -131,7 +131,11 @@
               title="Tải ảnh barcode đã chọn">
               Tải Barcode
             </button>
-            <button class="btn btn-action" @click="resetAllFilters">
+            <button class="btn btn-action" @click="downloadSelectedProductsExcel" :disabled="selectedImeis.length === 0"
+              title="Tải danh sách sản phẩm Excel">
+              Tải Excel
+            </button>
+            <button class="btn btn-reset" @click="resetAllFilters">
               Đặt lại bộ lọc
             </button>
             <button class="btn btn-action" @click="goBack">
@@ -174,12 +178,24 @@
           <DataTable title="" :headers="headers" :data="filteredProductDetails" :pageSize="pageSize"
             :pageSizeOptions="[5, 10, 15, 20, 30, 40, 50]" @page-changed="goToPage"
             @items-per-page-changed="handleItemsPerPageChange" class="table-product">
-            <template #checkbox="{ item }">
-              <input type="checkbox" v-model="selectedImeis" :value="item.imei" />
+            <template #checkbox="{ item, index }">
+              <input
+                v-if="index !== -1"
+                type="checkbox"
+                v-model="selectedImeis"
+                :value="item.imei"
+              />
+              <input
+                v-else
+                type="checkbox"
+                :checked="isAllSelected"
+                @change="toggleSelectAll"
+                title="Chọn tất cả"
+              />
             </template>
-          <template #stt="{ globalIndex }">
-            {{ globalIndex + 1 }}
-          </template>
+            <template #stt="{ globalIndex }">
+              {{ globalIndex + 1 }}
+            </template>
             <template #imageUrl="{ item }">
               <img :src="item.imageUrl" alt="Product Image" class="product-image" />
             </template>
@@ -288,7 +304,14 @@
             <table class="table table-hover">
               <thead>
                 <tr>
-                  <th scope="col" style="width: 5%;">#</th>
+                  <th scope="col" style="width: 5%;">
+                    <input
+                      type="checkbox"
+                      :checked="isAllSelected"
+                      @change="toggleSelectAll"
+                      title="Chọn tất cả"
+                    />
+                  </th>
                   <th scope="col" style="width: 5%;">STT</th>
                   <th scope="col" style="width: 10%;">Ảnh</th>
                   <th scope="col" style="width: 15%;">Mã Sản Phẩm</th>
@@ -397,6 +420,7 @@ import JsBarcode from 'jsbarcode';
 import * as bootstrap from 'bootstrap';
 import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
+import * as XLSX from 'xlsx';
 
 export default {
   name: 'ProductDetail',
@@ -437,9 +461,9 @@ export default {
     const selectedImeis = ref([]);
 
     const headers = ref([
-      { text: '#', value: 'checkbox' },
+      { text: '', value: 'checkbox', isSelectAll: true },
       { text: 'STT', value: 'stt' },
-      { text: 'Ảnh', value: 'imageUrl' }, // Thêm cột ảnh
+      { text: 'Ảnh', value: 'imageUrl' },
       { text: 'Mã CTSP', value: 'maSanPham' },
       { text: 'Tên SP', value: 'tenSanPham' },
       { text: 'IMEI', value: 'imei' },
@@ -527,7 +551,7 @@ export default {
         tenSanPham: item.tenSanPham,
         maSanPham: item.maSanPham,
         deleted: item.deleted,
-        imageUrl: item.imageUrl // Thêm imageUrl vào danh sách IMEI
+        imageUrl: item.imageUrl
       }));
 
       if (imeiSearchKeyword.value) {
@@ -561,7 +585,7 @@ export default {
           dungLuongBoNhoTrong: item.dungLuongBoNhoTrong,
           donGia: item.donGia,
           deleted: item.deleted,
-          imageUrl: item.imageUrl, // Thêm imageUrl
+          imageUrl: item.imageUrl,
           idMauSac: item.mauSac ? mauSacOptions.value.find(opt => opt.mauSac === item.mauSac)?.id : null,
           idRam: item.dungLuongRam ? ramOptions.value.find(opt => opt.dungLuongRam === item.dungLuongRam)?.id : null,
           idBoNhoTrong: item.dungLuongBoNhoTrong ? boNhoTrongOptions.value.find(opt => opt.dungLuongBoNhoTrong === item.dungLuongBoNhoTrong)?.id : null,
@@ -819,8 +843,78 @@ export default {
       }
     };
 
+    const downloadSelectedProductsExcel = async () => {
+      if (selectedImeis.value.length === 0) {
+        toast.value?.addToast({
+          type: 'warning',
+          message: 'Vui lòng chọn ít nhất một IMEI để tải danh sách Excel',
+          duration: 2000,
+        });
+        return;
+      }
+
+      try {
+        const selectedProducts = productDetails.value.filter(item => selectedImeis.value.includes(item.imei));
+        const data = selectedProducts.map(item => ({
+          'Mã Sản Phẩm': item.maSanPham || 'N/A',
+          'Tên Sản Phẩm': item.tenSanPham || 'N/A',
+          'IMEI': item.imei,
+          'Màu Sắc': item.mauSac || 'N/A',
+          'RAM': item.dungLuongRam || 'N/A',
+          'ROM': item.dungLuongBoNhoTrong || 'N/A',
+          'Đơn Giá': formatPrice(item.donGia),
+          'Trạng Thái': item.deleted ? 'Đã Bán' : 'Hoạt động'
+        }));
+
+        const worksheet = XLSX.utils.json_to_sheet(data);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, 'Danh Sách Sản Phẩm');
+        
+        // Đặt độ rộng cột
+        worksheet['!cols'] = [
+          { wch: 15 }, // Mã Sản Phẩm
+          { wch: 30 }, // Tên Sản Phẩm
+          { wch: 20 }, // IMEI
+          { wch: 15 }, // Màu Sắc
+          { wch: 10 }, // RAM
+          { wch: 10 }, // ROM
+          { wch: 15 }, // Đơn Giá
+          { wch: 15 }  // Trạng Thái
+        ];
+
+        const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+        const blob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+        saveAs(blob, 'danh_sach_san_pham.xlsx');
+
+        toast.value?.addToast({
+          type: 'success',
+          message: `Đã tải xuống danh sách ${selectedImeis.value.length} sản phẩm dưới dạng Excel`,
+          duration: 2000,
+        });
+      } catch (error) {
+        toast.value?.addToast({
+          type: 'error',
+          message: 'Lỗi khi tải xuống danh sách Excel: ' + error.message,
+          duration: 3000,
+        });
+      }
+    };
+
     const goBack = () => {
       router.push('/SanPham');
+    };
+
+    const isAllSelected = computed(() => {
+      return filteredProductDetails.value.length > 0 &&
+        filteredProductDetails.value.every(item => selectedImeis.value.includes(item.imei));
+    });
+
+    const toggleSelectAll = () => {
+      if (isAllSelected.value) {
+        selectedImeis.value = [];
+      } else {
+        selectedImeis.value = filteredProductDetails.value.map(item => item.imei);
+      }
     };
 
     watch(
@@ -834,7 +928,7 @@ export default {
     );
 
     watch(() => viewMode.value, () => {
-      sharedCurrentPage.value = 1; // Reset shared pagination when view mode changes
+      sharedCurrentPage.value = 1;
     });
 
     onMounted(async () => {
@@ -879,9 +973,12 @@ export default {
       copyImei,
       downloadBarcodeImage,
       downloadSelectedBarcodes,
+      downloadSelectedProductsExcel,
       selectedImei,
       selectedImeis,
       goBack,
+      isAllSelected,
+      toggleSelectAll,
     };
   },
 };
@@ -913,9 +1010,7 @@ export default {
 }
 
 @keyframes gentleGlow {
-
-  0%,
-  100% {
+  0%, 100% {
     box-shadow: 0 0 5px rgba(52, 211, 153, 0.3);
   }
 
@@ -1028,6 +1123,22 @@ export default {
 .btn-action:disabled {
   background: #6c757d;
   cursor: not-allowed;
+}
+
+.btn-reset {
+  background: #6c757d;
+  color: white;
+  border: none;
+  padding: 0.4rem 0.8rem;
+  font-size: 0.85rem;
+  border-radius: 6px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btn-reset:hover {
+  background: #5c636a;
+  color: white;
+  box-shadow: 0 0 15px rgba(108, 117, 125, 0.3);
 }
 
 .btn-table {

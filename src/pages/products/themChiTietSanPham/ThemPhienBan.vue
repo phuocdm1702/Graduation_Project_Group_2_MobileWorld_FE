@@ -94,7 +94,7 @@
                 <div class="filter-group me-3">
                   <input v-model="groupCommonValues[group.groupKey].price" type="text" placeholder="Nhập giá chung"
                     class="form-control search-input" @input="updateSelectedVariants(group)"
-                    style="  border-top-right-radius: 8px; border-bottom-right-radius: 8px;" />
+                    style="border-top-right-radius: 8px; border-bottom-right-radius: 8px;" />
                 </div>
                 <button v-if="hasSelectedInGroup[group.groupKey]" @click="removeMultipleVariants" class="btn btn-reset">
                   <i class="bi bi-trash-fill me-2"></i>
@@ -313,8 +313,14 @@
                   class="imei-item d-flex align-items-center p-2">
                   <span class="flex-grow-1">
                     IMEI {{ index + 1 }}: {{ imei }}
-                    <span :class="imei.length === 15 ? 'text-success' : 'text-danger'">
-                      {{ imei.length === 15 ? '(Hợp lệ)' : `(Không hợp lệ, cần 15 số, hiện tại ${imei.length} số)` }}
+                    <span :class="{
+                      'text-success': imei.length === 15 && !duplicateImeis.includes(imei),
+                      'text-danger': imei.length !== 15 || duplicateImeis.includes(imei)
+                    }">
+                      {{
+                        imei.length !== 15 ? `(Không hợp lệ, cần 15 số, hiện tại ${imei.length} số)` :
+                        duplicateImeis.includes(imei) ? '(Trùng lặp)' : '(Hợp lệ)'
+                      }}
                     </span>
                   </span>
                   <button @click="removeImei(index)" class="btn btn-sm btn-reset ms-2" title="Xóa IMEI">
@@ -350,6 +356,9 @@
         </div>
       </div>
     </div>
+
+        <!-- Toast Notification -->
+    <ToastNotification ref="toastNotification" />
 
     <!-- Form Modal for RAM, Bộ Nhớ Trong, Màu Sắc -->
     <div v-if="showFormModal" class="modal fade show d-block" tabindex="-1">
@@ -411,7 +420,6 @@ import FilterTableSection from '@/components/common/FilterTableSection.vue';
 import ToastNotification from '@/components/common/ToastNotification.vue';
 import { getRam, addRam, getBoNhoTrong, addBoNhoTrong, getMauSac, addMauSac } from '@/store/modules/products/chiTietSanPham';
 import * as XLSX from 'xlsx';
-import { nextTick } from 'vue';
 
 export default defineComponent({
   name: 'ProductVariants',
@@ -543,6 +551,16 @@ export default defineComponent({
       return `${ram}/${rom}/${color}`;
     });
 
+    const duplicateImeis = computed(() => {
+      const imeiCounts = {};
+      filteredImeiList.value.forEach((imei) => {
+        if (imei) {
+          imeiCounts[imei] = (imeiCounts[imei] || 0) + 1;
+        }
+      });
+      return filteredImeiList.value.filter((imei) => imeiCounts[imei] > 1);
+    });
+
     const filteredImeiList = computed(() => {
       return imeiInput.value
         .split('\n')
@@ -552,10 +570,16 @@ export default defineComponent({
 
     const validImeis = computed(() => {
       const existingImeis = new Set(
-        Object.values(localVariantImeis.value).flat().filter((imei) => imei.length === 15)
+        Object.values(localVariantImeis.value).flat().filter((imei) => imei && imei.length === 15)
       );
+      const imeiCounts = {};
+      filteredImeiList.value.forEach((imei) => {
+        if (imei) {
+          imeiCounts[imei] = (imeiCounts[imei] || 0) + 1;
+        }
+      });
       return filteredImeiList.value
-        .filter((imei) => imei.length === 15 && !existingImeis.has(imei))
+        .filter((imei) => imei.length === 15 && imeiCounts[imei] === 1 && !existingImeis.has(imei))
         .map((imei) => imei);
     });
 
@@ -675,16 +699,13 @@ export default defineComponent({
         return false;
       }
 
-      // Lưu danh sách biến thể cũ để sao chép giá và IMEI
       const oldVariants = [...localProductVariants.value];
       const oldImeis = { ...localVariantImeis.value };
       const newVariants = [];
 
-      // Tạo danh sách biến thể mới
       currentVariant.value.selectedRams.forEach((ramId) => {
         currentVariant.value.selectedBoNhoTrongs.forEach((boNhoId) => {
           currentVariant.value.selectedMauSacs.forEach((mauSacId) => {
-            // Tìm biến thể cũ để giữ giá
             const existingVariant = oldVariants.find(
               (v) => v.idRam === ramId && v.idBoNhoTrong === boNhoId && v.idMauSac === mauSacId
             );
@@ -698,7 +719,6 @@ export default defineComponent({
         });
       });
 
-      // Cập nhật lại IMEI cho các biến thể vẫn còn
       const newVariantImeis = {};
       newVariants.forEach((variant, index) => {
         const oldIndex = oldVariants.findIndex(
@@ -709,18 +729,15 @@ export default defineComponent({
         }
       });
 
-      // Cập nhật state
       localProductVariants.value = [...newVariants];
       localVariantImeis.value = newVariantImeis;
       selectedVariants.value = [];
       allSelected.value = {};
       groupCommonValues.value = {};
 
-      // Cập nhật lại các lựa chọn và trạng thái
       updateSelectedOptions();
       validateSelections();
 
-      // Phát sự kiện để cập nhật biến thể
       emit('variants-updated', { variants: localProductVariants.value, imeis: localVariantImeis.value });
       console.log('Emitting productVariants:', localProductVariants.value);
       console.log('Emitting variantImeis:', localVariantImeis.value);
@@ -885,6 +902,43 @@ export default defineComponent({
       imeiInput.value = '';
     };
 
+    // Debounce helper
+    function debounce(fn, delay) {
+      let timer = null;
+      return function (...args) {
+        clearTimeout(timer);
+        timer = setTimeout(() => fn.apply(this, args), delay);
+      };
+    }
+
+    // Debounced IMEI validation
+    const debouncedValidateImei = debounce(() => {
+      const lines = imeiInput.value.split('\n').map(line => line.trim());
+      const invalidLines = lines.filter(line => line.length > 0 && line.length !== 15);
+      if (invalidLines.length > 0) {
+        toastNotification.value?.addToast({
+          type: 'warning',
+          message: `Có ${invalidLines.length} IMEI không hợp lệ (cần đúng 15 chữ số)!`,
+          duration: 3000,
+        });
+      }
+      const imeiCounts = {};
+      lines.forEach((line) => {
+        if (line && line.length === 15) {
+          imeiCounts[line] = (imeiCounts[line] || 0) + 1;
+        }
+      });
+      const duplicates = Object.keys(imeiCounts).filter((imei) => imeiCounts[imei] > 1);
+      if (duplicates.length > 0) {
+        toastNotification.value?.addToast({
+          type: 'warning',
+          message: `Có ${duplicates.length} IMEI trùng lặp trong danh sách nhập!`,
+          duration: 3000,
+        });
+      }
+    }, 600); // 600ms sau khi dừng nhập mới kiểm tra
+
+    // Sửa lại restrictImeiInput
     const restrictImeiInput = (event) => {
       const textarea = event.target;
       let lines = imeiInput.value.split('\n');
@@ -892,7 +946,6 @@ export default defineComponent({
       let currentLineIndex = imeiInput.value.substr(0, cursorPos).split('\n').length - 1;
       let currentLine = lines[currentLineIndex] || '';
 
-      // Chỉ giữ số và giới hạn 15 ký tự mỗi dòng
       lines = lines.map((line, index) => {
         let cleaned = line.replace(/[^0-9]/g, '').slice(0, 15);
         if (index === currentLineIndex && cleaned.length >= 15 && imeiInput.value[cursorPos - 1] !== '\n') {
@@ -903,7 +956,6 @@ export default defineComponent({
 
       imeiInput.value = lines.join('\n');
 
-      // Cập nhật vị trí con trỏ
       const newLines = imeiInput.value.split('\n');
       let newCursorPos = 0;
       for (let i = 0; i < Math.min(currentLineIndex, newLines.length); i++) {
@@ -915,15 +967,8 @@ export default defineComponent({
       }
       setTimeout(() => textarea.setSelectionRange(newCursorPos, newCursorPos), 0);
 
-      // Kiểm tra và thông báo lỗi
-      const invalidLines = lines.filter(line => line.length > 0 && line.length !== 15);
-      if (invalidLines.length > 0) {
-        toastNotification.value?.addToast({
-          type: 'warning',
-          message: `Có ${invalidLines.length} IMEI không hợp lệ (cần đúng 15 chữ số)!`,
-          duration: 3000,
-        });
-      }
+      // Gọi debounce thay vì kiểm tra trực tiếp
+      debouncedValidateImei();
     };
 
     const removeImei = (index) => {
@@ -949,16 +994,32 @@ export default defineComponent({
       const existingImeis = new Set(
         Object.values(localVariantImeis.value)
           .flat()
-          .filter((imei) => imei.length === 15)
+          .filter((imei) => imei && imei.length === 15)
       );
+      const imeiCounts = {};
+      filteredImeiList.value.forEach((imei) => {
+        if (imei) {
+          imeiCounts[imei] = (imeiCounts[imei] || 0) + 1;
+        }
+      });
+      const duplicatesInInput = filteredImeiList.value.filter((imei) => imeiCounts[imei] > 1);
       const newImeis = validImeis.value;
-      const duplicates = newImeis.filter((imei) => existingImeis.has(imei));
+      const duplicatesWithExisting = newImeis.filter((imei) => existingImeis.has(imei));
       const invalidImeis = filteredImeiList.value.filter((imei) => imei.length !== 15 && imei.length > 0);
 
       if (filteredImeiList.value.length > 0 && newImeis.length === 0) {
         toastNotification.value?.addToast({
           type: 'error',
-          message: 'Không có IMEI hợp lệ! Tất cả IMEI phải có đúng 15 chữ số.',
+          message: `Không có IMEI hợp lệ để lưu! ${duplicatesInInput.length > 0 ? `${duplicatesInInput.length} IMEI trùng lặp, ` : ''}${invalidImeis.length > 0 ? `${invalidImeis.length} IMEI không hợp lệ.` : ''}`,
+          duration: 3000,
+        });
+        return;
+      }
+
+      if (duplicatesInInput.length > 0) {
+        toastNotification.value?.addToast({
+          type: 'error',
+          message: `Có ${duplicatesInInput.length} IMEI trùng lặp trong danh sách nhập, không thể lưu!`,
           duration: 3000,
         });
         return;
@@ -972,10 +1033,10 @@ export default defineComponent({
         });
       }
 
-      if (duplicates.length > 0) {
+      if (duplicatesWithExisting.length > 0) {
         toastNotification.value?.addToast({
           type: 'warning',
-          message: `Có ${duplicates.length} IMEI trùng lặp đã bị bỏ qua.`,
+          message: `Có ${duplicatesWithExisting.length} IMEI trùng với các biến thể khác đã bị bỏ qua.`,
           duration: 3000,
         });
       }
@@ -985,7 +1046,7 @@ export default defineComponent({
         emit('variants-updated', { variants: localProductVariants.value, imeis: localVariantImeis.value });
         toastNotification.value?.addToast({
           type: 'success',
-          message: `Lưu ${newImeis.length} IMEI thành công!`,
+          message: `Lưu thành công ${newImeis.length} IMEI!`,
           duration: 3000,
         });
       } else {
@@ -999,66 +1060,130 @@ export default defineComponent({
       closeImeiModal();
     };
 
-    const handleExcelImport = async (event) => {
-      const file = event.target.files[0];
-      if (!file) return;
+    const downloadImeiTemplate = () => {
       try {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          const data = new Uint8Array(e.target.result);
-          const workbook = XLSX.read(data, { type: 'array' });
-          const sheetName = workbook.SheetNames[0];
-          const sheet = workbook.Sheets[sheetName];
-          const json = XLSX.utils.sheet_to_json(sheet, { header: ['IMEI'] });
-          const existingImeis = new Set(
-            Object.values(localVariantImeis.value).flat().filter((imei) => imei.length === 15)
-          );
-          const imeis = json
-            .map((row) => row.IMEI?.toString().replace(/[^0-9]/g, '').slice(0, 15))
-            .filter((imei) => imei && imei.length === 15 && !existingImeis.has(imei));
-          const duplicates = json
-            .map((row) => row.IMEI?.toString().replace(/[^0-9]/g, '').slice(0, 15))
-            .filter((imei) => imei && imei.length === 15 && existingImeis.has(imei));
-          const invalid = json
-            .map((row) => row.IMEI?.toString().replace(/[^0-9]/g, ''))
-            .filter((imei) => imei && imei.length !== 15);
-
-          if (imeis.length === 0 && (duplicates.length > 0 || invalid.length > 0)) {
-            toastNotification.value?.addToast({
-              type: 'error',
-              message: `Không có IMEI hợp lệ mới! ${duplicates.length} trùng lặp, ${invalid.length} không hợp lệ.`,
-              duration: 3000,
-            });
-            return;
-          }
-
-          imeiInput.value = [...filteredImeiList.value, ...imeis].join('\n');
-          toastNotification.value?.addToast({
-            type: 'success',
-            message: `Đã nhập ${imeis.length} IMEI hợp lệ từ Excel!${duplicates.length > 0 ? ` (${duplicates.length} trùng lặp bị bỏ qua)` : ''}${invalid.length > 0 ? ` (${invalid.length} không hợp lệ bị bỏ qua)` : ''}`,
-            duration: 3000,
-          });
-        };
-        reader.readAsArrayBuffer(file);
+        const templateData = [
+          {
+            IMEI: '123456789012345',
+            'Ghi chú': 'Mỗi IMEI phải có đúng 15 chữ số. Nhập một IMEI trên mỗi dòng trong cột IMEI.'
+          },
+          { IMEI: '' },
+        ];
+        const ws = XLSX.utils.json_to_sheet(templateData, { header: ['IMEI', 'Ghi chú'] });
+        ws['!cols'] = [{ wch: 20 }, { wch: 50 }]; // Set column widths
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'IMEI Template');
+        XLSX.writeFile(wb, 'imei_template.xlsx'); // Use writeFile for browser download
+        toastNotification.value?.addToast({
+          type: 'success',
+          message: 'Đã tải mẫu Excel thành công! Vui lòng nhập IMEI theo đúng định dạng (15 chữ số).',
+          duration: 3000,
+        });
       } catch (error) {
+        console.error('Lỗi khi tải mẫu Excel:', error);
         toastNotification.value?.addToast({
           type: 'error',
-          message: 'Lỗi khi nhập file Excel: ' + error.message,
+          message: `Lỗi khi tải mẫu Excel: ${error.message}`,
           duration: 3000,
         });
       }
     };
 
-    const downloadImeiTemplate = () => {
-      const ws = XLSX.utils.json_to_sheet([{ IMEI: '123456789012345' }], { header: ['IMEI'] });
-      const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, 'IMEI Template');
-      XLSX.write(wb, 'imei_template.xlsx');
-      toastNotification.value?.addToast({
-        type: 'info',
-        message: 'Đã tải mẫu Excel! Mỗi IMEI phải có đúng 15 chữ số.',
-        duration: 3000,
-      });
+    const handleExcelImport = async (event) => {
+      const file = event.target.files[0];
+      if (!file) {
+        toastNotification.value?.addToast({
+          type: 'error',
+          message: 'Vui lòng chọn một file Excel để nhập!',
+          duration: 3000,
+        });
+        return;
+      }
+
+      try {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          try {
+            const data = new Uint8Array(e.target.result);
+            const workbook = XLSX.read(data, { type: 'array' });
+            const sheetName = workbook.SheetNames[0];
+            if (!sheetName) {
+              toastNotification.value?.addToast({
+                type: 'error',
+                message: 'File Excel không hợp lệ, không tìm thấy sheet!',
+                duration: 3000,
+              });
+              return;
+            }
+
+            const sheet = workbook.Sheets[sheetName];
+            const json = XLSX.utils.sheet_to_json(sheet, { header: ['IMEI'], skipHeader: false });
+
+            const existingImeis = new Set(
+              Object.values(localVariantImeis.value).flat().filter((imei) => imei && imei.length === 15)
+            );
+            const imeiCounts = {};
+            const imeis = json
+              .map((row) => {
+                const imei = row.IMEI ? String(row.IMEI).replace(/[^0-9]/g, '').slice(0, 15) : '';
+                if (imei) {
+                  imeiCounts[imei] = (imeiCounts[imei] || 0) + 1;
+                }
+                return imei;
+              })
+              .filter((imei) => imei && imei.length === 15 && imeiCounts[imei] === 1 && !existingImeis.has(imei));
+            const duplicatesInInput = json
+              .map((row) => row.IMEI ? String(row.IMEI).replace(/[^0-9]/g, '').slice(0, 15) : '')
+              .filter((imei) => imei && imeiCounts[imei] > 1);
+            const duplicatesWithExisting = json
+              .map((row) => row.IMEI ? String(row.IMEI).replace(/[^0-9]/g, '').slice(0, 15) : '')
+              .filter((imei) => imei && imei.length === 15 && existingImeis.has(imei));
+            const invalid = json
+              .map((row) => row.IMEI ? String(row.IMEI).replace(/[^0-9]/g, '') : '')
+              .filter((imei) => imei && imei.length !== 15);
+
+            if (imeis.length === 0) {
+              toastNotification.value?.addToast({
+                type: 'error',
+                message: `Không có IMEI hợp lệ mới! ${duplicatesInInput.length > 0 ? `${duplicatesInInput.length} trùng lặp trong file, ` : ''}${duplicatesWithExisting.length > 0 ? `${duplicatesWithExisting.length} trùng với biến thể khác, ` : ''}${invalid.length > 0 ? `${invalid.length} không hợp lệ.` : ''}`,
+                duration: 3000,
+              });
+              return;
+            }
+
+            imeiInput.value = [...filteredImeiList.value, ...imeis].join('\n');
+            toastNotification.value?.addToast({
+              type: 'success',
+              message: `Đã nhập ${imeis.length} IMEI hợp lệ từ Excel!${duplicatesInInput.length > 0 ? ` (${duplicatesInInput.length} trùng lặp trong file bị bỏ qua)` : ''}${duplicatesWithExisting.length > 0 ? ` (${duplicatesWithExisting.length} trùng với biến thể khác bị bỏ qua)` : ''}${invalid.length > 0 ? ` (${invalid.length} không hợp lệ bị bỏ qua)` : ''}`,
+              duration: 3000,
+            });
+
+            event.target.value = '';
+          } catch (error) {
+            console.error('Lỗi khi xử lý file Excel:', error);
+            toastNotification.value?.addToast({
+              type: 'error',
+              message: `Lỗi khi xử lý file Excel: ${error.message}`,
+              duration: 3000,
+            });
+          }
+        };
+        reader.onerror = () => {
+          toastNotification.value?.addToast({
+            type: 'error',
+            message: 'Lỗi khi đọc file Excel!',
+            duration: 3000,
+          });
+        };
+        reader.readAsArrayBuffer(file);
+      } catch (error) {
+        console.error('Lỗi khi nhập file Excel:', error);
+        toastNotification.value?.addToast({
+          type: 'error',
+          message: `Lỗi khi nhập file Excel: ${error.message}`,
+          duration: 3000,
+        });
+      }
     };
 
     const resetForm = async () => {
@@ -1080,7 +1205,6 @@ export default defineComponent({
       entityData.value = {};
       variantSearch.value = '';
       currentStep.value = 'ram';
-      await nextTick();
       emit('variants-updated', { variants: [], imeis: {} });
       emit('reset-form');
       toastNotification.value?.addToast({
@@ -1119,6 +1243,7 @@ export default defineComponent({
       selectedVariantsInGroup,
       filteredImeiList,
       validImeis,
+      duplicateImeis,
       filteredRamOptions,
       filteredBoNhoTrongOptions,
       filteredMauSacOptions,
@@ -1291,6 +1416,7 @@ th {
 
 .modal {
   background: rgba(0, 0, 0, 0.5);
+  z-index: 1;
 }
 
 .modal-content {
