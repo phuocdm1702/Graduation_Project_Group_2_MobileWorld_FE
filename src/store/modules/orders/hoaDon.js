@@ -449,6 +449,68 @@ export const useHoaDonStore = defineStore('hoaDon', {
             }
         },
 
+        async updateCustomerInfo(id, tenKhachHang, soDienThoai, diaChi, email) {
+            this.isLoading = true;
+            this.error = null;
+
+            try {
+                const params = { tenKhachHang, soDienThoai, diaChi, email };
+                const response = await apiService.put(`/api/hoa-don/${id}/update-customer-info`, null, { params });
+                if (this.invoiceDetail && this.invoiceDetail.id === id) {
+                    this.invoiceDetail.idKhachHang.ten = tenKhachHang;
+                    this.invoiceDetail.soDienThoaiKhachHang = soDienThoai;
+                    this.invoiceDetail.diaChiKhachHang = diaChi;
+                    this.invoiceDetail.idKhachHang.email = email;
+                    this.invoiceDetail.history.push({
+                        id: Date.now(),
+                        code: `LSHD_${Date.now()}`,
+                        invoice: this.invoiceDetail.ma,
+                        employee: 'Hệ thống',
+                        action: `Cập nhật thông tin khách hàng: ${tenKhachHang}`,
+                        timestamp: this.formatDate(new Date()),
+                        status: 'completed',
+                    });
+                }
+                return { success: true, data: response.data };
+            } catch (error) {
+                this.error = error.message || 'Không thể cập nhật thông tin khách hàng';
+                console.error('Lỗi khi cập nhật thông tin khách hàng:', error);
+                return { success: false, message: this.error };
+            } finally {
+                this.isLoading = false;
+            }
+        },
+
+        async updateHoaDon(id, maHD, loaiHD) {
+            this.isLoading = true;
+            this.error = null;
+
+            try {
+                const params = { maHD, loaiHD };
+                const response = await apiService.put(`/api/hoa-don/${id}/update-hoa-don`, null, { params });
+                if (this.invoiceDetail && this.invoiceDetail.id === id) {
+                    this.invoiceDetail.ma = maHD;
+                    this.invoiceDetail.loaiDon = loaiHD;
+                    this.invoiceDetail.history.push({
+                        id: Date.now(),
+                        code: `LSHD_${Date.now()}`,
+                        invoice: this.invoiceDetail.ma,
+                        employee: 'Hệ thống',
+                        action: `Cập nhật thông tin hóa đơn: ${maHD}`,
+                        timestamp: this.formatDate(new Date()),
+                        status: 'completed',
+                    });
+                }
+                return { success: true, data: response.data };
+            } catch (error) {
+                this.error = error.message || 'Không thể cập nhật thông tin hóa đơn';
+                console.error('Lỗi khi cập nhật thông tin hóa đơn:', error);
+                return { success: false, message: this.error };
+            } finally {
+                this.isLoading = false;
+            }
+        },
+
         formatDate(dateString) {
             const date = new Date(dateString);
             const time = date.toLocaleTimeString('en-GB', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });

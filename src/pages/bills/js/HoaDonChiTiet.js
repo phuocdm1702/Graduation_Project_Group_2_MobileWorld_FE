@@ -217,14 +217,14 @@ export default {
 
     const getTypeBadgeClass = (type) => {
       return {
-        'Online': 'badge-info',
+        'online': 'badge-info',
         'trực tiếp': 'badge-info',
       }[type] || 'badge-secondary';
     };
 
     const getTypeIcon = (type) => {
       return {
-        'Online': 'bi bi-globe',
+        'online': 'bi bi-globe',
         'trực tiếp': 'bi bi-shop',
       }[type] || 'bi bi-receipt';
     };
@@ -534,26 +534,56 @@ export default {
     };
 
     const saveUpdateChanges = async () => {
-      if (invoice.value.trangThai !== history.value[history.value.length - 1]?.action?.split(': ')[1]) {
-        const trangThaiNumber = hoaDonStore.mapStatusToNumber(invoice.value.trangThai);
-        const result = await hoaDonStore.updateInvoiceStatus(
+      if (activeTab.value === 'order') {
+        if (invoice.value.ma !== history.value[history.value.length - 1]?.action?.split(': ')[1] || invoice.value.loaiDon !== history.value[history.value.length - 1]?.action?.split(': ')[1]) {
+          const result = await hoaDonStore.updateHoaDon(
+            invoice.value.id,
+            invoice.value.ma,
+            invoice.value.loaiDon
+          );
+          if (result.success) {
+            history.value.push({
+              id: Date.now(),
+              action: `Cập nhật thông tin hóa đơn: ${invoice.value.ma}`,
+              employee: 'Hệ thống',
+              timestamp: new Date().toLocaleString('vi-VN'),
+              status: 'completed',
+            });
+            toastNotification.value.addToast({
+              type: 'success',
+              message: 'Đã cập nhật thông tin hóa đơn thành công',
+              duration: 3000,
+            });
+          } else {
+            toastNotification.value.addToast({
+              type: 'error',
+              message: result.message,
+              duration: 3000,
+            });
+          }
+        }
+        updateTimelineStatuses();
+      } else if (activeTab.value === 'customer') {
+        const result = await updateCustomerInfo(
           invoice.value.id,
-          trangThaiNumber,
-          null
+          invoice.value.idKhachHang.ten,
+          invoice.value.soDienThoaiKhachHang,
+          invoice.value.diaChiKhachHang,
+          invoice.value.idKhachHang.email
         );
         if (result.success) {
-          history.value.push({
-            id: Date.now(),
-            action: `Cập nhật trạng thái: ${invoice.value.trangThai}`,
-            employee: 'Hệ thống',
-            timestamp: new Date().toLocaleString('vi-VN'),
-            status: 'completed',
-          });
           toastNotification.value.addToast({
             type: 'success',
-            message: 'Đã cập nhật thông tin hóa đơn thành công',
+            message: 'Đã cập nhật thông tin khách hàng thành công',
             duration: 3000,
           });
+          customerInfo.value = [
+            { label: 'Tên khách hàng:', value: invoice.value.idKhachHang.ten, icon: 'bi bi-person', key: 'ten' },
+            { label: 'Số điện thoại:', value: invoice.value.soDienThoaiKhachHang, icon: 'bi bi-telephone', key: 'soDienThoai' },
+            { label: 'Địa chỉ:', value: invoice.value.diaChiKhachHang, icon: 'bi bi-geo-alt', key: 'diaChi' },
+            { label: 'Email:', value: invoice.value.idKhachHang.email, icon: 'bi bi-envelope', key: 'email' },
+            { label: 'Ghi chú:', value: invoice.value.ghiChu || 'Không có', icon: 'bi bi-sticky', key: 'ghiChu' },
+          ];
         } else {
           toastNotification.value.addToast({
             type: 'error',
@@ -562,8 +592,30 @@ export default {
           });
         }
       }
-      updateTimelineStatuses();
       closeUpdateModal();
+    };
+
+    const updateCustomerInfo = async (id, tenKhachHang, soDienThoai, diaChi, email) => {
+      try {
+        const params = { tenKhachHang, soDienThoai, diaChi, email };
+        const response = await hoaDonStore.updateCustomerInfo(id, tenKhachHang, soDienThoai, diaChi, email);
+        if (response.success) {
+          invoice.value.idKhachHang.ten = tenKhachHang;
+          invoice.value.soDienThoaiKhachHang = soDienThoai;
+          invoice.value.diaChiKhachHang = diaChi;
+          invoice.value.idKhachHang.email = email;
+          history.value.push({
+            id: Date.now(),
+            action: `Cập nhật thông tin khách hàng: ${tenKhachHang}`,
+            employee: 'Hệ thống',
+            timestamp: new Date().toLocaleString('vi-VN'),
+            status: 'completed',
+          });
+        }
+        return response;
+      } catch (error) {
+        return { success: false, message: error.message || 'Không thể cập nhật thông tin khách hàng' };
+      }
     };
 
     const showDivinationModal = () => {
