@@ -1272,7 +1272,6 @@ export default defineComponent({
       };
       this.$refs.notificationModal.openModal();
     },
-
     scrollCarousel(direction) {
       if (this.activeTab === 'alternative') {
         if (direction === 'left' && this.currentAlternativeIndex > 0) {
