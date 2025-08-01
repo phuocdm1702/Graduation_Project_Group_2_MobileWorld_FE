@@ -267,9 +267,19 @@ export default {
       return payment.timestamp ? payment.timestamp.split(' ')[1] : 'N/A';
     };
 
+    // Cập nhật phương thức showIMEIModal để thêm confirm
     const showIMEIModal = (item) => {
-      selectedProduct.value = { ...item };
-      isIMEIModalVisible.value = true;
+      notificationType.value = 'confirm';
+      notificationMessage.value = `Bạn có chắc chắn muốn xem IMEI của sản phẩm ${item.name}?`;
+      notificationOnConfirm.value = () => {
+        selectedProduct.value = { ...item };
+        isIMEIModalVisible.value = true;
+        resetNotification();
+      };
+      notificationOnCancel.value = () => {
+        resetNotification();
+      };
+      notificationModal.value.openModal();
     };
 
     const closeIMEIModal = () => {
@@ -368,58 +378,71 @@ export default {
       }
     };
 
+    // Cập nhật phương thức showConfirmIMEIModal để thêm confirm
     const showConfirmIMEIModal = async (item) => {
-      selectedProduct.value = { ...item };
-      if (!selectedProduct.value.chiTietSanPhamId) {
-        toastNotification.value.addToast({
-          type: 'error',
-          message: 'Không tìm thấy ID chi tiết sản phẩm cho sản phẩm này',
-          duration: 5000,
-        });
-        return;
-      }
-      try {
-        const response = await apiService.get(`/api/chi-tiet-san-pham/${selectedProduct.value.chiTietSanPhamId}/id-san-pham`);
-        const idSanPham = response.data;
-        if (!idSanPham) {
+      notificationType.value = 'confirm';
+      notificationMessage.value = `Bạn có chắc chắn muốn xác nhận IMEI cho sản phẩm ${item.name}?`;
+      notificationOnConfirm.value = async () => {
+        selectedProduct.value = { ...item };
+        if (!selectedProduct.value.chiTietSanPhamId) {
           toastNotification.value.addToast({
             type: 'error',
-            message: 'Không tìm thấy ID sản phẩm cho chi tiết sản phẩm này',
+            message: 'Không tìm thấy ID chi tiết sản phẩm cho sản phẩm này',
             duration: 5000,
           });
+          resetNotification();
           return;
         }
-        selectedProduct.value.idSanPham = idSanPham;
-        isConfirmIMEIModalVisible.value = true;
-        searchIMEI.value = '';
-        imeiCurrentPage.value = 1;
-        await hoaDonStore.fetchImelList({
-          page: 0,
-          size: 100,
-          idSanPham: selectedProduct.value.idSanPham,
-          chiTietSanPhamId: selectedProduct.value.chiTietSanPhamId,
-        });
-        if (hoaDonStore.getError) {
+        try {
+          const response = await apiService.get(`/api/chi-tiet-san-pham/${selectedProduct.value.chiTietSanPhamId}/id-san-pham`);
+          const idSanPham = response.data;
+          if (!idSanPham) {
+            toastNotification.value.addToast({
+              type: 'error',
+              message: 'Không tìm thấy ID sản phẩm cho chi tiết sản phẩm này',
+              duration: 5000,
+            });
+            resetNotification();
+            return;
+          }
+          selectedProduct.value.idSanPham = idSanPham;
+          isConfirmIMEIModalVisible.value = true;
+          searchIMEI.value = '';
+          imeiCurrentPage.value = 1;
+          await hoaDonStore.fetchImelList({
+            page: 0,
+            size: 100,
+            idSanPham: selectedProduct.value.idSanPham,
+            chiTietSanPhamId: selectedProduct.value.chiTietSanPhamId,
+          });
+          if (hoaDonStore.getError) {
+            toastNotification.value.addToast({
+              type: 'error',
+              message: `${hoaDonStore.getError}${hoaDonStore.getError.response?.data?.message ? `: ${hoaDonStore.getError.response.data.message}` : ''}`,
+              duration: 5000,
+            });
+          } else if (hoaDonStore.getImelList.length === 0) {
+            toastNotification.value.addToast({
+              type: 'warning',
+              message: 'Không có IMEI nào khả dụng cho sản phẩm này',
+              duration: 5000,
+            });
+          }
+          resetNotification();
+        } catch (error) {
+          console.error('Error in showConfirmIMEIModal:', error);
           toastNotification.value.addToast({
             type: 'error',
-            message: `${hoaDonStore.getError}${hoaDonStore.getError.response?.data?.message ? `: ${hoaDonStore.getError.response.data.message}` : ''}`,
+            message: `Lỗi khi lấy ID sản phẩm: ${error.message}`,
             duration: 5000,
           });
-        } else if (hoaDonStore.getImelList.length === 0) {
-          toastNotification.value.addToast({
-            type: 'warning',
-            message: 'Không có IMEI nào khả dụng cho sản phẩm này',
-            duration: 5000,
-          });
+          resetNotification();
         }
-      } catch (error) {
-        console.error('Error in showConfirmIMEIModal:', error);
-        toastNotification.value.addToast({
-          type: 'error',
-          message: `Lỗi khi lấy ID sản phẩm: ${error.message}`,
-          duration: 5000,
-        });
-      }
+      };
+      notificationOnCancel.value = () => {
+        resetNotification();
+      };
+      notificationModal.value.openModal();
     };
 
     const closeConfirmIMEIModal = () => {
@@ -484,9 +507,19 @@ export default {
       }
     };
 
+    // Cập nhật phương thức showAddProductModal để thêm confirm
     const showAddProductModal = () => {
-      isAddProductModalVisible.value = true;
-      newProduct.value = { name: '', price: 0, quantity: 1, image: '', imei: '', ram: '', capacity: '', color: '' };
+      notificationType.value = 'confirm';
+      notificationMessage.value = 'Bạn có chắc chắn muốn thêm sản phẩm mới?';
+      notificationOnConfirm.value = () => {
+        isAddProductModalVisible.value = true;
+        newProduct.value = { name: '', price: 0, quantity: 1, image: '', imei: '', ram: '', capacity: '', color: '' };
+        resetNotification();
+      };
+      notificationOnCancel.value = () => {
+        resetNotification();
+      };
+      notificationModal.value.openModal();
     };
 
     const closeAddProductModal = () => {
@@ -618,9 +651,19 @@ export default {
       }
     };
 
+    // Cập nhật phương thức showDivinationModal để thêm confirm
     const showDivinationModal = () => {
-      isDivinationModalVisible.value = true;
-      generateDivination();
+      notificationType.value = 'confirm';
+      notificationMessage.value = 'Bạn có chắc chắn muốn quét QR để thêm IMEI?';
+      notificationOnConfirm.value = () => {
+        isDivinationModalVisible.value = true;
+        generateDivination();
+        resetNotification();
+      };
+      notificationOnCancel.value = () => {
+        resetNotification();
+      };
+      notificationModal.value.openModal();
     };
 
     const closeDivinationModal = () => {
@@ -680,6 +723,7 @@ export default {
       return products.value.every(product => product.imei && product.imei.trim() !== '' && product.imeiList.every(i => i.status === 'Còn hàng'));
     };
 
+    // Cập nhật phương thức changeStatus để thêm confirm in hóa đơn khi chuyển sang "Chờ giao hàng"
     const changeStatus = async (status) => {
       if (invoice.value.loaiDon === 'trực tiếp') {
         toastNotification.value.addToast({
@@ -732,6 +776,20 @@ export default {
               message: `Cập nhật trạng thái thành công: ${status}`,
               duration: 3000,
             });
+
+            // Nếu chuyển sang trạng thái "Chờ giao hàng", hỏi có muốn in hóa đơn
+            if (status === 'Chờ giao hàng') {
+              notificationType.value = 'confirm';
+              notificationMessage.value = 'Bạn có muốn in hóa đơn ngay bây giờ?';
+              notificationOnConfirm.value = async () => {
+                await printInvoice();
+                resetNotification();
+              };
+              notificationOnCancel.value = () => {
+                resetNotification();
+              };
+              notificationModal.value.openModal();
+            }
           } else {
             toastNotification.value.addToast({
               type: 'error',
