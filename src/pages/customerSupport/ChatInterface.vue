@@ -351,6 +351,7 @@ const isScrolling = ref(false);
 const messagesContainer = ref(null);
 const messagesMap = ref({}); // { [customerId]: [messages] }
 const isSending = ref(false);
+const subscriptionRef = ref(null); // Thêm biến lưu subscription
 
 // Computed
 const filteredCustomerList = computed(() => {
@@ -395,12 +396,17 @@ const selectCustomer = async (customer) => {
 };
 
 const subscribeToCustomerTopic = () => {
+  // Unsubscribe trước nếu đã có subscription cũ
+  if (subscriptionRef.value) {
+    subscriptionRef.value.unsubscribe();
+    subscriptionRef.value = null;
+  }
   if (
     stompClient.value &&
     stompClient.value.connected &&
     activeCustomer.value
   ) {
-    stompClient.value.subscribe(
+    subscriptionRef.value = stompClient.value.subscribe(
       `/topic/customer/${activeCustomer.value.id}`,
       (message) => {
         const msg = JSON.parse(message.body);
@@ -737,12 +743,14 @@ onMounted(async () => {
   }
 });
 
-// Watch for messages changes to auto-scroll
+// Watch chuyển customer
 watch(
   () => activeCustomer.value,
   (newCustomer, oldCustomer) => {
-    if (oldCustomer && stompClient.value && stompClient.value.connected) {
-      stompClient.value.unsubscribe(`/topic/customer/${oldCustomer.id}`);
+    // Unsubscribe topic cũ
+    if (subscriptionRef.value) {
+      subscriptionRef.value.unsubscribe();
+      subscriptionRef.value = null;
     }
     if (newCustomer && stompClient.value && stompClient.value.connected) {
       subscribeToCustomerTopic();
@@ -750,8 +758,12 @@ watch(
   }
 );
 
-// Disconnect WebSocket when component unmounts
+// Disconnect WebSocket khi component unmounts
 onUnmounted(() => {
+  if (subscriptionRef.value) {
+    subscriptionRef.value.unsubscribe();
+    subscriptionRef.value = null;
+  }
   if (stompClient.value) {
     stompClient.value.disconnect();
   }
