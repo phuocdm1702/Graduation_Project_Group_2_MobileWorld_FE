@@ -1,11 +1,7 @@
 <template>
   <div class="container-fluid py-4">
-    <HeaderCard
-      title="Quản Lý Khách Hàng"
-      badgeText="Hệ Thống POS"
-      badgeClass="gradient-custom-teal"
-      :backgroundOpacity="0.95"
-    />
+    <HeaderCard title="Quản Lý Khách Hàng" badgeText="Hệ Thống POS" badgeClass="gradient-custom-teal"
+      :backgroundOpacity="0.95" />
 
     <!-- Filter Section -->
     <FilterTableSection title="Bộ Lọc Tìm Kiếm" icon="bi bi-funnel">
@@ -16,13 +12,8 @@
               <label class="filter-label">Tìm kiếm</label>
               <div class="search-input-wrapper">
                 <i class="bi bi-search search-icon"></i>
-                <input
-                  type="text"
-                  class="form-control search-input"
-                  placeholder="Mã, tên, email, SĐT..."
-                  :value="keyword"
-                  @input="debouncedSearch($event.target.value)"
-                />
+                <input type="text" class="form-control search-input" placeholder="Mã, tên, email, SĐT..."
+                  :value="keyword" @input="debouncedSearch($event.target.value)" />
               </div>
             </div>
           </div>
@@ -31,30 +22,15 @@
               <label class="filter-label">Trạng thái</label>
               <div class="radio-group">
                 <label class="radio-label">
-                  <input
-                    type="radio"
-                    value="tat-ca"
-                    v-model="statusFilter"
-                    class="radio-input"
-                  />
+                  <input type="radio" value="tat-ca" v-model="statusFilter" class="radio-input" />
                   Tất cả
                 </label>
                 <label class="radio-label">
-                  <input
-                    type="radio"
-                    value="Kích hoạt"
-                    v-model="statusFilter"
-                    class="radio-input"
-                  />
+                  <input type="radio" value="Kích hoạt" v-model="statusFilter" class="radio-input" />
                   Kích hoạt
                 </label>
                 <label class="radio-label">
-                  <input
-                    type="radio"
-                    value="Hủy kích hoạt"
-                    v-model="statusFilter"
-                    class="radio-input"
-                  />
+                  <input type="radio" value="Hủy kích hoạt" v-model="statusFilter" class="radio-input" />
                   Hủy kích hoạt
                 </label>
               </div>
@@ -67,11 +43,8 @@
               <div class="filter-stats">
                 <div class="stat-item d-flex gap-2">
                   <span class="stat-label">Tổng số khách hàng:</span>
-                  <span
-                    class="stat-value"
-                    style="color: #15803d; font-weight: bold"
-                    >{{ filteredCustomers.length }}</span
-                  >
+                  <span class="stat-value" style="color: #15803d; font-weight: bold">{{ filteredCustomers.length
+                  }}</span>
                 </div>
               </div>
             </div>
@@ -88,13 +61,7 @@
             </button>
             <label for="import-excel" class="btn btn-action cursor-pointer">
               Nhập từ Excel
-              <input
-                id="import-excel"
-                type="file"
-                accept=".xlsx, .xls"
-                class="d-none"
-                @change="handleExcelUpload"
-              />
+              <input id="import-excel" type="file" accept=".xlsx, .xls" class="d-none" @change="handleExcelUpload" />
             </label>
             <button class="btn btn-action" @click="downloadTemplate">
               Tải mẫu Excel
@@ -108,23 +75,17 @@
     <FilterTableSection title="Danh Sách Khách Hàng" icon="bi bi-table">
       <div class="table-header">
         <div class="table-title-wrapper">
-          <span class="table-count"
-            >{{ filteredCustomers.length }} khách hàng</span
-          >
+          <span class="table-count">{{ filteredCustomers.length }} khách hàng</span>
         </div>
       </div>
 
       <div class="table-body">
         <!-- Table View -->
         <div class="animate__animated animate__zoomIn">
-          <DataTable
-            :headers="headers"
-            :data="filteredCustomers"
-            :pageSizeOptions="[5, 10, 15, 20, 30, 40, 50]"
-          >
-          <template #stt="{ globalIndex }">
-            {{ globalIndex + 1 }}
-          </template>
+          <DataTable :headers="headers" :data="filteredCustomers" :pageSizeOptions="[5, 10, 15, 20, 30, 40, 50]">
+            <template #stt="{ globalIndex }">
+              {{ globalIndex + 1 }}
+            </template>
             <template #ma="{ item }">
               <div class="code-cell">
                 <span class="code-text">{{ item.ma }}</span>
@@ -138,24 +99,24 @@
             <template #soDienThoai="{ item }">
               <div class="customer-cell">
                 <div class="customer-name">
-                  {{ item.idTaiKhoan.soDienThoai }}
+                  {{ item.idTaiKhoan?.soDienThoai || 'Không có số điện thoại' }}
                 </div>
               </div>
             </template>
             <template #email="{ item }">
               <div class="customer-cell">
-                <div class="customer-name">{{ item.idTaiKhoan.email }}</div>
+                <div class="customer-name">
+                  {{ item.idTaiKhoan?.email || 'Không có email' }}
+                </div>
               </div>
             </template>
             <template #diaChi="{ item }">
               <div class="customer-cell">
                 <div class="customer-name">
-                  <span
-                    v-if="
-                      item.idDiaChiKhachHang &&
-                      item.idDiaChiKhachHang.macDinh === true
-                    "
-                  >
+                  <span v-if="
+                    item.idDiaChiKhachHang &&
+                    item.idDiaChiKhachHang.macDinh === true
+                  ">
                     {{ item.idDiaChiKhachHang.diaChiCuThe }},
                     {{ item.idDiaChiKhachHang.thanhPho }},
                     {{ item.idDiaChiKhachHang.quan }},
@@ -166,35 +127,20 @@
               </div>
             </template>
             <template #trangThai="{ item }">
-              <span
-                class="status-badge"
-                :class="getStatusBadgeClass(item.idTaiKhoan.deleted)"
-              >
-                {{ item.idTaiKhoan.deleted ? "Kích Hoạt" : "Đã Hủy" }}
+              <span class="status-badge" :class="getStatusBadgeClass(item.idTaiKhoan?.deleted)">
+                {{ item.idTaiKhoan ? (item.idTaiKhoan.deleted ? "Kích Hoạt" : "Đã Hủy") : "Không xác định" }}
               </span>
             </template>
             <template #actions="{ item }">
               <div class="action-buttons-cell d-flex gap-2">
                 <label class="switch">
-                  <input
-                    type="checkbox"
-                    :checked="item.idTaiKhoan.deleted"
-                    @change="toggleCustomerStatus(item)"
-                  />
+                  <input type="checkbox" :checked="item.idTaiKhoan.deleted" @change="toggleCustomerStatus(item)" />
                   <span class="slider round"></span>
                 </label>
-                <button
-                  class="btn btn-sm btn-table"
-                  @click="editCustomer(item)"
-                  title="Chỉnh sửa"
-                >
+                <button class="btn btn-sm btn-table" @click="editCustomer(item)" title="Chỉnh sửa">
                   <i class="bi bi-pencil-fill"></i>
                 </button>
-                <button
-                  class="btn btn-sm btn-table"
-                  @click="confirmDeleteCustomer(item)"
-                  title="Xóa"
-                >
+                <button class="btn btn-sm btn-table" @click="confirmDeleteCustomer(item)" title="Xóa">
                   <i class="bi bi-trash-fill"></i>
                 </button>
               </div>
@@ -204,15 +150,9 @@
       </div>
     </FilterTableSection>
 
-    <NotificationModal
-      ref="notificationModal"
-      :type="notificationType"
-      :message="notificationMessage"
-      :isLoading="isNotificationLoading"
-      :onConfirm="notificationOnConfirm"
-      :onCancel="notificationOnCancel"
-      @close="resetNotification"
-    />
+    <NotificationModal ref="notificationModal" :type="notificationType" :message="notificationMessage"
+      :isLoading="isNotificationLoading" :onConfirm="notificationOnConfirm" :onCancel="notificationOnCancel"
+      @close="resetNotification" />
     <ToastNotification ref="toastNotification" />
   </div>
 </template>
@@ -253,6 +193,10 @@ const customers = ref([]);
 const filteredCustomers = computed(() => {
   return customers.value
     .filter((customer) => {
+      if (!customer.idTaiKhoan) {
+        console.warn(`Customer ${customer.ma} has no idTaiKhoan`, customer);
+        customer.idTaiKhoan = { deleted: false }; // Assign default
+      }
       const searchText = keyword.value.toLowerCase();
       const matchesSearch =
         (customer.ma || "").toLowerCase().includes(searchText) ||
@@ -267,12 +211,15 @@ const filteredCustomers = computed(() => {
       return matchesSearch && matchesStatus;
     })
     .slice()
-    .reverse(); 
+    .reverse();
 });
 
 onMounted(async () => {
   const data = await fetchKhachHang();
-  customers.value = data;
+  customers.value = data.map(customer => ({
+    ...customer,
+    idTaiKhoan: customer.idTaiKhoan || { deleted: false }, // Default to false if idTaiKhoan is missing
+  }));
 });
 
 const headers = [
@@ -315,8 +262,8 @@ const resetFilters = () => {
 
 const getStatusBadgeClass = (status) => {
   return {
-    "badge-waiting": status,
-    "badge-canceled": !status,
+    "badge-waiting": status === true,
+    "badge-canceled": status === false || status === undefined || status === null,
   };
 };
 
@@ -357,10 +304,10 @@ const toggleCustomerStatus = async (customer) => {
       customers.value = customers.value.map((e) =>
         e.id === customer.id
           ? {
-              ...e,
-              trangThai: newStatus,
-              idTaiKhoan: { ...e.idTaiKhoan, deleted: newDeleted },
-            }
+            ...e,
+            trangThai: newStatus,
+            idTaiKhoan: { ...e.idTaiKhoan, deleted: newDeleted },
+          }
           : e
       );
 
@@ -536,8 +483,7 @@ const handleExcelUpload = async (event) => {
             !row["Email"]
           ) {
             throw new Error(
-              `Dòng ${
-                index + 2
+              `Dòng ${index + 2
               }: Thiếu Mã Khách Hàng, Tên Khách Hàng hoặc Email`
             );
           }
@@ -655,6 +601,7 @@ const handleExcelUpload = async (event) => {
 }
 
 @keyframes gentleGlow {
+
   0%,
   100% {
     box-shadow: 0 0 5px rgba(52, 211, 153, 0.3);
@@ -933,11 +880,11 @@ const handleExcelUpload = async (event) => {
   border-radius: 50%;
 }
 
-input:checked + .slider {
+input:checked+.slider {
   background-color: #34d399;
 }
 
-input:checked + .slider:before {
+input:checked+.slider:before {
   transform: translateX(20px);
 }
 
@@ -970,7 +917,7 @@ input:checked + .slider:before {
     margin-right: -0.25rem;
   }
 
-  .row.g-4 > [class*="col-"] {
+  .row.g-4>[class*="col-"] {
     padding-left: 0.25rem;
     padding-right: 0.25rem;
   }
