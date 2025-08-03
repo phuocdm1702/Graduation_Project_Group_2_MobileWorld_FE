@@ -50,14 +50,12 @@
         <div class="modal-dialog modal-dialog-centered">
           <div class="modal-content">
             <div class="modal-header">
-              <h5 class="modal-title">Kết Thúc Ca</h5>
+              <h5 class="modal-title">Xác Nhận Kết Thúc Ca</h5>
               <button type="button" class="btn-close" @click="showEndShiftModal = false"></button>
             </div>
             <div class="modal-body">
-              <div class="mb-3">
-                <label for="finalCash" class="form-label fw-bold">Số tiền mặt cuối ca (VND)</label>
-                <input type="number" id="finalCash" v-model.number="localFinalCash" class="form-control" placeholder="Nhập số tiền mặt cuối ca" min="0">
-              </div>
+              <p>Bạn có chắc chắn muốn kết thúc ca làm việc hiện tại không?</p>
+              <p class="text-muted">Hệ thống sẽ tự động tính toán tiền mặt cuối ca dựa trên các giao dịch đã ghi nhận.</p>
             </div>
             <div class="modal-footer">
               <button @click="endShift" class="btn btn-primary">Xác Nhận</button>
@@ -76,7 +74,7 @@
               <button type="button" class="btn-close" @click="closeReportModal"></button>
             </div>
             <div class="modal-body">
-              <p><strong>Nhân viên:</strong> {{ giaoCaStore.reportData.idNhanVien.ten }}</p>
+              <p><strong>Nhân viên:</strong> {{ giaoCaStore.reportData.tenNhanVien }}</p>
               <p><strong>Thời gian bắt đầu:</strong> {{ formatDateTime(giaoCaStore.reportData.thoiGianBatDau) }}</p>
               <p><strong>Thời gian kết thúc:</strong> {{ formatDateTime(giaoCaStore.reportData.thoiGianKetThuc) }}</p>
               <p><strong>Tiền mặt ban đầu:</strong> {{ formatCurrency(giaoCaStore.reportData.tienMatBanDau) }}</p>
@@ -86,9 +84,9 @@
               <p><strong>Tổng doanh thu ca:</strong> {{ formatCurrency(giaoCaStore.reportData.tongDoanhThu) }}</p>
               
               <h6 class="mt-4">Hóa đơn đã hoàn thành trong ca:</h6>
-              <ul v-if="giaoCaStore.reportData.completedOrders && giaoCaStore.reportData.completedOrders.length">
-                <li v-for="order in giaoCaStore.reportData.completedOrders" :key="order.id">
-                  Mã HD: {{ order.ma }}, Tổng tiền: {{ formatCurrency(order.tongTienSauGiam) }}
+              <ul v-if="giaoCaStore.reportData.hoaDons && giaoCaStore.reportData.hoaDons.length">
+                <li v-for="hoaDon in giaoCaStore.reportData.hoaDons" :key="hoaDon.ma">
+                  Mã HD: {{ hoaDon.ma }}, Tổng tiền: {{ formatCurrency(hoaDon.tongTien) }}
                 </li>
               </ul>
               <p v-else>Không có hóa đơn nào được hoàn thành trong ca này.</p>
@@ -156,7 +154,6 @@ const startShift = async () => {
   try {
     await giaoCaStore.startShift(authStore.user.idNhanVien, localInitialCash.value);
     toastNotification.value.addToast({ type: 'success', message: 'Bắt đầu ca làm việc thành công!', duration: 3000 });
-    // Start polling after shift begins
     pollingInterval = setInterval(fetchPendingOrdersCount, 100); // Poll every 5 seconds
   } catch (error) {
     toastNotification.value.addToast({ type: 'error', message: 'Lỗi khi bắt đầu ca làm việc.', duration: 3000 });
@@ -170,24 +167,24 @@ const endShift = async () => {
     return;
   }
   try {
-    await giaoCaStore.endShift(authStore.user.idNhanVien, localFinalCash.value);
-    showEndShiftModal.value = false;
-    showReportModal.value = true;
+    await giaoCaStore.endShift(authStore.user.idNhanVien);
+    showEndShiftModal.value = false; // Đóng modal trước
+    showReportModal.value = true;    // Mở ReportModal
     toastNotification.value.addToast({ type: 'success', message: 'Kết thúc ca làm việc thành công!', duration: 3000 });
-    // Stop polling after shift ends
     if (pollingInterval) {
       clearInterval(pollingInterval);
       pollingInterval = null;
     }
   } catch (error) {
-    toastNotification.value.addToast({ type: 'error', message: 'Lỗi khi kết thúc ca làm việc.', duration: 3000 });
+    console.error('Error ending shift:', error);
+    toastNotification.value.addToast({ type: 'error', message: `Lỗi khi kết thúc ca: ${error.message || 'Không xác định'}`, duration: 5000 });
+    showEndShiftModal.value = false; // Đảm bảo modal đóng ngay cả khi lỗi
   }
 };
 
 const exportReport = async () => {
   try {
     const response = await xuatExcel(giaoCaStore.reportData);
-
     const url = window.URL.createObjectURL(new Blob([response.data]));
     const link = document.createElement('a');
     link.href = url;
@@ -196,7 +193,6 @@ const exportReport = async () => {
     link.click();
     link.remove();
     window.URL.revokeObjectURL(url);
-
     toastNotification.value.addToast({ type: 'success', message: 'Xuất báo cáo Excel thành công!', duration: 3000 });
   } catch (error) {
     console.error('Error exporting report:', error);
@@ -216,7 +212,6 @@ onMounted(() => {
   } else {
     giaoCaStore.checkActiveShift(authStore.user.idNhanVien).then(() => {
       if (giaoCaStore.activeShift) {
-        // If there's an active shift on mount, start polling
         pollingInterval = setInterval(fetchPendingOrdersCount, 100); // Poll every 5 seconds
       }
     });

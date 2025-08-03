@@ -4,8 +4,8 @@ export const batDauCa = (nhanVienId, tienMatBanDau) => {
     return apiService.post(`/api/giao-ca/bat-dau?nhanVienId=${nhanVienId}&tienMatBanDau=${tienMatBanDau}`);
 };
 
-export const ketThucCa = (nhanVienId, tienMatCuoiCa) => {
-    return apiService.post(`/api/giao-ca/ket-thuc?nhanVienId=${nhanVienId}&tienMatCuoiCa=${tienMatCuoiCa}`);
+export const ketThucCa = (nhanVienId) => {
+    return apiService.post(`/api/giao-ca/ket-thuc?nhanVienId=${nhanVienId}`);
 };
 
 export const getActiveShift = (nhanVienId) => {

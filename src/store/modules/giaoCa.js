@@ -6,6 +6,7 @@ export const useGiaoCaStore = defineStore('giaoCa', {
     activeShift: null, // Sẽ lưu toàn bộ thông tin ca đang hoạt động từ BE
     reportData: {},
     lastEndedShiftCash: 0, // Thêm state mới để lưu tiền mặt cuối ca trước
+    error: null,
   }),
   actions: {
     async checkActiveShift(nhanVienId) {
@@ -21,6 +22,7 @@ export const useGiaoCaStore = defineStore('giaoCa', {
             this.activeShift = null; // No active shift
         } else {
             console.error('Error checking active shift:', error);
+            this.error = error.response?.data?.message || 'Lỗi không xác định';
             throw error;
         }
       }
@@ -52,9 +54,9 @@ export const useGiaoCaStore = defineStore('giaoCa', {
         throw error;
       }
     },
-    async endShift(nhanVienId, tienMatCuoiCa) {
+    async endShift(nhanVienId) {
       try {
-        const response = await ketThucCa(nhanVienId, tienMatCuoiCa);
+        const response = await ketThucCa(nhanVienId);
         this.reportData = response.data;
         this.activeShift = null; // Kết thúc ca, không còn ca hoạt động
         return response.data;
