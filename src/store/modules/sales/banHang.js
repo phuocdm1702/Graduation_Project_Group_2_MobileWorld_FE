@@ -9,6 +9,7 @@ import QrcodeVue from "qrcode.vue";
 import axios from "axios";
 import { useRouter } from "vue-router";
 import { BrowserMultiFormatReader, NotFoundException } from "@zxing/library";
+import { useGiaoCaStore } from "@/store/modules/giaoCa";
 
 // Debounce utility function
 const debounce = (func, delay) => {
@@ -545,45 +546,53 @@ export default {
     };
 
     const createNewPendingInvoice = async () => {
-  if (pendingInvoices.value.length >= 5) {
-    showToast("error", "Đã đạt giới hạn 5 hóa đơn chờ");
-    return;
-  }
-  isCreatingInvoice.value = true;
-  try {
-    const auth = JSON.parse(localStorage.getItem('auth') || '{}');
-    console.log('localStorage auth:', auth);
-    const nhanVienId = auth?.user?.idNhanVien;
-    if (!nhanVienId) {
-      showToast("error", "Không tìm thấy thông tin nhân viên. Vui lòng đăng nhập lại.");
-      router.push('/auth/login');
-      return;
-    }
-    console.log('nhanVienId:', nhanVienId);
-    const requestBody = {
-      khachHangId: customer.value.id || null,
-      idNhanVien: nhanVienId, // Thay nhanVienId thành idNhanVien
+      const giaoCaStore = useGiaoCaStore();
+      await giaoCaStore.checkActiveShift(JSON.parse(localStorage.getItem('auth')).user.idNhanVien);
+
+      if (!giaoCaStore.activeShift) {
+        showToast("error", giaoCaStore.error || "Nhân viên chưa bắt đầu ca làm việc. Vui lòng bắt đầu ca làm việc trước khi tạo hóa đơn.");
+        return;
+      }
+
+      if (pendingInvoices.value.length >= 5) {
+        showToast("error", "Đã đạt giới hạn 5 hóa đơn chờ");
+        return;
+      }
+      isCreatingInvoice.value = true;
+      try {
+        const auth = JSON.parse(localStorage.getItem('auth') || '{}');
+        console.log('localStorage auth:', auth);
+        const nhanVienId = auth?.user?.idNhanVien;
+        if (!nhanVienId) {
+          showToast("error", "Không tìm thấy thông tin nhân viên. Vui lòng đăng nhập lại.");
+          router.push('/auth/login');
+          return;
+        }
+        console.log('nhanVienId:', nhanVienId);
+        const requestBody = {
+          khachHangId: customer.value.id || null,
+          idNhanVien: nhanVienId, // Thay nhanVienId thành idNhanVien
+        };
+        console.log('Request body to /api/add/tao-hd-cho:', requestBody);
+        const response = await apiService.post("/api/add/tao-hd-cho", requestBody);
+        console.log('Response from /api/add/tao-hd-cho:', response.data);
+        const newInvoice = {
+          id: response.data.id,
+          ma: response.data.ma,
+          status: "Chờ xử lý",
+          items: [],
+        };
+        pendingInvoices.value.push(newInvoice);
+        activeInvoiceId.value = newInvoice.id;
+        cartItems.value = [];
+        showToast("success", `Tạo hóa đơn mới thành công: ${newInvoice.ma}`);
+      } catch (error) {
+        showToast("error", `Lỗi khi tạo hóa đơn mới: ${error.response?.data?.message || error.message}`);
+        console.error("Error details:", error);
+      } finally {
+        isCreatingInvoice.value = false;
+      }
     };
-    console.log('Request body to /api/add/tao-hd-cho:', requestBody);
-    const response = await apiService.post("/api/add/tao-hd-cho", requestBody);
-    console.log('Response from /api/add/tao-hd-cho:', response.data);
-    const newInvoice = {
-      id: response.data.id,
-      ma: response.data.ma,
-      status: "Chờ xử lý",
-      items: [],
-    };
-    pendingInvoices.value.push(newInvoice);
-    activeInvoiceId.value = newInvoice.id;
-    cartItems.value = [];
-    showToast("success", `Tạo hóa đơn mới thành công: ${newInvoice.ma}`);
-  } catch (error) {
-    showToast("error", `Lỗi khi tạo hóa đơn mới: ${error.response?.data?.message || error.message}`);
-    console.error("Error details:", error);
-  } finally {
-    isCreatingInvoice.value = false;
-  }
-};
 
     const loadPendingInvoice = async (invoice) => {
       activeInvoiceId.value = invoice.id;
