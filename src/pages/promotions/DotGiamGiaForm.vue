@@ -98,28 +98,49 @@
               </div>
 
               <div class="table-container h-100" style="overflow-y: auto;">
-                <DataTable :headers="productHeaders" :data="dspList" :pageSizeOptions="[5, 10, 15, 20, 30, 40, 50]"
-                  :itemsPerPage="10" class="product-table">
+                <DataTable
+                    v-if="!isLoading"
+                    :headers="productHeaders"
+                    :data="dspList"
+                    :pageSizeOptions="[5, 10, 15, 20, 30, 40, 50]"
+                    :itemsPerPage="10"
+                    class="product-table"
+                >
                   <template #checkbox="{ item }">
-                    <input type="checkbox" :value="item.sp.id" :checked="idDSPs.includes(item.sp.id)"
-                      @change="fetchCTSPData(item.sp.id)" class="form-check-input" />
+                    <input
+                        v-if="item && item.sp"
+                        type="checkbox"
+                        :value="item.sp.id"
+                        :checked="idDSPs.includes(item.sp.id)"
+                        @change="fetchCTSPData(item.sp.id)"
+                        class="form-check-input"
+                    />
+                    <span v-else>N/A</span>
                   </template>
                   <template #index="{ globalIndex }">
                     {{ globalIndex + 1 }}
                   </template>
                   <template #sp.ma="{ item }">
-                    <span>{{ item.sp.ma }}</span>
+                    <span>{{ item.sp?.ma ?? 'N/A' }}</span>
                   </template>
                   <template #sp.tenSanPham="{ item }">
-                    <span>{{ item.sp.tenSanPham }}</span>
+                    <span>{{ item.sp?.tenSanPham ?? 'N/A' }}</span>
                   </template>
                   <template #nsx.nhaSanXuat="{ item }">
-                    <span>{{ item.nsx.nhaSanXuat }}</span>
+                    <span>{{ item.nsx?.nhaSanXuat ?? 'N/A' }}</span>
                   </template>
                   <template #soLuongCTSP="{ item }">
-                    <span>{{ item.soLuongCTSP }}</span>
+                    <span>{{ item.soLuongCTSP ?? '0' }}</span>
                   </template>
                 </DataTable>
+                <div v-else-if="isLoading" class="text-center py-4 text-muted">
+                  <i class="pi pi-spin pi-spinner fs-1"></i>
+                  <p class="mt-2">Đang tải dữ liệu...</p>
+                </div>
+                <div v-else class="text-center py-4 text-muted">
+                  <i class="pi pi-inbox fs-1"></i>
+                  <p class="mt-2">Không có dữ liệu sản phẩm</p>
+                </div>
               </div>
             </div>
           </FilterTableSection>
