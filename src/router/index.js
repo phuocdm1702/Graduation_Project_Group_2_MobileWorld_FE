@@ -12,6 +12,7 @@ const EditSanPham = () => import("@/pages/products/EditSanPham.vue");
 const ChiTietSanPham = () => import("@/pages/products/ChiTietSanPham.vue");
 const EditChiTietSanPham = () => import("@/pages/products/EditChiTietSanPham.vue");
 const ThemChiTietSanPham = () => import("@/pages/products/ThemChiTietSanPham.vue");
+const NhaSanXuat = () => import("@/pages/products/thuocTinhSp/NhaSanXuat.vue");
 const HoaDon = () => import("@/pages/bills/HoaDon.vue");
 const HoaDonChiTiet = () => import("@/pages/bills/HoaDonChiTiet.vue");
 const PhieuGiamGia = () => import("@/pages/promotions/PhieuGiamGia.vue");
@@ -19,6 +20,7 @@ const PhieuGiamGiaForm = () => import("@/pages/promotions/PhieuGiamGiaForm.vue")
 const DotGiamGia = () => import("@/pages/promotions/DotGiamGia.vue");
 const DotGiamGiaForm = () => import("@/pages/promotions/DotGiamGiaForm.vue");
 const BanHang = () => import("@/pages/sells/banHang.vue");
+const ThanhToanQuay = () => import("@/pages/sells/thanhToanQuay.vue");
 const NhanVien = () => import("@/pages/accounts/NhanVien.vue");
 const NhanVienForm = () => import("@/pages/accounts/NhanVienForm.vue");
 const KhachHang = () => import("@/pages/accounts/KhachHang.vue");
@@ -27,7 +29,7 @@ const ChatInterface = () => import("@/pages/customerSupport/ChatInterface.vue");
 const ThongKe = () => import("@/pages/statistics/ThongKe.vue");
 const Login = () => import("@/pages/auth/Login.vue");
 const NotFound = () => import("@/pages/NotFound.vue");
-const ThongTin = () => import("@/pages/accounts/ThongTinAccounts.vue")
+const ThongTin = () => import("@/pages/accounts/ThongTinAccounts.vue");
 const GiaoCa = () => import("@/pages/giaoCa/GiaoCa.vue");
 
 const routes = [
@@ -37,9 +39,9 @@ const routes = [
     component: AdminLayout,
     meta: { requiresAuth: true },
     children: [
-      { 
-        path: "/trangChu", 
-        name: "TrangChu", 
+      {
+        path: "/trangChu",
+        name: "TrangChu",
         component: TrangChu,
         meta: {
           title: "Trang chủ",
@@ -48,9 +50,9 @@ const routes = [
           ]
         }
       },
-      { 
-        path: "/sanPham", 
-        name: "SanPham", 
+      {
+        path: "/sanPham",
+        name: "SanPham",
         component: SanPham,
         meta: {
           title: "Sản phẩm",
@@ -60,10 +62,10 @@ const routes = [
           ]
         }
       },
-      { 
-        path: "/editSanPham/:id?", 
-        name: "EditSanPham", 
-        component: EditSanPham, 
+      {
+        path: "/editSanPham/:id?",
+        name: "EditSanPham",
+        component: EditSanPham,
         props: true,
         meta: {
           title: "Chỉnh sửa sản phẩm",
@@ -74,10 +76,10 @@ const routes = [
           ]
         }
       },
-      { 
-        path: "/chiTietSanPham/:id?", 
-        name: "ChiTietSanPham", 
-        component: ChiTietSanPham, 
+      {
+        path: "/chiTietSanPham/:id?",
+        name: "ChiTietSanPham",
+        component: ChiTietSanPham,
         props: true,
         meta: {
           title: "Chi tiết sản phẩm",
@@ -88,10 +90,10 @@ const routes = [
           ]
         }
       },
-      { 
-        path: "/chiTietSanPham/edit/:id?", 
-        name: "EditChiTietSanPham", 
-        component: EditChiTietSanPham, 
+      {
+        path: "/chiTietSanPham/edit/:id?",
+        name: "EditChiTietSanPham",
+        component: EditChiTietSanPham,
         props: true,
         meta: {
           title: "Chỉnh sửa chi tiết sản phẩm",
@@ -103,9 +105,9 @@ const routes = [
           ]
         }
       },
-      { 
-        path: "/themChiTietSanPham", 
-        name: "ThemChiTietSanPham", 
+      {
+        path: "/themChiTietSanPham",
+        name: "ThemChiTietSanPham",
         component: ThemChiTietSanPham,
         meta: {
           title: "Thêm chi tiết sản phẩm",
@@ -116,9 +118,22 @@ const routes = [
           ]
         }
       },
-      { 
-        path: "/banHang", 
-        name: "BanHang", 
+      {
+        path: "/nhaSanXuat",
+        name: "NhaSanXuat",
+        component: NhaSanXuat,
+        meta: {
+          title: "Nhà sản xuất",
+          breadcrumb: [
+            { name: "Trang chủ", path: "/trangChu" },
+            { name: "Sản phẩm", path: "/sanPham" },
+            { name: "Nhà Sản Xuất", path: "/nhaSanXuat" },
+          ]
+        }
+      },
+      {
+        path: "/banHang",
+        name: "BanHang",
         component: BanHang,
         meta: {
           title: "Bán hàng",
@@ -128,9 +143,22 @@ const routes = [
           ]
         }
       },
-      { 
-        path: "/hoaDon", 
-        name: "HoaDon", 
+      {
+        path: "/checkout-display",
+        name: "ThanhToanQuay",
+        component: ThanhToanQuay,
+        meta: {
+          title: "Thanh toán quầy",
+          breadcrumb: [
+            { name: "Trang chủ", path: "/trangChu" },
+            { name: "Bán hàng", path: "/banHang" },
+            { name: "Thanh toán quầy", path: "/checkout-display" }
+          ]
+        }
+      },
+      {
+        path: "/hoaDon",
+        name: "HoaDon",
         component: HoaDon,
         meta: {
           title: "Quản lý hóa đơn",
@@ -140,10 +168,10 @@ const routes = [
           ]
         }
       },
-      { 
-        path: "/hoaDon/:id/detail", 
-        name: "HoaDonChiTiet", 
-        component: HoaDonChiTiet, 
+      {
+        path: "/hoaDon/:id/detail",
+        name: "HoaDonChiTiet",
+        component: HoaDonChiTiet,
         props: true,
         meta: {
           title: "Chi tiết hóa đơn",
@@ -154,9 +182,9 @@ const routes = [
           ]
         }
       },
-      { 
-        path: "/phieuGiamGia", 
-        name: "PhieuGiamGia", 
+      {
+        path: "/phieuGiamGia",
+        name: "PhieuGiamGia",
         component: PhieuGiamGia,
         meta: {
           title: "Phiếu giảm giá",
@@ -166,10 +194,10 @@ const routes = [
           ]
         }
       },
-      { 
-        path: "/phieuGiamGia/form/:id?", 
-        name: "PhieuGiamGiaForm", 
-        component: PhieuGiamGiaForm, 
+      {
+        path: "/phieuGiamGia/form/:id?",
+        name: "PhieuGiamGiaForm",
+        component: PhieuGiamGiaForm,
         props: true,
         meta: {
           title: "Form phiếu giảm giá",
@@ -180,9 +208,9 @@ const routes = [
           ]
         }
       },
-      { 
-        path: "/dotGiamGia", 
-        name: "DotGiamGia", 
+      {
+        path: "/dotGiamGia",
+        name: "DotGiamGia",
         component: DotGiamGia,
         meta: {
           title: "Đợt giảm giá",
@@ -192,10 +220,10 @@ const routes = [
           ]
         }
       },
-      { 
-        path: "/dotGiamGia/form/:id?", 
-        name: "DotGiamGiaForm", 
-        component: DotGiamGiaForm, 
+      {
+        path: "/dotGiamGia/form/:id?",
+        name: "DotGiamGiaForm",
+        component: DotGiamGiaForm,
         props: true,
         meta: {
           title: "Form đợt giảm giá",
@@ -206,9 +234,9 @@ const routes = [
           ]
         }
       },
-      { 
-        path: "/nhanVien", 
-        name: "NhanVien", 
+      {
+        path: "/nhanVien",
+        name: "NhanVien",
         component: NhanVien,
         meta: {
           title: "Nhân viên",
@@ -218,10 +246,10 @@ const routes = [
           ]
         }
       },
-      { 
-        path: "/nhanVien/form/:id?", 
-        name: "NhanVienForm", 
-        component: NhanVienForm, 
+      {
+        path: "/nhanVien/form/:id?",
+        name: "NhanVienForm",
+        component: NhanVienForm,
         props: true,
         meta: {
           title: "Form nhân viên",
@@ -232,9 +260,9 @@ const routes = [
           ]
         }
       },
-      { 
-        path: "/khachHang", 
-        name: "KhachHang", 
+      {
+        path: "/khachHang",
+        name: "KhachHang",
         component: KhachHang,
         meta: {
           title: "Khách hàng",
@@ -244,10 +272,10 @@ const routes = [
           ]
         }
       },
-      { 
-        path: "/khachHang/form/:id?", 
-        name: "KhachHangForm", 
-        component: KhachHangForm, 
+      {
+        path: "/khachHang/form/:id?",
+        name: "KhachHangForm",
+        component: KhachHangForm,
         props: true,
         meta: {
           title: "Form khách hàng",
@@ -258,9 +286,9 @@ const routes = [
           ]
         }
       },
-      { 
-        path: "/chatInterface", 
-        name: "ChatInterface", 
+      {
+        path: "/chatInterface",
+        name: "ChatInterface",
         component: ChatInterface,
         meta: {
           title: "Hệ thống chat khách hàng",
@@ -270,9 +298,9 @@ const routes = [
           ]
         }
       },
-      { 
-        path: "/thongKe", 
-        name: "ThongKe", 
+      {
+        path: "/thongKe",
+        name: "ThongKe",
         component: ThongKe,
         meta: {
           title: "Thống kê",
@@ -282,9 +310,9 @@ const routes = [
           ]
         }
       },
-      { 
-        path: "/account-info", 
-        name: "Thongtin", 
+      {
+        path: "/account-info",
+        name: "ThongTin",
         component: ThongTin,
         meta: {
           title: "Thông Tin",
@@ -294,9 +322,9 @@ const routes = [
           ]
         }
       },
-    { 
-        path: "/giao-ca", 
-        name: "GiaoCa", 
+      {
+        path: "/giao-ca",
+        name: "GiaoCa",
         component: GiaoCa,
         meta: {
           title: "Giao ca",
@@ -312,9 +340,9 @@ const routes = [
     path: "/auth",
     component: AuthLayout,
     children: [
-      { 
-        path: "login", 
-        name: "Login", 
+      {
+        path: "login",
+        name: "Login",
         component: Login,
         meta: {
           title: "Đăng nhập",
