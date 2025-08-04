@@ -332,7 +332,8 @@ import {
   ShoppingCartIcon,
   TagIcon,
   ChartBarIcon,
-  ChatBubbleLeftRightIcon
+  ChatBubbleLeftRightIcon,
+  ClockIcon // Thêm ClockIcon
 } from '@heroicons/vue/24/outline';
 
 const uiStore = useUiStore();
@@ -351,7 +352,7 @@ const isLoading = ref(false);
 const userAvatar = ref('');
 const isMobile = ref(window.innerWidth <= 768);
 
-// Main menu items for navbar (limited to key items for mobile)
+// Main menu items for navbar (unchanged)
 const mainMenuItems = computed(() => [
   { name: 'Trang chủ', path: '/trangChu', icon: HomeIcon },
   { name: 'Thống kê', path: '/thongKe', icon: ChartBarIcon },
@@ -390,7 +391,7 @@ const menuItems = ref([
     ],
     isOpen: false,
   },
-    { 
+  { 
     name: 'Quản Lý Giảm giá',
     path: '/quanLyGiamGia',
     icon: TagIcon,
@@ -413,7 +414,7 @@ const menuItems = ref([
   { 
     name: 'Giao Ca', 
     path: '/giao-ca', 
-    icon: ChartBarIcon 
+    icon: ClockIcon // Thay ChartBarIcon bằng ClockIcon
   },
   { 
     name: 'Hỗ trợ khách hàng', 
