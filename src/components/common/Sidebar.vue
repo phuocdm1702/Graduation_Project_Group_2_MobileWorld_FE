@@ -29,7 +29,7 @@
 
       <nav class="sidebar-nav">
         <div
-          v-for="(item) in menuItems"
+          v-for="(item) in filteredMenuItems"
           :key="item.name"
           class="nav-item-wrapper"
         >
@@ -144,11 +144,11 @@
               class="avatar-img"
               @error="handleImageError"
             />
-            <span class="avatar-fallback">A</span>
+            <span class="avatar-fallback">{{ authStore.user?.username?.charAt(0) || 'A' }}</span>
           </div>
           <div class="user-info" :class="{ 'text-hidden': !isSidebarOpen }">
-            <div class="user-name">Admin</div>
-            <div class="user-role">Administrator</div>
+            <div class="user-name">{{ authStore.user?.username || 'Admin' }}</div>
+            <div class="user-role">{{ authStore.user?.capQuyenHan === 1 ? 'Administrator' : 'Nhân viên' }}</div>
           </div>
           <div v-if="!isSidebarOpen" class="nav-tooltip">
             User Menu
@@ -162,7 +162,7 @@
     <nav class="mobile-navbar" v-if="isMobile">
       <div class="navbar-content">
         <router-link
-          v-for="(item, index) in mainMenuItems"
+          v-for="(item, index) in filteredMainMenuItems"
           :key="item.name"
           :to="item.path"
           class="navbar-item"
@@ -198,7 +198,7 @@
           </div>
           <div class="mobile-menu-nav">
             <div
-              v-for="item in menuItems"
+              v-for="item in filteredMenuItems"
               :key="item.name"
               class="mobile-nav-item-wrapper"
             >
@@ -260,11 +260,11 @@
                   class="avatar-img"
                   @error="handleImageError"
                 />
-                <span class="avatar-fallback">A</span>
+                <span class="avatar-fallback">{{ authStore.user?.username?.charAt(0) || 'A' }}</span>
               </div>
               <div class="user-info">
-                <div class="user-name">Admin</div>
-                <div class="user-role">Administrator</div>
+                <div class="user-name">{{ authStore.user?.username || 'Admin' }}</div>
+                <div class="user-role">{{ authStore.user?.capQuyenHan === 1 ? 'Administrator' : 'Nhân viên' }}</div>
               </div>
             </button>
           </div>
@@ -323,6 +323,7 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useUiStore } from '@/store/modules/ui';
+import { useAuthStore } from '@/store/modules/auth';
 import NotificationModal from './NotificationModal.vue';
 import {
   HomeIcon,
@@ -333,10 +334,11 @@ import {
   TagIcon,
   ChartBarIcon,
   ChatBubbleLeftRightIcon,
-  ClockIcon // Thêm ClockIcon
+  ClockIcon
 } from '@heroicons/vue/24/outline';
 
 const uiStore = useUiStore();
+const authStore = useAuthStore();
 const route = useRoute();
 const router = useRouter();
 const isSidebarOpen = computed(() => uiStore.isSidebarOpen);
@@ -352,23 +354,35 @@ const isLoading = ref(false);
 const userAvatar = ref('');
 const isMobile = ref(window.innerWidth <= 768);
 
-// Main menu items for navbar (unchanged)
-const mainMenuItems = computed(() => [
-  { name: 'Trang chủ', path: '/trangChu', icon: HomeIcon },
-  { name: 'Thống kê', path: '/thongKe', icon: ChartBarIcon },
-  { name: 'Bán Hàng', path: '/banHang', icon: ShoppingCartIcon },
-  { name: 'Hóa đơn', path: '/hoaDon', icon: DocumentTextIcon },
-]);
-
-const menuItems = ref([
-  { name: 'Trang chủ', path: '/trangChu', icon: HomeIcon },
-  { name: 'Thống kê', path: '/thongKe', icon: ChartBarIcon },
-  { name: 'Bán Hàng', path: '/banHang', icon: ShoppingCartIcon },
-  { name: 'Quản Lý Hóa đơn', path: '/hoaDon', icon: DocumentTextIcon },
+// Danh sách menu gốc
+const baseMenuItems = ref([
+  { 
+    name: 'Trang chủ', 
+    path: '/trangChu', 
+    icon: HomeIcon 
+  },
+  { 
+    name: 'Thống kê', 
+    path: '/thongKe', 
+    icon: ChartBarIcon,
+    requiresAdmin: true 
+  },
+  { 
+    name: 'Bán Hàng', 
+    path: '/banHang', 
+    icon: ShoppingCartIcon 
+  },
+  { 
+    name: 'Quản Lý Hóa đơn', 
+    path: '/hoaDon', 
+    icon: DocumentTextIcon,
+    requiresAdmin: true 
+  },
   { 
     name: 'Quản Lý Sản phẩm', 
     path: '/quanLySanPham', 
     icon: CubeIcon,
+    requiresAdmin: true,
     children: [
       { name: 'Sản phẩm', path: '/sanPham' },
       { name: 'Nhà sản xuất', path: '/nhaSanXuat' },
@@ -395,6 +409,7 @@ const menuItems = ref([
     name: 'Quản Lý Giảm giá',
     path: '/quanLyGiamGia',
     icon: TagIcon,
+    requiresAdmin: true,
     children: [
       { name: 'Phiếu giảm giá', path: '/phieuGiamGia' },
       { name: 'Đợt giảm giá', path: '/dotGiamGia' },
@@ -405,6 +420,7 @@ const menuItems = ref([
     name: 'Quản Lý Tài khoản',
     path: '/quanLyTaiKhoan',
     icon: UserIcon,
+    requiresAdmin: true,
     children: [
       { name: 'Nhân viên', path: '/nhanVien' },
       { name: 'Khách hàng', path: '/khachHang' },
@@ -414,7 +430,7 @@ const menuItems = ref([
   { 
     name: 'Giao Ca', 
     path: '/giao-ca', 
-    icon: ClockIcon // Thay ChartBarIcon bằng ClockIcon
+    icon: ClockIcon 
   },
   { 
     name: 'Hỗ trợ khách hàng', 
@@ -422,6 +438,33 @@ const menuItems = ref([
     icon: ChatBubbleLeftRightIcon 
   },
 ]);
+
+// Danh sách menu gốc cho navbar di động
+const baseMainMenuItems = ref([
+  { name: 'Trang chủ', path: '/trangChu', icon: HomeIcon },
+  { name: 'Thống kê', path: '/thongKe', icon: ChartBarIcon, requiresAdmin: true },
+  { name: 'Bán Hàng', path: '/banHang', icon: ShoppingCartIcon },
+  { name: 'Hóa đơn', path: '/hoaDon', icon: DocumentTextIcon, requiresAdmin: true },
+]);
+
+// Lọc menu dựa trên quyền hạn
+const filteredMenuItems = computed(() => {
+  if (authStore.isAuthenticated && authStore.user?.capQuyenHan === 1) {
+    // Admin: Hiển thị tất cả menu
+    return baseMenuItems.value;
+  }
+  // Nhân viên: Chỉ hiển thị các menu không yêu cầu quyền admin
+  return baseMenuItems.value.filter(item => !item.requiresAdmin);
+});
+
+const filteredMainMenuItems = computed(() => {
+  if (authStore.isAuthenticated && authStore.user?.capQuyenHan === 1) {
+    // Admin: Hiển thị tất cả menu
+    return baseMainMenuItems.value;
+  }
+  // Nhân viên: Chỉ hiển thị các menu không yêu cầu quyền admin
+  return baseMainMenuItems.value.filter(item => !item.requiresAdmin);
+});
 
 const isActive = (path) => {
   return route.path === path || route.path.startsWith(path);
@@ -439,7 +482,7 @@ const toggleSubmenu = (item) => {
   if (!isSidebarOpen.value && !isMobile.value) {
     uiStore.toggleSidebar();
     setTimeout(() => {
-      menuItems.value.forEach(menuItem => {
+      baseMenuItems.value.forEach(menuItem => {
         if (menuItem !== item && menuItem.children) {
           menuItem.isOpen = false;
         }
@@ -449,7 +492,7 @@ const toggleSubmenu = (item) => {
     return;
   }
   
-  menuItems.value.forEach(menuItem => {
+  baseMenuItems.value.forEach(menuItem => {
     if (menuItem !== item && menuItem.children) {
       menuItem.isOpen = false;
     }
@@ -498,6 +541,9 @@ const openLogoutConfirmModal = () => {
   notificationConfirmText.value = 'Đăng xuất';
   notificationOnConfirm.value = async () => {
     isLoading.value = true;
+    authStore.logout();
+    localStorage.removeItem('auth');
+    localStorage.removeItem('username');
     await new Promise(resolve => setTimeout(resolve, 1500));
     isLoading.value = false;
     router.push('/auth/login');
@@ -571,7 +617,7 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-/* Existing sidebar styles (unchanged) */
+/* Giữ nguyên toàn bộ style từ mã gốc */
 .modern-sidebar {
   position: fixed;
   top: 0;

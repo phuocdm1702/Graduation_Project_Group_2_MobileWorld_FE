@@ -1,7 +1,7 @@
 <template>
   <div class="login-container">
     <ToastNotification ref="toast" />
-    
+
     <div class="bg-shapes">
       <div class="shape shape-1"></div>
       <div class="shape shape-2"></div>
@@ -26,11 +26,13 @@
         <div class="brand-content">
           <div class="logo-container">
             <div class="logo-icon">
-              <img src="/images/logos/logo3.png" alt="Logo">
+              <img src="/images/logos/logo3.png" alt="Logo" />
             </div>
             <h1 class="brand-title">Mobile World</h1>
           </div>
-          <p class="brand-subtitle">Chào mừng đến với tương lai của công nghệ di động</p>
+          <p class="brand-subtitle">
+            Chào mừng đến với tương lai của công nghệ di động
+          </p>
           <div class="feature-highlights">
             <div class="feature-item">
               <i class="bi bi-shield-check"></i>
@@ -57,12 +59,18 @@
               Truy cập tài khoản của bạn để tiếp tục
             </p>
             <p class="form-subtitle" v-else>
-              Bạn đang đăng nhập với tư cách {{ authStore.user?.username }}. 
-              <button class="logout-button" @click="handleLogout">Đăng xuất</button>
+              Bạn đang đăng nhập với tư cách {{ authStore.user?.username }}.
+              <button class="logout-button" @click="handleLogout">
+                Đăng xuất
+              </button>
             </p>
           </div>
 
-          <form @submit.prevent="handleLogin" class="login-form" v-if="!authStore.isAuthenticated">
+          <form
+            @submit.prevent="handleLogin"
+            class="login-form"
+            v-if="!authStore.isAuthenticated"
+          >
             <div class="form-group">
               <label for="username" class="form-label">Tên đăng nhập</label>
               <div class="input-container">
@@ -99,7 +107,9 @@
                   @click="showPassword = !showPassword"
                   :disabled="isLoading"
                 >
-                  <i :class="showPassword ? 'bi bi-eye-slash' : 'bi bi-eye'"></i>
+                  <i
+                    :class="showPassword ? 'bi bi-eye-slash' : 'bi bi-eye'"
+                  ></i>
                 </button>
                 <div class="input-border"></div>
               </div>
@@ -107,7 +117,11 @@
 
             <div class="form-options">
               <label class="checkbox-container">
-                <input type="checkbox" v-model="rememberMe" :disabled="isLoading">
+                <input
+                  type="checkbox"
+                  v-model="rememberMe"
+                  :disabled="isLoading"
+                />
                 <span class="checkmark"></span>
                 Ghi nhớ tôi
               </label>
@@ -118,11 +132,7 @@
               {{ error }}
             </div>
 
-            <button
-              type="submit"
-              class="submit-button"
-              :disabled="isLoading"
-            >
+            <button type="submit" class="submit-button" :disabled="isLoading">
               <span v-if="!isLoading">Đăng nhập</span>
               <span v-else class="loading-dots">
                 <span></span>
@@ -134,10 +144,10 @@
           </form>
 
           <div class="form-footer">
-            <router-link 
-              to="/forgot-password" 
+            <router-link
+              to="/forgot-password"
               class="forgot-link"
-              :class="{ 'disabled': isLoading }"
+              :class="{ disabled: isLoading }"
             >
               <i class="bi bi-question-circle"></i>
               Quên mật khẩu của bạn?
@@ -165,21 +175,21 @@
 </template>
 
 <script>
-import { useAuthStore } from '@/store/modules/auth';
-import { ref, onMounted } from 'vue';
-import { useRouter } from 'vue-router';
-import axios from 'axios';
-import ToastNotification from '../../components/common/ToastNotification.vue';
+import { useAuthStore } from "@/store/modules/auth";
+import { ref, onMounted } from "vue";
+import { useRouter } from "vue-router";
+import axios from "axios";
+import ToastNotification from "../../components/common/ToastNotification.vue";
 
 export default {
-  name: 'ModernLogin',
+  name: "ModernLogin",
   components: {
     ToastNotification,
   },
   setup() {
-    const username = ref('Anh3212');
-    const password = ref('123');
-    const error = ref('');
+    const username = ref("Minh2212"); // Cập nhật để thử với tài khoản từ API
+    const password = ref("123");
+    const error = ref("");
     const isLoading = ref(false);
     const showPassword = ref(false);
     const rememberMe = ref(false);
@@ -188,7 +198,7 @@ export default {
     const toast = ref(null);
 
     const initializeAuth = () => {
-      const savedAuth = localStorage.getItem('auth');
+      const savedAuth = localStorage.getItem("auth");
       if (savedAuth) {
         const authData = JSON.parse(savedAuth);
         if (authData.isAuthenticated && authData.user?.username) {
@@ -200,7 +210,7 @@ export default {
     onMounted(() => {
       initializeAuth();
 
-      const savedUsername = localStorage.getItem('username');
+      const savedUsername = localStorage.getItem("username");
       if (savedUsername) {
         username.value = savedUsername;
         rememberMe.value = true;
@@ -211,8 +221,9 @@ export default {
       if (authStore.isAuthenticated) {
         if (toast.value) {
           toast.value.addToast({
-            type: 'info',
-            message: 'Bạn đã đăng nhập. Vui lòng đăng xuất để đăng nhập tài khoản khác.',
+            type: "info",
+            message:
+              "Bạn đã đăng nhập. Vui lòng đăng xuất để đăng nhập tài khoản khác.",
             duration: 3000,
           });
         }
@@ -220,76 +231,100 @@ export default {
       }
 
       isLoading.value = true;
-      error.value = '';
+      error.value = "";
 
       try {
         const payload = {
           tenDangNhap: username.value.trim(),
           matKhau: password.value,
-          email: '',
+          email: "",
         };
-        const response = await axios.post('http://localhost:8080/tai-khoan/dang-nhap', payload, {
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        });
+        const response = await axios.post(
+          "http://localhost:8080/tai-khoan/dang-nhap",
+          payload,
+          {
+            headers: {
+              "Content-Type": "application/json",
+            },
+          }
+        );
 
         if (response.status === 200) {
-          // Ghi log idNhanVien ra console
-          console.log('ID Nhân viên:', response.data.idNhanVien);
+          console.log("ID Nhân viên:", response.data.idNhanVien);
 
           const responseUsername = username.value.trim();
-          const userResponse = await axios.get(`http://localhost:8080/tai-khoan/thong-tin/${responseUsername}`);
+          const userResponse = await axios.get(
+            `http://localhost:8080/tai-khoan/thong-tin/${responseUsername}`
+          );
 
           if (userResponse.status === 200) {
+            if (userResponse.data.deleted == false) {
+              throw new Error("Tài khoản đã bị vô hiệu hóa.");
+            }
+
             const user = {
               username: responseUsername,
-              phone: userResponse.data.soDienThoai || '',
-              email: userResponse.data.email || '',
-              password: userResponse.data.matKhau || '********',
-              status: userResponse.data.deleted === false ? 'Hoạt động' : 'Đã nghỉ',
+              phone: userResponse.data.soDienThoai || "",
+              email: userResponse.data.email || "",
+              status:
+                userResponse.data.deleted === false ? "Hoạt động" : "Đã nghỉ",
               idNhanVien: response.data.idNhanVien,
+              capQuyenHan: userResponse.data.idQuyenHan?.capQuyenHan || 2, 
             };
             authStore.login(user);
-            localStorage.setItem('auth', JSON.stringify({
-              isAuthenticated: true,
-              user,
-            }));
+            localStorage.setItem(
+              "auth",
+              JSON.stringify({
+                isAuthenticated: true,
+                user,
+              })
+            );
             if (rememberMe.value) {
-              localStorage.setItem('username', responseUsername);
+              localStorage.setItem("username", responseUsername);
             } else {
-              localStorage.removeItem('username');
+              localStorage.removeItem("username");
             }
             if (toast.value) {
               toast.value.addToast({
-                type: 'success',
-                message: 'Đăng nhập thành công! Đang chuyển hướng...',
+                type: "success",
+                message: `Đăng nhập thành công! Quyền hạn: ${
+                  user.capQuyenHan === 1 ? "Admin" : "Nhân viên"
+                }`,
                 duration: 3000,
               });
             }
             setTimeout(() => {
-              router.push('/trangChu');
+              router.push("/trangChu");
             }, 2000);
+            // Điều hướng được xử lý trong authStore.login
           } else {
-            throw new Error('Không thể lấy thông tin người dùng sau khi đăng nhập.');
+            throw new Error(
+              "Không thể lấy thông tin người dùng sau khi đăng nhập."
+            );
           }
         } else {
-          throw new Error('API trả về mã trạng thái không mong đợi: ' + response.status);
+          throw new Error(
+            "API trả về mã trạng thái không mong đợi: " + response.status
+          );
         }
       } catch (error) {
-        let errorMessage = 'Tên đăng nhập hoặc mật khẩu không đúng. Vui lòng thử lại.';
+        let errorMessage =
+          "Tên đăng nhập hoặc mật khẩu không đúng. Vui lòng thử lại.";
         if (error.response) {
           if (error.response.status === 400) {
-            errorMessage = error.response.data.error || 'Thông tin đăng nhập không hợp lệ.';
+            errorMessage =
+              error.response.data.error || "Thông tin đăng nhập không hợp lệ.";
           } else if (error.response.status === 401) {
-            errorMessage = 'Tên đăng nhập hoặc mật khẩu không đúng.';
+            errorMessage = "Tên đăng nhập hoặc mật khẩu không đúng.";
           } else if (error.response.status === 500) {
-            errorMessage = 'Lỗi server. Vui lòng thử lại sau.';
+            errorMessage = "Lỗi server. Vui lòng thử lại sau.";
           }
+        } else if (error.message === "Tài khoản đã bị vô hiệu hóa.") {
+          errorMessage = error.message;
         }
         if (toast.value) {
           toast.value.addToast({
-            type: 'error',
+            type: "error",
             message: errorMessage,
             duration: 5000,
           });
@@ -302,23 +337,23 @@ export default {
 
     const handleLogout = () => {
       authStore.logout();
-      localStorage.removeItem('auth');
-      localStorage.removeItem('username');
+      localStorage.removeItem("auth");
+      localStorage.removeItem("username");
       if (toast.value) {
         toast.value.addToast({
-          type: 'success',
-          message: 'Đăng xuất thành công!',
+          type: "success",
+          message: "Đăng xuất thành công!",
           duration: 3000,
         });
       }
-      router.push('/auth/login');
+      // Điều hướng được xử lý trong authStore.logout
     };
 
-    return { 
-      username, 
-      password, 
-      error, 
-      isLoading, 
+    return {
+      username,
+      password,
+      error,
+      isLoading,
       showPassword,
       rememberMe,
       handleLogin,
@@ -329,6 +364,7 @@ export default {
   },
 };
 </script>
+<!-- Phần <template> và <style> giữ nguyên như mã gốc -->
 
 <style scoped>
 .logout-button {
@@ -346,7 +382,7 @@ export default {
   color: #b91c1c;
 }
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap");
 
 * {
   margin: 0;
@@ -356,7 +392,7 @@ export default {
 
 .login-container {
   min-height: 100vh;
-  font-family: 'Inter', sans-serif;
+  font-family: "Inter", sans-serif;
   position: relative;
   overflow: hidden;
   display: flex;
@@ -699,7 +735,7 @@ export default {
 }
 
 .checkbox-container input:checked + .checkmark::after {
-  content: '✓';
+  content: "✓";
   position: absolute;
   top: 50%;
   left: 50%;
@@ -741,13 +777,18 @@ export default {
 }
 
 .submit-button::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   left: -100%;
   width: 100%;
   height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.2),
+    transparent
+  );
   transition: left 0.5s;
 }
 
@@ -787,8 +828,12 @@ export default {
   animation: loadingDot 1.4s ease-in-out infinite both;
 }
 
-.loading-dots span:nth-child(1) { animation-delay: -0.32s; }
-.loading-dots span:nth-child(2) { animation-delay: -0.16s; }
+.loading-dots span:nth-child(1) {
+  animation-delay: -0.32s;
+}
+.loading-dots span:nth-child(2) {
+  animation-delay: -0.16s;
+}
 
 .form-footer {
   margin-top: 2rem;
@@ -875,8 +920,13 @@ export default {
 }
 
 @keyframes float {
-  0%, 100% { transform: translateY(0px) rotate(0deg); }
-  50% { transform: translateY(-20px) rotate(180deg); }
+  0%,
+  100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-20px) rotate(180deg);
+  }
 }
 
 @keyframes particleFloat {
@@ -897,8 +947,13 @@ export default {
 }
 
 @keyframes logoFloat {
-  0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-10px); }
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
 }
 
 @keyframes slideUp {
@@ -913,18 +968,31 @@ export default {
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 @keyframes shake {
-  0%, 100% { transform: translateX(0); }
-  25% { transform: translateX(-5px); }
-  75% { transform: translateX(5px); }
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-5px);
+  }
+  75% {
+    transform: translateX(5px);
+  }
 }
 
 @keyframes loadingDot {
-  0%, 80%, 100% {
+  0%,
+  80%,
+  100% {
     transform: scale(0);
   }
   40% {
@@ -937,29 +1005,29 @@ export default {
     grid-template-columns: 1fr;
     padding: 1rem;
   }
-  
+
   .brand-section {
     padding: 2rem 1rem 1rem;
   }
-  
+
   .form-section {
     padding: 1rem;
   }
-  
+
   .form-container {
     padding: 2rem 1.5rem;
   }
-  
+
   .brand-title {
     font-size: 2rem;
   }
-  
+
   .logo-icon {
     width: 60px;
     height: 60px;
     font-size: 1.5rem;
   }
-  
+
   .feature-highlights {
     flex-direction: row;
     justify-content: center;
@@ -972,15 +1040,15 @@ export default {
   .form-container {
     padding: 1.5rem 1rem;
   }
-  
+
   .form-title {
     font-size: 1.5rem;
   }
-  
+
   .social-buttons {
     gap: 0.5rem;
   }
-  
+
   .social-btn {
     width: 45px;
     height: 45px;
@@ -988,24 +1056,84 @@ export default {
   }
 }
 
-.particle:nth-child(1) { left: 10%; animation-duration: 8s; }
-.particle:nth-child(2) { left: 20%; animation-duration: 7s; }
-.particle:nth-child(3) { left: 30%; animation-duration: 9s; }
-.particle:nth-child(4) { left: 40%; animation-duration: 6s; }
-.particle:nth-child(5) { left: 50%; animation-duration: 8s; }
-.particle:nth-child(6) { left: 60%; animation-duration: 7s; }
-.particle:nth-child(7) { left: 70%; animation-duration: 9s; }
-.particle:nth-child(8) { left: 80%; animation-duration: 6s; }
-.particle:nth-child(9) { left: 90%; animation-duration: 8s; }
-.particle:nth-child(10) { left: 15%; animation-duration: 7s; }
-.particle:nth-child(11) { left: 25%; animation-duration: 9s; }
-.particle:nth-child(12) { left: 35%; animation-duration: 6s; }
-.particle:nth-child(13) { left: 45%; animation-duration: 8s; }
-.particle:nth-child(14) { left: 55%; animation-duration: 7s; }
-.particle:nth-child(15) { left: 65%; animation-duration: 9s; }
-.particle:nth-child(16) { left: 75%; animation-duration: 6s; }
-.particle:nth-child(17) { left: 85%; animation-duration: 8s; }
-.particle:nth-child(18) { left: 95%; animation-duration: 7s; }
-.particle:nth-child(19) { left: 5%; animation-duration: 9s; }
-.particle:nth-child(20) { left: 95%; animation-duration: 6s; }
+.particle:nth-child(1) {
+  left: 10%;
+  animation-duration: 8s;
+}
+.particle:nth-child(2) {
+  left: 20%;
+  animation-duration: 7s;
+}
+.particle:nth-child(3) {
+  left: 30%;
+  animation-duration: 9s;
+}
+.particle:nth-child(4) {
+  left: 40%;
+  animation-duration: 6s;
+}
+.particle:nth-child(5) {
+  left: 50%;
+  animation-duration: 8s;
+}
+.particle:nth-child(6) {
+  left: 60%;
+  animation-duration: 7s;
+}
+.particle:nth-child(7) {
+  left: 70%;
+  animation-duration: 9s;
+}
+.particle:nth-child(8) {
+  left: 80%;
+  animation-duration: 6s;
+}
+.particle:nth-child(9) {
+  left: 90%;
+  animation-duration: 8s;
+}
+.particle:nth-child(10) {
+  left: 15%;
+  animation-duration: 7s;
+}
+.particle:nth-child(11) {
+  left: 25%;
+  animation-duration: 9s;
+}
+.particle:nth-child(12) {
+  left: 35%;
+  animation-duration: 6s;
+}
+.particle:nth-child(13) {
+  left: 45%;
+  animation-duration: 8s;
+}
+.particle:nth-child(14) {
+  left: 55%;
+  animation-duration: 7s;
+}
+.particle:nth-child(15) {
+  left: 65%;
+  animation-duration: 9s;
+}
+.particle:nth-child(16) {
+  left: 75%;
+  animation-duration: 6s;
+}
+.particle:nth-child(17) {
+  left: 85%;
+  animation-duration: 8s;
+}
+.particle:nth-child(18) {
+  left: 95%;
+  animation-duration: 7s;
+}
+.particle:nth-child(19) {
+  left: 5%;
+  animation-duration: 9s;
+}
+.particle:nth-child(20) {
+  left: 95%;
+  animation-duration: 6s;
+}
 </style>

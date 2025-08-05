@@ -8,32 +8,23 @@ export const useAuthStore = defineStore('auth', {
     user: null,
   }),
   actions: {
-    async login(credentials) {
-      // Dữ liệu fix cứng
-      const mockUser = {
-        username: 'admin',
-        password: '123456',
-        name: 'Admin User',
-        role: 'admin',
+    login(user) {
+      this.isAuthenticated = true;
+      this.user = {
+        username: user.username,
+        phone: user.phone || '',
+        email: user.email || '',
+        status: user.status || 'Hoạt động',
+        idNhanVien: user.idNhanVien || null,
+        capQuyenHan: user.capQuyenHan || 2, // Lưu capQuyenHan, mặc định là 2 nếu không có
       };
 
-      // Kiểm tra thông tin đăng nhập
-      if (
-        credentials.username === mockUser.username &&
-        credentials.password === mockUser.password
-      ) {
-        this.isAuthenticated = true;
-        this.user = { name: mockUser.name, role: mockUser.role };
+      // Mở sidebar sau khi đăng nhập
+      const uiStore = useUiStore();
+      uiStore.openSidebar();
 
-        // Mở sidebar sau khi đăng nhập
-        const uiStore = useUiStore();
-        uiStore.openSidebar();
-
-        // Điều hướng đến home
-        router.push('/trangChu');
-      } else {
-        throw new Error('Tài khoản hoặc mật khẩu không đúng');
-      }
+      // Điều hướng đến trang chủ
+      router.push('/trangChu');
     },
     logout() {
       this.isAuthenticated = false;

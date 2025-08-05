@@ -45,10 +45,8 @@ const routes = [
         component: TrangChu,
         meta: {
           title: "Trang chủ",
-          breadcrumb: [
-            { name: "Trang chủ", path: "/trangChu" }
-          ]
-        }
+          breadcrumb: [{ name: "Trang chủ", path: "/trangChu" }],
+        },
       },
       {
         path: "/sanPham",
@@ -58,9 +56,10 @@ const routes = [
           title: "Sản phẩm",
           breadcrumb: [
             { name: "Trang chủ", path: "/trangChu" },
-            { name: "Sản phẩm", path: "/sanPham" }
-          ]
-        }
+            { name: "Sản phẩm", path: "/sanPham" },
+          ],
+          requiresAdmin: true, // Yêu cầu quyền admin
+        },
       },
       {
         path: "/editSanPham/:id?",
@@ -72,9 +71,10 @@ const routes = [
           breadcrumb: [
             { name: "Trang chủ", path: "/trangChu" },
             { name: "Sản phẩm", path: "/sanPham" },
-            { name: "Chỉnh sửa sản phẩm", path: "/editSanPham" }
-          ]
-        }
+            { name: "Chỉnh sửa sản phẩm", path: "/editSanPham" },
+          ],
+          requiresAdmin: true,
+        },
       },
       {
         path: "/chiTietSanPham/:id?",
@@ -86,9 +86,10 @@ const routes = [
           breadcrumb: [
             { name: "Trang chủ", path: "/trangChu" },
             { name: "Sản phẩm", path: "/sanPham" },
-            { name: "Chi tiết sản phẩm", path: "/chiTietSanPham" }
-          ]
-        }
+            { name: "Chi tiết sản phẩm", path: "/chiTietSanPham" },
+          ],
+          requiresAdmin: true,
+        },
       },
       {
         path: "/chiTietSanPham/edit/:id?",
@@ -101,9 +102,10 @@ const routes = [
             { name: "Trang chủ", path: "/trangChu" },
             { name: "Sản phẩm", path: "/sanPham" },
             { name: "Chi tiết sản phẩm", path: "/chiTietSanPham" },
-            { name: "Chỉnh sửa chi tiết sản phẩm", path: "/chiTietSanPham/edit" }
-          ]
-        }
+            { name: "Chỉnh sửa chi tiết sản phẩm", path: "/chiTietSanPham/edit" },
+          ],
+          requiresAdmin: true,
+        },
       },
       {
         path: "/themChiTietSanPham",
@@ -114,9 +116,10 @@ const routes = [
           breadcrumb: [
             { name: "Trang chủ", path: "/trangChu" },
             { name: "Sản phẩm", path: "/sanPham" },
-            { name: "Thêm chi tiết sản phẩm", path: "/themChiTietSanPham" }
-          ]
-        }
+            { name: "Thêm chi tiết sản phẩm", path: "/themChiTietSanPham" },
+          ],
+          requiresAdmin: true,
+        },
       },
       {
         path: "/nhaSanXuat",
@@ -128,8 +131,9 @@ const routes = [
             { name: "Trang chủ", path: "/trangChu" },
             { name: "Sản phẩm", path: "/sanPham" },
             { name: "Nhà Sản Xuất", path: "/nhaSanXuat" },
-          ]
-        }
+          ],
+          requiresAdmin: true,
+        },
       },
       {
         path: "/banHang",
@@ -139,9 +143,9 @@ const routes = [
           title: "Bán hàng",
           breadcrumb: [
             { name: "Trang chủ", path: "/trangChu" },
-            { name: "Bán hàng", path: "/banHang" }
-          ]
-        }
+            { name: "Bán hàng", path: "/banHang" },
+          ],
+        },
       },
       {
         path: "/checkout-display",
@@ -152,9 +156,9 @@ const routes = [
           breadcrumb: [
             { name: "Trang chủ", path: "/trangChu" },
             { name: "Bán hàng", path: "/banHang" },
-            { name: "Thanh toán quầy", path: "/checkout-display" }
-          ]
-        }
+            { name: "Thanh toán quầy", path: "/checkout-display" },
+          ],
+        },
       },
       {
         path: "/hoaDon",
@@ -164,9 +168,10 @@ const routes = [
           title: "Quản lý hóa đơn",
           breadcrumb: [
             { name: "Trang chủ", path: "/trangChu" },
-            { name: "Quản lý hóa đơn", path: "/hoaDon" }
-          ]
-        }
+            { name: "Quản lý hóa đơn", path: "/hoaDon" },
+          ],
+          requiresAdmin: true,
+        },
       },
       {
         path: "/hoaDon/:id/detail",
@@ -178,9 +183,10 @@ const routes = [
           breadcrumb: [
             { name: "Trang chủ", path: "/trangChu" },
             { name: "Quản lý hóa đơn", path: "/hoaDon" },
-            { name: "Chi tiết hóa đơn", path: "/hoaDon/detail" }
-          ]
-        }
+            { name: "Chi tiết hóa đơn", path: "/hoaDon/detail" },
+          ],
+          requiresAdmin: true,
+        },
       },
       {
         path: "/phieuGiamGia",
@@ -190,9 +196,10 @@ const routes = [
           title: "Phiếu giảm giá",
           breadcrumb: [
             { name: "Trang chủ", path: "/trangChu" },
-            { name: "Phiếu giảm giá", path: "/phieuGiamGia" }
-          ]
-        }
+            { name: "Phiếu giảm giá", path: "/phieuGiamGia" },
+          ],
+          requiresAdmin: true,
+        },
       },
       {
         path: "/phieuGiamGia/form/:id?",
@@ -204,9 +211,10 @@ const routes = [
           breadcrumb: [
             { name: "Trang chủ", path: "/trangChu" },
             { name: "Phiếu giảm giá", path: "/phieuGiamGia" },
-            { name: "Form phiếu giảm giá", path: "/phieuGiamGia/form" }
-          ]
-        }
+            { name: "Form phiếu giảm giá", path: "/phieuGiamGia/form" },
+          ],
+          requiresAdmin: true,
+        },
       },
       {
         path: "/dotGiamGia",
@@ -216,9 +224,10 @@ const routes = [
           title: "Đợt giảm giá",
           breadcrumb: [
             { name: "Trang chủ", path: "/trangChu" },
-            { name: "Đợt giảm giá", path: "/dotGiamGia" }
-          ]
-        }
+            { name: "Đợt giảm giá", path: "/dotGiamGia" },
+          ],
+          requiresAdmin: true,
+        },
       },
       {
         path: "/dotGiamGia/form/:id?",
@@ -230,9 +239,10 @@ const routes = [
           breadcrumb: [
             { name: "Trang chủ", path: "/trangChu" },
             { name: "Đợt giảm giá", path: "/dotGiamGia" },
-            { name: "Form đợt giảm giá", path: "/dotGiamGia/form" }
-          ]
-        }
+            { name: "Form đợt giảm giá", path: "/dotGiamGia/form" },
+          ],
+          requiresAdmin: true,
+        },
       },
       {
         path: "/nhanVien",
@@ -242,9 +252,10 @@ const routes = [
           title: "Nhân viên",
           breadcrumb: [
             { name: "Trang chủ", path: "/trangChu" },
-            { name: "Nhân viên", path: "/nhanVien" }
-          ]
-        }
+            { name: "Nhân viên", path: "/nhanVien" },
+          ],
+          requiresAdmin: true,
+        },
       },
       {
         path: "/nhanVien/form/:id?",
@@ -256,9 +267,10 @@ const routes = [
           breadcrumb: [
             { name: "Trang chủ", path: "/trangChu" },
             { name: "Nhân viên", path: "/nhanVien" },
-            { name: "Form nhân viên", path: "/nhanVien/form" }
-          ]
-        }
+            { name: "Form nhân viên", path: "/nhanVien/form" },
+          ],
+          requiresAdmin: true,
+        },
       },
       {
         path: "/khachHang",
@@ -268,9 +280,10 @@ const routes = [
           title: "Khách hàng",
           breadcrumb: [
             { name: "Trang chủ", path: "/trangChu" },
-            { name: "Khách hàng", path: "/khachHang" }
-          ]
-        }
+            { name: "Khách hàng", path: "/khachHang" },
+          ],
+          requiresAdmin: true,
+        },
       },
       {
         path: "/khachHang/form/:id?",
@@ -282,9 +295,10 @@ const routes = [
           breadcrumb: [
             { name: "Trang chủ", path: "/trangChu" },
             { name: "Khách hàng", path: "/khachHang" },
-            { name: "Form khách hàng", path: "/khachHang/form" }
-          ]
-        }
+            { name: "Form khách hàng", path: "/khachHang/form" },
+          ],
+          requiresAdmin: true,
+        },
       },
       {
         path: "/chatInterface",
@@ -294,9 +308,9 @@ const routes = [
           title: "Hệ thống chat khách hàng",
           breadcrumb: [
             { name: "Trang chủ", path: "/trangChu" },
-            { name: "Hỗ trợ khách hàng", path: "/chatInterface" }
-          ]
-        }
+            { name: "Hỗ trợ khách hàng", path: "/chatInterface" },
+          ],
+        },
       },
       {
         path: "/thongKe",
@@ -306,9 +320,10 @@ const routes = [
           title: "Thống kê",
           breadcrumb: [
             { name: "Trang chủ", path: "/trangChu" },
-            { name: "Thống kê", path: "/thongKe" }
-          ]
-        }
+            { name: "Thống kê", path: "/thongKe" },
+          ],
+          requiresAdmin: true,
+        },
       },
       {
         path: "/account-info",
@@ -318,9 +333,9 @@ const routes = [
           title: "Thông Tin",
           breadcrumb: [
             { name: "Trang chủ", path: "/trangChu" },
-            { name: "Thông Tin", path: "/account-info" }
-          ]
-        }
+            { name: "Thông Tin", path: "/account-info" },
+          ],
+        },
       },
       {
         path: "/giao-ca",
@@ -330,9 +345,9 @@ const routes = [
           title: "Giao ca",
           breadcrumb: [
             { name: "Trang chủ", path: "/trangChu" },
-            { name: "Giao ca", path: "/giao-ca" }
-          ]
-        }
+            { name: "Giao ca", path: "/giao-ca" },
+          ],
+        },
       },
     ],
   },
@@ -346,10 +361,8 @@ const routes = [
         component: Login,
         meta: {
           title: "Đăng nhập",
-          breadcrumb: [
-            { name: "Đăng nhập", path: "/auth/login" }
-          ]
-        }
+          breadcrumb: [{ name: "Đăng nhập", path: "/auth/login" }],
+        },
       },
     ],
   },
@@ -359,10 +372,8 @@ const routes = [
     component: NotFound,
     meta: {
       title: "Không tìm thấy trang",
-      breadcrumb: [
-        { name: "Không tìm thấy trang", path: "/404" }
-      ]
-    }
+      breadcrumb: [{ name: "Không tìm thấy trang", path: "/404" }],
+    },
   },
 ];
 
@@ -374,7 +385,7 @@ const router = createRouter({
 router.beforeEach((to, from, next) => {
   const authStore = useAuthStore();
 
-  // Khôi phục trạng thái auth từ localStorage (đồng bộ)
+  // Khôi phục trạng thái auth từ localStorage
   const savedAuth = localStorage.getItem('auth');
   if (savedAuth) {
     const authData = JSON.parse(savedAuth);
@@ -383,13 +394,19 @@ router.beforeEach((to, from, next) => {
     }
   }
 
-  console.log('Route to:', to.name, 'Authenticated:', authStore.isAuthenticated);
+  console.log('Route to:', to.name, 'Authenticated:', authStore.isAuthenticated, 'CapQuyenHan:', authStore.user?.capQuyenHan);
 
   // Nếu route yêu cầu đăng nhập và chưa đăng nhập
   if (to.meta.requiresAuth && !authStore.isAuthenticated) {
     console.log('Redirecting to login');
     next('/auth/login');
-  } else {
+  }
+  // Nếu route yêu cầu quyền admin và người dùng không phải admin (capQuyenHan !== 1)
+  else if (to.meta.requiresAdmin && authStore.isAuthenticated && authStore.user?.capQuyenHan !== 1) {
+    console.log('Access denied: Requires admin privileges');
+    next('/trangChu'); // Chuyển hướng về trang chủ nếu không có quyền admin
+  }
+  else {
     next();
   }
 });
