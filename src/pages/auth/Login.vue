@@ -1,8 +1,8 @@
+```vue
 <template>
   <div class="login-container">
     <ToastNotification ref="toast" />
     
-
     <div class="bg-shapes">
       <div class="shape shape-1"></div>
       <div class="shape shape-2"></div>
@@ -12,17 +12,17 @@
       </div>
     </div>
 
-    <!-- Loading Overlay -->
+    <!-- Lớp phủ khi đang tải -->
     <div v-if="isLoading" class="loading-overlay">
       <div class="loading-spinner">
         <div class="spinner-ring"></div>
-        <div class="loading-text">Signing you in...</div>
+        <div class="loading-text">Đang đăng nhập...</div>
       </div>
     </div>
 
-    <!-- Main Content -->
+    <!-- Nội dung chính -->
     <div class="login-content">
-      <!-- Left Side - Branding -->
+      <!-- Phần bên trái - Thương hiệu -->
       <div class="brand-section">
         <div class="brand-content">
           <div class="logo-container">
@@ -31,41 +31,41 @@
             </div>
             <h1 class="brand-title">Mobile World</h1>
           </div>
-          <p class="brand-subtitle">Welcome to the future of mobile technology</p>
+          <p class="brand-subtitle">Chào mừng đến với tương lai của công nghệ di động</p>
           <div class="feature-highlights">
             <div class="feature-item">
               <i class="bi bi-shield-check"></i>
-              <span>Secure & Reliable</span>
+              <span>An toàn & Đáng tin cậy</span>
             </div>
             <div class="feature-item">
               <i class="bi bi-lightning-charge"></i>
-              <span>Fast Performance</span>
+              <span>Hiệu suất nhanh</span>
             </div>
             <div class="feature-item">
               <i class="bi bi-heart"></i>
-              <span>User Friendly</span>
+              <span>Thân thiện với người dùng</span>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Right Side - Login Form -->
+      <!-- Phần bên phải - Biểu mẫu đăng nhập -->
       <div class="form-section">
         <div class="form-container">
           <div class="form-header">
-            <h2 class="form-title">Sign In</h2>
+            <h2 class="form-title">Đăng nhập</h2>
             <p class="form-subtitle" v-if="!authStore.isAuthenticated">
-              Access your account to continue
+              Truy cập tài khoản của bạn để tiếp tục
             </p>
             <p class="form-subtitle" v-else>
-              You are logged in as {{ authStore.user?.username }}. 
-              <button class="logout-button" @click="handleLogout">Log out</button>
+              Bạn đang đăng nhập với tư cách {{ authStore.user?.username }}. 
+              <button class="logout-button" @click="handleLogout">Đăng xuất</button>
             </p>
           </div>
 
           <form @submit.prevent="handleLogin" class="login-form" v-if="!authStore.isAuthenticated">
             <div class="form-group">
-              <label for="username" class="form-label">Username</label>
+              <label for="username" class="form-label">Tên đăng nhập</label>
               <div class="input-container">
                 <i class="bi bi-person input-icon"></i>
                 <input
@@ -82,7 +82,7 @@
             </div>
 
             <div class="form-group">
-              <label for="password" class="form-label">Password</label>
+              <label for="password" class="form-label">Mật khẩu</label>
               <div class="input-container">
                 <i class="bi bi-lock input-icon"></i>
                 <input
@@ -110,7 +110,7 @@
               <label class="checkbox-container">
                 <input type="checkbox" v-model="rememberMe" :disabled="isLoading">
                 <span class="checkmark"></span>
-                Remember me
+                Ghi nhớ tôi
               </label>
             </div>
 
@@ -124,7 +124,7 @@
               class="submit-button"
               :disabled="isLoading"
             >
-              <span v-if="!isLoading">Sign In</span>
+              <span v-if="!isLoading">Đăng nhập</span>
               <span v-else class="loading-dots">
                 <span></span>
                 <span></span>
@@ -141,11 +141,11 @@
               :class="{ 'disabled': isLoading }"
             >
               <i class="bi bi-question-circle"></i>
-              Forgot your password?
+              Quên mật khẩu của bạn?
             </router-link>
 
             <div class="social-login">
-              <p class="social-text">Or continue with</p>
+              <p class="social-text">Hoặc tiếp tục với</p>
               <div class="social-buttons">
                 <button class="social-btn google" :disabled="isLoading">
                   <i class="bi bi-google"></i>
@@ -178,8 +178,8 @@ export default {
     ToastNotification,
   },
   setup() {
-    const username = ref('');
-    const password = ref('');
+    const username = ref('Anh3212');
+    const password = ref('123');
     const error = ref('');
     const isLoading = ref(false);
     const showPassword = ref(false);
@@ -206,144 +206,104 @@ export default {
         username.value = savedUsername;
         rememberMe.value = true;
       }
-
-      const token = localStorage.getItem('authToken');
-      if (token && !authStore.isAuthenticated) {
-        isLoading.value = true;
-        axios
-          .get('http://localhost:8080/tai-khoan/kiem-tra-token', {
-            headers: { Authorization: `Bearer ${token}` },
-          })
-          .then((response) => {
-            if (response.status === 200 && response.data.username) {
-              authStore.login({ username: response.data.username });
-              localStorage.setItem('auth', JSON.stringify({
-                isAuthenticated: true,
-                user: { username: response.data.username },
-              }));
-            }
-          })
-          .catch((err) => {
-            if (err.response?.status === 401) {
-              localStorage.removeItem('authToken');
-              localStorage.removeItem('auth');
-              authStore.logout();
-            }
-          })
-          .finally(() => {
-            isLoading.value = false;
-          });
-      }
     });
 
     const handleLogin = async () => {
-  if (authStore.isAuthenticated) {
-    if (toast.value) {
-      toast.value.addToast({
-        type: 'info',
-        message: 'Bạn đã đăng nhập. Vui lòng đăng xuất để đăng nhập tài khoản khác.',
-        duration: 3000,
-      });
-    }
-    return;
-  }
-
-  isLoading.value = true;
-  error.value = '';
-
-  try {
-    const payload = {
-      tenDangNhap: username.value.trim(),
-      matKhau: password.value,
-      email: '',
-    };
-    const response = await axios.post('http://localhost:8080/tai-khoan/dang-nhap', payload, {
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-
-    if (response.status === 200) {
-      // Log idNhanVien to console
-      console.log('ID Nhân viên:', response.data.idNhanVien);
-
-      // Xử lý token linh hoạt: chuỗi hoặc JSON { "token": "..." }
-      let token = response.data.token;
-      if (!token || typeof token !== 'string' || !token.startsWith('eyJ')) {
-        throw new Error('Token không hợp lệ từ API');
-      }
-
-      const responseUsername = username.value.trim();
-      const userResponse = await axios.get(`http://localhost:8080/tai-khoan/thong-tin/${responseUsername}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      if (userResponse.status === 200) {
-        const user = {
-          username: responseUsername,
-          phone: userResponse.data.soDienThoai || '',
-          email: userResponse.data.email || '',
-          password: userResponse.data.matKhau || '********',
-          status: userResponse.data.deleted === false ? 'Hoạt động' : 'Đã nghỉ',
-          idNhanVien: response.data.idNhanVien, // Optionally store idNhanVien in user object
-        };
-        authStore.login(user);
-        localStorage.setItem('auth', JSON.stringify({
-          isAuthenticated: true,
-          user,
-        }));
-        localStorage.setItem('authToken', token);
-        if (rememberMe.value) {
-          localStorage.setItem('username', responseUsername);
-        } else {
-          localStorage.removeItem('username');
-        }
+      if (authStore.isAuthenticated) {
         if (toast.value) {
           toast.value.addToast({
-            type: 'success',
-            message: 'Đăng nhập thành công! Đang chuyển hướng...',
+            type: 'info',
+            message: 'Bạn đã đăng nhập. Vui lòng đăng xuất để đăng nhập tài khoản khác.',
             duration: 3000,
           });
         }
-        setTimeout(() => {
-          router.push('/trangChu');
-        }, 2000);
-      } else {
-        throw new Error('Không thể lấy thông tin người dùng sau khi đăng nhập.');
+        return;
       }
-    } else {
-      throw new Error('API trả về mã trạng thái không mong đợi: ' + response.status);
-    }
-  } catch (error) {
-    let errorMessage = 'Tên đăng nhập hoặc mật khẩu không đúng. Vui lòng thử lại.';
-    if (error.response) {
-      if (error.response.status === 400) {
-        errorMessage = error.response.data.error || 'Thông tin đăng nhập không hợp lệ.';
-      } else if (error.response.status === 401) {
-        errorMessage = 'Tên đăng nhập hoặc mật khẩu không đúng.';
-      } else if (error.response.status === 500) {
-        errorMessage = 'Lỗi server. Vui lòng thử lại sau.';
+
+      isLoading.value = true;
+      error.value = '';
+
+      try {
+        const payload = {
+          tenDangNhap: username.value.trim(),
+          matKhau: password.value,
+          email: '',
+        };
+        const response = await axios.post('http://localhost:8080/tai-khoan/dang-nhap', payload, {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (response.status === 200) {
+          // Ghi log idNhanVien ra console
+          console.log('ID Nhân viên:', response.data.idNhanVien);
+
+          const responseUsername = username.value.trim();
+          const userResponse = await axios.get(`http://localhost:8080/tai-khoan/thong-tin/${responseUsername}`);
+
+          if (userResponse.status === 200) {
+            const user = {
+              username: responseUsername,
+              phone: userResponse.data.soDienThoai || '',
+              email: userResponse.data.email || '',
+              password: userResponse.data.matKhau || '********',
+              status: userResponse.data.deleted === false ? 'Hoạt động' : 'Đã nghỉ',
+              idNhanVien: response.data.idNhanVien,
+            };
+            authStore.login(user);
+            localStorage.setItem('auth', JSON.stringify({
+              isAuthenticated: true,
+              user,
+            }));
+            if (rememberMe.value) {
+              localStorage.setItem('username', responseUsername);
+            } else {
+              localStorage.removeItem('username');
+            }
+            if (toast.value) {
+              toast.value.addToast({
+                type: 'success',
+                message: 'Đăng nhập thành công! Đang chuyển hướng...',
+                duration: 3000,
+              });
+            }
+            setTimeout(() => {
+              router.push('/trangChu');
+            }, 2000);
+          } else {
+            throw new Error('Không thể lấy thông tin người dùng sau khi đăng nhập.');
+          }
+        } else {
+          throw new Error('API trả về mã trạng thái không mong đợi: ' + response.status);
+        }
+      } catch (error) {
+        let errorMessage = 'Tên đăng nhập hoặc mật khẩu không đúng. Vui lòng thử lại.';
+        if (error.response) {
+          if (error.response.status === 400) {
+            errorMessage = error.response.data.error || 'Thông tin đăng nhập không hợp lệ.';
+          } else if (error.response.status === 401) {
+            errorMessage = 'Tên đăng nhập hoặc mật khẩu không đúng.';
+          } else if (error.response.status === 500) {
+            errorMessage = 'Lỗi server. Vui lòng thử lại sau.';
+          }
+        }
+        if (toast.value) {
+          toast.value.addToast({
+            type: 'error',
+            message: errorMessage,
+            duration: 5000,
+          });
+        }
+        error.value = errorMessage;
+      } finally {
+        isLoading.value = false;
       }
-    } else if (error.message === 'Token không hợp lệ từ API') {
-      errorMessage = 'Lỗi xác thực token. Vui lòng liên hệ quản trị viên.';
-    }
-    if (toast.value) {
-      toast.value.addToast({
-        type: 'error',
-        message: errorMessage,
-        duration: 5000,
-      });
-    }
-    error.value = errorMessage;
-  } finally {
-    isLoading.value = false;
-  }
-};
+    };
 
     const handleLogout = () => {
       authStore.logout();
       localStorage.removeItem('auth');
-      localStorage.removeItem('authToken');
       localStorage.removeItem('username');
       if (toast.value) {
         toast.value.addToast({
@@ -1050,3 +1010,4 @@ export default {
 .particle:nth-child(19) { left: 5%; animation-duration: 9s; }
 .particle:nth-child(20) { left: 95%; animation-duration: 6s; }
 </style>
+```

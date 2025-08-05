@@ -1,3 +1,4 @@
+```vue
 <template>
   <div class="container-fluid py-4">
     <HeaderCard
@@ -191,22 +192,9 @@ onMounted(async () => {
 
   try {
     isLoading.value = true;
-    let token = localStorage.getItem('authToken');
     const username = authStore.user?.username;
 
-    // Làm sạch token: chỉ lấy phần JWT
-    if (token && token.includes('eyJ')) {
-      const match = token.match(/eyJ[a-zA-Z0-9._-]+/);
-      if (match) {
-        token = match[0];
-        console.log('Cleaned token:', token);
-        localStorage.setItem('authToken', token); // Ghi đè token sạch vào localStorage
-      } else {
-        throw new Error('Token không hợp lệ trong localStorage');
-      }
-    }
-
-    if (!token || !username) {
+    if (!username) {
       const savedAuth = localStorage.getItem('auth');
       if (savedAuth) {
         const authData = JSON.parse(savedAuth);
@@ -231,13 +219,12 @@ onMounted(async () => {
           return;
         }
       }
-      throw new Error('Không tìm thấy token hoặc tên đăng nhập.');
+      throw new Error('Không tìm thấy tên đăng nhập.');
     }
 
     const response = await axios.get(`http://localhost:8080/tai-khoan/thong-tin/${username}`, {
-      headers: { Authorization: `Bearer ${token}` },
+      headers: { 'Content-Type': 'application/json' },
     });
-
 
     if (response.status === 200) {
       const userData = {
@@ -270,7 +257,6 @@ onMounted(async () => {
       console.log('Unauthorized, redirecting to login');
       authStore.logout();
       localStorage.removeItem('auth');
-      localStorage.removeItem('authToken');
       router.push('/auth/login');
     }
   } finally {
@@ -282,7 +268,6 @@ const handleLogout = () => {
   console.log('Logging out');
   authStore.logout();
   localStorage.removeItem('auth');
-  localStorage.removeItem('authToken');
   localStorage.removeItem('username');
   if (toast.value) {
     toast.value.addToast({
@@ -429,3 +414,4 @@ const handleLogout = () => {
   }
 }
 </style>
+```
