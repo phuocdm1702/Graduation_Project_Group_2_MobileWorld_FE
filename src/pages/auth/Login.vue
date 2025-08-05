@@ -1,4 +1,3 @@
-```vue
 <template>
   <div class="login-container">
     <ToastNotification ref="toast" />
@@ -1010,4 +1009,3 @@ export default {
 .particle:nth-child(19) { left: 5%; animation-duration: 9s; }
 .particle:nth-child(20) { left: 95%; animation-duration: 6s; }
 </style>
-```

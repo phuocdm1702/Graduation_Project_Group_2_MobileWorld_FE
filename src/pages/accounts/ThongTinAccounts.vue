@@ -1,4 +1,3 @@
-```vue
 <template>
   <div class="container-fluid py-4">
     <HeaderCard
@@ -414,4 +413,3 @@ const handleLogout = () => {
   }
 }
 </style>
-```
