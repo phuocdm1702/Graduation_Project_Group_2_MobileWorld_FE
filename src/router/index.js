@@ -62,9 +62,6 @@ const routes = [
         }
       },
       { 
-        path: "/sanPham", 
-        name: "SanPham", 
-      {
         path: "/sanPham",
         name: "SanPham",
         component: SanPham,
