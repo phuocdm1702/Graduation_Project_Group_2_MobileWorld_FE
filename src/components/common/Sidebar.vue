@@ -334,6 +334,7 @@ import {
   TagIcon,
   ChartBarIcon,
   ChatBubbleLeftRightIcon,
+  CalendarDaysIcon
   ClockIcon
 } from '@heroicons/vue/24/outline';
 
@@ -431,6 +432,11 @@ const baseMenuItems = ref([
     name: 'Giao Ca', 
     path: '/giao-ca', 
     icon: ClockIcon 
+  },
+  { 
+    name: 'Lịch làm việc', 
+    path: '/lich-lam-viec', 
+    icon: CalendarDaysIcon 
   },
   { 
     name: 'Hỗ trợ khách hàng', 

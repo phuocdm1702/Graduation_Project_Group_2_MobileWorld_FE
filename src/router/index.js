@@ -31,6 +31,7 @@ const Login = () => import("@/pages/auth/Login.vue");
 const NotFound = () => import("@/pages/NotFound.vue");
 const ThongTin = () => import("@/pages/accounts/ThongTinAccounts.vue");
 const GiaoCa = () => import("@/pages/giaoCa/GiaoCa.vue");
+const LichLamViec = () => import("@/pages/giaoCa/LichLamViec.vue");
 
 const routes = [
   {
@@ -48,6 +49,21 @@ const routes = [
           breadcrumb: [{ name: "Trang chủ", path: "/trangChu" }],
         },
       },
+      { 
+        path: "/lich-lam-viec", 
+        name: "LichLamViec", 
+        component: LichLamViec,
+        meta: {
+          title: "Lịch làm việc",
+          breadcrumb: [
+            { name: "Trang chủ", path: "/trangChu" },
+            { name: "Lịch làm việc", path: "/lich-lam-viec" }
+          ]
+        }
+      },
+      { 
+        path: "/sanPham", 
+        name: "SanPham", 
       {
         path: "/sanPham",
         name: "SanPham",
