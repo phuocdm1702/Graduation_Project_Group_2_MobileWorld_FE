@@ -308,6 +308,21 @@ export const useHoaDonStore = defineStore('hoaDon', {
             this.isLoading = true;
             this.error = null;
 
+            // Kiểm tra imelMap
+            for (const [chiTietSanPhamId, imei] of Object.entries(imelMap)) {
+                if (!imei || imei.trim() === '') {
+                    this.error = `IMEI cho sản phẩm ID ${chiTietSanPhamId} không hợp lệ`;
+                    this.isLoading = false;
+                    return { success: false, message: this.error };
+                }
+                const imeiData = this.imelList.find(i => i.imei === imei);
+                if (!imeiData || imeiData.status !== 'Còn hàng') {
+                    this.error = `IMEI ${imei} không khả dụng`;
+                    this.isLoading = false;
+                    return { success: false, message: this.error };
+                }
+            }
+
             try {
                 const response = await apiService.post(`/api/client/hoa-don/xac-nhan-imei/${idHD}`, imelMap);
                 const updatedInvoice = response.data;
@@ -353,7 +368,7 @@ export const useHoaDonStore = defineStore('hoaDon', {
 
                 return { success: true, data: updatedInvoice };
             } catch (error) {
-                this.error = error.message || 'Không thể xác nhận và gán IMEI';
+                this.error = error.response?.data?.message || error.message || 'Không thể xác nhận và gán IMEI';
                 console.error('Lỗi khi gọi API xác nhận IMEI:', error);
                 return { success: false, message: this.error };
             } finally {
@@ -378,14 +393,14 @@ export const useHoaDonStore = defineStore('hoaDon', {
                     throw new Error(`IMEI ${imei} không khả dụng`);
                 }
 
-                // Step 1: Fetch idImel
+                // Lấy idImel
                 const idImelResponse = await apiService.get(`/api/chi-tiet-san-pham/find-id-imel-by-imei?imei=${imei}`);
                 const idImel = idImelResponse.data?.idImel;
                 if (!idImel) {
                     throw new Error('Không tìm thấy idImel cho IMEI này');
                 }
 
-                // Step 2: Create new product using selectedProduct and imeiData
+                // Tạo sản phẩm mới
                 const newProduct = {
                     chiTietSanPhamId: selectedProduct.chiTietSanPhamId,
                     idSanPham: selectedProduct.idSanPham,
@@ -403,18 +418,21 @@ export const useHoaDonStore = defineStore('hoaDon', {
                     imeiList: [{ imei, status: 'Còn hàng' }],
                 };
 
-                // Step 3: Replace product
+                // Lưu sản phẩm cũ để khôi phục nếu cần
+                const oldProduct = { ...products.find(p => p.chiTietSanPhamId === selectedProduct.chiTietSanPhamId) };
+
+                // Thay thế sản phẩm tạm thời
                 const productIndex = products.findIndex(p => p.chiTietSanPhamId === selectedProduct.chiTietSanPhamId);
                 if (productIndex === -1) {
                     throw new Error('Không tìm thấy sản phẩm để thay thế');
                 }
+                products[productIndex] = newProduct;
 
-                // Step 4: Assign IMEI to invoice
+                // Gán IMEI cho hóa đơn
                 const imelMap = { [newProduct.chiTietSanPhamId]: imei };
                 const result = await apiService.post(`/api/hoa-don/xac-nhan-imei/${invoiceId}`, imelMap);
 
                 if (result.status === 200) {
-                    // Update products in invoiceDetail
                     if (this.invoiceDetail && this.invoiceDetail.id === invoiceId) {
                         this.invoiceDetail.products[productIndex] = newProduct;
                         this.invoiceDetail.history.push({
@@ -434,16 +452,79 @@ export const useHoaDonStore = defineStore('hoaDon', {
                         updatedProduct: newProduct,
                     };
                 } else {
+                    // Khôi phục sản phẩm cũ nếu thất bại
+                    products[productIndex] = oldProduct;
                     throw new Error(result.data?.message || 'Lỗi khi gán IMEI');
                 }
             } catch (error) {
-                this.error = error.message || 'Lỗi khi thay thế sản phẩm';
+                this.error = error.response?.data?.message || error.message || 'Lỗi không xác định';
                 console.error('Error in selectIMEI:', error);
-                console.error('Error response:', error.response?.data);
                 return {
                     success: false,
-                    message: error.response?.data?.message || error.message || 'Lỗi không xác định',
+                    message: this.error,
                 };
+            } finally {
+                this.isLoading = false;
+            }
+        },
+
+        async updateCustomerInfo(id, tenKhachHang, soDienThoai, diaChi, email) {
+            this.isLoading = true;
+            this.error = null;
+
+            try {
+                const params = { tenKhachHang, soDienThoai, diaChi, email };
+                const response = await apiService.put(`/api/hoa-don/${id}/update-customer-info`, null, { params });
+                if (this.invoiceDetail && this.invoiceDetail.id === id) {
+                    this.invoiceDetail.idKhachHang.ten = tenKhachHang;
+                    this.invoiceDetail.soDienThoaiKhachHang = soDienThoai;
+                    this.invoiceDetail.diaChiKhachHang = diaChi;
+                    this.invoiceDetail.idKhachHang.email = email;
+                    this.invoiceDetail.history.push({
+                        id: Date.now(),
+                        code: `LSHD_${Date.now()}`,
+                        invoice: this.invoiceDetail.ma,
+                        employee: 'Hệ thống',
+                        action: `Cập nhật thông tin khách hàng: ${tenKhachHang}`,
+                        timestamp: this.formatDate(new Date()),
+                        status: 'completed',
+                    });
+                }
+                return { success: true, data: response.data };
+            } catch (error) {
+                this.error = error.message || 'Không thể cập nhật thông tin khách hàng';
+                console.error('Lỗi khi cập nhật thông tin khách hàng:', error);
+                return { success: false, message: this.error };
+            } finally {
+                this.isLoading = false;
+            }
+        },
+
+        async updateHoaDon(id, maHD, loaiHD) {
+            this.isLoading = true;
+            this.error = null;
+
+            try {
+                const params = { maHD, loaiHD };
+                const response = await apiService.put(`/api/hoa-don/${id}/update-hoa-don`, null, { params });
+                if (this.invoiceDetail && this.invoiceDetail.id === id) {
+                    this.invoiceDetail.ma = maHD;
+                    this.invoiceDetail.loaiDon = loaiHD;
+                    this.invoiceDetail.history.push({
+                        id: Date.now(),
+                        code: `LSHD_${Date.now()}`,
+                        invoice: this.invoiceDetail.ma,
+                        employee: 'Hệ thống',
+                        action: `Cập nhật thông tin hóa đơn: ${maHD}`,
+                        timestamp: this.formatDate(new Date()),
+                        status: 'completed',
+                    });
+                }
+                return { success: true, data: response.data };
+            } catch (error) {
+                this.error = error.message || 'Không thể cập nhật thông tin hóa đơn';
+                console.error('Lỗi khi cập nhật thông tin hóa đơn:', error);
+                return { success: false, message: this.error };
             } finally {
                 this.isLoading = false;
             }

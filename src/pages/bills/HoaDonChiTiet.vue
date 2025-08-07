@@ -102,13 +102,16 @@
               </div>
             </div>
             <div class="product-card-actions">
-              <button class="btn btn-sm btn-view" @click="showIMEIModal(product)" title="Xem IMEI">
+              <button class="btn btn-sm btn-view" @click="showIMEIModal(product)" title="Xem IMEI"
+                :disabled="isActionButtonsDisabled">
                 Xem IMEI
               </button>
-              <button class="btn btn-sm btn-view" @click="showConfirmIMEIModal(product)" title="Xác nhận IMEI">
+              <button class="btn btn-sm btn-view" @click="showConfirmIMEIModal(product)" title="Xác nhận IMEI"
+                :disabled="isActionButtonsDisabled">
                 Xác nhận
               </button>
-              <button class="btn btn-sm btn-delete" @click="removeProduct(product)" title="Xóa sản phẩm">
+              <button class="btn btn-sm btn-delete" @click="removeProduct(product)" title="Xóa sản phẩm"
+                :disabled="isActionButtonsDisabled">
                 Xóa
               </button>
             </div>
@@ -271,7 +274,7 @@
         <div class="modal-header">
           <h5 class="modal-title">
             IMEI - {{ selectedProduct?.name }} {{ selectedProduct?.color }} {{ selectedProduct?.ram }} {{
-              selectedProduct?.capacity }}
+            selectedProduct?.capacity }}
           </h5>
           <button class="btn-close-glass" @click="closeIMEIModal">
             <i class="bi bi-x-lg"></i>
@@ -320,7 +323,7 @@
         <div class="modal-header">
           <h5 class="modal-title">
             Xác Nhận IMEI - {{ selectedProduct?.name }} {{ selectedProduct?.color }} {{ selectedProduct?.ram }} {{
-              selectedProduct?.capacity }}
+            selectedProduct?.capacity }}
           </h5>
           <button class="btn-close-glass" @click="closeConfirmIMEIModal">
             <i class="bi bi-x-lg"></i>
@@ -443,7 +446,7 @@
             <div class="form-group mb-3">
               <label class="form-label">Loại đơn</label>
               <select v-model="invoice.loaiDon" class="form-select">
-                <option value="Online">Online</option>
+                <option value="online">online</option>
                 <option value="trực tiếp">trực tiếp</option>
               </select>
             </div>

@@ -26,8 +26,7 @@
                         <i class="bi bi-search text-muted"></i>
                       </span>
                       <input type="text" class="form-control search-input" placeholder="Tìm kiếm hóa đơn..."
-                        :value="invoiceSearchQuery" @input="debouncedInvoiceSearch($event.target.value)"
-                        />
+                        :value="invoiceSearchQuery" @input="debouncedInvoiceSearch($event.target.value)" />
                     </div>
                   </div>
                   <button class="btn btn-light px-4 py-2 fw-semibold add-bill-btn text-dark"
@@ -205,7 +204,7 @@
           <div class="modal-header border-0 d-flex justify-content-between align-items-center">
             <h5 class="modal-title fw-bold text-dark">
               Chọn phương thức thanh toán
-            </h5 |h>
+            </h5>
             <button class="btn btn-outline-secondary btn-close-custom" @click="closePaymentProviderModal">
               <i class="bi bi-x-lg"></i>
             </button>
@@ -259,9 +258,9 @@
               <div class="row g-3 mb-4">
                 <div class="col-md-3 search-input-wrapper">
                   <i class="bi bi-search search-icon"></i>
-                  <input v-model="cartSearchQuery" type="text" class="form-control search-input" style="padding-left: 2rem;"
-                    placeholder="Tìm sản phẩm, IMEI..." @input="debouncedCartSearch($event.target.value)"
-                    />
+                  <input v-model="cartSearchQuery" type="text" class="form-control search-input"
+                    style="padding-left: 2rem;" placeholder="Tìm sản phẩm, IMEI..."
+                    @input="debouncedCartSearch($event.target.value)" />
                 </div>
                 <div class="col-md-3">
                   <select v-model="cartFilterColor" class="form-select search-input">
@@ -398,9 +397,9 @@
             <div class="row g-3 p-2">
               <div class="col-md-3 search-input-wrapper">
                 <i class="bi bi-search search-icon"></i>
-                <input :value="productSearchQuery" type="text" class="form-control search-input" style="padding-left: 2rem;"
-                  placeholder="Tìm kiếm sản phẩm..." @input="debouncedProductSearch($event.target.value)"
-                  />
+                <input :value="productSearchQuery" type="text" class="form-control search-input"
+                  style="padding-left: 2rem;" placeholder="Tìm kiếm sản phẩm..."
+                  @input="debouncedProductSearch($event.target.value)" />
               </div>
               <div class="col-md-3">
                 <select v-model="filterColor" class="form-select search-input">
@@ -429,9 +428,9 @@
             </div>
             <DataTable title="" :headers="productHeaders" :data="filteredProducts"
               :pageSizeOptions="[5, 10, 15, 20, 30, 40, 50]" @scroll="handleScroll">
-          <template #stt="{ globalIndex }">
-            {{ globalIndex + 1 }}
-          </template>
+              <template #stt="{ globalIndex }">
+                {{ globalIndex + 1 }}
+              </template>
               <template #tenSanPham="{ item }">
                 <span class="text-muted">{{ item.tenSanPham }}</span>
               </template>
@@ -634,7 +633,7 @@
                             min="0" :disabled="!isReceiverEditable" style="
                               border-radius: 0 0.5rem 0.5rem 0;
                               transition: all 0.3s ease;
-                            " />
+                            " @input="updateShippingFee" />
                         </div>
                       </div>
 
@@ -710,7 +709,7 @@
                             Đơn tối thiểu: {{ formatPrice(selectedDiscount.minOrder) }}
                           </div>
                         </div>
-                        <button class="btn btn-outline-danger btn-sm  px-3 py-1" @click="selectedDiscount = null">
+                        <button class="btn btn-outline-danger btn-sm  px-3 py-1" @click="removeDiscount">
                           Hủy
                         </button>
                       </div>
@@ -723,8 +722,8 @@
                     <div v-if="activeTab === 'alternative'" class="voucher-carousel position-relative">
                       <div class="mb-3">
                         <input v-model="alternativeSearchQuery" type="text" class="form-control search-input"
-                          placeholder="Tìm kiếm mã giảm giá..." @input="debouncedAlternativeSearch($event.target.value)"
-                          />
+                          placeholder="Tìm kiếm mã giảm giá..."
+                          @input="debouncedAlternativeSearch($event.target.value)" />
                       </div>
                       <div class="d-flex gap-3 overflow-x-hidden pb-2" ref="alternativeCarousel">
                         <div v-for="(discount, index) in filteredAlternativeDiscountsComputed" :key="discount.id"
@@ -748,8 +747,8 @@
                                 Giảm: <strong>{{
                                   discount.percent
                                     ? `${discount.percent}% (ước tính ${formatPrice((discount.percent / 100) *
-                                  tongTien)})`
-                                  : formatPrice(discount.value)
+                                      tongTien)})`
+                                    : formatPrice(discount.value)
                                 }}</strong>
                               </div>
                               <div class="text-secondary" style="font-size: 0.9rem">
@@ -765,7 +764,8 @@
                             </button>
                           </div>
                         </div>
-                        <div v-if="filteredAlternativeDiscountsComputed.length === 0" class="text-center text-muted py-4 w-100">
+                        <div v-if="filteredAlternativeDiscountsComputed.length === 0"
+                          class="text-center text-muted py-4 w-100">
                           <i class="bi bi-ticket-perforated me-2" style="font-size: 1.2rem"></i>
                           Không có mã giảm giá thay thế khả dụng
                         </div>
@@ -812,7 +812,7 @@
                                   discount.percent
                                     ? `${discount.percent}% (ước tính ${formatPrice((discount.percent / 100) *
                                       tongTien)})`
-                                  : formatPrice(discount.value)
+                                    : formatPrice(discount.value)
                                 }}</strong>
                               </div>
                               <div class="text-secondary" style="font-size: 0.9rem">
@@ -921,16 +921,12 @@
                   " @click="confirmPayment">
                   <span class="fw-semibold">Thanh toán</span>
                 </button>
-                <!-- Customer Payment Button -->
-                <button class="btn w-100 py-3 mt-2" style="
-                    background: linear-gradient(135deg, #facc15, #f97316);
-                    color: white;
-                  " :disabled="!activeInvoiceId ||
-                    !cartItems ||
-                    cartItems.length === 0 ||
-                    isCreatingOrder
-                    " @click="goToCustomerPayment">
-                  <span class="fw-semibold">Thanh toán tại quầy (Khách hàng)</span>
+                <!-- Checkout Display Button -->
+                <button class="btn w-100 py-3 mt-3 gradient-custom-green text-white" :disabled="!activeInvoiceId ||
+                  !cartItems ||
+                  cartItems.length === 0
+                  " @click="goToCheckoutDisplay">
+                  <span class="fw-semibold">Xem Thanh Toán Quầy</span>
                 </button>
               </div>
             </div>
@@ -1219,6 +1215,7 @@
 import { defineComponent } from "vue";
 import banHang from "../../store/modules/sales/banHang";
 import { debounce } from "lodash";
+import { useInvoiceStore } from "../../store/modules/sales/invoiceStore";
 
 export default defineComponent({
   name: "BanHang",
@@ -1228,10 +1225,13 @@ export default defineComponent({
       activeTab: 'best',
       currentAlternativeIndex: 0,
       alternativeSearchQuery: '',
+      products: [], // Danh sách sản phẩm từ API
+      selectedProduct: null,
+      selectedIMEIs: [],
+      selectedDiscount: null,
     };
   },
   computed: {
-    // Compute filtered alternative discounts based on search query
     filteredAlternativeDiscountsComputed() {
       if (!this.alternativeSearchQuery) {
         return this.alternativeDiscounts || [];
@@ -1247,29 +1247,62 @@ export default defineComponent({
     }
   },
   methods: {
-    // Debounced search method for alternative discounts
+    // Add this method to handle tab switching
+    setActiveTab(tab) {
+      this.activeTab = tab;
+      this.currentAlternativeIndex = 0; // Reset carousel index when switching tabs
+      console.log('Switched to tab:', tab);
+    },
+
+    // Existing methods
+    async fetchProducts() {
+      try {
+        console.log('Dữ liệu sản phẩm từ API:', this.products);
+      } catch (error) {
+        console.error('Lỗi khi tải sản phẩm:', error);
+      }
+    },
+
     debouncedAlternativeSearch: debounce(function (value) {
       this.alternativeSearchQuery = value;
-      this.currentAlternativeIndex = 0; // Reset carousel index on search
+      this.currentAlternativeIndex = 0;
     }, 300),
-    // Select a discount and switch to 'best' tab
+
     selectDiscount(discount) {
       this.selectedDiscount = discount;
-      this.activeTab = 'best'; // Automatically switch to 'Mã Tốt Nhất' tab
-      this.currentAlternativeIndex = 0; // Reset carousel index
+      this.activeTab = 'best';
+      this.currentAlternativeIndex = 0;
+
+      const invoiceStore = useInvoiceStore();
+      const discountAmount = discount.percent ? (discount.percent / 100) * this.tongTien : discount.value;
+
+      // Cập nhật store với thông tin đầy đủ
+      invoiceStore.setDiscountAmount(discountAmount, {
+        ...discount,
+        appliedAmount: discountAmount // Thêm số tiền được giảm thực tế
+      });
+
+      console.log('Áp dụng mã giảm giá:', { discount, discountAmount });
       this.$refs.toastNotification.showToast({
         message: `Đã áp dụng mã giảm giá ${discount.code}`,
         type: 'success',
         duration: 3000
       });
     },
-    // Set active tab and reset carousel index
-    setActiveTab(tab) {
-      this.activeTab = tab;
-      if (tab === 'alternative') {
-        this.currentAlternativeIndex = 0; // Reset carousel when switching to alternative tab
-      }
+
+    removeDiscount() {
+      this.selectedDiscount = null;
+      const invoiceStore = useInvoiceStore();
+      invoiceStore.setDiscountAmount(0, null);
+
+      console.log('Hủy mã giảm giá');
+      this.$refs.toastNotification.showToast({
+        message: 'Đã hủy mã giảm giá',
+        type: 'info',
+        duration: 3000
+      });
     },
+
     confirmPayment() {
       this.notificationType = "confirm";
       this.notificationMessage = `Bạn có chắc chắn muốn thanh toán ${this.formatPrice(
@@ -1278,57 +1311,291 @@ export default defineComponent({
       this.notificationOnConfirm = () => {
         this.ThanhToan();
       };
-      this.notificationOnCancel = () => {
-        // No action on cancel
-      };
+      this.notificationOnCancel = () => { };
       this.$refs.notificationModal.openModal();
     },
-   goToCustomerPayment() {
-  this.$router.push({
-    name: "ThanhToanQuay",
-    params: {
-      invoiceId: this.activeInvoiceId
-    },
-    query: {
-      cartItems: JSON.stringify(this.cartItems),
-      selectedDiscount: JSON.stringify(this.selectedDiscount),
-      totalAmount: this.tongTien,
-      discount: this.discount,
-      shippingFee: this.shippingFee,
-      isDelivery: this.isDelivery.toString(),
-      customerName: this.customer.name,
-      customerPhone: this.customer.phone,
-      customerCity: this.customer.city,
-      customerDistrict: this.customer.district,
-      customerWard: this.customer.ward,
-      customerAddress: this.customer.address,
-      paymentMethod: this.paymentMethod,
-      selectedPaymentProvider: this.selectedPaymentProvider
-    }
-  });
-},
-    scrollCarousel(direction) {
-      if (this.activeTab === 'alternative') {
-        if (direction === 'left' && this.currentAlternativeIndex > 0) {
-          this.currentAlternativeIndex--;
-        } else if (direction === 'right' && this.currentAlternativeIndex < this.filteredAlternativeDiscountsComputed.length - 1) {
-          this.currentAlternativeIndex++;
-        }
+
+    // Chỉ sửa method selectPayment trong banHang.vue
+    selectPayment(method) {
+      const oldMethod = this.paymentMethod;
+      this.paymentMethod = method;
+
+      console.log('[banHang] selectPayment called:', {
+        oldMethod,
+        newMethod: method,
+        activeInvoiceId: this.activeInvoiceId,
+        hasCartItems: this.cartItems && this.cartItems.length > 0
+      });
+
+      const invoiceStore = useInvoiceStore();
+
+      // Cập nhật phương thức thanh toán
+      invoiceStore.setPaymentMethod(method);
+
+      // Cập nhật trạng thái thanh toán dựa trên phương thức
+      let newStatus = 'waiting';
+      if (method === 'cash') {
+        newStatus = 'completed';
+      } else if (method === 'transfer' || method === 'both') {
+        newStatus = 'waiting';
       }
+
+      // Cập nhật payment status
+      invoiceStore.setPaymentStatus(newStatus);
+
+      console.log('[banHang] Payment updated:', {
+        paymentMethod: method,
+        paymentStatus: newStatus,
+        shouldShowQR: invoiceStore.shouldShowQRCode,
+        hasValidInvoice: invoiceStore.hasValidInvoice
+      });
+
+      // Force trigger realtime update ngay lập tức
+      this.$nextTick(() => {
+        // Dispatch event với thông tin đầy đủ
+        window.dispatchEvent(new CustomEvent('paymentMethodChanged', {
+          detail: {
+            paymentMethod: method,
+            paymentStatus: newStatus,
+            shouldShowQR: invoiceStore.shouldShowQRCode,
+            hasValidInvoice: invoiceStore.hasValidInvoice,
+            currentInvoice: invoiceStore.currentInvoice,
+            totalPayment: invoiceStore.totalPayment,
+            timestamp: Date.now()
+          }
+        }));
+
+        // Backup dispatch để đảm bảo
+        setTimeout(() => {
+          window.dispatchEvent(new CustomEvent('forceUpdate', {
+            detail: {
+              paymentMethod: method,
+              paymentStatus: newStatus,
+              shouldShowQR: invoiceStore.shouldShowQRCode,
+              hasValidInvoice: invoiceStore.hasValidInvoice,
+              timestamp: Date.now()
+            }
+          }));
+        }, 50);
+      });
+    },
+
+    updateShippingFee() {
+      const invoiceStore = useInvoiceStore();
+      const finalShippingFee = this.isDelivery && this.tongTien < this.FREE_SHIP_THRESHOLD ? this.shippingFee : 0;
+      invoiceStore.setShippingFee(finalShippingFee);
+
+      console.log('Cập nhật phí vận chuyển:', finalShippingFee);
+    },
+
+    // Đảm bảo cập nhật store khi thay đổi giỏ hàng
+    addProductWithIMEIs() {
+      const invoiceStore = useInvoiceStore();
+      console.log('Dữ liệu sản phẩm trước khi thêm:', {
+        selectedProduct: this.selectedProduct,
+        selectedIMEIs: this.selectedIMEIs
+      });
+
+      const item = {
+        id: this.selectedProduct.idSanPham,
+        name: this.selectedProduct.tenSanPham,
+        code: this.selectedProduct.ma,
+        color: this.selectedProduct.mauSac,
+        ram: this.selectedProduct.dungLuongRam,
+        storage: this.selectedProduct.dungLuongBoNhoTrong,
+        price: this.selectedProduct.giaBan,
+        currentPrice: this.selectedProduct.giaBan, // Thêm currentPrice
+        quantity: this.selectedIMEIs.length,
+        total: (this.selectedProduct.giaBan) * (this.selectedIMEIs.length),
+        imei: this.selectedIMEIs.length ? this.selectedIMEIs.join(', ') : `IMEI-${Date.now()}`
+      };
+
+      invoiceStore.addItemToInvoice(item);
+
+      // Force update discount nếu có
+      if (this.selectedDiscount) {
+        const discountAmount = this.selectedDiscount.percent ?
+          (this.selectedDiscount.percent / 100) * this.tongTien :
+          this.selectedDiscount.value;
+        invoiceStore.setDiscountAmount(discountAmount, {
+          ...this.selectedDiscount,
+          appliedAmount: discountAmount
+        });
+      }
+
+      console.log('Thêm sản phẩm vào giỏ:', item);
+      this.$refs.toastNotification.showToast({
+        message: `Đã thêm ${item.name} vào giỏ hàng`,
+        type: 'success',
+        duration: 3000
+      });
+      this.closeIMEIModal();
+    },
+
+    removeItem(item) {
+      const invoiceStore = useInvoiceStore();
+      invoiceStore.removeItemFromInvoice(item.id);
+
+      // Cập nhật lại discount nếu có
+      if (this.selectedDiscount) {
+        const newTotal = this.tongTien - (item.currentPrice * item.quantity);
+        const discountAmount = this.selectedDiscount.percent ?
+          (this.selectedDiscount.percent / 100) * newTotal :
+          this.selectedDiscount.value;
+        invoiceStore.setDiscountAmount(discountAmount, {
+          ...this.selectedDiscount,
+          appliedAmount: discountAmount
+        });
+      }
+
+      console.log('Xóa sản phẩm khỏi giỏ:', item);
+      this.$refs.toastNotification.showToast({
+        message: `Đã xóa ${item.name} khỏi giỏ hàng`,
+        type: 'info',
+        duration: 3000
+      });
+    },
+
+    goToCheckoutDisplay() {
+      const invoiceStore = useInvoiceStore();
+      const invoiceData = {
+        invoiceNumber: this.activeInvoiceId || 'INV-' + Date.now(),
+        cashier: 'Nguyễn Văn A',
+        items: this.cartItems.map(item => ({
+          id: item.id,
+          name: item.name,
+          code: item.ma || item.code,
+          color: item.color,
+          ram: item.ram,
+          storage: item.storage,
+          price: item.currentPrice || item.price,
+          quantity: item.quantity,
+          total: (item.currentPrice || item.price) * item.quantity,
+          imei: item.imei,
+          image: item.image // Thêm image
+        }))
+      };
+
+      // Cập nhật tất cả thông tin vào store
+      invoiceStore.setInvoice(invoiceData);
+      invoiceStore.setPaymentMethod(this.paymentMethod);
+
+      const finalShippingFee = this.isDelivery && this.tongTien < this.FREE_SHIP_THRESHOLD ? this.shippingFee : 0;
+      invoiceStore.setShippingFee(finalShippingFee);
+
+      const paymentStatus = this.paymentMethod === 'cash' ? 'completed' : 'waiting';
+      invoiceStore.setPaymentStatus(paymentStatus);
+
+      // Cập nhật discount
+      if (this.selectedDiscount) {
+        const discountAmount = this.selectedDiscount.percent ?
+          (this.selectedDiscount.percent / 100) * this.tongTien :
+          this.selectedDiscount.value;
+        invoiceStore.setDiscountAmount(discountAmount, {
+          ...this.selectedDiscount,
+          appliedAmount: discountAmount
+        });
+      } else {
+        invoiceStore.setDiscountAmount(0, null);
+      }
+
+      console.log('Chuyển sang Thanh Toán Quầy:', {
+        invoiceData,
+        paymentMethod: this.paymentMethod,
+        paymentStatus,
+        shippingFee: finalShippingFee,
+        discountInfo: this.selectedDiscount,
+        discountAmount: this.selectedDiscount ? (this.selectedDiscount.percent ?
+          (this.selectedDiscount.percent / 100) * this.tongTien :
+          this.selectedDiscount.value) : 0
+      });
+
+      this.$router.push('/checkout-display');
     },
   },
   watch: {
-    // Update filtered discounts when alternativeDiscounts change
     alternativeDiscounts: {
       handler() {
-        this.currentAlternativeIndex = 0; // Reset carousel index
+        this.currentAlternativeIndex = 0;
       },
       deep: true
+    },
+    cartItems: {
+      handler(newItems) {
+        const invoiceStore = useInvoiceStore();
+        const invoiceData = {
+          invoiceNumber: this.activeInvoiceId,
+          cashier: 'Nguyễn Văn A',
+          items: newItems.map(item => ({
+            id: item.id,
+            name: item.name,
+            code: item.ma,
+            color: item.color,
+            ram: item.ram,
+            storage: item.storage,
+            price: item.currentPrice,
+            quantity: item.quantity,
+            total: item.currentPrice * item.quantity,
+            imei: item.imei
+          }))
+        };
+        invoiceStore.setInvoice(invoiceData);
+        console.log('Cập nhật giỏ hàng:', invoiceData);
+      },
+      deep: true
+    },
+    selectedDiscount: {
+      handler(newDiscount) {
+        const invoiceStore = useInvoiceStore();
+        if (newDiscount) {
+          const discountAmount = newDiscount.percent ?
+            (newDiscount.percent / 100) * this.tongTien :
+            newDiscount.value;
+          invoiceStore.setDiscountAmount(discountAmount, {
+            ...newDiscount,
+            appliedAmount: discountAmount
+          });
+        } else {
+          invoiceStore.setDiscountAmount(0, null);
+        }
+      },
+      deep: true
+    },
+
+    // Watch cho paymentMethod
+    paymentMethod: {
+      handler(newMethod) {
+        const invoiceStore = useInvoiceStore();
+        invoiceStore.setPaymentMethod(newMethod);
+        const newStatus = newMethod === 'cash' ? 'completed' : 'waiting';
+        invoiceStore.setPaymentStatus(newStatus);
+      }
+    },
+
+    // Watch cho tổng tiền để cập nhật lại discount
+    tongTien: {
+      handler(newTotal) {
+        if (this.selectedDiscount && this.selectedDiscount.percent) {
+          const invoiceStore = useInvoiceStore();
+          const discountAmount = (this.selectedDiscount.percent / 100) * newTotal;
+          invoiceStore.setDiscountAmount(discountAmount, {
+            ...this.selectedDiscount,
+            appliedAmount: discountAmount
+          });
+        }
+      }
     }
   },
+
   mounted() {
-    // Initialize filtered discounts
+    this.fetchProducts();
     this.currentAlternativeIndex = 0;
+    console.log('Mounted banHang.vue, dữ liệu ban đầu:', {
+      products: this.products,
+      selectedProduct: this.selectedProduct,
+      selectedIMEIs: this.selectedIMEIs,
+      selectedDiscount: this.selectedDiscount
+    });
   }
 });
 </script>
@@ -1479,13 +1746,15 @@ export default defineComponent({
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 1rem; /* Adjust gap between buttons and counter */
+  gap: 1rem;
+  /* Adjust gap between buttons and counter */
   margin-top: 1rem;
 }
 
 .carousel-control-prev,
 .carousel-control-next {
-  position: static; /* Remove absolute positioning */
+  position: static;
+  /* Remove absolute positioning */
   background: #34d399;
   border-radius: 0.5rem;
   width: 40px;
