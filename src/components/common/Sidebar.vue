@@ -334,8 +334,8 @@ import {
   TagIcon,
   ChartBarIcon,
   ChatBubbleLeftRightIcon,
-  CalendarDaysIcon
-  ClockIcon
+  CalendarDaysIcon,
+  ClockIcon,
 } from '@heroicons/vue/24/outline';
 
 const uiStore = useUiStore();
