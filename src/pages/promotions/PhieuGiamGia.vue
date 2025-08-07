@@ -20,7 +20,7 @@
                 <input
                   type="text"
                   class="form-control search-input"
-                  style="padding-left: 2.5rem;"
+                  style="padding-left: 2.5rem"
                   placeholder="Mã phiếu, tên phiếu..."
                   v-model="searchQuery"
                   @input="debouncedSearch($event.target.value)"
@@ -114,7 +114,9 @@
         </div>
 
         <!-- Action Buttons -->
-        <div class="filter-actions mt-4 d-flex flex-wrap gap-2 justify-content-end">
+        <div
+          class="filter-actions mt-4 d-flex flex-wrap gap-2 justify-content-end"
+        >
           <button class="btn btn-reset" @click="resetFilters">
             Đặt lại bộ lọc
           </button>
@@ -132,7 +134,9 @@
     <FilterTableSection title="Danh Sách Phiếu Giảm Giá" icon="bi bi-table">
       <div class="table-header">
         <div class="table-title-wrapper">
-          <span class="table-count">{{ filteredVouchers.length }} phiếu giảm giá</span>
+          <span class="table-count"
+            >{{ filteredVouchers.length }} phiếu giảm giá</span
+          >
         </div>
       </div>
 
@@ -155,10 +159,16 @@
           <template #value="{ item }">
             <div class="amount-cell">
               <div class="total-amount">
-                {{ item.type === 'Phần trăm' ? `${item.value}%` : formatPrice(item.value) }}
+                {{
+                  item.type === "Phần trăm"
+                    ? `${item.value}%`
+                    : formatPrice(item.value)
+                }}
               </div>
               <div class="discount-info" v-if="item.minOrder > 0">
-                <small class="text-muted">Đơn tối thiểu: {{ formatPrice(item.minOrder) }}</small>
+                <small class="text-muted"
+                  >Đơn tối thiểu: {{ formatPrice(item.minOrder) }}</small
+                >
               </div>
             </div>
           </template>
@@ -168,7 +178,10 @@
             </span>
           </template>
           <template #status="{ item }">
-            <span class="status-badge" :class="getStatusBadgeClass(item.status)">
+            <span
+              class="status-badge"
+              :class="getStatusBadgeClass(item.status)"
+            >
               {{ item.status }}
             </span>
           </template>
@@ -216,14 +229,14 @@
 </template>
 
 <script>
-import { ref, computed, watch } from 'vue';
-import { debounce } from 'lodash';
-import { useRouter } from 'vue-router';
-import DataTable from '@/components/common/DataTable.vue';
-import NotificationModal from '@/components/common/NotificationModal.vue';
-import ToastNotification from '@/components/common/ToastNotification.vue';
-import HeaderCard from '@/components/common/HeaderCard.vue';
-import FilterTableSection from '@/components/common/FilterTableSection.vue';
+import { ref, computed, watch } from "vue";
+import { debounce } from "lodash";
+import { useRouter } from "vue-router";
+import DataTable from "@/components/common/DataTable.vue";
+import NotificationModal from "@/components/common/NotificationModal.vue";
+import ToastNotification from "@/components/common/ToastNotification.vue";
+import HeaderCard from "@/components/common/HeaderCard.vue";
+import FilterTableSection from "@/components/common/FilterTableSection.vue";
 import {
   fetchVouchers,
   searchVouchers,
@@ -234,10 +247,10 @@ import {
   filterByValue,
   filterVouchers,
   updateVoucherStatus,
-} from '../../store/modules/promotions/phieuGiamGia';
+} from "../../store/modules/promotions/phieuGiamGia";
 
 export default {
-  name: 'VoucherManagement',
+  name: "VoucherManagement",
   components: {
     HeaderCard,
     FilterTableSection,
@@ -250,11 +263,11 @@ export default {
 
     // Data
     const vouchers = ref([]);
-    const searchQuery = ref('');
-    const filterType = ref('');
-    const filterStatus = ref('');
-    const startDate = ref('');
-    const endDate = ref('');
+    const searchQuery = ref("");
+    const filterType = ref("");
+    const filterStatus = ref("");
+    const startDate = ref("");
+    const endDate = ref("");
     const rangeMin = ref(0);
     const rangeMax = ref(5000000);
     const minVoucherValue = 0;
@@ -268,7 +281,10 @@ export default {
       return vouchers.value.map((voucher) => ({
         id: voucher.id,
         code: voucher.ma,
-        value: voucher.loaiPhieuGiamGia === 'Phần trăm' ? voucher.phanTramGiamGia : voucher.soTienGiamToiDa,
+        value:
+          voucher.loaiPhieuGiamGia === "Phần trăm"
+            ? voucher.phanTramGiamGia
+            : voucher.soTienGiamToiDa,
         minOrder: voucher.hoaDonToiThieu,
         type: voucher.loaiPhieuGiamGia,
         status: getStatus(voucher),
@@ -278,8 +294,14 @@ export default {
     });
 
     const sliderRangeStyle = computed(() => {
-      const percent1 = ((rangeMin.value - minVoucherValue) / (maxVoucherValue - minVoucherValue)) * 100;
-      const percent2 = ((rangeMax.value - minVoucherValue) / (maxVoucherValue - minVoucherValue)) * 100;
+      const percent1 =
+        ((rangeMin.value - minVoucherValue) /
+          (maxVoucherValue - minVoucherValue)) *
+        100;
+      const percent2 =
+        ((rangeMax.value - minVoucherValue) /
+          (maxVoucherValue - minVoucherValue)) *
+        100;
       return {
         left: `${percent1}%`,
         width: `${percent2 - percent1}%`,
@@ -287,43 +309,58 @@ export default {
     });
 
     const headers = [
-      { text: 'STT', value: 'stt' },
-      { text: 'Mã Phiếu', value: 'code' },
-      { text: 'Giá Trị', value: 'value' },
-      { text: 'Loại Phiếu', value: 'type' },
-      { text: 'Trạng Thái', value: 'status' },
-      { text: 'Ngày Bắt Đầu', value: 'startDate' },
-      { text: 'Ngày Kết Thúc', value: 'expiryDate' },
-      { text: 'Hành Động', value: 'actions' },
+      { text: "STT", value: "stt" },
+      { text: "Mã Phiếu", value: "code" },
+      { text: "Giá Trị", value: "value" },
+      { text: "Loại Phiếu", value: "type" },
+      { text: "Trạng Thái", value: "status" },
+      { text: "Ngày Bắt Đầu", value: "startDate" },
+      { text: "Ngày Kết Thúc", value: "expiryDate" },
+      { text: "Hành Động", value: "actions" },
     ];
 
     // Methods
     const formatPrice = (value) => {
-      return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);
+      return new Intl.NumberFormat("vi-VN", {
+        style: "currency",
+        currency: "VND",
+      }).format(value);
     };
 
     const formatDate = (date) => {
-      if (!date) return '';
-      return new Date(date).toLocaleDateString('vi-VN');
+      if (!date) return "";
+      return new Date(date).toLocaleDateString("vi-VN");
     };
 
     const getStatus = (voucher) => {
       const now = new Date();
-      if (!voucher.trangThai) return 'Không hoạt động';
-      if (new Date(voucher.ngayBatDau) > now) return 'Chưa diễn ra';
-      if (new Date(voucher.ngayKetThuc) < now) return 'Không hoạt động';
-      return 'Đang diễn ra';
+      const startDate = new Date(voucher.ngayBatDau);
+      const endDate = new Date(voucher.ngayKetThuc);
+
+      if (!voucher.trangThai) {
+        return "Không hoạt động";
+      }
+      if (startDate > now) {
+        return "Chưa diễn ra";
+      }
+      if (endDate < now) {
+        return "Không hoạt động";
+      }
+      return "Đang diễn ra";
     };
 
     const loadVouchers = async () => {
       try {
-        const response = await fetchVouchers(currentPage.value - 1, pageSize.value);
+        const response = await fetchVouchers(
+          currentPage.value - 1,
+          pageSize.value
+        );
         vouchers.value = response.data.content;
         totalItems.value = response.data.totalElements;
       } catch (error) {
         toastNotification.value.addToast({
-          type: 'error',
-          message: 'Lỗi khi tải danh sách phiếu giảm giá!',
+          type: "error",
+          message: "Lỗi khi tải danh sách phiếu giảm giá!",
         });
       }
     };
@@ -332,13 +369,17 @@ export default {
       searchQuery.value = value;
       if (value.trim()) {
         try {
-          const response = await searchVouchers(value, currentPage.value - 1, pageSize.value);
+          const response = await searchVouchers(
+            value,
+            currentPage.value - 1,
+            pageSize.value
+          );
           vouchers.value = response.data.content;
           totalItems.value = response.data.totalElements;
         } catch (error) {
           toastNotification.value.addToast({
-            type: 'error',
-            message: 'Lỗi khi tìm kiếm phiếu giảm giá!',
+            type: "error",
+            message: "Lỗi khi tìm kiếm phiếu giảm giá!",
           });
         }
       } else {
@@ -349,54 +390,92 @@ export default {
     const applyFilters = async () => {
       try {
         let response;
-        if (filterType.value && !filterStatus.value && !startDate.value && !endDate.value && rangeMin.value === minVoucherValue && rangeMax.value === maxVoucherValue) {
-          response = await filterByLoaiPhieu(filterType.value, currentPage.value - 1, pageSize.value);
-        } else if (filterStatus.value && !filterType.value && !startDate.value && !endDate.value && rangeMin.value === minVoucherValue && rangeMax.value === maxVoucherValue) {
-          response = await filterByTrangThai(filterStatus.value, currentPage.value - 1, pageSize.value);
-        } else if ((startDate.value || endDate.value) && !filterType.value && !filterStatus.value && rangeMin.value === minVoucherValue && rangeMax.value === maxVoucherValue) {
-          response = await filterByDateRange(startDate.value, endDate.value, currentPage.value - 1, pageSize.value);
-        } else if (rangeMin.value !== minVoucherValue && !filterType.value && !filterStatus.value && !startDate.value && !endDate.value && rangeMax.value === maxVoucherValue) {
-          response = await filterByMinOrder(rangeMin.value, currentPage.value - 1, pageSize.value);
-        } else if (rangeMax.value !== maxVoucherValue && !filterType.value && !filterStatus.value && !startDate.value && !endDate.value && rangeMin.value === minVoucherValue) {
-          response = await filterByValue(rangeMax.value, currentPage.value - 1, pageSize.value);
+        const filters = {
+          loaiPhieuGiamGia: filterType.value,
+          trangThai: filterStatus.value,
+          startDate: startDate.value,
+          endDate: endDate.value,
+          minOrder: rangeMin.value,
+          valueFilter: rangeMax.value,
+        };
+
+        // Nếu không có bộ lọc nào được áp dụng, gọi API lấy tất cả
+        if (
+          !filterType.value &&
+          !filterStatus.value &&
+          !startDate.value &&
+          !endDate.value &&
+          rangeMin.value === minVoucherValue &&
+          rangeMax.value === maxVoucherValue
+        ) {
+          response = await fetchVouchers(currentPage.value - 1, pageSize.value);
+        } else if (filterStatus.value) {
+          response = await filterByTrangThai(
+            filterStatus.value,
+            currentPage.value - 1,
+            pageSize.value
+          );
+        } else if (filterType.value) {
+          response = await filterByLoaiPhieu(
+            filterType.value,
+            currentPage.value - 1,
+            pageSize.value
+          );
+        } else if (startDate.value || endDate.value) {
+          response = await filterByDateRange(
+            startDate.value,
+            endDate.value,
+            currentPage.value - 1,
+            pageSize.value
+          );
+        } else if (rangeMin.value !== minVoucherValue) {
+          response = await filterByMinOrder(
+            rangeMin.value,
+            currentPage.value - 1,
+            pageSize.value
+          );
+        } else if (rangeMax.value !== maxVoucherValue) {
+          response = await filterByValue(
+            rangeMax.value,
+            currentPage.value - 1,
+            pageSize.value
+          );
         } else {
-          // Sử dụng bộ lọc tổng hợp nếu có nhiều điều kiện
-          const filters = {
-            loaiPhieuGiamGia: filterType.value,
-            trangThai: filterStatus.value,
-            startDate: startDate.value,
-            endDate: endDate.value,
-            minOrder: rangeMin.value,
-            valueFilter: rangeMax.value,
-          };
-          response = await filterVouchers(filters, currentPage.value - 1, pageSize.value);
+          response = await filterVouchers(
+            filters,
+            currentPage.value - 1,
+            pageSize.value
+          );
         }
+
         vouchers.value = response.data.content;
         totalItems.value = response.data.totalElements;
       } catch (error) {
         toastNotification.value.addToast({
-          type: 'error',
-          message: `Lỗi khi lọc phiếu giảm giá: ${error.response?.data || error.message}`,
+          type: "error",
+          message: `Lỗi khi lọc phiếu giảm giá: ${
+            error.response?.data || error.message
+          }`,
         });
       }
     };
 
     const resetFilters = () => {
-      searchQuery.value = '';
-      filterType.value = '';
-      filterStatus.value = '';
-      startDate.value = '';
-      endDate.value = '';
+      searchQuery.value = "";
+      filterType.value = "";
+      filterStatus.value = "";
+      startDate.value = "";
+      endDate.value = "";
       rangeMin.value = minVoucherValue;
       rangeMax.value = maxVoucherValue;
       currentPage.value = 1;
-      loadVouchers();
+      loadVouchers(); // Gọi hàm tải tất cả phiếu giảm giá
     };
 
     const exportExcel = () => {
       toastNotification.value.addToast({
-        type: 'success',
-        message: 'Xuất Excel thành công!',
+        type: "success",
+        message: "Xuất Excel thành công!",
       });
     };
 
@@ -405,18 +484,20 @@ export default {
     };
 
     const toggleVoucherStatus = async (voucher) => {
-      const newStatus = voucher.status === 'Đang diễn ra' ? false : true;
+      const newStatus = voucher.status === "Đang diễn ra" ? false : true;
       try {
         await updateVoucherStatus(voucher.id, newStatus);
         toastNotification.value.addToast({
-          type: 'info',
-          message: `Phiếu ${voucher.code} đã được ${newStatus ? 'kích hoạt' : 'tắt'}`,
+          type: "info",
+          message: `Phiếu ${voucher.code} đã được ${
+            newStatus ? "kích hoạt" : "tắt"
+          }`,
         });
         loadVouchers();
       } catch (error) {
         toastNotification.value.addToast({
-          type: 'error',
-          message: 'Lỗi khi cập nhật trạng thái!',
+          type: "error",
+          message: "Lỗi khi cập nhật trạng thái!",
         });
       }
     };
@@ -435,40 +516,51 @@ export default {
 
     const notificationModal = ref(null);
     const toastNotification = ref(null);
-    const notificationType = ref('');
-    const notificationMessage = ref('');
+    const notificationType = ref("");
+    const notificationMessage = ref("");
     const isNotificationLoading = ref(false);
     const notificationOnConfirm = ref(() => {});
     const notificationOnCancel = ref(() => resetNotification());
 
     const resetNotification = () => {
-      notificationType.value = '';
-      notificationMessage.value = '';
+      notificationType.value = "";
+      notificationMessage.value = "";
       isNotificationLoading.value = false;
       notificationOnConfirm.value = () => {};
       notificationOnCancel.value = () => resetNotification();
     };
 
     const getTypeBadgeClass = (type) => {
-      return 'badge-info';
+      return "badge-info";
     };
 
     const getStatusBadgeClass = (status) => {
       switch (status) {
-        case 'Đang diễn ra':
-          return 'badge-completed';
-        case 'Chưa diễn ra':
-          return 'badge-waiting';
+        case "Đang diễn ra":
+          return "badge-completed";
+        case "Chưa diễn ra":
+          return "badge-waiting";
         default:
-          return 'badge-canceled';
+          return "badge-canceled";
       }
     };
 
     // Watchers
-    watch([searchQuery, filterType, filterStatus, startDate, endDate, rangeMin, rangeMax], () => {
-      currentPage.value = 1;
-      applyFilters();
-    });
+    watch(
+      [
+        searchQuery,
+        filterType,
+        filterStatus,
+        startDate,
+        endDate,
+        rangeMin,
+        rangeMax,
+      ],
+      () => {
+        currentPage.value = 1;
+        applyFilters();
+      }
+    );
 
     watch(currentPage, () => {
       if (searchQuery.value.trim()) {
@@ -545,7 +637,8 @@ export default {
 }
 
 @keyframes gentleGlow {
-  0%, 100% {
+  0%,
+  100% {
     box-shadow: 0 0 5px rgba(52, 211, 153, 0.3);
   }
   50% {
@@ -870,7 +963,7 @@ export default {
 
 .slider:before {
   position: absolute;
-  content: '';
+  content: "";
   height: 16px;
   width: 16px;
   left: 2px;
@@ -894,7 +987,7 @@ input:checked + .slider:before {
   margin-right: -0.5rem;
 }
 
-.row.g-3 > [class*='col-'] {
+.row.g-3 > [class*="col-"] {
   padding-left: 0.5rem;
   padding-right: 0.5rem;
 }
@@ -921,7 +1014,7 @@ input:checked + .slider:before {
     margin-right: -0.25rem;
   }
 
-  .row.g-3 > [class*='col-'] {
+  .row.g-3 > [class*="col-"] {
     padding-left: 0.25rem;
     padding-right: 0.25rem;
   }

@@ -332,7 +332,8 @@ import {
   ShoppingCartIcon,
   TagIcon,
   ChartBarIcon,
-  ChatBubbleLeftRightIcon
+  ChatBubbleLeftRightIcon,
+  CalendarDaysIcon
 } from '@heroicons/vue/24/outline';
 
 const uiStore = useUiStore();
@@ -414,6 +415,11 @@ const menuItems = ref([
     name: 'Giao Ca', 
     path: '/giao-ca', 
     icon: ChartBarIcon 
+  },
+  { 
+    name: 'Lịch làm việc', 
+    path: '/lich-lam-viec', 
+    icon: CalendarDaysIcon 
   },
   { 
     name: 'Hỗ trợ khách hàng', 
