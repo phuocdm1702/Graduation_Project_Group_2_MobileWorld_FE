@@ -10,9 +10,13 @@ export const fetchNhanVien = async () => {
   }
 };
 
-export const addNhanVien = async (nhanVienData) => {
+export const addNhanVien = async (formData) => {
   try {
-    const response = await apiService.post('/nhan-vien/add', nhanVienData);
+    const response = await apiService.post('/nhan-vien/add', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
     return { success: true, data: response.data };
   } catch (error) {
     console.error('Lỗi khi thêm nhân viên:', error);
@@ -38,16 +42,21 @@ export const getNhanVienDetail = async (id) => {
   }
 };
 
-export const UpdateNhanVien = async (id, nhanVienData) => {
+export const UpdateNhanVien = async (id, formData) => {
   try {
-    const response = await apiService.put(`/nhan-vien/update/${id}`, nhanVienData);
+    const response = await apiService.post(`/nhan-vien/update/${id}`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
     return { success: true, data: response.data };
   } catch (error) {
-    console.error('Lỗi khi update nhân viên:', error);
+    console.error('Lỗi khi cập nhật nhân viên:', error);
+    const errorMessage = error.response?.data?.message || error.response?.data || 'Lỗi khi cập nhật nhân viên';
     console.log('Phản hồi từ server:', error.response?.data);
     return {
       success: false,
-      message: error.response?.data || 'Không tìm thấy nhân viên',
+      message: errorMessage,
     };
   }
 };

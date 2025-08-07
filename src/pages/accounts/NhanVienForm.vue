@@ -84,7 +84,7 @@
             type="text"
             class="form-control search-input"
             placeholder="Nhập tên nhân viên"
-            v-model="employee.tenNhanVien"
+            v-model.trim="employee.tenNhanVien"
           />
         </div>
         <div class="col-md-6">
@@ -93,7 +93,7 @@
             type="text"
             class="form-control search-input"
             placeholder="Nhập số điện thoại"
-            v-model="employee.soDienThoai"
+            v-model.trim="employee.soDienThoai"
           />
         </div>
         <div class="col-md-6">
@@ -103,7 +103,7 @@
               type="text"
               class="form-control search-input"
               placeholder="Nhập CCCD"
-              v-model="employee.cccd"
+              v-model.trim="employee.cccd"
             />
             <button
               class="btn btn-outline-action"
@@ -120,7 +120,7 @@
             type="email"
             class="form-control search-input"
             placeholder="Nhập email"
-            v-model="employee.email"
+            v-model.trim="employee.email"
           />
         </div>
         <div class="col-md-4">
@@ -164,7 +164,7 @@
             type="text"
             class="form-control search-input"
             placeholder="Nhập địa chỉ cụ thể"
-            v-model="employee.diaChiCuThe"
+            v-model.trim="employee.diaChiCuThe"
           />
         </div>
         <div class="col-md-6">
@@ -248,6 +248,7 @@ export default {
     const fileInput = ref(null);
     const isScanning = ref(false);
     const employeeImage = ref(null);
+    const existingEmployeeImage = ref(null);
     const toastNotification = ref(null);
     const notificationModal = ref(null);
     const html5QrCode = ref(null);
@@ -274,9 +275,15 @@ export default {
     const isEditMode = computed(() => !!route.params.id);
 
     const fetchProvinces = async () => {
+      const cachedProvinces = localStorage.getItem('provinces');
+      if (cachedProvinces) {
+        provinces.value = JSON.parse(cachedProvinces);
+        return;
+      }
       try {
         const response = await axios.get('https://provinces.open-api.vn/api/p/');
         provinces.value = response.data;
+        localStorage.setItem('provinces', JSON.stringify(provinces.value));
       } catch (error) {
         console.error('Lỗi khi tải danh sách tỉnh/thành phố:', error);
         toastNotification.value.addToast({
@@ -289,113 +296,97 @@ export default {
     const fetchDistricts = async () => {
       districts.value = [];
       wards.value = [];
-      employee.value.quan = '';
-      employee.value.phuong = '';
-      const selectedProvince = provinces.value.find((p) => p.name === employee.value.thanhPho);
-      if (selectedProvince) {
-        selectedProvinceCode.value = selectedProvince.code;
-        try {
-          const response = await axios.get(
-            `https://provinces.open-api.vn/api/p/${selectedProvince.code}?depth=2`
-          );
-          districts.value = response.data.districts;
-        } catch (error) {
-          console.error('Lỗi khi tải danh sách quận/huyện:', error);
-          toastNotification.value.addToast({
-            type: 'error',
-            message: 'Không thể tải danh sách quận/huyện!',
-          });
-        }
+      const province = provinces.value.find(p => p.name === employee.value.thanhPho);
+      if (!province) return;
+
+      const cacheKey = `districts_${province.code}`;
+      const cachedDistricts = localStorage.getItem(cacheKey);
+      if (cachedDistricts) {
+        districts.value = JSON.parse(cachedDistricts);
+        return;
+      }
+
+      selectedProvinceCode.value = province.code;
+      try {
+        const response = await axios.get(`https://provinces.open-api.vn/api/p/${province.code}?depth=2`);
+        districts.value = response.data.districts;
+        localStorage.setItem(cacheKey, JSON.stringify(districts.value));
+      } catch (error) {
+        console.error('Lỗi khi tải danh sách quận/huyện:', error);
+        toastNotification.value.addToast({
+          type: 'error',
+          message: 'Không thể tải danh sách quận/huyện!',
+        });
       }
     };
 
     const fetchWards = async () => {
       wards.value = [];
-      employee.value.phuong = '';
-      const selectedDistrict = districts.value.find((d) => d.name === employee.value.quan);
-      if (selectedDistrict) {
-        selectedDistrictCode.value = selectedDistrict.code;
-        try {
-          const response = await axios.get(
-            `https://provinces.open-api.vn/api/d/${selectedDistrict.code}?depth=2`
-          );
-          wards.value = response.data.wards;
-        } catch (error) {
-          console.error('Lỗi khi tải danh sách xã/phường:', error);
-          toastNotification.value.addToast({
-            type: 'error',
-            message: 'Không thể tải danh sách xã/phường!',
-          });
-        }
+      const district = districts.value.find(d => d.name === employee.value.quan);
+      if (!district) return;
+
+      const cacheKey = `wards_${district.code}`;
+      const cachedWards = localStorage.getItem(cacheKey);
+      if (cachedWards) {
+        wards.value = JSON.parse(cachedWards);
+        return;
+      }
+
+      selectedDistrictCode.value = district.code;
+      try {
+        const response = await axios.get(`https://provinces.open-api.vn/api/d/${district.code}?depth=2`);
+        wards.value = response.data.wards;
+        localStorage.setItem(cacheKey, JSON.stringify(wards.value));
+      } catch (error) {
+        console.error('Lỗi khi tải danh sách xã/phường:', error);
+        toastNotification.value.addToast({
+          type: 'error',
+          message: 'Không thể tải danh sách xã/phường!',
+        });
       }
     };
 
-    const startScanning = () => {
+    const startScanning = async () => {
       isScanning.value = true;
-      setTimeout(() => {
-        try {
-          html5QrCode.value = new Html5Qrcode('qr-reader');
-          html5QrCode.value
-            .start(
-              { facingMode: 'environment' },
-              { fps: 10, qrbox: { width: 250, height: 250 } },
-              (decodedText) => {
-                handleQrCodeResult(decodedText);
-              },
-              (error) => {
-                console.warn('Lỗi quét QR:', error);
-              }
-            )
-            .catch((err) => {
-              console.error('Lỗi khởi động camera:', err);
-              toastNotification.value.addToast({
-                type: 'error',
-                message: 'Không thể khởi động quét mã QR! Vui lòng kiểm tra quyền camera.',
-              });
-              stopScanning();
-            });
-        } catch (error) {
-          console.error('Lỗi khởi tạo Html5Qrcode:', error);
-          toastNotification.value.addToast({
-            type: 'error',
-            message: 'Lỗi khởi tạo quét mã QR!',
-          });
-          stopScanning();
-        }
-      }, 0);
+      await nextTick();
+      try {
+        html5QrCode.value = new Html5Qrcode('qr-reader');
+        await html5QrCode.value.start(
+          { facingMode: 'environment' },
+          { fps: 10, qrbox: { width: 250, height: 250 } },
+          handleQrCodeResult,
+          (error) => console.warn('Lỗi quét QR:', error)
+        );
+      } catch (error) {
+        console.error('Lỗi khởi động camera:', error);
+        toastNotification.value.addToast({
+          type: 'error',
+          message: 'Không thể khởi động quét mã QR! Vui lòng kiểm tra quyền camera.',
+        });
+        stopScanning();
+      }
     };
 
-    const stopScanning = () => {
+    const stopScanning = async () => {
       if (html5QrCode.value) {
-        html5QrCode.value
-          .stop()
-          .then(() => {
-            html5QrCode.value.clear();
-            isScanning.value = false;
-          })
-          .catch((err) => {
-            console.error('Lỗi dừng quét QR:', err);
-            isScanning.value = false;
-          });
-      } else {
-        isScanning.value = false;
+        try {
+          await html5QrCode.value.stop();
+          html5QrCode.value.clear();
+        } catch (error) {
+          console.error('Lỗi dừng quét QR:', error);
+        }
       }
+      isScanning.value = false;
     };
 
     const handleQrCodeResult = async (decodedText) => {
       try {
         const qrData = decodedText.split('|');
-        if (qrData.length < 6) {
-          throw new Error('Dữ liệu mã QR không hợp lệ');
-        }
+        if (qrData.length < 6) throw new Error('Dữ liệu mã QR không hợp lệ');
 
         const [cccd, , hoTen, ngaySinh, gioiTinh, diaChi] = qrData;
-
-        if (!cccd || cccd.length !== 12 || isNaN(cccd)) {
-          throw new Error('Số CCCD không hợp lệ');
-        }
-        if (!hoTen) throw new Error('Họ tên không được để trống');
-        if (!diaChi) throw new Error('Địa chỉ không được để trống');
+        if (!cccd || cccd.length !== 12 || isNaN(cccd)) throw new Error('Số CCCD không hợp lệ');
+        if (!hoTen || !diaChi) throw new Error('Họ tên hoặc địa chỉ không hợp lệ');
 
         employee.value.cccd = cccd;
         employee.value.tenNhanVien = hoTen;
@@ -403,127 +394,72 @@ export default {
         employee.value.gioiTinh = gioiTinh === 'Nam' ? 'False' : 'True';
 
         const addressParts = parseAddress(diaChi);
-        const normalizedThanhPho = normalizeName(addressParts.thanhPho);
-        const matchedProvince = provinces.value.find(
-          (p) => normalizeName(p.name) === normalizedThanhPho
-        );
-        employee.value.thanhPho = matchedProvince ? matchedProvince.name : addressParts.thanhPho;
+        employee.value.thanhPho = provinces.value.find(p => normalizeName(p.name) === normalizeName(addressParts.thanhPho))?.name || addressParts.thanhPho;
         employee.value.diaChiCuThe = addressParts.diaChiCuThe;
 
         await fetchDistricts();
-        if (addressParts.quan) {
-          const normalizedQuan = normalizeName(addressParts.quan);
-          const matchedDistrict = districts.value.find(
-            (d) => normalizeName(d.name) === normalizedQuan
-          );
-          employee.value.quan = matchedDistrict ? matchedDistrict.name : addressParts.quan;
-        }
+        employee.value.quan = districts.value.find(d => normalizeName(d.name) === normalizeName(addressParts.quan))?.name || addressParts.quan;
 
         await fetchWards();
-        if (addressParts.phuong) {
-          const normalizedPhuong = normalizeName(addressParts.phuong);
-          const matchedWard = wards.value.find(
-            (w) => normalizeName(w.name) === normalizedPhuong
-          );
-          employee.value.phuong = matchedWard ? matchedWard.name : addressParts.phuong;
-        }
+        employee.value.phuong = wards.value.find(w => normalizeName(w.name) === normalizeName(addressParts.phuong))?.name || addressParts.phuong;
 
-        toastNotification.value.addToast({
-          type: 'success',
-          message: 'Quét mã QR thành công!',
-        });
-        stopScanning();
+        toastNotification.value.addToast({ type: 'success', message: 'Quét mã QR thành công!' });
       } catch (error) {
-        console.error('Lỗi quét mã QR:', error);
-        toastNotification.value.addToast({
-          type: 'error',
-          message: `Lỗi: ${error.message}`,
-        });
+        toastNotification.value.addToast({ type: 'error', message: `Lỗi: ${error.message}` });
+      } finally {
+        stopScanning();
       }
     };
 
     const formatDate = (dateString) => {
-      try {
-        if (!dateString || dateString.length !== 8 || isNaN(dateString)) {
-          throw new Error('Ngày sinh không hợp lệ');
-        }
-        const day = dateString.slice(0, 2);
-        const month = dateString.slice(2, 4);
-        const year = dateString.slice(4, 8);
-        return `${year}-${month}-${day}`;
-      } catch (error) {
-        toastNotification.value.addToast({
-          type: 'error',
-          message: `Lỗi định dạng ngày sinh: ${error.message}`,
-        });
-        return '';
-      }
+      if (!dateString || dateString.length !== 8 || isNaN(dateString)) return '';
+      return `${dateString.slice(4, 8)}-${dateString.slice(2, 4)}-${dateString.slice(0, 2)}`;
     };
 
     const parseAddress = (address) => {
-      try {
-        const parts = address.replace(/\s+/g, ' ').trim().split(/,\s*/);
-        return {
-          diaChiCuThe: parts[0] || '',
-          phuong: parts[1] || '',
-          quan: parts[2] || '',
-          thanhPho: parts[3] || parts[parts.length - 1] || '',
-        };
-      } catch (error) {
-        toastNotification.value.addToast({
-          type: 'error',
-          message: 'Lỗi phân tích địa chỉ',
-        });
-        return { diaChiCuThe: address, phuong: '', quan: '', thanhPho: '' };
-      }
+      const parts = address.replace(/\s+/g, ' ').trim().split(/,\s*/);
+      return {
+        diaChiCuThe: parts[0] || '',
+        phuong: parts[1] || '',
+        quan: parts[2] || '',
+        thanhPho: parts[3] || parts[parts.length - 1] || '',
+      };
     };
 
-    const normalizeName = (name) =>
-      name
-        ? name
-            .replace(/^(Thị trấn|Quận|Phường|Xã|Huyện|Thành phố)\s+/i, '')
-            .replace(/\s+/g, ' ')
-            .trim()
-            .toLowerCase()
-        : '';
+    const normalizeName = (name) => name ? name.replace(/^(Thị trấn|Quận|Phường|Xã|Huyện|Thành phố)\s+/i, '').replace(/\s+/g, ' ').trim().toLowerCase() : '';
 
     const loadEmployeeData = async () => {
-      if (isEditMode.value) {
-        try {
-          const employeeId = parseInt(route.params.id);
-          const result = await getNhanVienDetail(employeeId);
-          if (result.success) {
-            const employeeData = result.data;
-            employee.value = {
-              id: employeeData.id,
-              tenNhanVien: employeeData.tenNhanVien || '',
-              soDienThoai: employeeData.idTaiKhoan?.soDienThoai || '',
-              cccd: employeeData.cccd || '',
-              email: employeeData.idTaiKhoan?.email || '',
-              diaChiCuThe: employeeData.diaChiCuThe || '',
-              ngaySinh: employeeData.ngaySinh ? employeeData.ngaySinh.substring(0, 10) : '',
-              gioiTinh: employeeData.deleted ? 'True' : 'False',
-              thanhPho: employeeData.thanhPho || '',
-              quan: employeeData.quan || '',
-              phuong: employeeData.phuong || '',
-            };
-            employeeImage.value = employeeData.imageUrl || null;
-            if (employee.value.thanhPho) {
-              await fetchDistricts();
-              if (employee.value.quan) await fetchWards();
-            }
-          } else {
-            toastNotification.value.addToast({
-              type: 'error',
-              message: result.message || 'Lỗi khi tải dữ liệu nhân viên!',
-            });
+      if (!isEditMode.value) return;
+      try {
+        const employeeId = parseInt(route.params.id);
+        const result = await getNhanVienDetail(employeeId);
+        if (result.success) {
+          const { data } = result;
+          employee.value = {
+            id: data.id,
+            tenNhanVien: data.tenNhanVien || '',
+            soDienThoai: data.idTaiKhoan?.soDienThoai || '',
+            cccd: data.cccd || '',
+            email: data.idTaiKhoan?.email || '',
+            diaChiCuThe: data.diaChiCuThe || '',
+            ngaySinh: data.ngaySinh?.substring(0, 10) || '',
+            gioiTinh: data.gioiTinh ? 'True' : 'False',
+            thanhPho: data.thanhPho || '',
+            quan: data.quan || '',
+            phuong: data.phuong || '',
+          };
+          employeeImage.value = data.anhNhanVien || null;
+          existingEmployeeImage.value = data.anhNhanVien || null;
+
+          if (employee.value.thanhPho) {
+            await fetchDistricts();
+            if (employee.value.quan) await fetchWards();
           }
-        } catch (error) {
-          toastNotification.value.addToast({
-            type: 'error',
-            message: 'Lỗi khi tải dữ liệu nhân viên!',
-          });
+        } else {
+          toastNotification.value.addToast({ type: 'error', message: result.message || 'Lỗi khi tải dữ liệu nhân viên!' });
         }
+      } catch (error) {
+        toastNotification.value.addToast({ type: 'error', message: 'Lỗi khi tải dữ liệu nhân viên!' });
       }
     };
 
@@ -531,76 +467,46 @@ export default {
 
     const handleImageUpload = (event) => {
       const file = event.target.files[0];
-      if (file) {
-        if (file.size > 5 * 1024 * 1024) {
-          toastNotification.value.addToast({
-            type: 'error',
-            message: 'Kích thước file không được vượt quá 5MB',
-          });
-          return;
-        }
-        if (!file.type.startsWith('image/')) {
-          toastNotification.value.addToast({
-            type: 'error',
-            message: 'Vui lòng chọn file hình ảnh',
-          });
-          return;
-        }
-        employeeImage.value = URL.createObjectURL(file);
+      if (!file) return;
+      if (file.size > 5 * 1024 * 1024) {
+        toastNotification.value.addToast({ type: 'error', message: 'Kích thước file không được vượt quá 5MB' });
+        return;
       }
+      if (!file.type.startsWith('image/')) {
+        toastNotification.value.addToast({ type: 'error', message: 'Vui lòng chọn file hình ảnh' });
+        return;
+      }
+      employeeImage.value = URL.createObjectURL(file);
     };
 
     const removeImage = () => {
       employeeImage.value = null;
+      existingEmployeeImage.value = null;
       if (fileInput.value) fileInput.value.value = '';
     };
 
     const showConfirmModal = () => {
-      if (!employee.value.tenNhanVien.trim()) {
-        toastNotification.value.addToast({ type: 'error', message: 'Vui lòng nhập tên nhân viên!' });
+      if (!employeeImage.value && !isEditMode.value) {
+        toastNotification.value.addToast({ type: 'error', message: 'Vui lòng chọn ảnh nhân viên!' });
         return;
       }
-      if (!/^[a-zA-ZÀ-ỹ\s]+$/.test(employee.value.tenNhanVien.trim())) {
-        toastNotification.value.addToast({
-          type: 'error',
-          message: 'Tên nhân viên chỉ được chứa chữ cái và khoảng trắng!',
-        });
+      if (!employee.value.tenNhanVien || !/^[a-zA-ZÀ-ỹ\s]{2,30}$/.test(employee.value.tenNhanVien)) {
+        toastNotification.value.addToast({ type: 'error', message: 'Tên nhân viên phải từ 2-30 ký tự, chỉ chứa chữ cái và khoảng trắng!' });
         return;
       }
-      if (employee.value.tenNhanVien.trim().length < 2 || employee.value.tenNhanVien.trim().length > 30) {
-        toastNotification.value.addToast({
-          type: 'error',
-          message: 'Tên nhân viên phải từ 2 đến 30 ký tự!',
-        });
+      if (!employee.value.soDienThoai || !/^(03|05|07|08|09)\d{8}$/.test(employee.value.soDienThoai)) {
+        toastNotification.value.addToast({ type: 'error', message: 'Số điện thoại không hợp lệ!' });
         return;
       }
-      if (!employee.value.soDienThoai.trim()) {
-        toastNotification.value.addToast({ type: 'error', message: 'Vui lòng nhập số điện thoại!' });
+      if (!employee.value.cccd || !/^\d{12}$/.test(employee.value.cccd)) {
+        toastNotification.value.addToast({ type: 'error', message: 'CCCD phải là 12 chữ số!' });
         return;
       }
-      if (!/^(03|05|07|08|09)\d{8}$/.test(employee.value.soDienThoai.trim())) {
-        toastNotification.value.addToast({
-          type: 'error',
-          message: 'Số điện thoại không hợp lệ!',
-        });
-        return;
-      }
-      if (!employee.value.cccd.trim()) {
-        toastNotification.value.addToast({ type: 'error', message: 'Vui lòng nhập CCCD!' });
-        return;
-      }
-      if (!/^\d{12}$/.test(employee.value.cccd.trim())) {
-        toastNotification.value.addToast({
-          type: 'error',
-          message: 'CCCD phải là 12 chữ số!',
-        });
-        return;
-      }
-      if (!employee.value.email.trim()) {
+      if (!employee.value.email) {
         toastNotification.value.addToast({ type: 'error', message: 'Vui lòng nhập email!' });
         return;
       }
-      if (!employee.value.diaChiCuThe.trim()) {
+      if (!employee.value.diaChiCuThe) {
         toastNotification.value.addToast({ type: 'error', message: 'Vui lòng nhập địa chỉ cụ thể!' });
         return;
       }
@@ -608,61 +514,56 @@ export default {
         toastNotification.value.addToast({ type: 'error', message: 'Vui lòng chọn giới tính!' });
         return;
       }
-      if (!employee.value.ngaySinh.trim()) {
+      if (!employee.value.ngaySinh) {
         toastNotification.value.addToast({ type: 'error', message: 'Vui lòng nhập ngày sinh!' });
         return;
       }
-      const [year, month, day] = employee.value.ngaySinh.trim().split('-').map(Number);
+      const [year, month, day] = employee.value.ngaySinh.split('-').map(Number);
       const inputDate = new Date(year, month - 1, day);
-      if (inputDate.getDate() !== day || inputDate.getMonth() + 1 !== month || inputDate.getFullYear() !== year) {
-        toastNotification.value.addToast({ type: 'error', message: 'Ngày sinh không hợp lệ!' });
+      if (isNaN(inputDate.getTime()) || inputDate > new Date()) {
+        toastNotification.value.addToast({ type: 'error', message: 'Ngày sinh không hợp lệ hoặc vượt quá ngày hiện tại!' });
         return;
       }
-      const today = new Date();
-      if (inputDate > today) {
-        toastNotification.value.addToast({ type: 'error', message: 'Ngày sinh không được vượt quá ngày hiện tại!' });
-        return;
-      }
-
       notificationModal.value.openModal();
     };
 
-    const closeConfirmModal = () => {
-      notificationModal.value.closeModal();
-    };
+    const closeConfirmModal = () => notificationModal.value.closeModal();
 
     const submitForm = async () => {
+      const formData = new FormData();
+      formData.append('tenNhanVien', employee.value.tenNhanVien);
+      formData.append('soDienThoai', employee.value.soDienThoai);
+      formData.append('cccd', employee.value.cccd);
+      formData.append('email', employee.value.email);
+      formData.append('diaChiCuThe', employee.value.diaChiCuThe);
+      formData.append('ngaySinh', employee.value.ngaySinh);
+      formData.append('gioiTinh', employee.value.gioiTinh === 'True');
+      formData.append('thanhPho', employee.value.thanhPho);
+      formData.append('quan', employee.value.quan);
+      formData.append('phuong', employee.value.phuong);
+
       const file = fileInput.value?.files[0];
-      const dataNhanVien = {
-        ...employee.value,
-        gioiTinh: employee.value.gioiTinh === 'True',
-      };
+      if (file) formData.append('anhNhanVien', file);
+      if (isEditMode.value && existingEmployeeImage.value && !file) {
+        formData.append('existingAnhNhanVien', existingEmployeeImage.value);
+      }
 
       try {
         const result = isEditMode.value
-          ? await UpdateNhanVien(employee.value.id, dataNhanVien, file)
-          : await addNhanVien(dataNhanVien, file);
-        if (result.success) {
-          toastNotification.value.addToast({
-            type: 'success',
-            message: isEditMode.value ? 'Cập nhật nhân viên thành công!' : 'Thêm nhân viên thành công!',
-          });
-          if (!isEditMode.value) {
-            setTimeout(() => {
-              resetForm();
-              goBack();
-            }, 1500);
-          }
-        } else {
-          toastNotification.value.addToast({
-            type: 'error',
-            message: result.message || 'Lỗi khi lưu nhân viên!',
-          });
-        }
+          ? await UpdateNhanVien(employee.value.id, formData)
+          : await addNhanVien(formData);
+        toastNotification.value.addToast({
+          type: 'success',
+          message: isEditMode.value ? 'Cập nhật nhân viên thành công!' : 'Thêm nhân viên thành công!',
+        });
+        setTimeout(() => {
+          resetForm();
+          goBack();
+        }, 1000);
       } catch (error) {
         toastNotification.value.addToast({
           type: 'error',
-          message: 'Lỗi khi lưu nhân viên!',
+          message: error.response?.data?.message || 'Lỗi khi lưu nhân viên!',
         });
       }
     };
@@ -682,6 +583,7 @@ export default {
         phuong: '',
       };
       employeeImage.value = null;
+      existingEmployeeImage.value = null;
       if (fileInput.value) fileInput.value.value = '';
     };
 
@@ -696,6 +598,7 @@ export default {
       fileInput,
       isScanning,
       employeeImage,
+      existingEmployeeImage,
       employee,
       toastNotification,
       notificationModal,
