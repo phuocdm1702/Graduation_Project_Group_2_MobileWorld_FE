@@ -20,7 +20,6 @@ const PhieuGiamGiaForm = () => import("@/pages/promotions/PhieuGiamGiaForm.vue")
 const DotGiamGia = () => import("@/pages/promotions/DotGiamGia.vue");
 const DotGiamGiaForm = () => import("@/pages/promotions/DotGiamGiaForm.vue");
 const BanHang = () => import("@/pages/sells/banHang.vue");
-const ThanhToanQuay = () => import("@/pages/sells/thanhToanQuay.vue");
 const NhanVien = () => import("@/pages/accounts/NhanVien.vue");
 const NhanVienForm = () => import("@/pages/accounts/NhanVienForm.vue");
 const KhachHang = () => import("@/pages/accounts/KhachHang.vue");
@@ -157,19 +156,6 @@ const routes = [
           breadcrumb: [
             { name: "Trang chủ", path: "/trangChu" },
             { name: "Bán hàng", path: "/banHang" },
-          ],
-        },
-      },
-      {
-        path: "/checkout-display",
-        name: "ThanhToanQuay",
-        component: ThanhToanQuay,
-        meta: {
-          title: "Thanh toán quầy",
-          breadcrumb: [
-            { name: "Trang chủ", path: "/trangChu" },
-            { name: "Bán hàng", path: "/banHang" },
-            { name: "Thanh toán quầy", path: "/checkout-display" },
           ],
         },
       },
