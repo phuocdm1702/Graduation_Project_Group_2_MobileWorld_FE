@@ -231,6 +231,7 @@ import { useRouter, useRoute } from 'vue-router';
 import HeaderCard from '@/components/common/HeaderCard.vue';
 import ToastNotification from '@/components/common/ToastNotification.vue';
 import NotificationModal from '@/components/common/NotificationModal.vue';
+import { nextTick } from 'vue'
 import { Html5Qrcode } from 'html5-qrcode';
 import { addNhanVien, getNhanVienDetail, UpdateNhanVien } from '../../store/modules/employees/nhanVien';
 import axios from 'axios';
