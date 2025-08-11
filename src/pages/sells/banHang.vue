@@ -1221,6 +1221,11 @@ export default defineComponent({
       selectedProduct: null,
       selectedIMEIs: [],
       selectedDiscount: null,
+      customer: {
+        id: null,
+        name: "",
+        phone: "",
+      },
     };
   },
   computed: {
@@ -1379,8 +1384,10 @@ export default defineComponent({
             (newDiscount.percent / 100) * this.tongTien :
             newDiscount.value;
           this.discount = discountAmount;
+          console.log('Phiếu giảm giá thay đổi:', { newDiscount, discountAmount });
         } else {
           this.discount = 0;
+          console.log('Phiếu giảm giá bị hủy');
         }
       },
       deep: true
@@ -1397,6 +1404,12 @@ export default defineComponent({
           this.discount = discountAmount;
         }
       }
+    },
+    customer: {
+      handler(newCustomer) {
+        console.log('Thông tin khách hàng thay đổi:', newCustomer);
+      },
+      deep: true
     }
   },
   mounted() {
