@@ -1,4 +1,4 @@
-import { ref, computed, onMounted, nextTick } from "vue";
+import { ref, computed, onMounted, onUnmounted, nextTick } from "vue";
 import HeaderCard from "@/components/common/HeaderCard.vue";
 import DataTable from "@/components/common/DataTable.vue";
 import NotificationModal from "@/components/common/NotificationModal.vue";
@@ -8,6 +8,9 @@ import QrcodeVue from "qrcode.vue";
 import { useRouter } from "vue-router";
 import { BrowserMultiFormatReader, NotFoundException } from "@zxing/library";
 import { useGiaoCaStore } from "@/store/modules/giaoCa";
+
+// Import WebSocket connection
+import { connectWebSocket, disconnectWebSocket } from "@/services/websocket";
 
 // Import utility and API functions
 import { debounce, formatPrice, formatDate, isValidDiscount } from "./banHangUtils";
@@ -112,8 +115,8 @@ export default {
     const notificationType = ref("confirm");
     const notificationMessage = ref("");
     const isNotificationLoading = ref(false);
-    const notificationOnConfirm = ref(() => {});
-    const notificationOnCancel = ref(() => {});
+    const notificationOnConfirm = ref(() => { });
+    const notificationOnCancel = ref(() => { });
     const notificationModal = ref(null);
     const toastNotification = ref(null);
     const qrCodeValue = ref("");
@@ -217,6 +220,50 @@ export default {
       { value: "actions", text: "Thao tác", cellSlot: "productActionsSlot" },
     ]);
 
+    // WebSocket functions
+    const handleWebSocketMessage = (message) => {
+      try {
+        console.log("Received WebSocket message:", message);
+
+        // Hiển thị thông báo toast cho user
+        if (message.maHoaDon) {
+          showToast("info", `Cập nhật hóa đơn: ${message.maHoaDon} - ${message.trangThaiText || 'Có thay đổi'}`);
+        }
+
+        // Nếu là hóa đơn hiện tại đang được xử lý, reload dữ liệu
+        if (activeInvoiceId.value && message.id === activeInvoiceId.value) {
+          // Reload cart items nếu cần
+          loadPendingInvoiceData(activeInvoiceId.value);
+        }
+
+        // Reload danh sách hóa đơn chờ
+        fetchPendingInvoices();
+
+      } catch (error) {
+        console.error("Error handling WebSocket message:", error);
+      }
+    };
+
+    const loadPendingInvoiceData = async (invoiceId) => {
+      try {
+        const responseData = await loadPendingInvoiceApi(invoiceId);
+        cartItems.value = responseData.chiTietGioHangDTOS.map((item) => ({
+          id: item.chiTietSanPhamId,
+          name: item.tenSanPham,
+          color: item.mauSac,
+          ram: item.ram,
+          storage: item.boNhoTrong,
+          imei: item.maImel,
+          originalPrice: Number(item.giaBanGoc) || Number(item.giaBan) || 0,
+          currentPrice: Number(item.giaBan) || 0,
+          quantity: item.soLuong,
+          ghiChuGia: item.ghiChuGia || "",
+        }));
+      } catch (error) {
+        console.error("Error loading pending invoice data:", error);
+      }
+    };
+
     // Computed
     const discount = computed({
       get: () => {
@@ -224,9 +271,9 @@ export default {
         const fixedDiscount = selectedDiscount.value.value || 0;
         const percentDiscount = selectedDiscount.value.percent
           ? Math.min(
-              (selectedDiscount.value.percent / 100) * tongTien.value,
-              selectedDiscount.value.value || Infinity
-            )
+            (selectedDiscount.value.percent / 100) * tongTien.value,
+            selectedDiscount.value.value || Infinity
+          )
           : 0;
         return Math.max(fixedDiscount, percentDiscount);
       },
@@ -389,9 +436,8 @@ export default {
 
       if (tongTien.value >= bestDiscount.minOrder) {
         return {
-          message: `Bạn có thể áp dụng mã ${
-            bestDiscount.code
-          } để được giảm ${formatPrice(bestDiscount.value)}.`,
+          message: `Bạn có thể áp dụng mã ${bestDiscount.code
+            } để được giảm ${formatPrice(bestDiscount.value)}.`,
           additionalAmount: 0,
           bestDiscount,
         };
@@ -399,9 +445,8 @@ export default {
 
       const additionalAmount = bestDiscount.minOrder - tongTien.value;
       return {
-        message: `Mua thêm ${formatPrice(additionalAmount)} để sử dụng mã ${
-          bestDiscount.code
-        } và được giảm ${formatPrice(bestDiscount.value)}.`,
+        message: `Mua thêm ${formatPrice(additionalAmount)} để sử dụng mã ${bestDiscount.code
+          } và được giảm ${formatPrice(bestDiscount.value)}.`,
         additionalAmount,
         bestDiscount,
       };
@@ -426,7 +471,7 @@ export default {
       toastNotification.value.addToast({ type, message, isLoading, duration });
     };
 
-    const showConfirm = (message, onConfirm, onCancel = () => {}) => {
+    const showConfirm = (message, onConfirm, onCancel = () => { }) => {
       notificationType.value = "confirm";
       notificationMessage.value = message;
       notificationOnConfirm.value = onConfirm;
@@ -444,8 +489,8 @@ export default {
       notificationType.value = "confirm";
       notificationMessage.value = "";
       isNotificationLoading.value = false;
-      notificationOnConfirm.value = () => {};
-      notificationOnCancel.value = () => {};
+      notificationOnConfirm.value = () => { };
+      notificationOnCancel.value = () => { };
     };
 
     // Debounced Search Functions
@@ -572,7 +617,7 @@ export default {
       showConfirm(
         `Bạn có chắc chắn muốn hủy hóa đơn ${invoice.ma}?`,
         () => cancelInvoice(invoice),
-        () => {}
+        () => { }
       );
     };
 
@@ -750,11 +795,10 @@ export default {
         const latestInitialPrice = Number(productData.giaBanBanDau) || latestPrice;
 
         if (latestInitialPrice !== selectedProduct.value.giaBan) {
-          const ghiChuGia = `Giá sản phẩm ${
-            selectedProduct.value.tenSanPham
-          } đã thay đổi thành ${formatPrice(
-            latestPrice
-          )} từ giá ban đầu ${formatPrice(latestInitialPrice)}`;
+          const ghiChuGia = `Giá sản phẩm ${selectedProduct.value.tenSanPham
+            } đã thay đổi thành ${formatPrice(
+              latestPrice
+            )} từ giá ban đầu ${formatPrice(latestInitialPrice)}`;
           showToast("warning", ghiChuGia);
         }
 
@@ -1243,6 +1287,12 @@ export default {
       }
     };
 
+    const removeDiscount = () => {
+      selectedDiscount.value = null;
+      manualDiscountSelected.value = false;
+      showToast("info", "Đã hủy mã giảm giá");
+    };
+
     const applyBestDiscount = async () => {
       if (!cartItems.value.length || tongTien.value <= 0) {
         selectedDiscount.value = null;
@@ -1315,9 +1365,9 @@ export default {
             const fixedDiscount = code.value || 0;
             const percentDiscount = code.percent
               ? Math.min(
-                  (code.percent / 100) * tongTien.value,
-                  code.value || Infinity
-                )
+                (code.percent / 100) * tongTien.value,
+                code.value || Infinity
+              )
               : 0;
             const actualDiscount = Math.max(fixedDiscount, percentDiscount);
 
@@ -1339,8 +1389,7 @@ export default {
             : formatPrice(bestDiscount.value);
           showToast(
             "success",
-            `Đã áp dụng mã giảm giá ${
-              bestDiscount.tenPhieuGiamGia || bestDiscount.code
+            `Đã áp dụng mã giảm giá ${bestDiscount.tenPhieuGiamGia || bestDiscount.code
             } (-${discountText})`
           );
         } else {
@@ -1355,9 +1404,8 @@ export default {
     };
 
     const bankInfo = ref({
-      description: `Thanh toán hóa đơn ${
-        activeInvoiceId.value || "HDXXX"
-      } qua VietQR`,
+      description: `Thanh toán hóa đơn ${activeInvoiceId.value || "HDXXX"
+        } qua VietQR`,
     });
 
     const generateQRCode = (amount) => {
@@ -1512,11 +1560,10 @@ export default {
         );
 
         if (product.giaBanBanDau !== product.giaBan) {
-          const ghiChuGia = `Giá sản phẩm ${
-            product.tenSanPham
-          } đã thay đổi thành ${formatPrice(
-            product.giaBan
-          )} từ giá ban đầu ${formatPrice(product.giaBanBanDau)}`;
+          const ghiChuGia = `Giá sản phẩm ${product.tenSanPham
+            } đã thay đổi thành ${formatPrice(
+              product.giaBan
+            )} từ giá ban đầu ${formatPrice(product.giaBanBanDau)}`;
           showToast("warning", ghiChuGia);
         }
 
@@ -1619,15 +1666,13 @@ export default {
           accountNumber: "1234567890",
           accountHolder: "Your Company Name",
           amount: amount,
-          description: `Thanh toán hóa đơn ${
-            activeInvoiceId.value || "HDXXX"
-          } qua VietQR`,
+          description: `Thanh toán hóa đơn ${activeInvoiceId.value || "HDXXX"
+            } qua VietQR`,
         };
-        qrCodeValue.value = `vietqr://pay?account=${
-          bankInfo.value.accountNumber
-        }&amount=${bankInfo.value.amount}&desc=${encodeURIComponent(
-          bankInfo.value.description
-        )}`;
+        qrCodeValue.value = `vietqr://pay?account=${bankInfo.value.accountNumber
+          }&amount=${bankInfo.value.amount}&desc=${encodeURIComponent(
+            bankInfo.value.description
+          )}`;
         showQRCode.value = true;
       } else {
         qrCodeValue.value = "";
@@ -1773,8 +1818,7 @@ export default {
                   tongTien.value
                 )}) nhỏ hơn giá trị đơn tối thiểu yêu cầu (${formatPrice(
                   selectedDiscount.value.minOrder
-                )}) của mã giảm giá ${
-                  selectedDiscount.value.code
+                )}) của mã giảm giá ${selectedDiscount.value.code
                 }. Vui lòng chọn mã khác hoặc tiếp tục thanh toán mà không sử dụng mã giảm giá.`
               );
               selectedDiscount.value = null;
@@ -1810,9 +1854,9 @@ export default {
             const fixedDiscount = code.value || 0;
             const percentDiscount = code.percent
               ? Math.min(
-                  (code.percent / 100) * tongTien.value,
-                  code.value || Infinity
-                )
+                (code.percent / 100) * tongTien.value,
+                code.value || Infinity
+              )
               : 0;
             const actualDiscountValue = Math.max(
               fixedDiscount,
@@ -1858,9 +1902,8 @@ export default {
 
         if (selectedPaymentProvider.value === "vnpay") {
           try {
-            const orderInfo = `Thanh toán hóa đơn ${
-              activeInvoiceId.value || "HDXXX"
-            }`;
+            const orderInfo = `Thanh toán hóa đơn ${activeInvoiceId.value || "HDXXX"
+              }`;
             const amountToSend = totalPayment.value || 100000;
 
             const hoaDonRequest = {
@@ -1870,11 +1913,11 @@ export default {
               diaChiKhachHang:
                 customer.value && isDelivery.value
                   ? {
-                      thanhPho: customer.value.city,
-                      quan: customer.value.district,
-                      phuong: customer.value.ward,
-                      diaChiCuThe: customer.value.address,
-                    }
+                    thanhPho: customer.value.city,
+                    quan: customer.value.district,
+                    phuong: customer.value.ward,
+                    diaChiCuThe: customer.value.address,
+                  }
                   : { thanhPho: "", quan: "", phuong: "", diaChiCuThe: "" },
               hinhThucThanhToan: [
                 {
@@ -1938,17 +1981,17 @@ export default {
           diaChiKhachHang:
             customer.value && isDelivery.value
               ? {
-                  thanhPho: customer.value.city,
-                  quan: customer.value.district,
-                  phuong: customer.value.ward,
-                  diaChiCuThe: customer.value.address,
-                }
+                thanhPho: customer.value.city,
+                quan: customer.value.district,
+                phuong: customer.value.ward,
+                diaChiCuThe: customer.value.address,
+              }
               : {
-                  thanhPho: "",
-                  quan: "",
-                  phuong: "",
-                  diaChiCuThe: "",
-                },
+                thanhPho: "",
+                quan: "",
+                phuong: "",
+                diaChiCuThe: "",
+              },
           hinhThucThanhToan: (() => {
             const hinhThucThanhToan = [];
             if (paymentMethod.value === "cash") {
@@ -2057,8 +2100,33 @@ export default {
       }
     };
 
+    const handleCustomerProvinceChange = () => {
+      customer.value.district = "";
+      customer.value.ward = "";
+      customer.value.address = "";
+      districts.value = [];
+      wards.value = [];
+
+      if (customer.value.city) {
+        fetchDistricts(customer.value.city);
+      }
+    };
+
+    const handleCustomerDistrictChange = () => {
+      customer.value.ward = "";
+      customer.value.address = "";
+      wards.value = [];
+
+      if (customer.value.district) {
+        fetchWards(customer.value.district);
+      }
+    };
+
     onMounted(async () => {
       try {
+        // Khởi tạo WebSocket connection
+        connectWebSocket(handleWebSocketMessage);
+
         await fetchPGG();
         fetchPendingInvoices();
         fetchProducts();
@@ -2109,32 +2177,21 @@ export default {
       }
     });
 
-    const handleCustomerProvinceChange = () => {
-      customer.value.district = "";
-      customer.value.ward = "";
-      customer.value.address = "";
-      districts.value = [];
-      wards.value = [];
+    onUnmounted(() => {
+      // Ngắt kết nối WebSocket khi component bị unmount
+      disconnectWebSocket();
 
-      if (customer.value.city) {
-        fetchDistricts(customer.value.city);
+      // Cleanup camera nếu đang hoạt động
+      if (isCameraActive.value) {
+        cleanupZXing();
       }
-    };
-
-    const handleCustomerDistrictChange = () => {
-      customer.value.ward = "";
-      customer.value.address = "";
-      wards.value = [];
-
-      if (customer.value.district) {
-        fetchWards(customer.value.district);
-      }
-    };
+    });
 
     return {
       handleCustomerProvinceChange,
       handleCustomerDistrictChange,
       selectDiscount,
+      removeDiscount,
       suggestedDiscounts,
       alternativeDiscounts,
       shippingFee,
