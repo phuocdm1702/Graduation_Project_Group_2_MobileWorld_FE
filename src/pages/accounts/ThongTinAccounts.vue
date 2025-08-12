@@ -231,6 +231,7 @@ const formData = ref({
   password: '********',
   status: 'Hoạt động',
   role: 'Nhân viên',
+  capQuyenHan: 2, // Thay permissionLevel thành capQuyenHan
   avatar: '',
   createdAt: new Date().toISOString(),
   lastLogin: new Date().toISOString(),
@@ -241,7 +242,7 @@ const getStatusIcon = () => {
 };
 
 const getStatusText = () => {
-  return formData.value.status === 'Hoạt động' ? 'Hoạt động' : 'Đã nghỉ';
+  return formData.value.status;
 };
 
 const getStatusColor = () => {
@@ -249,15 +250,15 @@ const getStatusColor = () => {
 };
 
 const getRoleClass = () => {
-  return formData.value.role === 'Admin' ? 'role-admin' : 'role-employee';
+  return formData.value.capQuyenHan === 1 ? 'role-admin' : 'role-employee';
 };
 
 const getRoleIcon = () => {
-  return formData.value.role === 'Admin' ? 'bi-shield-fill-check' : 'bi-person-check-fill';
+  return formData.value.capQuyenHan === 1 ? 'bi-shield-fill-check' : 'bi-person-check-fill';
 };
 
 const getRoleColor = () => {
-  return formData.value.role === 'Admin' ? '#dc2626' : '#059669';
+  return formData.value.capQuyenHan === 1 ? '#dc2626' : '#059669';
 };
 
 const getProfileImage = () => {
@@ -268,8 +269,8 @@ const getProfileImage = () => {
 };
 
 const getDefaultAvatar = () => {
-  const role = formData.value.role || 'Nhân viên';
-  return role === 'Admin'
+  const capQuyenHan = formData.value.capQuyenHan || 2;
+  return capQuyenHan === 1
     ? 'https://ui-avatars.com/api/?name=Admin&background=dc2626&color=fff&size=200&font-size=0.6&format=png&rounded=true'
     : 'https://ui-avatars.com/api/?name=Employee&background=059669&color=fff&size=200&font-size=0.6&format=png&rounded=true';
 };
@@ -324,13 +325,15 @@ onMounted(async () => {
       if (savedAuth) {
         const authData = JSON.parse(savedAuth);
         if (authData.user?.username) {
+          const capQuyenHan = authData.user.capQuyenHan || 2;
           formData.value = {
             username: authData.user.username,
             phone: authData.user.phone || '',
             email: authData.user.email || '',
             password: authData.user.password || '********',
             status: authData.user.status || 'Hoạt động',
-            role: authData.user.role || 'Nhân viên',
+            role: capQuyenHan === 1 ? 'Admin' : 'Nhân viên',
+            capQuyenHan: capQuyenHan,
             avatar: authData.user.avatar || '',
             createdAt: authData.user.createdAt || new Date().toISOString(),
             lastLogin: authData.user.lastLogin || new Date().toISOString(),
@@ -352,13 +355,15 @@ onMounted(async () => {
     });
 
     if (response.status === 200) {
+      const capQuyenHan = response.data.idQuyenHan?.capQuyenHan || 2;
       const userData = {
         username: response.data.tenDangNhap || response.data.username || username,
         phone: response.data.soDienThoai || response.data.phone || '',
         email: response.data.email || '',
         password: response.data.matKhau || '********',
-        status: response.data.deleted === false ? 'Hoạt động' : 'Đã nghỉ',
-        role: response.data.role || response.data.vaiTro || 'Nhân viên',
+        status: response.data.deleted === true ? 'Hoạt động' : 'Đã nghỉ',
+        role: capQuyenHan === 1 ? 'Admin' : 'Nhân viên',
+        capQuyenHan: capQuyenHan,
         avatar: response.data.avatar || response.data.anhDaiDien || '',
         createdAt: response.data.createdAt || response.data.ngayTao || new Date().toISOString(),
         lastLogin: response.data.lastLogin || response.data.lanCuoiDangNhap || new Date().toISOString(),
