@@ -1949,7 +1949,8 @@ export default {
               })
             );
 
-            const vnpayUrl = await createPaymentApi(amountToSend, orderInfo);
+            const returnUrl = 'http://localhost:5173/banHang';
+            const vnpayUrl = await createPaymentApi(amountToSend, orderInfo, returnUrl);
             window.location.href = vnpayUrl;
           } catch (error) {
             showToast(
