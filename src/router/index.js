@@ -169,7 +169,6 @@ const routes = [
             { name: "Trang chủ", path: "/trangChu" },
             { name: "Quản lý hóa đơn", path: "/hoaDon" },
           ],
-          requiresAdmin: true,
         },
       },
       {
@@ -184,7 +183,6 @@ const routes = [
             { name: "Quản lý hóa đơn", path: "/hoaDon" },
             { name: "Chi tiết hóa đơn", path: "/hoaDon/detail" },
           ],
-          requiresAdmin: true,
         },
       },
       {

@@ -377,7 +377,6 @@ const baseMenuItems = ref([
     name: 'Quản Lý Hóa đơn', 
     path: '/hoaDon', 
     icon: DocumentTextIcon,
-    requiresAdmin: true 
   },
   { 
     name: 'Quản Lý Sản phẩm', 
@@ -450,7 +449,7 @@ const baseMainMenuItems = ref([
   { name: 'Trang chủ', path: '/trangChu', icon: HomeIcon },
   { name: 'Thống kê', path: '/thongKe', icon: ChartBarIcon, requiresAdmin: true },
   { name: 'Bán Hàng', path: '/banHang', icon: ShoppingCartIcon },
-  { name: 'Hóa đơn', path: '/hoaDon', icon: DocumentTextIcon, requiresAdmin: true },
+  { name: 'Hóa đơn', path: '/hoaDon', icon: DocumentTextIcon},
 ]);
 
 // Lọc menu dựa trên quyền hạn
