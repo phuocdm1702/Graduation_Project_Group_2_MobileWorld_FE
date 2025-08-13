@@ -435,7 +435,9 @@ const baseMenuItems = ref([
   { 
     name: 'Lịch làm việc', 
     path: '/lich-lam-viec', 
-    icon: CalendarDaysIcon 
+    icon: CalendarDaysIcon,
+    requiresAdmin: true,
+
   },
   { 
     name: 'Hỗ trợ khách hàng', 
@@ -450,6 +452,8 @@ const baseMainMenuItems = ref([
   { name: 'Thống kê', path: '/thongKe', icon: ChartBarIcon, requiresAdmin: true },
   { name: 'Bán Hàng', path: '/banHang', icon: ShoppingCartIcon },
   { name: 'Hóa đơn', path: '/hoaDon', icon: DocumentTextIcon},
+  { name: 'Lịch làm việc', path: '/lich-lam-viec', icon: CalendarDaysIcon, requiresAdmin: true },
+
 ]);
 
 // Lọc menu dựa trên quyền hạn
