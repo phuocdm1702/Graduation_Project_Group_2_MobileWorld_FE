@@ -839,17 +839,68 @@ export default defineComponent({
     const showDropdown = (field) => {
       if (isNewProduct.value) {
         dropdownState.value[field] = true;
-        filterOptions(field);
+        // Reset filtered options to show all options when focusing
+        switch (field) {
+          case 'tenSanPham':
+            filteredOptions.value[field] = [...productNameOptions.value];
+            break;
+          case 'heDieuHanh':
+            filteredOptions.value[field] = [...heDieuHanhOptions.value];
+            break;
+          case 'congNgheManHinh':
+            filteredOptions.value[field] = [...congNgheManHinhOptions.value];
+            break;
+          case 'nhaSanXuat':
+            filteredOptions.value[field] = [...nhaSanXuatOptions.value];
+            break;
+          case 'cumCamera':
+            filteredOptions.value[field] = [...cumCameraOptions.value];
+            break;
+          case 'sim':
+            filteredOptions.value[field] = [...simOptions.value];
+            break;
+          case 'thietKe':
+            filteredOptions.value[field] = [...thietKeOptions.value];
+            break;
+          case 'pin':
+            filteredOptions.value[field] = [...pinOptions.value];
+            break;
+          case 'cpu':
+            filteredOptions.value[field] = [...cpuOptions.value];
+            break;
+          case 'gpu':
+            filteredOptions.value[field] = [...gpuOptions.value];
+            break;
+          case 'congNgheMang':
+            filteredOptions.value[field] = [...congNgheMangOptions.value];
+            break;
+          case 'hoTroCongNgheSac':
+            filteredOptions.value[field] = [...hoTroCongNgheSacOptions.value];
+            break;
+          case 'chiSoKhangBuiVaNuoc':
+            filteredOptions.value[field] = [...chiSoKhangBuiVaNuocOptions.value];
+            break;
+          case 'hoTroBoNhoNgoai':
+            filteredOptions.value[field] = [...hoTroBoNhoNgoaiOptions.value];
+            break;
+        }
       }
     };
 
     const delayHideDropdown = (field) => {
       setTimeout(() => {
         dropdownState.value[field] = false;
+        // Reset search term when closing dropdown
+        if (!searchTerms.value[field]) {
+          const selectedOption = getSelectedOption(field);
+          searchTerms.value[field] = selectedOption ? getOptionText(field, selectedOption) : '';
+        }
       }, 200);
     };
 
     const filterOptions = (field) => {
+      if (!isNewProduct.value) return;
+
       const searchTerm = searchTerms.value[field]?.toLowerCase().trim() || '';
       const optionsMap = {
         tenSanPham: productNameOptions.value,
@@ -868,14 +919,17 @@ export default defineComponent({
         hoTroBoNhoNgoai: hoTroBoNhoNgoaiOptions.value,
       };
 
+      // Show all options if search term is empty
       if (!searchTerm) {
         filteredOptions.value[field] = [...optionsMap[field]];
-      } else {
-        filteredOptions.value[field] = optionsMap[field].filter((option) => {
-          const text = getOptionText(field, option).toLowerCase();
-          return text.includes(searchTerm);
-        });
+        return;
       }
+
+      // Filter options based on search term
+      filteredOptions.value[field] = optionsMap[field].filter((option) => {
+        const text = getOptionText(field, option).toLowerCase();
+        return text.includes(searchTerm);
+      });
     };
 
     const getOptionText = (field, option) => {
@@ -1565,14 +1619,32 @@ export default defineComponent({
   border: 1px solid rgba(52, 211, 153, 0.2);
   border-radius: 8px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  max-height: 200px;
+  max-height: 250px; /* Increased max height */
   overflow-y: auto;
   animation: fadeInUp 0.3s ease-out;
+  scrollbar-width: thin;
+  scrollbar-color: #34d399 #f8f9fa;
+}
+
+.dropdown-menu::-webkit-scrollbar {
+  width: 6px;
+}
+
+.dropdown-menu::-webkit-scrollbar-track {
+  background: #f8f9fa;
+}
+
+.dropdown-menu::-webkit-scrollbar-thumb {
+  background-color: #34d399;
+  border-radius: 6px;
 }
 
 .dropdown-item {
-
-  padding: 0.5rem 1rem;
+  white-space: normal; /* Allow text wrapping */
+  word-break: break-word;
+  padding: 8px 12px;
+  font-size: 0.9rem;
+  line-height: 1.4;
   color: #1f3a44;
   background: transparent;
   cursor: pointer;
