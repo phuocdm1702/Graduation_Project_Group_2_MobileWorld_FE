@@ -57,7 +57,8 @@ const routes = [
           breadcrumb: [
             { name: "Trang chủ", path: "/trangChu" },
             { name: "Lịch làm việc", path: "/lich-lam-viec" }
-          ]
+          ],
+          requiresAdmin: true,
         }
       },
       { 

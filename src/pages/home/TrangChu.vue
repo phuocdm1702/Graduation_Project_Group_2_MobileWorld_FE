@@ -47,12 +47,11 @@
             </div>
           </div>
           <div>
-                        <div class="stat-change" :class="stat.changeClass">
+            <div class="stat-change" :class="stat.changeClass">
               <i :class="stat.trendIcon" class="me-1"></i>
               {{ stat.change }}
             </div>
             <div class="stat-value fw-bold mb-1">{{ stat.value }}</div>
-
           </div>
         </div>
       </div>
@@ -152,23 +151,29 @@
 </template>
 
 <script>
-import useDashboard from '@/store/modules/home/trangChu.js'
+import { useAuthStore } from '@/store/modules/auth';
+import { ref, computed } from 'vue';
+import useDashboard from '@/store/modules/home/trangChu.js';
 
 export default {
   name: 'Dashboard',
   setup() {
-    const {
-      username,
-      role,
-      userInitial,
-      currentDate,
-      stats,
-      recentActivities,
-      quickActions,
-      systemStatus,
-      handleStatClick,
-      handleQuickAction,
-    } = useDashboard()
+    const authStore = useAuthStore();
+    const { stats, recentActivities, quickActions, systemStatus, handleStatClick, handleQuickAction } = useDashboard();
+
+    // Lấy username từ authStore
+    const username = computed(() => authStore.user?.username || 'Khách');
+    // Lấy chữ cái đầu tiên của username
+    const userInitial = computed(() => authStore.user?.username?.charAt(0)?.toUpperCase() || 'K');
+    // Xác định vai trò
+    const role = computed(() => authStore.user?.capQuyenHan === 1 ? 'Administrator' : 'Nhân viên');
+    // Lấy ngày hiện tại
+    const currentDate = ref(new Date().toLocaleDateString('vi-VN', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    }));
 
     return {
       username,
@@ -181,10 +186,11 @@ export default {
       systemStatus,
       handleStatClick,
       handleQuickAction,
-    }
+    };
   }
-}
+};
 </script>
+
 <style scoped>
 .glass-card {
   background: rgba(255, 255, 255, 0.9);
@@ -412,12 +418,10 @@ export default {
 }
 
 @keyframes pulse {
-
   0%,
   100% {
     opacity: 1;
   }
-
   50% {
     opacity: 0.5;
   }
@@ -428,7 +432,6 @@ export default {
     opacity: 0;
     transform: translateY(30px);
   }
-
   to {
     opacity: 1;
     transform: translateY(0);
@@ -440,7 +443,6 @@ export default {
     opacity: 0;
     transform: translateX(-30px);
   }
-
   to {
     opacity: 1;
     transform: translateX(0);
