@@ -9,9 +9,6 @@ import { useRouter } from "vue-router";
 import { BrowserMultiFormatReader, NotFoundException } from "@zxing/library";
 import { useGiaoCaStore } from "@/store/modules/giaoCa";
 
-// Import WebSocket connection
-import { connectWebSocket, disconnectWebSocket } from "@/services/websocket";
-
 // Import utility and API functions
 import { debounce, formatPrice, formatDate, isValidDiscount } from "./banHangUtils";
 import {
@@ -219,50 +216,6 @@ export default {
       },
       { value: "actions", text: "Thao tác", cellSlot: "productActionsSlot" },
     ]);
-
-    // WebSocket functions
-    const handleWebSocketMessage = (message) => {
-      try {
-        console.log("Received WebSocket message:", message);
-
-        // Hiển thị thông báo toast cho user
-        if (message.maHoaDon) {
-          showToast("info", `Cập nhật hóa đơn: ${message.maHoaDon} - ${message.trangThaiText || 'Có thay đổi'}`);
-        }
-
-        // Nếu là hóa đơn hiện tại đang được xử lý, reload dữ liệu
-        if (activeInvoiceId.value && message.id === activeInvoiceId.value) {
-          // Reload cart items nếu cần
-          loadPendingInvoiceData(activeInvoiceId.value);
-        }
-
-        // Reload danh sách hóa đơn chờ
-        fetchPendingInvoices();
-
-      } catch (error) {
-        console.error("Error handling WebSocket message:", error);
-      }
-    };
-
-    const loadPendingInvoiceData = async (invoiceId) => {
-      try {
-        const responseData = await loadPendingInvoiceApi(invoiceId);
-        cartItems.value = responseData.chiTietGioHangDTOS.map((item) => ({
-          id: item.chiTietSanPhamId,
-          name: item.tenSanPham,
-          color: item.mauSac,
-          ram: item.ram,
-          storage: item.boNhoTrong,
-          imei: item.maImel,
-          originalPrice: Number(item.giaBanGoc) || Number(item.giaBan) || 0,
-          currentPrice: Number(item.giaBan) || 0,
-          quantity: item.soLuong,
-          ghiChuGia: item.ghiChuGia || "",
-        }));
-      } catch (error) {
-        console.error("Error loading pending invoice data:", error);
-      }
-    };
 
     // Computed
     const discount = computed({
@@ -2124,9 +2077,6 @@ export default {
 
     onMounted(async () => {
       try {
-        // Khởi tạo WebSocket connection
-        connectWebSocket(handleWebSocketMessage);
-
         await fetchPGG();
         fetchPendingInvoices();
         fetchProducts();
@@ -2178,8 +2128,6 @@ export default {
     });
 
     onUnmounted(() => {
-      // Ngắt kết nối WebSocket khi component bị unmount
-      disconnectWebSocket();
 
       // Cleanup camera nếu đang hoạt động
       if (isCameraActive.value) {
