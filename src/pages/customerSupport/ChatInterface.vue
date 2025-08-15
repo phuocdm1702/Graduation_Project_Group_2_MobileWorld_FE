@@ -379,7 +379,7 @@ const selectCustomer = async (customer) => {
     stompClient.value &&
     stompClient.value.connected
   ) {
-    stompClient.value.unsubscribe(`/topic/customer/${activeCustomer.value.id}`);
+    stompClient.value.unsubscribe(`/topic/admin/${activeCustomer.value.id}`);
   }
   activeCustomer.value = null;
   await nextTick();
@@ -407,7 +407,7 @@ const subscribeToCustomerTopic = () => {
     activeCustomer.value
   ) {
     subscriptionRef.value = stompClient.value.subscribe(
-      `/topic/customer/${activeCustomer.value.id}`,
+      `/topic/admin/${activeCustomer.value.id}`,
       (message) => {
         const msg = JSON.parse(message.body);
         messages.value.push({
@@ -479,12 +479,41 @@ const connectWebSocket = () => {
   stompClient.value = Stomp.over(socket);
   stompClient.value.connect(
     {},
-    () => {
+    async () => {
       isConnecting.value = false;
       console.log("WebSocket connected for employee");
+
+      try {
+        const response = await axios.get("http://localhost:8080/api/customers");
+        customers.value = response.data.map((customer) => ({
+          ...customer,
+          ma: customer.ma || "N/A",
+          ten: customer.ten || "N/A",
+          idTaiKhoan: customer.idTaiKhoan || {
+            email: "",
+            soDienThoai: "",
+            deleted: false,
+          },
+        }));
+      } catch (error) {
+        toastNotification.value.addToast({
+          type: "error",
+          message: "Lỗi khi tải dữ liệu khách hàng",
+        });
+        console.error("Error fetching customers:", error);
+      }
+
       if (activeCustomer.value) {
         subscribeToCustomerTopic();
       }
+
+      // Subscribe to new customer topic
+      stompClient.value.subscribe('/topic/new-customer', (message) => {
+        const newCustomer = JSON.parse(message.body);
+        if (!customers.value.some(c => c.id === newCustomer.id)) {
+          customers.value.push(newCustomer);
+        }
+      });
     },
     (error) => {
       isConnecting.value = false;
@@ -717,30 +746,12 @@ const handleScroll = () => {
 
 // Lifecycle
 onMounted(async () => {
-  try {
-    const response = await axios.get("http://localhost:8080/api/customers");
-    customers.value = response.data.map((customer) => ({
-      ...customer,
-      ma: customer.ma || "N/A",
-      ten: customer.ten || "N/A",
-      idTaiKhoan: customer.idTaiKhoan || {
-        email: "",
-        soDienThoai: "",
-        deleted: false,
-      },
-    }));
-    nextTick(() => {
-      if (messagesContainer.value) {
-        messagesContainer.value.addEventListener("scroll", handleScroll);
-      }
-    });
-  } catch (error) {
-    toastNotification.value.addToast({
-      type: "error",
-      message: "Lỗi khi tải dữ liệu khách hàng",
-    });
-    console.error("Error fetching customers:", error);
-  }
+  connectWebSocket();
+  nextTick(() => {
+    if (messagesContainer.value) {
+      messagesContainer.value.addEventListener("scroll", handleScroll);
+    }
+  });
 });
 
 // Watch chuyển customer
