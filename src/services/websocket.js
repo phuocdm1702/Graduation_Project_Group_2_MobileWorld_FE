@@ -7,6 +7,9 @@ let isConnecting = false;
 let reconnectAttempts = 0;
 const maxReconnectAttempts = 10;
 
+// Biến để theo dõi đơn hàng được chọn
+let selectedOrderId = null;
+
 export const connectWebSocket = (onMessageReceived) => {
   if (isConnecting) {
     console.log('Already connecting, skipping');
@@ -27,103 +30,84 @@ export const connectWebSocket = (onMessageReceived) => {
     isConnecting = false;
     reconnectAttempts = 0;
 
-    // === BAN HANG SERVICE TOPICS ===
-    
-    // Lắng nghe danh sách hóa đơn chờ
+    // === TOPICS CHO SINGLE ORDER MODE ===
+
+    // Lắng nghe danh sách hóa đơn chờ (để hiển thị list chọn)
     stompClient.subscribe('/topic/hoa-don-list', (message) => {
       const hoaDonList = JSON.parse(message.body);
-      console.log('Received on /topic/hoa-don-list:', hoaDonList);
+      console.log('Received order list:', hoaDonList);
       onMessageReceived('hoa-don-list', hoaDonList);
     });
 
-    // Lắng nghe hóa đơn mới được tạo
-    stompClient.subscribe('/topic/hoa-don-create', (message) => {
-      const hoaDonDTO = JSON.parse(message.body);
-      console.log('Received on /topic/hoa-don-create:', hoaDonDTO);
-      onMessageReceived('hoa-don-create', hoaDonDTO);
+    // Lắng nghe đơn hàng được chọn từ web
+    stompClient.subscribe('/topic/selected-order', (message) => {
+      const selectedOrder = JSON.parse(message.body);
+      console.log('Received selected order:', selectedOrder);
+      selectedOrderId = selectedOrder.id;
+      onMessageReceived('selected-order', selectedOrder);
     });
 
     // Lắng nghe thông báo xóa hóa đơn
     stompClient.subscribe('/topic/hoa-don-delete', (message) => {
       const deleteInfo = JSON.parse(message.body);
-      console.log('Received on /topic/hoa-don-delete:', deleteInfo);
-      onMessageReceived('hoa-don-delete', deleteInfo);
+      console.log('Received order delete:', deleteInfo);
+      
+      // Nếu đơn hàng hiện tại bị xóa
+      if (selectedOrderId && deleteInfo.hoaDonId === selectedOrderId) {
+        selectedOrderId = null;
+        onMessageReceived('order-deleted', deleteInfo);
+      }
     });
 
-    // Lắng nghe chi tiết hóa đơn chờ
-    stompClient.subscribe('/topic/hoa-don-detail', (message) => {
-      const hoaDonDTO = JSON.parse(message.body);
-      console.log('Received on /topic/hoa-don-detail:', hoaDonDTO);
-      onMessageReceived('hoa-don-detail', hoaDonDTO);
-    });
-
-    // Lắng nghe thông tin hóa đơn đơn lẻ
+    // Lắng nghe cập nhật đơn hàng đơn lẻ
     stompClient.subscribe('/topic/single-hoa-don', (message) => {
       const singleHoaDonUpdate = JSON.parse(message.body);
-      console.log('Received on /topic/single-hoa-don:', singleHoaDonUpdate);
-      onMessageReceived('single-hoa-don', singleHoaDonUpdate);
-    });
-
-    // Lắng nghe cập nhật giỏ hàng
-    stompClient.subscribe('/topic/gio-hang-update', (message) => {
-      const gioHangData = JSON.parse(message.body);
-      console.log('Received on /topic/gio-hang-update:', gioHangData);
-      onMessageReceived('gio-hang-update', gioHangData);
-    });
-
-    // Lắng nghe thông báo xóa giỏ hàng
-    stompClient.subscribe('/topic/gio-hang-delete', (message) => {
-      const deleteInfo = JSON.parse(message.body);
-      console.log('Received on /topic/gio-hang-delete:', deleteInfo);
-      onMessageReceived('gio-hang-delete', deleteInfo);
+      console.log('Received single order update:', singleHoaDonUpdate);
+      
+      // Chỉ xử lý nếu là đơn hàng đang được chọn
+      if (selectedOrderId && singleHoaDonUpdate.hoaDon && 
+          singleHoaDonUpdate.hoaDon.id === selectedOrderId) {
+        onMessageReceived('single-hoa-don', singleHoaDonUpdate);
+      }
     });
 
     // Lắng nghe thông báo thanh toán thành công
     stompClient.subscribe('/topic/payment-success', (message) => {
       const paymentData = JSON.parse(message.body);
-      console.log('Received on /topic/payment-success:', paymentData);
-      onMessageReceived('payment-success', paymentData);
+      console.log('Received payment success:', paymentData);
+      
+      // Chỉ xử lý nếu là đơn hàng đang được chọn
+      if (selectedOrderId && paymentData.hoaDon && 
+          paymentData.hoaDon.id === selectedOrderId) {
+        onMessageReceived('payment-success', paymentData);
+      }
     });
 
-    // Lắng nghe thông tin khách hàng
+    // Lắng nghe thông tin khách hàng (chỉ cho đơn hàng hiện tại)
     stompClient.subscribe('/topic/khach-hang-update', (message) => {
       const khachHangUpdate = JSON.parse(message.body);
-      console.log('Received on /topic/khach-hang-update:', khachHangUpdate);
+      console.log('Received customer update:', khachHangUpdate);
       onMessageReceived('khach-hang-update', khachHangUpdate);
     });
 
-    // === PHIEU GIAM GIA SERVICE TOPICS ===
-    
-    // Lắng nghe danh sách tất cả phiếu giảm giá
-    stompClient.subscribe('/topic/all-pgg', (message) => {
-      const allPggUpdate = JSON.parse(message.body);
-      console.log('Received on /topic/all-pgg:', allPggUpdate);
-      onMessageReceived('all-pgg', allPggUpdate);
+    // Lắng nghe cập nhật voucher cho đơn hàng
+    stompClient.subscribe('/topic/voucher-order-update', (message) => {
+      const voucherOrderUpdate = JSON.parse(message.body);
+      console.log('Received voucher order update:', voucherOrderUpdate);
+      
+      // Chỉ xử lý nếu là đơn hàng đang được chọn
+      if (selectedOrderId && voucherOrderUpdate.hoaDonId === selectedOrderId) {
+        onMessageReceived('voucher-order-update', voucherOrderUpdate);
+      }
     });
 
-    // === PHIEU GIAM GIA CA NHAN SERVICE TOPICS ===
-    
-    // Lắng nghe danh sách tất cả phiếu giảm giá cá nhân
-    stompClient.subscribe('/topic/all-pgg-ca-nhan', (message) => {
-      const allPggCaNhanUpdate = JSON.parse(message.body);
-      console.log('Received on /topic/all-pgg-ca-nhan:', allPggCaNhanUpdate);
-      onMessageReceived('all-pgg-ca-nhan', allPggCaNhanUpdate);
-    });
-
-    // Lắng nghe kết quả kiểm tra mã giảm giá
-    stompClient.subscribe('/topic/discount-code-check', (message) => {
-      const discountCheckUpdate = JSON.parse(message.body);
-      console.log('Received on /topic/discount-code-check:', discountCheckUpdate);
-      onMessageReceived('discount-code-check', discountCheckUpdate);
-    });
-
-    console.log('All WebSocket subscriptions established successfully');
+    console.log('All WebSocket subscriptions established for single order mode');
   };
 
   const errorCallback = (error) => {
     console.error('WebSocket connection error:', error);
     isConnecting = false;
-    
+
     if (reconnectAttempts < maxReconnectAttempts) {
       reconnectAttempts++;
       console.log(`Attempting to reconnect... (${reconnectAttempts}/${maxReconnectAttempts})`);
@@ -138,7 +122,7 @@ export const connectWebSocket = (onMessageReceived) => {
   socket.onopen = () => {
     console.log('SockJS connection opened');
   };
-  
+
   socket.onclose = (event) => {
     console.log('SockJS connection closed:', event);
     if (!event.wasClean && reconnectAttempts < maxReconnectAttempts) {
@@ -147,7 +131,7 @@ export const connectWebSocket = (onMessageReceived) => {
       setTimeout(() => connectWebSocket(onMessageReceived), reconnectDelay);
     }
   };
-  
+
   socket.onerror = (error) => {
     console.error('SockJS error:', error);
   };
@@ -159,6 +143,7 @@ export const disconnectWebSocket = () => {
     stompClient.disconnect(() => {
       console.log('WebSocket disconnected successfully');
       stompClient = null;
+      selectedOrderId = null;
     });
   } else {
     console.log('No active WebSocket connection to disconnect');
@@ -171,7 +156,83 @@ export const isWebSocketConnected = () => {
   return stompClient && stompClient.connected;
 };
 
-// Utility function để send message (nếu cần thiết)
+// Function để chọn đơn hàng từ web
+export const selectOrder = (orderId) => {
+  if (stompClient && stompClient.connected) {
+    const message = {
+      action: 'select',
+      orderId: orderId,
+      timestamp: new Date().toISOString()
+    };
+    
+    stompClient.send('/app/select-order', {}, JSON.stringify(message));
+    selectedOrderId = orderId;
+    console.log(`Order ${orderId} selected and sent to mobile app`);
+  } else {
+    console.error('WebSocket not connected. Cannot select order.');
+  }
+};
+
+// Function để hủy chọn đơn hàng
+export const deselectOrder = () => {
+  if (stompClient && stompClient.connected) {
+    const message = {
+      action: 'deselect',
+      orderId: selectedOrderId,
+      timestamp: new Date().toISOString()
+    };
+    
+    stompClient.send('/app/deselect-order', {}, JSON.stringify(message));
+    selectedOrderId = null;
+    console.log('Order deselected');
+  } else {
+    console.error('WebSocket not connected. Cannot deselect order.');
+  }
+};
+
+// Function để gửi thông báo xóa đơn hàng
+export const notifyOrderDeleted = (orderId) => {
+  if (stompClient && stompClient.connected) {
+    const message = {
+      action: 'delete',
+      hoaDonId: orderId,
+      timestamp: new Date().toISOString()
+    };
+    
+    stompClient.send('/topic/hoa-don-delete', {}, JSON.stringify(message));
+    
+    // Nếu đơn hàng bị xóa là đơn hiện tại thì clear
+    if (selectedOrderId === orderId) {
+      selectedOrderId = null;
+    }
+    
+    console.log(`Notified order ${orderId} deleted`);
+  } else {
+    console.error('WebSocket not connected. Cannot notify order deletion.');
+  }
+};
+
+// Function để gửi cập nhật customer
+export const sendCustomerUpdate = (customerData) => {
+  if (stompClient && stompClient.connected) {
+    stompClient.send('/topic/khach-hang-update', {}, JSON.stringify(customerData));
+    console.log('Customer update sent:', customerData);
+  } else {
+    console.error('WebSocket not connected. Cannot send customer update.');
+  }
+};
+
+// Function để gửi cập nhật voucher
+export const sendVoucherUpdate = (voucherData) => {
+  if (stompClient && stompClient.connected) {
+    stompClient.send('/topic/voucher-order-update', {}, JSON.stringify(voucherData));
+    console.log('Voucher update sent:', voucherData);
+  } else {
+    console.error('WebSocket not connected. Cannot send voucher update.');
+  }
+};
+
+// Utility function để gửi message tùy chỉnh
 export const sendMessage = (destination, message) => {
   if (stompClient && stompClient.connected) {
     stompClient.send(destination, {}, JSON.stringify(message));
@@ -181,12 +242,18 @@ export const sendMessage = (destination, message) => {
   }
 };
 
-// Function để check connection status
+// Function để lấy trạng thái kết nối
 export const getConnectionStatus = () => {
   return {
     connected: isWebSocketConnected(),
     connecting: isConnecting,
     reconnectAttempts: reconnectAttempts,
-    maxReconnectAttempts: maxReconnectAttempts
+    maxReconnectAttempts: maxReconnectAttempts,
+    selectedOrderId: selectedOrderId
   };
+};
+
+// Function để lấy ID đơn hàng hiện tại
+export const getSelectedOrderId = () => {
+  return selectedOrderId;
 };
