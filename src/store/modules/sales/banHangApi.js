@@ -201,6 +201,7 @@ export const createPaymentApi = async (amount, orderInfo) => {
     const params = new URLSearchParams();
     params.append("amount", amount.toString());
     params.append("orderInfo", orderInfo);
+    params.append("returnUrl", "http://localhost:5173/banHang");
     const response = await apiService.post("/api/payment/create", params.toString(), {
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
     });
