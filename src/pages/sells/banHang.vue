@@ -704,13 +704,6 @@
                             Đơn tối thiểu: {{ formatPrice(selectedDiscount.minOrder) }}
                           </div>
                         </div>
-                        <button class="btn btn-outline-danger btn-sm  px-3 py-1" @click="removeDiscount">
-                          Hủy
-                        </button>
-                      </div>
-                      <div v-else class="text-center text-muted py-3">
-                        <i class="bi bi-ticket-perforated me-2" style="font-size: 1.2rem"></i>
-                        Chưa chọn mã giảm giá
                       </div>
                     </div>
                     <!-- Alternative Vouchers -->
