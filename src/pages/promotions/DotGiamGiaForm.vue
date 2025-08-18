@@ -198,8 +198,13 @@
               <DataTable :headers="detailHeaders" :data="filteredCTSPList" :pageSizeOptions="[5, 10, 15, 20, 30, 40, 50]"
                 class="detail-table">
                 <template #select="{ item }">
-                  <input type="checkbox" :value="item.ctsp.id" :checked="item.selected"
-                    @change="handleCheckboxChangeCTSP(item.ctsp.id, $event.target.checked)" class="form-check-input" />
+                  <input
+                      type="checkbox"
+                      :value="item.ctsp.id"
+                      :checked="selectedCTSPIds.includes(item.ctsp.id)"
+                      @change="handleCheckboxChangeCTSP(item.ctsp.id, $event.target.checked)"
+                      class="form-check-input"
+                  />
                 </template>
                 <template #index="{ globalIndex }">
                   {{ globalIndex + 1 }}
@@ -249,6 +254,7 @@ const originalMa = ref('');
 
 const {
   toast,
+  selectedCTSPIds,
   currentPageDSP,
   changePageDSP,
   pageSizeDSP,
@@ -481,14 +487,26 @@ const confirmAddData = async () => {
 };
 
 const handleCheckboxChangeCTSP = (id, isChecked) => {
+  console.log("handleCheckboxChangeCTSP called with id:", id, "isChecked:", isChecked);
+  if (isChecked) {
+    if (!selectedCTSPIds.value.includes(id)) {
+      selectedCTSPIds.value.push(id);
+    }
+  } else {
+    selectedCTSPIds.value = selectedCTSPIds.value.filter(ctspId => ctspId !== id);
+  }
   ctspList.value = ctspList.value.map(item => {
     if (item.ctsp.id === id) {
       return { ...item, selected: isChecked };
     }
     return item;
   });
+  console.log("selectedCTSPIds after update:", selectedCTSPIds.value);
+  console.log("ctspList after update:", ctspList.value.map(item => ({
+    id: item.ctsp.id,
+    selected: item.selected
+  })));
 };
-
 onMounted(() => {
   if (isEditMode.value) {
     originalMa.value = dotGiamGia.value.ma;
@@ -499,6 +517,15 @@ onMounted(() => {
   selectedDongSanPham.value = '';
   selectedBoNhoTrong.value = '';
   selectedMauSac.value = '';
+
+  // Thêm listener cho sự kiện checkbox-change
+  const table = document.querySelector('.detail-table');
+  if (table) {
+    table.addEventListener('checkbox-change', (event) => {
+      const { id, checked } = event.detail;
+      handleCheckboxChangeCTSP(id, checked);
+    });
+  }
 });
 </script>
 
