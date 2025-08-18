@@ -3,7 +3,7 @@
     <!-- Breadcrumb -->
     <!-- Header Section -->
     <HeaderCard title="Thống Kê & Báo Cáo" badgeText="Hệ Thống POS" badgeClass="gradient-custom-teal"
-      :backgroundOpacity="0.95" />
+                :backgroundOpacity="0.95" />
 
     <!-- Filter Section -->
     <FilterTableSection title="Bộ Lọc Thống Kê" icon="bi bi-funnel">
@@ -14,7 +14,7 @@
             <div class="filter-group">
               <label class="filter-label">Khoảng thời gian thống kê</label>
               <select v-model="filterType" class="form-control filter-select"
-                @change="fetchData(); fetchRevenueChartData()">
+                      @change="fetchData(); fetchRevenueChartData()">
                 <option value="day">Hôm nay</option>
                 <option value="week">Tuần này</option>
                 <option value="month">Tháng này</option>
@@ -45,8 +45,8 @@
               <label class="filter-label">Loại biểu đồ</label>
               <div class="chart-type-buttons">
                 <button v-for="type in chartTypes" :key="type.value" class="btn chart-type-btn"
-                  :class="{ 'active': selectedChartType === type.value }"
-                  @click="selectedChartType = type.value; updateRevenueChart()">
+                        :class="{ 'active': selectedChartType === type.value }"
+                        @click="selectedChartType = type.value; updateRevenueChart()">
                   <i :class="type.icon" class="me-2"></i>
                   {{ type.label }}
                 </button>
@@ -68,12 +68,6 @@
                   <span class="stat-label">Tổng doanh thu:</span>
                   <span class="stat-value text-success">{{ formatCurrency(totalRevenue) }}</span>
                 </div>
-                <!--                <div class="stat-item">-->
-                <!--                  <span class="stat-label">Tăng trưởng:</span>-->
-                <!--                  <span class="stat-value" :class="growthRate >= 0 ? 'text-success' : 'text-danger'">-->
-                <!--                    {{ growthRate >= 0 ? '+' : '' }}{{ growthRate }}%-->
-                <!--                  </span>-->
-                <!--                </div>-->
               </div>
             </div>
           </div>
@@ -118,7 +112,7 @@
       <!-- Revenue Chart -->
       <div class="col-lg-8">
         <FilterTableSection title="Biểu Đồ Doanh Thu" icon="bi bi-bar-chart-line">
-          <div class="chart-container p-4">
+          <div class="chart-container p-4 revenue-chart-container">
             <canvas id="revenueChart" class="revenue-chart"></canvas>
           </div>
         </FilterTableSection>
@@ -129,7 +123,7 @@
         <FilterTableSection title="Sản Phẩm Bán Chạy" icon="bi bi-trophy">
           <div class="top-products-container p-4">
             <div v-for="(product, index) in topProducts" :key="product.id"
-              class="product-item d-flex align-items-center mb-3">
+                 class="product-item d-flex align-items-center mb-3">
               <div class="product-rank me-3">
                 <span class="rank-number" :class="getRankClass(index)">{{ index + 1 }}</span>
               </div>
@@ -137,14 +131,14 @@
                 <div class="product-name fw-semibold">{{ product.productName }}</div>
                 <div class="product-stats">
                   <small class="text-muted">Đã bán: {{ product.soldQuantity }} | Giá: {{
-                    formatCurrency(product.price)
-                  }}</small>
+                      formatCurrency(product.price)
+                    }}</small>
                 </div>
               </div>
               <div class="product-progress">
                 <div class="progress" style="width: 60px; height: 4px;">
                   <div class="progress-bar bg-mint"
-                    :style="{ width: (product.soldQuantity / Math.max(...topProducts.map(p => p.soldQuantity)) * 100) + '%' }">
+                       :style="{ width: (product.soldQuantity / Math.max(...topProducts.map(p => p.soldQuantity)) * 100) + '%' }">
                   </div>
                 </div>
               </div>
@@ -162,18 +156,18 @@
           <div class="chart-container p-4">
             <div class="d-flex justify-content-center gap-1 mb-4">
               <button @click="chartFilterType = 'day'; fetchOrderStatusStats()"
-                :class="['btn', chartFilterType === 'day' ? 'btn-primary' : 'btn-outline-secondary']"
-                class="px-3 py-1 rounded-start">
+                      :class="['btn', chartFilterType === 'day' ? 'btn-primary' : 'btn-outline-secondary']"
+                      class="px-3 py-1 rounded-start">
                 Ngày
               </button>
               <button @click="chartFilterType = 'month'; fetchOrderStatusStats()"
-                :class="['btn', chartFilterType === 'month' ? 'btn-primary' : 'btn-outline-secondary']"
-                class="px-3 py-1">
+                      :class="['btn', chartFilterType === 'month' ? 'btn-primary' : 'btn-outline-secondary']"
+                      class="px-3 py-1">
                 Tháng
               </button>
               <button @click="chartFilterType = 'year'; fetchOrderStatusStats()"
-                :class="['btn', chartFilterType === 'year' ? 'btn-primary' : 'btn-outline-secondary']"
-                class="px-3 py-1 rounded-end">
+                      :class="['btn', chartFilterType === 'year' ? 'btn-primary' : 'btn-outline-secondary']"
+                      class="px-3 py-1 rounded-end">
                 Năm
               </button>
             </div>
@@ -181,7 +175,7 @@
               {{ error }}
             </div>
             <div v-else-if="!orderStatusStats || Object.values(orderStatusStats).every(val => val === 0)"
-              class="text-muted text-center mb-3">
+                 class="text-muted text-center mb-3">
               Không có dữ liệu để hiển thị.
             </div>
             <canvas id="orderStatusChart" class="status-chart"></canvas>
@@ -243,8 +237,8 @@
         Không có dữ liệu sản phẩm bán chạy.
       </div>
       <DataTable v-else
-        :headers="[{ value: 'stt', text: '#' }, { value: 'imageUrl', text: 'Ảnh' }, { value: 'productName', text: 'Tên Sản Phẩm' }, { value: 'price', text: 'Giá Bán' }, { value: 'soldQuantity', text: 'Số Lượng Đã Bán' }]"
-        :data="topProducts" :pageSizeOptions="[5, 10, 15]">
+                 :headers="[{ value: 'stt', text: '#' }, { value: 'imageUrl', text: 'Ảnh' }, { value: 'productName', text: 'Tên Sản Phẩm' }, { value: 'price', text: 'Giá Bán' }, { value: 'soldQuantity', text: 'Số Lượng Đã Bán' }]"
+                 :data="topProducts" :pageSizeOptions="[5, 10, 15]">
         <template #stt="{ globalIndex }">
           {{ globalIndex + 1 }}
         </template>
@@ -272,8 +266,8 @@
         Không có dữ liệu sản phẩm sắp hết hàng.
       </div>
       <DataTable v-else
-        :headers="[{ value: 'stt', text: '#' }, { value: 'tenSanPham', text: 'Tên Sản Phẩm' }, { value: 'soLuong', text: 'Số Lượng' }]"
-        :data="sanPhamHetHang" :pageSizeOptions="[5, 8, 10]">
+                 :headers="[{ value: 'stt', text: '#' }, { value: 'tenSanPham', text: 'Tên Sản Phẩm' }, { value: 'soLuong', text: 'Số Lượng' }]"
+                 :data="sanPhamHetHang" :pageSizeOptions="[5, 8, 10]">
         <template #stt="{ globalIndex }">
           {{ globalIndex + 1 }}
         </template>
@@ -678,6 +672,10 @@ export default {
   position: relative;
 }
 
+.revenue-chart-container {
+  background: #535353;
+}
+
 .revenue-chart,
 .status-chart {
   max-width: 100%;
@@ -792,13 +790,9 @@ export default {
 
 .product-image {
   width: 50px;
-  /* Kích thước chiều rộng ảnh */
   height: 50px;
-  /* Kích thước chiều cao ảnh */
   object-fit: cover;
-  /* Đảm bảo ảnh không bị méo */
   border-radius: 4px;
-  /* Bo góc ảnh (tùy chọn) */
 }
 
 .row.align-items-stretch {
@@ -871,7 +865,6 @@ export default {
 }
 
 @media (max-width: 576px) {
-
   .chart-container,
   .top-products-container {
     height: 250px;
@@ -912,7 +905,6 @@ export default {
 }
 
 @media print {
-
   .filter-actions,
   .action-buttons {
     display: none !important;
