@@ -185,6 +185,9 @@
               {{ item.status }}
             </span>
           </template>
+          <template #count="{ item }">
+            <span>{{ item.count }}</span>
+          </template>
           <template #startDate="{ item }">
             <span>{{ item.startDate }}</span>
           </template>
@@ -290,6 +293,7 @@ export default {
         status: getStatus(voucher),
         startDate: formatDate(voucher.ngayBatDau),
         expiryDate: formatDate(voucher.ngayKetThuc),
+        count: voucher.soLuongDung,
       }));
     });
 
@@ -312,6 +316,7 @@ export default {
       { text: "STT", value: "stt" },
       { text: "Mã Phiếu", value: "code" },
       { text: "Giá Trị", value: "value" },
+      { text: "Số lượng", value: "count" },
       { text: "Loại Phiếu", value: "type" },
       { text: "Trạng Thái", value: "status" },
       { text: "Ngày Bắt Đầu", value: "startDate" },
