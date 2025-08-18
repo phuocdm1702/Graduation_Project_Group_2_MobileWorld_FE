@@ -705,6 +705,10 @@
                           </div>
                         </div>
                       </div>
+                      <div v-else class="text-center text-muted py-3">
+                        <i class="bi bi-ticket-perforated me-2" style="font-size: 1.2rem"></i>
+                        Chưa chọn mã giảm giá
+                      </div>
                     </div>
                     <!-- Alternative Vouchers -->
                     <div v-if="activeTab === 'alternative'" class="voucher-carousel position-relative">
