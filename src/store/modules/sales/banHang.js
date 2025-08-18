@@ -2079,7 +2079,8 @@ export default {
     onMounted(async () => {
       try {
         await fetchPGG();
-        fetchPendingInvoices();
+        setInterval(fetchPendingInvoices, 1000); // Refresh pending invoices every 30 seconds
+        // fetchPendingInvoices();
         fetchProducts();
         fetchLocations();
         await applyBestDiscount();
