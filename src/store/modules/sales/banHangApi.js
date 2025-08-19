@@ -136,6 +136,23 @@ export const searchCustomersApi = async (query, hoaDonId) => {
   }
 };
 
+export const updatePhieuGiamGiaApi = async (hoaDonId, idPhieuGiamGia) => {
+  try {
+    const response = await apiService.put("/api/updatePhieuGiamGia", null, {
+      params: {
+        hoaDonId,
+        idPhieuGiamGia
+      }
+    });
+    return { success: true, data: response.data };
+  } catch (error) {
+    return { 
+      success: false, 
+      message: error.response?.data || "Lỗi khi cập nhật phiếu giảm giá" 
+    };
+  }
+};
+
 export const addCustomerApi = async (customerData) => {
   try {
     const response = await apiService.post("/khach-hang/add-Bh", customerData);
