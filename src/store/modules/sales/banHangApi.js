@@ -119,12 +119,20 @@ export const updateIMEIStatusApi = async (imei, deleted) => {
 };
 
 // Customer-Related APIs
-export const searchCustomersApi = async (query) => {
+export const searchCustomersApi = async (query, hoaDonId) => {
   try {
-    const response = await apiService.get("/khach-hang/search", { params: { query } });
+    const response = await apiService.get("/khach-hang/searchKhachHangHD", {
+      params: {
+        query: encodeURIComponent(query),
+        hoaDonId
+      }
+    });
     return { success: true, data: response.data };
   } catch (error) {
-    return { success: false, message: error.response?.data || "Không tìm thấy khách hàng" };
+    return { 
+      success: false, 
+      message: error.response?.data || "Không tìm thấy khách hàng hoặc hóa đơn không hợp lệ" 
+    };
   }
 };
 
