@@ -1,5 +1,51 @@
 <!-- NhaSanXuat.vue -->
 <template>
+  <!-- Modal -->
+  <div v-if="showModal" class="modal-overlay">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          {{ isEditMode ? 'Chỉnh Sửa Nhà Sản Xuất' : 'Thêm Nhà Sản Xuất Mới' }}
+        </h5>
+        <button @click="closeModal" class="close-button" aria-label="Close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form @submit.prevent="submitForm" id="manufacturerForm">
+          <div class="form-grid">
+            <!-- Tên nhà sản xuất -->
+            <div class="form-group full-width">
+              <label class="form-label">
+                Tên Nhà Sản Xuất <span class="required">*</span>
+              </label>
+              <input type="text" class="form-control" v-model="formData.nhaSanXuat" placeholder="Nhập tên nhà sản xuất"
+                :class="{ 'is-invalid': errors.nhaSanXuat }" @blur="validateField('nhaSanXuat')"
+                @input="clearFieldError('nhaSanXuat')" />
+              <div v-if="errors.nhaSanXuat" class="invalid-feedback">{{ errors.nhaSanXuat }}</div>
+              <small class="form-hint">Tên nhà sản xuất phải từ 2-100 ký tự</small>
+            </div>
+          </div>
+
+          <!-- Validation Summary -->
+          <div v-if="Object.keys(errors).length > 0" class="alert alert-danger">
+            <h6><i class="bi bi-exclamation-triangle me-2"></i>Vui lòng kiểm tra lại:</h6>
+            <ul class="mb-0">
+              <li v-for="(error, field) in errors" :key="field">{{ error }}</li>
+            </ul>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" @click="closeModal" class="btn btn-reset">Hủy</button>
+        <button type="submit" form="manufacturerForm" class="btn btn-action btn-primary-custom"
+          :disabled="isSubmitting">
+          {{ isEditMode ? 'Cập nhật' : 'Thêm mới' }}
+          <span v-if="isSubmitting" class="spinner-border spinner-border-sm ml-2"></span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Container chính -->
   <div class="container-fluid py-4">
     <!-- Header -->
     <HeaderCard title="Quản Lý Nhà Sản Xuất" badgeText="Hệ Thống POS" badgeClass="gradient-custom-teal"
@@ -29,17 +75,17 @@
               <div class="status-radio-group">
                 <div class="form-check form-check-inline">
                   <input class="form-check-input" type="radio" v-model="filters.status" value="" id="statusAll"
-                    @change="searchNhaSanXuat">
+                    @change="searchNhaSanXuat" />
                   <label class="form-check-label" for="statusAll">Tất cả</label>
                 </div>
                 <div class="form-check form-check-inline">
-                  <input class="form-check-input" type="radio" v-model="filters.status" value="active"
-                    id="statusActive" @change="searchNhaSanXuat">
+                  <input class="form-check-input" type="radio" v-model="filters.status" value="active" id="statusActive"
+                    @change="searchNhaSanXuat" />
                   <label class="form-check-label" for="statusActive">Hoạt động</label>
                 </div>
                 <div class="form-check form-check-inline">
                   <input class="form-check-input" type="radio" v-model="filters.status" value="inactive"
-                    id="statusInactive" @change="searchNhaSanXuat">
+                    id="statusInactive" @change="searchNhaSanXuat" />
                   <label class="form-check-label" for="statusInactive">Không hoạt động</label>
                 </div>
               </div>
@@ -54,19 +100,20 @@
               <div class="filter-stats d-flex">
                 <div class="stat-item d-flex gap-2">
                   <span class="stat-label">Tổng số nhà sản xuất:</span>
-                  <span class="stat-value" style="color: rgb(21, 128, 61); font-weight: bold;">{{
-                    sharedFilteredItems.length }}</span>
+                  <span class="stat-value" style="color: rgb(21, 128, 61); font-weight: bold;">
+                    {{ sharedFilteredItems.length }}
+                  </span>
                 </div>
               </div>
             </div>
           </div>
 
           <div class="action-buttons">
-            <button class="btn btn-action" @click="downloadSelectedExcel"
-              :disabled="selectedItems.length === 0" title="Tải danh sách Excel">
+            <button class="btn btn-action" @click="downloadSelectedExcel" :disabled="selectedItems.length === 0"
+              title="Tải danh sách Excel">
               Tải Excel
             </button>
-            <button class="btn btn-action" @click="openAddModal" title="Thêm nhà sản xuất mới">
+            <button class="btn btn-action btn-primary-custom" @click="openAddModal" title="Thêm nhà sản xuất mới">
               Thêm nhà sản xuất
             </button>
             <button class="btn btn-reset" @click="resetFilters">
@@ -94,11 +141,11 @@
           <template #stt="{ globalIndex }">
             {{ globalIndex + 1 }}
           </template>
-          <template #nhaSanXuat="{ item }">
-            <div class="code-text">{{ item.nhaSanXuat }}</div>
+          <template #ma="{ item }">
+            <div class="code-text">{{ item.ma }}</div>
           </template>
-          <template #moTa="{ item }">
-            <div class="description-text">{{ item.moTa || 'Không có mô tả' }}</div>
+          <template #nhaSanXuat="{ item }">
+            <div class="name-text">{{ item.nhaSanXuat }}</div>
           </template>
           <template #trangThai="{ item }">
             <span class="status-badge" :class="getStatusBadgeClass(item)">
@@ -107,66 +154,14 @@
           </template>
           <template #actions="{ item }">
             <div class="action-buttons-cell">
-              <button class="btn btn-sm btn-table" @click="viewItem(item)" title="Xem chi tiết">
-                <i class="bi bi-eye-fill"></i>
-              </button>
-              <button class="btn btn-sm btn-table" @click="editItem(item)" title="Chỉnh sửa">
+              <button class="btn btn-sm btn-table btn-edit" @click="editItem(item)" title="Chỉnh sửa">
                 <i class="bi bi-pencil-fill"></i>
-              </button>
-              <button class="btn btn-sm btn-table" @click="deleteItem(item)" title="Xóa">
-                <i class="bi bi-trash-fill"></i>
               </button>
             </div>
           </template>
         </DataTable>
       </div>
     </FilterTableSection>
-
-    <!-- Add/Edit Modal -->
-    <div class="modal fade" id="addEditModal" tabindex="-1" aria-labelledby="addEditModalLabel" aria-hidden="true"
-      ref="addEditModal">
-      <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title" id="addEditModalLabel">
-              {{ isEditMode ? 'Chỉnh Sửa Nhà Sản Xuất' : 'Thêm Nhà Sản Xuất Mới' }}
-            </h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-          </div>
-          <div class="modal-body">
-            <form @submit.prevent="submitForm">
-              <div class="row g-3">
-                <div class="col-md-12">
-                  <label class="form-label">Mã Nhà Sản Xuất</label>
-                  <input type="text" class="form-control" v-model="formData.ma" placeholder="Mã sẽ được tự động tạo" disabled />
-                </div>
-                <div class="col-md-12">
-                  <label class="form-label">Tên Nhà Sản Xuất <span class="text-danger">*</span></label>
-                  <input type="text" class="form-control" v-model="formData.nhaSanXuat" 
-                    placeholder="Nhập tên nhà sản xuất"
-                    :class="{ 'is-invalid': errors.nhaSanXuat }" />
-                  <div v-if="errors.nhaSanXuat" class="invalid-feedback">{{ errors.nhaSanXuat }}</div>
-                </div>
-                <div class="col-md-6">
-                  <label class="form-label">Trạng Thái</label>
-                  <select class="form-select" v-model="formData.trangThai">
-                    <option :value="true">Hoạt động</option>
-                    <option :value="false">Không hoạt động</option>
-                  </select>
-                </div>
-              </div>
-            </form>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
-            <button type="button" class="btn btn-primary" @click="submitForm" :disabled="isSubmitting">
-              <span v-if="isSubmitting" class="spinner-border spinner-border-sm me-2" role="status"></span>
-              {{ isEditMode ? 'Cập nhật' : 'Thêm mới' }}
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
 
     <!-- Modals -->
     <NotificationModal ref="notificationModal" :type="notificationType" :message="notificationMessage"
@@ -187,7 +182,7 @@ import FilterTableSection from "@/components/common/FilterTableSection.vue";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
 
-// Import API services (bạn cần tạo các service này)
+// Import API services
 import {
   fetchNhaSanXuat,
   searchNhaSanXuat as searchNhaSanXuatAPI,
@@ -219,21 +214,19 @@ export default defineComponent({
     const route = useRoute();
     const toastNotification = ref(null);
     const notificationModal = ref(null);
-    const addEditModal = ref(null);
     const currentPage = ref(1);
     const itemsPerPage = ref(10);
     const isLoading = ref(false);
     const totalElements = ref(0);
     const selectedItems = ref([]);
+    const showModal = ref(false);
 
     // Form state
     const isEditMode = ref(false);
     const isSubmitting = ref(false);
     const formData = ref({
       id: null,
-      ma: "",
       nhaSanXuat: "",
-      trangThai: true, // Đổi thành trangThai boolean
     });
     const errors = ref({});
 
@@ -247,7 +240,7 @@ export default defineComponent({
     // State
     const keyword = ref("");
     const filters = ref({
-      status: "", // "" for all, "active" for trangThai=true, "inactive" for trangThai=false
+      status: "",
     });
 
     // Data from API
@@ -255,11 +248,11 @@ export default defineComponent({
 
     // Headers for DataTable
     const headers = ref([
-      { text: '', value: 'checkbox', isSelectAll: true },
+      { text: "", value: "checkbox", isSelectAll: true },
       { text: "STT", value: "stt" },
       { text: "Mã", value: "ma" },
       { text: "Tên Nhà Sản Xuất", value: "nhaSanXuat" },
-      { text: "Trạng Thái", value: "trangThai" }, // Đổi value thành trangThai
+      { text: "Trạng Thái", value: "trangThai" },
       { text: "Thao Tác", value: "actions" },
     ]);
 
@@ -271,16 +264,52 @@ export default defineComponent({
     const paginatedItems = computed(() => {
       const start = (currentPage.value - 1) * itemsPerPage.value;
       const end = start + itemsPerPage.value;
-      return (nhaSanXuatList.value || []).slice(start, end).map((item, index) => ({
-        ...item,
-        stt: start + index + 1,
-      }));
+      return (nhaSanXuatList.value || [])
+        .slice(start, end)
+        .map((item, index) => ({
+          ...item,
+          stt: start + index + 1,
+        }));
     });
 
     const isAllSelected = computed(() => {
-      return paginatedItems.value.length > 0 &&
-        paginatedItems.value.every(item => selectedItems.value.includes(item.id));
+      return (
+        paginatedItems.value.length > 0 &&
+        paginatedItems.value.every((item) => selectedItems.value.includes(item.id))
+      );
     });
+
+    // Validation methods
+    const validateField = (fieldName) => {
+      switch (fieldName) {
+        case "nhaSanXuat":
+          if (!formData.value.nhaSanXuat.trim()) {
+            errors.value.nhaSanXuat = "Tên nhà sản xuất không được để trống";
+          } else if (formData.value.nhaSanXuat.trim().length < 2) {
+            errors.value.nhaSanXuat = "Tên nhà sản xuất phải có ít nhất 2 ký tự";
+          } else if (formData.value.nhaSanXuat.trim().length > 100) {
+            errors.value.nhaSanXuat = "Tên nhà sản xuất không được vượt quá 100 ký tự";
+          } else {
+            delete errors.value.nhaSanXuat;
+          }
+          break;
+      }
+    };
+
+    const clearFieldError = (fieldName) => {
+      if (errors.value[fieldName]) {
+        delete errors.value[fieldName];
+      }
+    };
+
+    const validateForm = () => {
+      errors.value = {};
+
+      // Validate tên nhà sản xuất
+      validateField("nhaSanXuat");
+
+      return Object.keys(errors.value).length === 0;
+    };
 
     // API Methods
     const loadNhaSanXuat = async () => {
@@ -289,7 +318,6 @@ export default defineComponent({
         const searchParams = {};
         if (keyword.value) searchParams.keyword = keyword.value;
         if (filters.value.status) {
-          // Sửa logic filter theo trangThai
           searchParams.trangThai = filters.value.status === "active" ? true : false;
         }
 
@@ -324,37 +352,33 @@ export default defineComponent({
 
     // Methods
     const formatDate = (dateString) => {
-      if (!dateString) return 'N/A';
+      if (!dateString) return "N/A";
       try {
-        return new Date(dateString).toLocaleDateString('vi-VN');
+        return new Date(dateString).toLocaleDateString("vi-VN");
       } catch (error) {
-        return 'N/A';
+        return "N/A";
       }
     };
 
-    // Thêm function để lấy text trạng thái
     const getStatusText = (item) => {
-      // Kiểm tra các thuộc tính có thể có
-      if (item.hasOwnProperty('trangThai')) {
-        return item.trangThai ? 'Không hoạt động' : 'Hoạt động';
-      } else if (item.hasOwnProperty('deleted')) {
-        return item.deleted === 0 ? 'Không hoạt động' : 'Hoạt động';
+      if (item.hasOwnProperty("trangThai")) {
+        return item.trangThai ? "Hoạt động" : "Không hoạt động";
+      } else if (item.hasOwnProperty("deleted")) {
+        return item.deleted === false ? "Hoạt động" : "Không hoạt động";
       }
-      // Default fallback
-      return 'Không xác định';
+      return "Không xác định";
     };
 
-    // Sửa function getStatusBadgeClass
     const getStatusBadgeClass = (item) => {
       let isActive = false;
-      
-      if (item.hasOwnProperty('trangThai')) {
+
+      if (item.hasOwnProperty("trangThai")) {
         isActive = item.trangThai === true;
-      } else if (item.hasOwnProperty('deleted')) {
-        isActive = item.deleted === 0;
+      } else if (item.hasOwnProperty("deleted")) {
+        isActive = item.deleted === false;
       }
-      
-      return isActive ? "badge-canceled" : "badge-completed";
+
+      return isActive ? "badge-completed" : "badge-canceled";
     };
 
     const debouncedSearch = debounce(() => {
@@ -387,83 +411,33 @@ export default defineComponent({
       isEditMode.value = false;
       formData.value = {
         id: null,
-        ma: "",
         nhaSanXuat: "",
-        trangThai: true, // Mặc định là hoạt động
       };
       errors.value = {};
-      const modal = new bootstrap.Modal(addEditModal.value);
-      modal.show();
+      showModal.value = true;
     };
 
-    const viewItem = (item) => {
-      // Implement view details functionality
-      toastNotification.value?.addToast({
-        type: "info",
-        message: `Xem chi tiết: ${item.nhaSanXuat}`,
-        duration: 2000,
-      });
+    const closeModal = () => {
+      showModal.value = false;
     };
 
     const editItem = (item) => {
       isEditMode.value = true;
       formData.value = {
         id: item.id,
-        ma: item.ma,
         nhaSanXuat: item.nhaSanXuat,
-        moTa: item.moTa || "",
-        // Xử lý trạng thái từ API
-        trangThai: item.hasOwnProperty('trangThai') 
-          ? item.trangThai 
-          : (item.hasOwnProperty('deleted') ? item.deleted === 0 : true)
       };
       errors.value = {};
-      const modal = new bootstrap.Modal(addEditModal.value);
-      modal.show();
-    };
-
-    const deleteItem = (item) => {
-      notificationType.value = "confirm";
-      notificationMessage.value = `Bạn có chắc chắn muốn xóa nhà sản xuất "${item.nhaSanXuat}"?`;
-      notificationOnConfirm.value = async () => {
-        try {
-          isNotificationLoading.value = true;
-          await deleteNhaSanXuat(item.id);
-          await loadNhaSanXuat();
-          toastNotification.value?.addToast({
-            type: "success",
-            message: "Xóa nhà sản xuất thành công",
-            duration: 3000,
-          });
-          notificationModal.value?.close();
-        } catch (error) {
-          toastNotification.value?.addToast({
-            type: "error",
-            message: "Lỗi khi xóa nhà sản xuất: " + (error.response?.data?.message || error.message),
-            duration: 5000,
-          });
-        } finally {
-          isNotificationLoading.value = false;
-        }
-      };
-      notificationOnCancel.value = () => {
-        notificationModal.value?.close();
-      };
-      notificationModal.value?.show();
-    };
-
-    const validateForm = () => {
-      errors.value = {};
-      
-      if (!formData.value.nhaSanXuat.trim()) {
-        errors.value.nhaSanXuat = "Tên nhà sản xuất không được để trống";
-      }
-
-      return Object.keys(errors.value).length === 0;
+      showModal.value = true;
     };
 
     const submitForm = async () => {
       if (!validateForm()) {
+        toastNotification.value?.addToast({
+          type: "error",
+          message: "Vui lòng kiểm tra lại thông tin đã nhập",
+          duration: 3000,
+        });
         return;
       }
 
@@ -471,7 +445,6 @@ export default defineComponent({
         isSubmitting.value = true;
         const data = {
           nhaSanXuat: formData.value.nhaSanXuat.trim(),
-          trangThai: formData.value.trangThai, // Gửi trangThai thay vì deleted
         };
 
         if (isEditMode.value) {
@@ -490,17 +463,47 @@ export default defineComponent({
           });
         }
 
-        const modal = bootstrap.Modal.getInstance(addEditModal.value);
-        modal.hide();
+        closeModal();
         await loadNhaSanXuat();
       } catch (error) {
+        console.error("Error submitting form:", error);
         toastNotification.value?.addToast({
           type: "error",
-          message: "Lỗi khi lưu nhà sản xuất: " + (error.response?.data?.message || error.message),
+          message:
+            "Lỗi khi lưu nhà sản xuất: " +
+            (error.response?.data?.error || error.response?.data?.message || error.message),
           duration: 5000,
         });
       } finally {
         isSubmitting.value = false;
+      }
+    };
+
+    const deleteItem = async (item) => {
+      try {
+        isNotificationLoading.value = true;
+        await deleteNhaSanXuat(item.id);
+
+        toastNotification.value?.addToast({
+          type: "success",
+          message: `Đã xóa nhà sản xuất "${item.nhaSanXuat}" thành công`,
+          duration: 3000,
+        });
+
+        await loadNhaSanXuat();
+        notificationModal.value?.hide();
+      } catch (error) {
+        console.error("Error deleting item:", error);
+        toastNotification.value?.addToast({
+          type: "error",
+          message:
+            "Lỗi khi xóa nhà sản xuất: " +
+            (error.response?.data?.error || error.response?.data?.message || error.message),
+          duration: 5000,
+        });
+      } finally {
+        isNotificationLoading.value = false;
+        resetNotification();
       }
     };
 
@@ -527,54 +530,58 @@ export default defineComponent({
       if (isAllSelected.value) {
         selectedItems.value = [];
       } else {
-        selectedItems.value = paginatedItems.value.map(item => item.id);
+        selectedItems.value = paginatedItems.value.map((item) => item.id);
       }
     };
 
     const downloadSelectedExcel = async () => {
       if (selectedItems.value.length === 0) {
         toastNotification.value?.addToast({
-          type: 'warning',
-          message: 'Vui lòng chọn ít nhất một nhà sản xuất để tải danh sách Excel',
+          type: "warning",
+          message: "Vui lòng chọn ít nhất một nhà sản xuất để tải danh sách Excel",
           duration: 2000,
         });
         return;
       }
 
       try {
-        const selectedData = nhaSanXuatList.value.filter(item => selectedItems.value.includes(item.id));
-        const data = selectedData.map(item => ({
-          'Tên Nhà Sản Xuất': item.nhaSanXuat || 'N/A',
-          'Mô Tả': item.moTa || 'Không có mô tả',
-          'Trạng Thái': getStatusText(item), // Sử dụng function getStatusText
-          'Ngày Tạo': formatDate(item.ngayTao),
+        const selectedData = nhaSanXuatList.value.filter((item) => selectedItems.value.includes(item.id));
+        const data = selectedData.map((item) => ({
+          Mã: item.ma || "N/A",
+          "Tên Nhà Sản Xuất": item.nhaSanXuat || "N/A",
+          "Mô Tả": item.moTa || "Không có mô tả",
+          "Trạng Thái": getStatusText(item),
+          "Ngày Tạo": formatDate(item.ngayTao),
         }));
 
         const worksheet = XLSX.utils.json_to_sheet(data);
         const workbook = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(workbook, worksheet, 'Nhà Sản Xuất');
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Nhà Sản Xuất");
 
         // Đặt độ rộng cột
-        worksheet['!cols'] = [
+        worksheet["!cols"] = [
+          { wch: 15 }, // Mã
           { wch: 25 }, // Tên Nhà Sản Xuất
           { wch: 40 }, // Mô Tả
           { wch: 15 }, // Trạng Thái
           { wch: 15 }, // Ngày Tạo
         ];
 
-        const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
-        const blob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-        saveAs(blob, 'danh_sach_nha_san_xuat.xlsx');
+        const excelBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
+        const blob = new Blob([excelBuffer], {
+          type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        });
+        saveAs(blob, "danh_sach_nha_san_xuat.xlsx");
 
         toastNotification.value?.addToast({
-          type: 'success',
+          type: "success",
           message: `Đã tải xuống danh sách ${selectedItems.value.length} nhà sản xuất dưới dạng Excel`,
           duration: 2000,
         });
       } catch (error) {
         toastNotification.value?.addToast({
-          type: 'error',
-          message: 'Lỗi khi tải xuống danh sách Excel: ' + error.message,
+          type: "error",
+          message: "Lỗi khi tải xuống danh sách Excel: " + error.message,
           duration: 3000,
         });
       }
@@ -600,7 +607,6 @@ export default defineComponent({
     return {
       toastNotification,
       notificationModal,
-      addEditModal,
       keyword,
       filters,
       nhaSanXuatList,
@@ -612,13 +618,13 @@ export default defineComponent({
       sharedFilteredItems,
       paginatedItems,
       formatDate,
-      getStatusText, // Export function
+      getStatusText,
       getStatusBadgeClass,
       debouncedSearch,
       searchNhaSanXuat,
       resetFilters,
       openAddModal,
-      viewItem,
+      closeModal,
       editItem,
       deleteItem,
       submitForm,
@@ -639,6 +645,9 @@ export default defineComponent({
       formData,
       errors,
       validateForm,
+      validateField,
+      clearFieldError,
+      showModal,
     };
   },
 });
@@ -646,6 +655,227 @@ export default defineComponent({
 
 <style scoped>
 /* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(50px);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes pulse {
+
+  0%,
+  100% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.02);
+  }
+}
+
+/* Modal Styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1050;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(0, 0, 0, 0.5);
+  animation: fadeIn 0.3s ease-out;
+  backdrop-filter: blur(4px);
+}
+
+.modal-content {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(12px);
+  border-radius: 16px;
+  width: 100%;
+  max-width: 600px;
+  padding: 24px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  animation: slideUp 0.4s ease-out;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.modal-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1a3c34;
+  margin: 0;
+}
+
+.close-button {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: #6b7280;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.close-button:hover {
+  color: #1a3c34;
+}
+
+.modal-body {
+  padding: 24px 0;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+}
+
+.form-group.full-width {
+  grid-column: span 2;
+}
+
+.form-label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #1a3c34;
+  margin-bottom: 8px;
+  display: block;
+}
+
+.required {
+  color: #ef4444;
+}
+
+.form-control,
+.form-select {
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  padding: 12px;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+  background: rgba(255, 255, 255, 0.8);
+}
+
+.form-control:focus,
+.form-select:focus {
+  border-color: #34d399;
+  box-shadow: 0 0 0 3px rgba(52, 211, 153, 0.2);
+  outline: none;
+}
+
+.form-control.is-invalid {
+  border-color: #ef4444;
+  animation: shake 0.3s ease-in-out;
+}
+
+.form-control.is-invalid:focus {
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2);
+}
+
+.invalid-feedback {
+  color: #ef4444;
+  font-size: 0.8rem;
+  margin-top: 4px;
+}
+
+.form-hint {
+  color: #6b7280;
+  font-size: 0.8rem;
+  margin-top: 4px;
+  display: block;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.btn {
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #34d399, #059669);
+  color: white;
+  border: none;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: linear-gradient(135deg, #059669, #047857);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(52, 211, 153, 0.3);
+}
+
+.btn-primary:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+}
+
+.btn-secondary {
+  background: #e5e7eb;
+  color: #1a3c34;
+  border: none;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: #d1d5db;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.alert-danger {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+  border-radius: 8px;
+  padding: 12px;
+  margin-top: 16px;
+}
+
+.alert h6 {
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.alert ul {
+  font-size: 0.85rem;
+  margin: 0;
+  padding-left: 20px;
+}
+
+/* Existing styles (unchanged) */
 @keyframes fadeInUp {
   from {
     opacity: 0;
@@ -682,12 +912,10 @@ export default defineComponent({
   }
 }
 
-/* Gradient Definitions */
 .gradient-custom-teal {
   background: #34d399;
 }
 
-/* Filter Label and Inputs */
 .filter-label {
   display: block;
   font-weight: 600;
@@ -770,6 +998,9 @@ export default defineComponent({
   font-size: 0.9rem;
   border-radius: 8px;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
 }
 
 .btn-reset {
@@ -788,15 +1019,21 @@ export default defineComponent({
   background: #34d399;
   color: white;
   border: none;
-  text-decoration: none;
-  display: inline-flex;
-  align-items: center;
+}
+
+.btn-primary-custom {
+  background: #34d399;
 }
 
 .btn-action:hover {
   background: #16a34a;
   color: white;
   box-shadow: 0 0 15px rgba(52, 211, 153, 0.3);
+}
+
+.btn-primary-custom:hover {
+  background: #16a34a;
+  box-shadow: 0 0 20px rgba(52, 211, 153, 0.4);
 }
 
 .btn-action:disabled {
@@ -856,6 +1093,11 @@ export default defineComponent({
   color: #34d399;
 }
 
+.name-text {
+  font-weight: 500;
+  color: #1f3a44;
+}
+
 .description-text {
   color: #6c757d;
   font-size: 0.9rem;
@@ -881,107 +1123,55 @@ export default defineComponent({
   color: #1f3a44;
   border: none;
   padding: 0.25rem 0.5rem;
-}
-
-.btn-table:hover {
-  color: #16a34a;
-  text-shadow: 0 0 15px rgba(52, 211, 153, 0.3);
-}
-
-.btn-table.btn-danger {
-  color: #dc3545;
-}
-
-.btn-table.btn-danger:hover {
-  color: #c82333;
-  text-shadow: 0 0 15px rgba(220, 53, 69, 0.3);
-}
-
-/* Modal Styles */
-.modal-content {
-  border-radius: 12px;
-  border: none;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
-}
-
-.modal-header {
-  background: linear-gradient(135deg, #34d399 0%, #16a34a 100%);
-  color: white;
-  border-radius: 12px 12px 0 0;
-  border-bottom: none;
-}
-
-.modal-title {
-  font-weight: 600;
-}
-
-.btn-close {
-  filter: invert(1);
-}
-
-.modal-body {
-  padding: 2rem;
-}
-
-.form-label {
-  font-weight: 600;
-  color: #1f3a44;
-  margin-bottom: 0.5rem;
-}
-
-.form-control,
-.form-select {
-  border: 2px solid rgba(52, 211, 153, 0.1);
-  border-radius: 8px;
+  border-radius: 4px;
   transition: all 0.2s ease;
 }
 
-.form-control:focus,
-.form-select:focus {
-  border-color: #34d399;
-  box-shadow: 0 0 10px rgba(52, 211, 153, 0.2);
+.btn-edit:hover {
+  color: #16a34a;
+  background: rgba(52, 211, 153, 0.1);
 }
 
-.is-invalid {
-  border-color: #dc3545;
+.btn-delete {
+  color: #dc3545;
 }
 
-.invalid-feedback {
-  display: block;
-  font-size: 0.875rem;
+.btn-delete:hover {
+  color: #c82333;
+  background: rgba(220, 53, 69, 0.1);
 }
 
-.text-danger {
-  color: #dc3545 !important;
-}
+@keyframes shake {
 
-.modal-footer {
-  padding: 1rem 2rem 2rem;
-  border-top: none;
-}
+  0%,
+  100% {
+    transform: translateX(0);
+  }
 
-.btn-primary {
-  background: #34d399;
-  border-color: #34d399;
-}
+  25% {
+    transform: translateX(-5px);
+  }
 
-.btn-primary:hover {
-  background: #16a34a;
-  border-color: #16a34a;
-}
-
-.btn-secondary {
-  background: #6c757d;
-  border-color: #6c757d;
-}
-
-.spinner-border-sm {
-  width: 1rem;
-  height: 1rem;
+  75% {
+    transform: translateX(5px);
+  }
 }
 
 /* Responsive */
 @media (max-width: 768px) {
+  .modal-content {
+    margin: 16px;
+    max-width: calc(100% - 32px);
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .form-group.full-width {
+    grid-column: span 1;
+  }
+
   .filter-actions {
     flex-direction: column;
     gap: 1rem;
@@ -1023,30 +1213,31 @@ export default defineComponent({
   .description-text {
     max-width: 150px;
   }
-
-  .modal-dialog {
-    margin: 1rem;
-  }
-
-  .modal-body {
-    padding: 1.5rem;
-  }
-
-  .modal-footer {
-    padding: 1rem 1.5rem 1.5rem;
-    flex-direction: column;
-    gap: 0.5rem;
-  }
-
-  .modal-footer .btn {
-    width: 100%;
-  }
 }
 
 @media (max-width: 576px) {
+  .modal-content {
+    padding: 16px;
+  }
+
+  .modal-title {
+    font-size: 1.25rem;
+  }
+
+  .form-control,
+  .form-select {
+    padding: 10px;
+    font-size: 0.85rem;
+  }
+
+  .btn {
+    padding: 10px 20px;
+    font-size: 0.85rem;
+  }
+
   .status-badge {
-    font-size: 0.8rem;
-    padding: 0.4rem 0.8rem;
+    font-size: 0.7rem;
+    padding: 0.3rem 0.6rem;
   }
 
   .description-text {
