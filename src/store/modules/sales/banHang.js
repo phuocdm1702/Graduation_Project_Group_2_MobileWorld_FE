@@ -650,7 +650,7 @@ export default {
     };
 
     // Cập nhật hàm searchCustomers
-   const searchCustomers = async () => {
+  const searchCustomers = async () => {
   if (!searchCustomer.value) {
     selectedCustomer.value = null;
     customer.value = {
@@ -663,40 +663,53 @@ export default {
       address: "",
     };
     privateDiscountCodes.value = [];
+    const invoiceIndex = pendingInvoices.value.findIndex(
+      (inv) => inv.id === activeInvoiceId.value
+    );
+    if (invoiceIndex !== -1) {
+      pendingInvoices.value[invoiceIndex].customer = null;
+    }
     setTimeout(() => {
       showToast("warning", "Vui lòng nhập thông tin tìm kiếm");
     }, 3000);
     return;
   }
 
+  if (!activeInvoiceId.value) {
+    showToast("error", "Vui lòng chọn hoặc tạo một hóa đơn trước khi tìm kiếm khách hàng");
+    return;
+  }
+
   try {
-    const result = await searchCustomersApi(searchCustomer.value);
-    if (result.success && result.data && result.data.length > 0) {
-      const customerData = result.data[0];
-      const customerId =
-        customerData.id ||
-        customerData.idKhachHang ||
-        (customerData.idKhachHang && customerData.idKhachHang.id) ||
-        null;
+    const result = await searchCustomersApi(searchCustomer.value, activeInvoiceId.value);
+
+    if (result.success && result.data) {
+      // Kiểm tra dữ liệu trả về là đối tượng HoaDon
+      const customerData = {
+        id: result.data.idKhachHang?.id || null,
+        ten: result.data.tenKhachHang || "",
+        soDienThoai: result.data.soDienThoaiKhachHang || "",
+        diaChi: result.data.diaChiKhachHang || "",
+        email: result.data.email || ""
+      };
 
       selectedCustomer.value = customerData;
       customer.value = {
-        id: customerId,
-        name: customerData.ten || customerData.idKhachHang?.ten || "",
-        phone:
-          customerData.idTaiKhoan?.soDienThoai ||
-          customerData.idKhachHang?.idTaiKhoan?.soDienThoai ||
-          "",
-        city: customerData.idDiaChiKhachHang?.thanhPho || "",
-        district: customerData.idDiaChiKhachHang?.quan || "",
-        ward: customerData.idDiaChiKhachHang?.phuong || "",
-        address: customerData.idDiaChiKhachHang?.diaChiCuThe || "",
+        id: customerData.id,
+        name: customerData.ten,
+        phone: customerData.soDienThoai,
+        city: result.data.diaChiKhachHang?.thanhPho || "",
+        district: result.data.diaChiKhachHang?.quan || "",
+        ward: result.data.diaChiKhachHang?.phuong || "",
+        address: result.data.diaChiKhachHang?.diaChiCuThe || "",
       };
 
+      // Cập nhật thông tin khách hàng vào hóa đơn hiện tại
+      const invoiceIndex = pendingInvoices.value.findIndex(
+        (inv) => inv.id === activeInvoiceId.value
+      );
       if (invoiceIndex !== -1) {
-        pendingInvoices.value[invoiceIndex].customer = {
-          ...customer.value,
-        };
+        pendingInvoices.value[invoiceIndex].customer = { ...customer.value };
       }
 
       if (customer.value.city) {
@@ -706,15 +719,14 @@ export default {
         }
       }
 
-      if (customerId) {
-        const pggResult = await getPhieuGiamGiaByKhachHangApi(customerId);
+      if (customerData.id) {
+        const pggResult = await getPhieuGiamGiaByKhachHangApi(customerData.id);
         if (pggResult.success && Array.isArray(pggResult.data)) {
           privateDiscountCodes.value = pggResult.data
             .filter(
               (item) =>
                 item.idPhieuGiamGia?.riengTu === true &&
-                isValidDiscount(item.idPhieuGiamGia?.ngayKetThuc) &&
-                Number(item.idPhieuGiamGia?.soLuongDung || item.soLuongDung) > 0
+                isValidDiscount(item.idPhieuGiamGia?.ngayKetThuc)
             )
             .map((item, index) => ({
               id: item.id || index + 1,
@@ -722,7 +734,6 @@ export default {
               value: item.idPhieuGiamGia?.soTienGiamToiDa || 0,
               expiry: formatDate(item.idPhieuGiamGia?.ngayKetThuc),
               rawExpiry: item.idPhieuGiamGia?.ngayKetThuc,
-              soLuongDung: Number(item.idPhieuGiamGia?.soLuongDung || item.soLuongDung) || 0,
               type: "private",
             }));
           showToast(
@@ -762,9 +773,7 @@ export default {
       if (invoiceIndex !== -1) {
         pendingInvoices.value[invoiceIndex].customer = null;
       }
-      setTimeout(() => {
-        showToast("warning", "Không tìm thấy khách hàng");
-      }, 3000);
+      showToast("warning", result.message || "Không tìm thấy khách hàng");
       await applyBestDiscount();
     }
   } catch (error) {
@@ -785,10 +794,11 @@ export default {
     if (invoiceIndex !== -1) {
       pendingInvoices.value[invoiceIndex].customer = null;
     }
-    showToast("error", "Đã xảy ra lỗi khi tìm kiếm khách hàng");
+    showToast("error", `Lỗi khi tìm kiếm khách hàng: ${error.message}`);
     await applyBestDiscount();
   }
 };
+
     const confirmCancelInvoice = (invoice) => {
       showConfirm(
         `Bạn có chắc chắn muốn hủy hóa đơn ${invoice.ma}?`,
