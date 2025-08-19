@@ -17,20 +17,12 @@
               <label class="form-label">
                 Tên Nhà Sản Xuất <span class="required">*</span>
               </label>
-              <input type="text" class="form-control" v-model="formData.nhaSanXuat" placeholder="Nhập tên nhà sản xuất"
-                :class="{ 'is-invalid': errors.nhaSanXuat }" @blur="validateField('nhaSanXuat')"
-                @input="clearFieldError('nhaSanXuat')" />
-              <div v-if="errors.nhaSanXuat" class="invalid-feedback">{{ errors.nhaSanXuat }}</div>
-              <small class="form-hint">Tên nhà sản xuất phải từ 2-100 ký tự</small>
+              <input type="text" class="form-control" v-model="formData.nhaSanXuat" 
+                     placeholder="Nhập tên nhà sản xuất"
+                     :class="{ 'is-invalid': errors.nhaSanXuat }" 
+                     @blur="validateNhaSanXuatField"
+                     @input="clearFieldError('nhaSanXuat')" />
             </div>
-          </div>
-
-          <!-- Validation Summary -->
-          <div v-if="Object.keys(errors).length > 0" class="alert alert-danger">
-            <h6><i class="bi bi-exclamation-triangle me-2"></i>Vui lòng kiểm tra lại:</h6>
-            <ul class="mb-0">
-              <li v-for="(error, field) in errors" :key="field">{{ error }}</li>
-            </ul>
           </div>
         </form>
       </div>
@@ -64,30 +56,6 @@
                 <input v-model.trim="keyword" @input="debouncedSearch" type="text"
                   placeholder="Tìm kiếm theo tên nhà sản xuất..." class="form-control search-input"
                   style="padding-left: 2.5rem;" />
-              </div>
-            </div>
-          </div>
-
-          <!-- Filter for Status -->
-          <div class="col-lg-6 col-md-4">
-            <div class="filter-group">
-              <label class="filter-label">Trạng Thái</label>
-              <div class="status-radio-group">
-                <div class="form-check form-check-inline">
-                  <input class="form-check-input" type="radio" v-model="filters.status" value="" id="statusAll"
-                    @change="searchNhaSanXuat" />
-                  <label class="form-check-label" for="statusAll">Tất cả</label>
-                </div>
-                <div class="form-check form-check-inline">
-                  <input class="form-check-input" type="radio" v-model="filters.status" value="active" id="statusActive"
-                    @change="searchNhaSanXuat" />
-                  <label class="form-check-label" for="statusActive">Hoạt động</label>
-                </div>
-                <div class="form-check form-check-inline">
-                  <input class="form-check-input" type="radio" v-model="filters.status" value="inactive"
-                    id="statusInactive" @change="searchNhaSanXuat" />
-                  <label class="form-check-label" for="statusInactive">Không hoạt động</label>
-                </div>
               </div>
             </div>
           </div>
@@ -191,6 +159,9 @@ import {
   deleteNhaSanXuat,
 } from "@/store/modules/products/thuocTinhSp/nhaSanXuat";
 
+// Import API service để check trùng tên
+import apiService from "@/services/api";
+
 // Debounce utility
 const debounce = (func, delay) => {
   let timeoutId;
@@ -240,7 +211,7 @@ export default defineComponent({
     // State
     const keyword = ref("");
     const filters = ref({
-      status: "",
+      // status: "",
     });
 
     // Data from API
@@ -252,7 +223,6 @@ export default defineComponent({
       { text: "STT", value: "stt" },
       { text: "Mã", value: "ma" },
       { text: "Tên Nhà Sản Xuất", value: "nhaSanXuat" },
-      { text: "Trạng Thái", value: "trangThai" },
       { text: "Thao Tác", value: "actions" },
     ]);
 
@@ -279,6 +249,21 @@ export default defineComponent({
       );
     });
 
+    // API method để check trùng tên nhà sản xuất
+    const checkNhaSanXuatExists = async (nhaSanXuat, excludeId = null) => {
+      try {
+        const params = { nhaSanXuat };
+        if (excludeId) {
+          params.excludeId = excludeId;
+        }
+        const response = await apiService.get('/api/nha-san-xuat/exists/nha-san-xuat', { params });
+        return response.data;
+      } catch (error) {
+        console.error('Error checking nhaSanXuat exists:', error);
+        return false;
+      }
+    };
+
     // Validation methods
     const validateField = (fieldName) => {
       switch (fieldName) {
@@ -296,19 +281,104 @@ export default defineComponent({
       }
     };
 
+    // Validate nhà sản xuất field với check trùng tên
+    const validateNhaSanXuatField = async () => {
+      // Kiểm tra validation cơ bản trước
+      validateField('nhaSanXuat');
+      
+      // Nếu có lỗi validation cơ bản thì không check trùng tên
+      if (errors.value.nhaSanXuat) {
+        return;
+      }
+
+      const nhaSanXuatValue = formData.value.nhaSanXuat.trim();
+      
+      // Kiểm tra ký tự trống
+      if (nhaSanXuatValue.includes('  ') || nhaSanXuatValue !== nhaSanXuatValue.trim()) {
+        errors.value.nhaSanXuat = "Tên nhà sản xuất không được chứa ký tự trống thừa";
+        toastNotification.value?.addToast({
+          type: "warning",
+          message: "Tên nhà sản xuất không được chứa ký tự trống thừa",
+          duration: 3000,
+        });
+        return;
+      }
+
+      // Check trùng tên (không check khi edit với cùng tên)
+      if (nhaSanXuatValue) {
+        const excludeId = isEditMode.value ? formData.value.id : null;
+        const exists = await checkNhaSanXuatExists(nhaSanXuatValue, excludeId);
+        
+        if (exists) {
+          errors.value.nhaSanXuat = "Tên nhà sản xuất đã tồn tại";
+          toastNotification.value?.addToast({
+            type: "warning", 
+            message: "Tên nhà sản xuất đã tồn tại trong hệ thống",
+            duration: 3000,
+          });
+        }
+      }
+    };
+
     const clearFieldError = (fieldName) => {
       if (errors.value[fieldName]) {
         delete errors.value[fieldName];
       }
     };
 
-    const validateForm = () => {
+    const validateForm = async () => {
       errors.value = {};
-
+      
       // Validate tên nhà sản xuất
-      validateField("nhaSanXuat");
+      if (!formData.value.nhaSanXuat.trim()) {
+        toastNotification.value?.addToast({
+          type: "warning",
+          message: "Tên nhà sản xuất không được để trống",
+          duration: 3000,
+        });
+        return false;
+      } else if (formData.value.nhaSanXuat.trim().length < 2) {
+        toastNotification.value?.addToast({
+          type: "warning", 
+          message: "Tên nhà sản xuất phải có ít nhất 2 ký tự",
+          duration: 3000,
+        });
+        return false;
+      } else if (formData.value.nhaSanXuat.trim().length > 100) {
+        toastNotification.value?.addToast({
+          type: "warning",
+          message: "Tên nhà sản xuất không được vượt quá 100 ký tự", 
+          duration: 3000,
+        });
+        return false;
+      }
 
-      return Object.keys(errors.value).length === 0;
+      const nhaSanXuatValue = formData.value.nhaSanXuat.trim();
+      
+      // Kiểm tra ký tự trống
+      if (nhaSanXuatValue.includes('  ') || nhaSanXuatValue !== nhaSanXuatValue.trim()) {
+        toastNotification.value?.addToast({
+          type: "warning",
+          message: "Tên nhà sản xuất không được chứa ký tự trống thừa",
+          duration: 3000,
+        });
+        return false;
+      }
+
+      // Check trùng tên trước khi submit
+      const excludeId = isEditMode.value ? formData.value.id : null;
+      const exists = await checkNhaSanXuatExists(nhaSanXuatValue, excludeId);
+      
+      if (exists) {
+        toastNotification.value?.addToast({
+          type: "warning",
+          message: "Tên nhà sản xuất đã tồn tại trong hệ thống",
+          duration: 3000,
+        });
+        return false;
+      }
+
+      return true;
     };
 
     // API Methods
@@ -317,9 +387,6 @@ export default defineComponent({
         isLoading.value = true;
         const searchParams = {};
         if (keyword.value) searchParams.keyword = keyword.value;
-        if (filters.value.status) {
-          searchParams.trangThai = filters.value.status === "active" ? true : false;
-        }
 
         let response;
         const hasFilters = keyword.value || filters.value.status;
@@ -360,27 +427,6 @@ export default defineComponent({
       }
     };
 
-    const getStatusText = (item) => {
-      if (item.hasOwnProperty("trangThai")) {
-        return item.trangThai ? "Hoạt động" : "Không hoạt động";
-      } else if (item.hasOwnProperty("deleted")) {
-        return item.deleted === false ? "Hoạt động" : "Không hoạt động";
-      }
-      return "Không xác định";
-    };
-
-    const getStatusBadgeClass = (item) => {
-      let isActive = false;
-
-      if (item.hasOwnProperty("trangThai")) {
-        isActive = item.trangThai === true;
-      } else if (item.hasOwnProperty("deleted")) {
-        isActive = item.deleted === false;
-      }
-
-      return isActive ? "badge-completed" : "badge-canceled";
-    };
-
     const debouncedSearch = debounce(() => {
       currentPage.value = 1;
       loadNhaSanXuat();
@@ -394,7 +440,7 @@ export default defineComponent({
     const resetFilters = () => {
       keyword.value = "";
       filters.value = {
-        status: "",
+        // status: "",
       };
       currentPage.value = 1;
       selectedItems.value = [];
@@ -432,12 +478,8 @@ export default defineComponent({
     };
 
     const submitForm = async () => {
-      if (!validateForm()) {
-        toastNotification.value?.addToast({
-          type: "error",
-          message: "Vui lòng kiểm tra lại thông tin đã nhập",
-          duration: 3000,
-        });
+      const isValid = await validateForm();
+      if (!isValid) {
         return;
       }
 
@@ -446,6 +488,15 @@ export default defineComponent({
         const data = {
           nhaSanXuat: formData.value.nhaSanXuat.trim(),
         };
+
+        // Khi edit, cần giữ nguyên mã cũ
+        if (isEditMode.value) {
+          // Tìm item hiện tại để lấy mã
+          const currentItem = nhaSanXuatList.value.find(item => item.id === formData.value.id);
+          if (currentItem) {
+            data.ma = currentItem.ma; // Giữ nguyên mã cũ
+          }
+        }
 
         if (isEditMode.value) {
           await updateNhaSanXuat(formData.value.id, data);
@@ -476,34 +527,6 @@ export default defineComponent({
         });
       } finally {
         isSubmitting.value = false;
-      }
-    };
-
-    const deleteItem = async (item) => {
-      try {
-        isNotificationLoading.value = true;
-        await deleteNhaSanXuat(item.id);
-
-        toastNotification.value?.addToast({
-          type: "success",
-          message: `Đã xóa nhà sản xuất "${item.nhaSanXuat}" thành công`,
-          duration: 3000,
-        });
-
-        await loadNhaSanXuat();
-        notificationModal.value?.hide();
-      } catch (error) {
-        console.error("Error deleting item:", error);
-        toastNotification.value?.addToast({
-          type: "error",
-          message:
-            "Lỗi khi xóa nhà sản xuất: " +
-            (error.response?.data?.error || error.response?.data?.message || error.message),
-          duration: 5000,
-        });
-      } finally {
-        isNotificationLoading.value = false;
-        resetNotification();
       }
     };
 
@@ -550,7 +573,6 @@ export default defineComponent({
           Mã: item.ma || "N/A",
           "Tên Nhà Sản Xuất": item.nhaSanXuat || "N/A",
           "Mô Tả": item.moTa || "Không có mô tả",
-          "Trạng Thái": getStatusText(item),
           "Ngày Tạo": formatDate(item.ngayTao),
         }));
 
@@ -558,12 +580,11 @@ export default defineComponent({
         const workbook = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(workbook, worksheet, "Nhà Sản Xuất");
 
-        // Đặt độ rộng cột
+        // Sửa lại độ rộng cột
         worksheet["!cols"] = [
           { wch: 15 }, // Mã
           { wch: 25 }, // Tên Nhà Sản Xuất
           { wch: 40 }, // Mô Tả
-          { wch: 15 }, // Trạng Thái
           { wch: 15 }, // Ngày Tạo
         ];
 
@@ -618,15 +639,12 @@ export default defineComponent({
       sharedFilteredItems,
       paginatedItems,
       formatDate,
-      getStatusText,
-      getStatusBadgeClass,
       debouncedSearch,
       searchNhaSanXuat,
       resetFilters,
       openAddModal,
       closeModal,
       editItem,
-      deleteItem,
       submitForm,
       resetNotification,
       handlePageChange,
@@ -646,8 +664,10 @@ export default defineComponent({
       errors,
       validateForm,
       validateField,
+      validateNhaSanXuatField,
       clearFieldError,
       showModal,
+      checkNhaSanXuatExists,
     };
   },
 });
@@ -702,7 +722,6 @@ export default defineComponent({
   justify-content: center;
   background-color: rgba(0, 0, 0, 0.5);
   animation: fadeIn 0.3s ease-out;
-  backdrop-filter: blur(4px);
 }
 
 .modal-content {
@@ -795,12 +814,6 @@ export default defineComponent({
 
 .form-control.is-invalid:focus {
   box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2);
-}
-
-.invalid-feedback {
-  color: #ef4444;
-  font-size: 0.8rem;
-  margin-top: 4px;
 }
 
 .form-hint {
@@ -953,27 +966,6 @@ export default defineComponent({
   box-shadow: 0 0 10px rgba(52, 211, 153, 0.2);
 }
 
-.status-radio-group {
-  display: flex;
-  gap: 1rem;
-  align-items: center;
-}
-
-.form-check-input {
-  cursor: pointer;
-}
-
-.form-check-label {
-  font-size: 0.9rem;
-  color: #1f3a44;
-  cursor: pointer;
-}
-
-.form-check-input:checked {
-  background-color: #34d399;
-  border-color: #34d399;
-}
-
 .filter-actions {
   display: flex;
   justify-content: space-between;
@@ -1060,32 +1052,6 @@ export default defineComponent({
   font-size: 0.875rem;
   color: #6c757d;
   font-weight: 500;
-}
-
-.status-badge {
-  padding: 0.25rem 0.75rem;
-  border-radius: 1rem;
-  display: flex;
-  justify-content: center;
-  text-align: center;
-  font-size: 0.75rem;
-  font-weight: 500;
-  align-items: center;
-}
-
-.badge-completed {
-  background: #34d399;
-  color: white;
-}
-
-.badge-canceled {
-  background: #dc3545;
-  color: white;
-}
-
-.badge-primary {
-  background: #6c757d;
-  color: white;
 }
 
 .code-text {
@@ -1191,23 +1157,6 @@ export default defineComponent({
     flex-direction: column;
     align-items: flex-start;
     gap: 1rem;
-  }
-
-  .status-badge {
-    width: 100%;
-    text-align: center;
-    margin-bottom: 0.5rem;
-  }
-
-  .action-buttons-cell {
-    flex-direction: row;
-    gap: 0.3rem;
-  }
-
-  .status-radio-group {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.5rem;
   }
 
   .description-text {
