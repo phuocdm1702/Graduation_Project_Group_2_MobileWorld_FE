@@ -101,12 +101,9 @@
             <div class="description-text">{{ item.moTa || 'Không có mô tả' }}</div>
           </template>
           <template #trangThai="{ item }">
-            <span class="status-badge" :class="getStatusBadgeClass(item.trangThai)">
-              {{ item.trangThai ? 'Hoạt động' : 'Không hoạt động' }}
+            <span class="status-badge" :class="getStatusBadgeClass(item)">
+              {{ getStatusText(item) }}
             </span>
-          </template>
-          <template #ngayTao="{ item }">
-            <div class="date-text">{{ formatDate(item.ngayTao) }}</div>
           </template>
           <template #actions="{ item }">
             <div class="action-buttons-cell">
@@ -116,7 +113,7 @@
               <button class="btn btn-sm btn-table" @click="editItem(item)" title="Chỉnh sửa">
                 <i class="bi bi-pencil-fill"></i>
               </button>
-              <button class="btn btn-sm btn-table btn-danger" @click="deleteItem(item)" title="Xóa">
+              <button class="btn btn-sm btn-table" @click="deleteItem(item)" title="Xóa">
                 <i class="bi bi-trash-fill"></i>
               </button>
             </div>
@@ -140,15 +137,15 @@
             <form @submit.prevent="submitForm">
               <div class="row g-3">
                 <div class="col-md-12">
-                  <label class="form-label">Tên Nhà Sản Xuất <span class="text-danger">*</span></label>
-                  <input type="text" class="form-control" v-model="formData.nhaSanXuat" placeholder="Nhập tên nhà sản xuất"
-                    :class="{ 'is-invalid': errors.nhaSanXuat }" />
-                  <div v-if="errors.nhaSanXuat" class="invalid-feedback">{{ errors.nhaSanXuat }}</div>
+                  <label class="form-label">Mã Nhà Sản Xuất</label>
+                  <input type="text" class="form-control" v-model="formData.ma" placeholder="Mã sẽ được tự động tạo" disabled />
                 </div>
                 <div class="col-md-12">
-                  <label class="form-label">Mô Tả</label>
-                  <textarea class="form-control" v-model="formData.moTa" rows="3"
-                    placeholder="Nhập mô tả về nhà sản xuất"></textarea>
+                  <label class="form-label">Tên Nhà Sản Xuất <span class="text-danger">*</span></label>
+                  <input type="text" class="form-control" v-model="formData.nhaSanXuat" 
+                    placeholder="Nhập tên nhà sản xuất"
+                    :class="{ 'is-invalid': errors.nhaSanXuat }" />
+                  <div v-if="errors.nhaSanXuat" class="invalid-feedback">{{ errors.nhaSanXuat }}</div>
                 </div>
                 <div class="col-md-6">
                   <label class="form-label">Trạng Thái</label>
@@ -234,9 +231,9 @@ export default defineComponent({
     const isSubmitting = ref(false);
     const formData = ref({
       id: null,
+      ma: "",
       nhaSanXuat: "",
-      moTa: "",
-      trangThai: true,
+      trangThai: true, // Đổi thành trangThai boolean
     });
     const errors = ref({});
 
@@ -250,7 +247,7 @@ export default defineComponent({
     // State
     const keyword = ref("");
     const filters = ref({
-      status: "",
+      status: "", // "" for all, "active" for trangThai=true, "inactive" for trangThai=false
     });
 
     // Data from API
@@ -260,10 +257,9 @@ export default defineComponent({
     const headers = ref([
       { text: '', value: 'checkbox', isSelectAll: true },
       { text: "STT", value: "stt" },
+      { text: "Mã", value: "ma" },
       { text: "Tên Nhà Sản Xuất", value: "nhaSanXuat" },
-      { text: "Mô Tả", value: "moTa" },
-      { text: "Trạng Thái", value: "trangThai" },
-      { text: "Ngày Tạo", value: "ngayTao" },
+      { text: "Trạng Thái", value: "trangThai" }, // Đổi value thành trangThai
       { text: "Thao Tác", value: "actions" },
     ]);
 
@@ -293,7 +289,8 @@ export default defineComponent({
         const searchParams = {};
         if (keyword.value) searchParams.keyword = keyword.value;
         if (filters.value.status) {
-          searchParams.trangThai = filters.value.status === "active";
+          // Sửa logic filter theo trangThai
+          searchParams.trangThai = filters.value.status === "active" ? true : false;
         }
 
         let response;
@@ -335,6 +332,31 @@ export default defineComponent({
       }
     };
 
+    // Thêm function để lấy text trạng thái
+    const getStatusText = (item) => {
+      // Kiểm tra các thuộc tính có thể có
+      if (item.hasOwnProperty('trangThai')) {
+        return item.trangThai ? 'Không hoạt động' : 'Hoạt động';
+      } else if (item.hasOwnProperty('deleted')) {
+        return item.deleted === 0 ? 'Không hoạt động' : 'Hoạt động';
+      }
+      // Default fallback
+      return 'Không xác định';
+    };
+
+    // Sửa function getStatusBadgeClass
+    const getStatusBadgeClass = (item) => {
+      let isActive = false;
+      
+      if (item.hasOwnProperty('trangThai')) {
+        isActive = item.trangThai === true;
+      } else if (item.hasOwnProperty('deleted')) {
+        isActive = item.deleted === 0;
+      }
+      
+      return isActive ? "badge-canceled" : "badge-completed";
+    };
+
     const debouncedSearch = debounce(() => {
       currentPage.value = 1;
       loadNhaSanXuat();
@@ -365,9 +387,9 @@ export default defineComponent({
       isEditMode.value = false;
       formData.value = {
         id: null,
+        ma: "",
         nhaSanXuat: "",
-        moTa: "",
-        trangThai: true,
+        trangThai: true, // Mặc định là hoạt động
       };
       errors.value = {};
       const modal = new bootstrap.Modal(addEditModal.value);
@@ -387,9 +409,13 @@ export default defineComponent({
       isEditMode.value = true;
       formData.value = {
         id: item.id,
+        ma: item.ma,
         nhaSanXuat: item.nhaSanXuat,
         moTa: item.moTa || "",
-        trangThai: item.trangThai,
+        // Xử lý trạng thái từ API
+        trangThai: item.hasOwnProperty('trangThai') 
+          ? item.trangThai 
+          : (item.hasOwnProperty('deleted') ? item.deleted === 0 : true)
       };
       errors.value = {};
       const modal = new bootstrap.Modal(addEditModal.value);
@@ -445,8 +471,7 @@ export default defineComponent({
         isSubmitting.value = true;
         const data = {
           nhaSanXuat: formData.value.nhaSanXuat.trim(),
-          moTa: formData.value.moTa.trim(),
-          trangThai: formData.value.trangThai,
+          trangThai: formData.value.trangThai, // Gửi trangThai thay vì deleted
         };
 
         if (isEditMode.value) {
@@ -487,10 +512,6 @@ export default defineComponent({
       notificationOnCancel.value = () => { };
     };
 
-    const getStatusBadgeClass = (status) => {
-      return status ? "badge-completed" : "badge-canceled";
-    };
-
     const handlePageChange = (page) => {
       currentPage.value = page;
       loadNhaSanXuat();
@@ -525,7 +546,7 @@ export default defineComponent({
         const data = selectedData.map(item => ({
           'Tên Nhà Sản Xuất': item.nhaSanXuat || 'N/A',
           'Mô Tả': item.moTa || 'Không có mô tả',
-          'Trạng Thái': item.trangThai ? 'Hoạt động' : 'Không hoạt động',
+          'Trạng Thái': getStatusText(item), // Sử dụng function getStatusText
           'Ngày Tạo': formatDate(item.ngayTao),
         }));
 
@@ -591,6 +612,8 @@ export default defineComponent({
       sharedFilteredItems,
       paginatedItems,
       formatDate,
+      getStatusText, // Export function
+      getStatusBadgeClass,
       debouncedSearch,
       searchNhaSanXuat,
       resetFilters,
@@ -600,7 +623,6 @@ export default defineComponent({
       deleteItem,
       submitForm,
       resetNotification,
-      getStatusBadgeClass,
       handlePageChange,
       handleItemsPerPageChange,
       selectedItems,
