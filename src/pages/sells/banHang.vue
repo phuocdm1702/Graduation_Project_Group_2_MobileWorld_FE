@@ -747,12 +747,26 @@
               <!-- Nội dung thông tin đơn khi có sản phẩm -->
               <div v-else class="d-flex flex-column flex-grow-1">
                 <div v-if="isDelivery" class="mb-5">
-                  <h6
-                    class="fw-bold text-dark mb-3 mt-3"
-                    style="font-size: 1.3rem; letter-spacing: 0.5px"
+                  <div
+                    class="d-flex justify-content-between align-items-center mt-3 mb-3"
                   >
-                    Thông tin người nhận
-                  </h6>
+                    <h6
+                      class="fw-bold text-dark"
+                      style="font-size: 1.3rem; letter-spacing: 0.5px"
+                    >
+                      Thông tin người nhận
+                    </h6>
+
+                    <button
+                      class="btn btn-outline-teal btn-sm px-4 py-2"
+                      @click="openAddressModal"
+                      style="border-radius: 0.5rem; transition: all 0.3s ease"
+                      :disabled="!isReceiverEditable"
+                    >
+                      <i class="bi bi-geo-alt-fill me-2"></i>Chọn địa chỉ
+                    </button>
+                  </div>
+
                   <div
                     class="receiver-form bg-white p-3 shadow-sm animate__animated animate__fadeIn"
                     style="
@@ -1097,7 +1111,10 @@
                         Chưa chọn mã giảm giá
                       </div>
                       <div v-else class="text-center text-muted py-3">
-                        <i class="bi bi-ticket-perforated me-2" style="font-size: 1.2rem"></i>
+                        <i
+                          class="bi bi-ticket-perforated me-2"
+                          style="font-size: 1.2rem"
+                        ></i>
                         Chưa chọn mã giảm giá
                       </div>
                     </div>
