@@ -123,7 +123,7 @@ export const searchCustomersApi = async (query, hoaDonId) => {
   try {
     const response = await apiService.get("/khach-hang/searchKhachHangHD", {
       params: {
-        query: encodeURIComponent(query),
+        query,  // ✅ để nguyên, axios sẽ encode 1 lần
         hoaDonId
       }
     });
@@ -135,6 +135,7 @@ export const searchCustomersApi = async (query, hoaDonId) => {
     };
   }
 };
+
 
 export const updatePhieuGiamGiaApi = async (hoaDonId, idPhieuGiamGia) => {
   try {
@@ -149,6 +150,20 @@ export const updatePhieuGiamGiaApi = async (hoaDonId, idPhieuGiamGia) => {
     return { 
       success: false, 
       message: error.response?.data || "Lỗi khi cập nhật phiếu giảm giá" 
+    };
+  }
+};
+
+export const getKhachHangByIdApi = async (id) => {
+  try {
+    const response = await axios.get("/khach-hang/getById", {
+      params: { id },
+    });
+    return { success: true, data: response.data };
+  } catch (error) {
+    return {
+      success: false,
+      message: error.response?.data || "Không tìm thấy khách hàng",
     };
   }
 };
