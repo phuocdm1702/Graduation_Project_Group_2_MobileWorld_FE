@@ -1088,12 +1088,6 @@
                             {{ formatPrice(selectedDiscount.minOrder) }}
                           </div>
                         </div>
-                        <button
-                          class="btn btn-outline-danger btn-sm px-3 py-1"
-                          @click="removeDiscount"
-                        >
-                          Hủy
-                        </button>
                       </div>
                       <div v-else class="text-center text-muted py-3">
                         <i
@@ -1986,17 +1980,6 @@ export default defineComponent({
       this.$refs.toastNotification.showToast({
         message: `Đã áp dụng mã giảm giá ${discount.code}`,
         type: "success",
-        duration: 3000,
-      });
-    },
-
-    removeDiscount() {
-      this.selectedDiscount = null;
-
-      console.log("Hủy mã giảm giá");
-      this.$refs.toastNotification.showToast({
-        message: "Đã hủy mã giảm giá",
-        type: "info",
         duration: 3000,
       });
     },
