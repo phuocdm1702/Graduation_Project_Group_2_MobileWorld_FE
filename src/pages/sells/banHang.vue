@@ -747,263 +747,248 @@
               <!-- Nội dung thông tin đơn khi có sản phẩm -->
               <div v-else class="d-flex flex-column flex-grow-1">
                 <div v-if="isDelivery" class="mb-5">
-                  <div
-                    class="d-flex justify-content-between align-items-center mt-3 mb-3"
-                  >
-                    <h6
-                      class="fw-bold text-dark"
-                      style="font-size: 1.3rem; letter-spacing: 0.5px"
-                    >
-                      Thông tin người nhận
-                    </h6>
+              <div
+                class="d-flex justify-content-between align-items-center mt-3 mb-3"
+              >
+                <h6
+                  class="fw-bold text-dark"
+                  style="font-size: 1.3rem; letter-spacing: 0.5px"
+                >
+                  Thông tin người nhận
+                </h6>
 
-                    <button
-                      class="btn btn-outline-teal btn-sm px-4 py-2"
-                      @click="openAddressModal"
-                      style="border-radius: 0.5rem; transition: all 0.3s ease"
-                      :disabled="!isReceiverEditable"
+                <button
+                  class="btn btn-outline-teal btn-sm px-4 py-2"
+                  @click="openAddressModal"
+                  style="border-radius: 0.5rem; transition: all 0.3s ease"
+                >
+                  <i class="bi bi-geo-alt-fill me-2"></i>Chọn địa chỉ
+                </button>
+              </div>
+
+              <div
+                class="receiver-form bg-white p-3 shadow-sm animate__animated animate__fadeIn"
+                style="
+                  border: 1px solid rgba(52, 211, 153, 0.1);
+                  border-radius: 0.5rem;
+                  backdrop-filter: blur(5px);
+                "
+              >
+                <div class="row g-3">
+                  <div class="col-md-6">
+                    <label
+                      class="form-label fw-medium text-dark mb-2"
+                      style="font-size: 0.95rem"
                     >
-                      <i class="bi bi-geo-alt-fill me-2"></i>Chọn địa chỉ
-                    </button>
+                      Tên người nhận <span class="text-danger">*</span>
+                    </label>
+                    <div class="input-group">
+                      <span class="input-group-text bg-light border-end-0">
+                        <i class="bi bi-person text-teal"></i>
+                      </span>
+                      <input
+                        v-model="customer.name"
+                        type="text"
+                        class="form-control search-input border-start-0"
+                        placeholder="Nhập tên người nhận"
+                        disabled
+                        style="
+                          border-radius: 0 0.5rem 0.5rem 0;
+                          transition: all 0.3s ease;
+                        "
+                      />
+                    </div>
                   </div>
-
-                  <div
-                    class="receiver-form bg-white p-3 shadow-sm animate__animated animate__fadeIn"
-                    style="
-                      border: 1px solid rgba(52, 211, 153, 0.1);
-                      border-radius: 0.5rem;
-                      backdrop-filter: blur(5px);
-                    "
-                  >
-                    <div class="row g-3">
-                      <div class="col-md-6">
-                        <label
-                          class="form-label fw-medium text-dark mb-2"
-                          style="font-size: 0.95rem"
+                  <div class="col-md-6">
+                    <label
+                      class="form-label fw-medium text-dark mb-2"
+                      style="font-size: 0.95rem"
+                    >
+                      Số điện thoại <span class="text-danger">*</span>
+                    </label>
+                    <div class="input-group">
+                      <span class="input-group-text bg-light border-end-0">
+                        <i class="bi bi-telephone text-teal"></i>
+                      </span>
+                      <input
+                        v-model="customer.phone"
+                        type="tel"
+                        class="form-control search-input border-start-0"
+                        placeholder="Nhập số điện thoại"
+                        disabled
+                        style="
+                          border-radius: 0 0.5rem 0.5rem 0;
+                          transition: all 0.3s ease;
+                        "
+                      />
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <label
+                      class="form-label fw-medium text-dark mb-2"
+                      style="font-size: 0.95rem"
+                    >
+                      Tỉnh/Thành phố <span class="text-danger">*</span>
+                    </label>
+                    <div class="input-group">
+                      <span class="input-group-text bg-light border-end-0">
+                        <i class="bi bi-geo-alt text-teal"></i>
+                      </span>
+                      <select
+                        v-model="customer.city"
+                        class="form-select search-input border-start-0"
+                        @change="handleCustomerProvinceChange"
+                        style="
+                          border-radius: 0 0.5rem 0.5rem 0;
+                          transition: all 0.3s ease;
+                        "
+                        disabled
+                      >
+                        <option value="" disabled>
+                          Chọn tỉnh/thành phố
+                        </option>
+                        <option
+                          v-for="province in provinces"
+                          :key="province.code"
+                          :value="province.name"
                         >
-                          Tên người nhận <span class="text-danger">*</span>
-                        </label>
-                        <div class="input-group">
-                          <span class="input-group-text bg-light border-end-0">
-                            <i class="bi bi-person text-teal"></i>
-                          </span>
-                          <input
-                            v-model="customer.name"
-                            type="text"
-                            class="form-control search-input border-start-0"
-                            placeholder="Nhập tên người nhận"
-                            :disabled="!isReceiverEditable"
-                            style="
-                              border-radius: 0 0.5rem 0.5rem 0;
-                              transition: all 0.3s ease;
-                            "
-                          />
-                        </div>
-                      </div>
-                      <div class="col-md-6">
-                        <label
-                          class="form-label fw-medium text-dark mb-2"
-                          style="font-size: 0.95rem"
+                          {{ province.name }}
+                        </option>
+                      </select>
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <label
+                      class="form-label fw-medium text-dark mb-2"
+                      style="font-size: 0.95rem"
+                    >
+                      Quận/Huyện <span class="text-danger">*</span>
+                    </label>
+                    <div class="input-group">
+                      <span class="input-group-text bg-light border-end-0">
+                        <i class="bi bi-geo text-teal"></i>
+                      </span>
+                      <select
+                        v-model="customer.district"
+                        class="form-select search-input border-start-0"
+                        @change="handleCustomerDistrictChange"
+                        style="
+                          border-radius: 0 0.5rem 0.5rem 0;
+                          transition: all 0.3s ease;
+                        "
+                        disabled
+                      >
+                        <option value="" disabled>Chọn quận/huyện</option>
+                        <option
+                          v-for="district in districts"
+                          :key="district.code"
+                          :value="district.name"
                         >
-                          Số điện thoại <span class="text-danger">*</span>
-                        </label>
-                        <div class="input-group">
-                          <span class="input-group-text bg-light border-end-0">
-                            <i class="bi bi-telephone text-teal"></i>
-                          </span>
-                          <input
-                            v-model="customer.phone"
-                            type="tel"
-                            class="form-control search-input border-start-0"
-                            placeholder="Nhập số điện thoại"
-                            :disabled="!isReceiverEditable"
-                            style="
-                              border-radius: 0 0.5rem 0.5rem 0;
-                              transition: all 0.3s ease;
-                            "
-                          />
-                        </div>
-                      </div>
-                      <div class="col-md-6">
-                        <label
-                          class="form-label fw-medium text-dark mb-2"
-                          style="font-size: 0.95rem"
+                          {{ district.name }}
+                        </option>
+                      </select>
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <label
+                      class="form-label fw-medium text-dark mb-2"
+                      style="font-size: 0.95rem"
+                    >
+                      Phường/Xã <span class="text-danger">*</span>
+                    </label>
+                    <div class="input-group">
+                      <span class="input-group-text bg-light border-end-0">
+                        <i class="bi bi-geo-fill text-teal"></i>
+                      </span>
+                      <select
+                        v-model="customer.ward"
+                        class="form-select search-input border-start-0"
+                        style="
+                          border-radius: 0 0.5rem 0.5rem 0;
+                          transition: all 0.3s ease;
+                        "
+                        disabled
+                      >
+                        <option value="" disabled>Chọn phường/xã</option>
+                        <option
+                          v-for="ward in wards"
+                          :key="ward.code"
+                          :value="ward.name"
                         >
-                          Tỉnh/Thành phố <span class="text-danger">*</span>
-                        </label>
-                        <div class="input-group">
-                          <span class="input-group-text bg-light border-end-0">
-                            <i class="bi bi-geo-alt text-teal"></i>
-                          </span>
-                          <select
-                            v-model="customer.city"
-                            class="form-select search-input border-start-0"
-                            @change="handleCustomerProvinceChange"
-                            style="
-                              border-radius: 0 0.5rem 0.5rem 0;
-                              transition: all 0.3s ease;
-                            "
-                          >
-                            <option value="" disabled>
-                              Chọn tỉnh/thành phố
-                            </option>
-                            <option
-                              v-for="province in provinces"
-                              :key="province.code"
-                              :value="province.name"
-                            >
-                              {{ province.name }}
-                            </option>
-                          </select>
-                        </div>
-                      </div>
-                      <div class="col-md-6">
-                        <label
-                          class="form-label fw-medium text-dark mb-2"
-                          style="font-size: 0.95rem"
-                        >
-                          Quận/Huyện <span class="text-danger">*</span>
-                        </label>
-                        <div class="input-group">
-                          <span class="input-group-text bg-light border-end-0">
-                            <i class="bi bi-geo text-teal"></i>
-                          </span>
-                          <select
-                            v-model="customer.district"
-                            class="form-select search-input border-start-0"
-                            @change="handleCustomerDistrictChange"
-                            style="
-                              border-radius: 0 0.5rem 0.5rem 0;
-                              transition: all 0.3s ease;
-                            "
-                          >
-                            <option value="" disabled>Chọn quận/huyện</option>
-                            <option
-                              v-for="district in districts"
-                              :key="district.code"
-                              :value="district.name"
-                            >
-                              {{ district.name }}
-                            </option>
-                          </select>
-                        </div>
-                      </div>
-                      <div class="col-md-6">
-                        <label
-                          class="form-label fw-medium text-dark mb-2"
-                          style="font-size: 0.95rem"
-                        >
-                          Phường/Xã <span class="text-danger">*</span>
-                        </label>
-                        <div class="input-group">
-                          <span class="input-group-text bg-light border-end-0">
-                            <i class="bi bi-geo-fill text-teal"></i>
-                          </span>
-                          <select
-                            v-model="customer.ward"
-                            class="form-select search-input border-start-0"
-                            style="
-                              border-radius: 0 0.5rem 0.5rem 0;
-                              transition: all 0.3s ease;
-                            "
-                          >
-                            <option value="" disabled>Chọn phường/xã</option>
-                            <option
-                              v-for="ward in wards"
-                              :key="ward.code"
-                              :value="ward.name"
-                            >
-                              {{ ward.name }}
-                            </option>
-                          </select>
-                        </div>
-                      </div>
-
-                      <div class="col-12">
-                        <label
-                          class="form-label fw-medium text-dark mb-2"
-                          style="font-size: 0.95rem"
-                        >
-                          Địa chỉ cụ thể <span class="text-danger">*</span>
-                        </label>
-                        <div class="input-group">
-                          <span class="input-group-text bg-light border-end-0">
-                            <i class="bi bi-house-door text-teal"></i>
-                          </span>
-                          <input
-                            v-model="customer.address"
-                            type="text"
-                            class="form-control search-input border-start-0"
-                            placeholder="Nhập địa chỉ cụ thể (số nhà, tên đường,...)"
-                            :disabled="!isReceiverEditable"
-                            style="
-                              border-radius: 0 0.5rem 0.5rem 0;
-                              transition: all 0.3s ease;
-                            "
-                          />
-                        </div>
-                      </div>
-                      <div class="d-flex align-items-center gap-2 mt-2">
-                        <label
-                          class="form-label fw-medium text-dark mb-2"
-                          style="font-size: 0.95rem; margin-top: 10px"
-                        >
-                          Giao hàng tận nhà <span class="text-danger"></span>
-                        </label>
-                        <input
-                          type="checkbox"
-                          class="form-check-input"
-                          v-model="isHomeDelivery"
-                          :disabled="!isReceiverEditable"
-                          style="
-                            margin-top: 10px;
-                            border-color: #34d399;
-                            margin-left: auto;
-                          "
-                        />
-                      </div>
-                      <div v-if="isHomeDelivery" class="mt-2">
-                        <label
-                          class="form-label fw-medium text-dark mb-2"
-                          style="font-size: 0.95rem"
-                        >
-                          Phí vận chuyển <span class="text-danger">*</span>
-                        </label>
-                        <div class="input-group">
-                          <span class="input-group-text bg-light border-end-0">
-                            <i class="bi bi-truck text-teal"></i>
-                          </span>
-                          <input
-                            v-model.number="shippingFee"
-                            type="number"
-                            class="form-control search-input border-start-0"
-                            placeholder="Nhập phí vận chuyển (VND)"
-                            min="0"
-                            :disabled="!isReceiverEditable"
-                            style="
-                              border-radius: 0 0.5rem 0.5rem 0;
-                              transition: all 0.3s ease;
-                            "
-                            @input="updateShippingFee"
-                          />
-                        </div>
-                      </div>
-
-                      <div class="mt-4 text-end" v-if="!isReceiverEditable">
-                        <button
-                          class="btn btn-outline-teal btn-sm px-4 py-2"
-                          @click="isReceiverEditable = true"
-                          style="
-                            border-radius: 0.5rem;
-                            transition: all 0.3s ease;
-                          "
-                        >
-                          <i class="bi bi-pencil-square me-2"></i>Chỉnh sửa
-                        </button>
-                      </div>
+                          {{ ward.name }}
+                        </option>
+                      </select>
+                    </div>
+                  </div>
+                  <div class="col-12">
+                    <label
+                      class="form-label fw-medium text-dark mb-2"
+                      style="font-size: 0.95rem"
+                    >
+                      Địa chỉ cụ thể <span class="text-danger">*</span>
+                    </label>
+                    <div class="input-group">
+                      <span class="input-group-text bg-light border-end-0">
+                        <i class="bi bi-house-door text-teal"></i>
+                      </span>
+                      <input
+                        v-model="customer.address"
+                        type="text"
+                        class="form-control search-input border-start-0"
+                        placeholder="Nhập địa chỉ cụ thể (số nhà, tên đường,...)"
+                        style="
+                          border-radius: 0 0.5rem 0.5rem 0;
+                          transition: all 0.3s ease;
+                        "
+                      />
+                    </div>
+                  </div>
+                  <div class="d-flex align-items-center gap-2 mt-2">
+                    <label
+                      class="form-label fw-medium text-dark mb-2"
+                      style="font-size: 0.95rem; margin-top: 10px"
+                    >
+                      Giao hàng tận nhà <span class="text-danger"></span>
+                    </label>
+                    <input
+                      type="checkbox"
+                      class="form-check-input"
+                      v-model="isHomeDelivery"
+                      style="
+                        margin-top: 10px;
+                        border-color: #34d399;
+                        margin-left: auto;
+                      "
+                    />
+                  </div>
+                  <div v-if="isHomeDelivery" class="mt-2">
+                    <label
+                      class="form-label fw-medium text-dark mb-2"
+                      style="font-size: 0.95rem"
+                    >
+                      Phí vận chuyển <span class="text-danger">*</span>
+                    </label>
+                    <div class="input-group">
+                      <span class="input-group-text bg-light border-end-0">
+                        <i class="bi bi-truck text-teal"></i>
+                      </span>
+                      <input
+                        v-model.number="shippingFee"
+                        type="number"
+                        class="form-control search-input border-start-0"
+                        placeholder="Nhập phí vận chuyển (VND)"
+                        min="0"
+                        style="
+                          border-radius: 0 0.5rem 0.5rem 0;
+                          transition: all 0.3s ease;
+                        "
+                        @input="updateShippingFee"
+                      />
                     </div>
                   </div>
                 </div>
+              </div>
+            </div>
 
                 <!-- Voucher Section -->
                 <div class="voucher-section mb-2 mt-3">
@@ -1905,6 +1890,101 @@
           </div>
         </div>
       </div>
+
+      <!-- Address Selection Modal -->
+<div
+  v-if="showAddressModal"
+  class="modal fade show d-block"
+  tabindex="-1"
+  style="background: rgba(0, 0, 0, 0.5)"
+>
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div
+      class="modal-content shadow-lg p-3 gradient-modal animate__animated animate__zoomIn"
+      style="border-radius: 0.75rem"
+    >
+      <!-- Header -->
+      <div
+        class="modal-header border-0 d-flex justify-content-between align-items-center"
+      >
+        <h5 class="modal-title fw-bold text-dark">
+          <i class="bi bi-geo-alt-fill text-success me-2"></i>
+          Chọn địa chỉ khách hàng
+        </h5>
+        <button
+          class="btn btn-outline-secondary btn-close-custom"
+          @click="closeAddressModal"
+        >
+          <i class="bi bi-x-lg"></i>
+        </button>
+      </div>
+
+      <!-- Body -->
+      <div class="modal-body p-4">
+        <div
+          v-if="customerAddresses.length === 0"
+          class="empty-cart-container py-4 text-muted"
+        >
+          <div
+            class="empty-icon-container d-flex align-items-center justify-content-center mb-3 rounded-circle p-3"
+            style="width: 60px; height: 60px"
+          >
+            <i class="bi bi-info-circle text-white" style="font-size: 1.5rem"></i>
+          </div>
+          <p class="fw-medium">Không có địa chỉ nào được lưu</p>
+        </div>
+
+        <div v-else class="d-flex flex-column gap-3">
+          <div
+            v-for="(address, index) in customerAddresses"
+            :key="address.id"
+            class="address-card p-3 rounded shadow-sm animate__animated animate__fadeInUp"
+            :class="{ 'border border-2 border-success bg-light': selectedAddressId === address.id }"
+            style="cursor: pointer; transition: all 0.3s ease"
+            @click="selectAddress(address)"
+          >
+            <div class="d-flex align-items-start">
+              <input
+                type="radio"
+                :value="address.id"
+                v-model="selectedAddressId"
+                class="form-check-input me-3 mt-1"
+                style="border-color: #34d399"
+              />
+              <div>
+                <div class="fw-bold text-dark">
+                  <i class="bi bi-house-door-fill text-success me-2"></i>
+                  Địa chỉ {{ index + 1 }}
+                </div>
+                <div class="text-muted small">
+                  {{ address.address }}, {{ address.ward }}, {{ address.district }}, {{ address.city }}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="modal-footer border-0">
+        <button
+          class="btn btn-outline-teal px-4 py-2"
+          @click="closeAddressModal"
+        >
+          <i class="bi bi-x-circle me-2"></i> Hủy
+        </button>
+        <button
+          class="btn teal text-white px-4 py-2 select-btn"
+          @click="applySelectedAddress"
+          :disabled="!selectedAddressId"
+        >
+          <i class="bi bi-check-circle me-2"></i> Xác nhận
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
 
       <!-- Notification Modal -->
       <NotificationModal

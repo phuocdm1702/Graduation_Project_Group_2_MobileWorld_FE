@@ -22,6 +22,7 @@ import {
   loadPendingInvoiceApi,
   cancelInvoiceApi,
   fetchProductsApi,
+  getAllAddressesByKhachHangIdApi,
   removeItemApi,
   fetchIMEIsApi,
   getProductDetailsByIdApi,
@@ -82,6 +83,7 @@ export default {
     const selectedIMEIs = ref([]);
     const searchCustomer = ref("");
     const selectedCustomer = ref(null);
+    const isSearching = ref(false);
     const customer = ref({
       id: null,
       name: "",
@@ -115,6 +117,8 @@ export default {
       ward: "",
       address: "",
     });
+    const showAddressModal = ref(false); // Kiểm soát hiển thị modal chọn địa chỉ
+    const customerAddresses = ref([]); // Lưu danh sách địa chỉ của khách hàng
     const notificationType = ref("confirm");
     const notificationMessage = ref("");
     const isNotificationLoading = ref(false);
@@ -650,29 +654,28 @@ export default {
       }
     };
 
+    const closeAddressModal = () => {
+  showAddressModal.value = false;
+  selectedAddressId.value = null; // Reset any related state
+  console.log('Modal closed'); // Optional debug log
+};
+
     // Cập nhật hàm searchCustomers
-    const searchCustomers = async () => {
+   const searchCustomers = async () => {
   if (!activeInvoiceId.value) {
-    showToast(
-      "error",
-      "Vui lòng chọn hoặc tạo một hóa đơn trước khi tìm kiếm khách hàng"
-    );
+    showToast("error", "Vui lòng chọn hoặc tạo một hóa đơn trước khi tìm kiếm khách hàng");
     return;
   }
 
+  isSearching.value = true; // Bắt đầu loading
   try {
-    // Cho phép keyword rỗng để backend gán id_khach_hang = 1
     const keyword = searchCustomer.value || "";
-    const result = await searchCustomersApi(
-      keyword,
-      activeInvoiceId.value
-    );
+    const result = await searchCustomersApi(keyword, activeInvoiceId.value);
 
     if (result.success && result.data) {
-      // Kiểm tra dữ liệu trả về là đối tượng HoaDon
       const customerData = {
-        id: result.data.idKhachHang?.id || 1, // Mặc định id = 1 nếu không có
-        ten: searchCustomer.value ? (result.data.tenKhachHang || "") : "",
+        id: result.data.idKhachHang?.id || 1,
+        ten: searchCustomer.value ? result.data.tenKhachHang || "" : "",
         soDienThoai: result.data.soDienThoaiKhachHang || "",
         diaChi: result.data.diaChiKhachHang || "",
         email: result.data.email || "",
@@ -689,10 +692,22 @@ export default {
         address: result.data.diaChiKhachHang?.diaChiCuThe || "",
       };
 
-      // Cập nhật thông tin khách hàng vào hóa đơn hiện tại
-      const invoiceIndex = pendingInvoices.value.findIndex(
-        (inv) => inv.id === activeInvoiceId.value
-      );
+      // Lấy danh sách địa chỉ khách hàng
+      if (customerData.id) {
+        const addressResult = await getAllAddressesByKhachHangIdApi(customerData.id);
+        customerAddresses.value = addressResult.success && Array.isArray(addressResult.data)
+          ? addressResult.data.map((addr, index) => ({
+              id: addr.id || index + 1,
+              city: addr.thanhPho || "",
+              district: addr.quan || "",
+              ward: addr.phuong || "",
+              address: addr.diaChiCuThe || "",
+            }))
+          : [];
+      }
+
+      // Gắn vào hóa đơn
+      const invoiceIndex = pendingInvoices.value.findIndex((inv) => inv.id === activeInvoiceId.value);
       if (invoiceIndex !== -1) {
         pendingInvoices.value[invoiceIndex].customer = {
           ...customer.value,
@@ -700,106 +715,94 @@ export default {
           tenKhachHang: customerData.ten,
           soDienThoaiKhachHang: customerData.soDienThoai,
         };
-        pendingInvoices.value[invoiceIndex].idKhachHang = customerData.id;
-        pendingInvoices.value[invoiceIndex].tenKhachHang = customerData.ten;
-        pendingInvoices.value[invoiceIndex].soDienThoaiKhachHang = customerData.soDienThoai;
       }
 
+      await applyBestDiscount();
+    } else {
+      selectedCustomer.value = null;
+      customer.value = { id: null, name: "", phone: "", city: "", district: "", ward: "", address: "" };
+      customerAddresses.value = [];
+      privateDiscountCodes.value = [];
+      showToast("warning", result.message || "Không tìm thấy khách hàng");
+      await applyBestDiscount();
+    }
+  } catch (error) {
+    selectedCustomer.value = null;
+    customer.value = { id: null, name: "", phone: "", city: "", district: "", ward: "", address: "" };
+    customerAddresses.value = [];
+    privateDiscountCodes.value = [];
+    showToast("error", `Lỗi khi tìm kiếm khách hàng: ${error.response?.data || error.message}`);
+    await applyBestDiscount();
+  } finally {
+    isSearching.value = false; // Kết thúc loading
+  }
+};
+
+
+    const selectAddress = async (address) => {
+      customer.value = {
+        ...customer.value,
+        city: address.city,
+        district: address.district,
+        ward: address.ward,
+        address: address.address,
+      };
+      if (isDelivery.value) {
+        receiver.value = { ...customer.value };
+        isReceiverEditable.value = false;
+      }
+      // Cập nhật thông tin khách hàng vào hóa đơn
+      const invoiceIndex = pendingInvoices.value.findIndex(
+        (inv) => inv.id === activeInvoiceId.value
+      );
+      if (invoiceIndex !== -1) {
+        pendingInvoices.value[invoiceIndex].customer = {
+          ...customer.value,
+          idKhachHang: customer.value.id,
+          tenKhachHang: customer.value.name,
+          soDienThoaiKhachHang: customer.value.phone,
+        };
+      }
+      showAddressModal.value = false;
+      showToast(
+        "success",
+        `Đã chọn địa chỉ: ${address.address}, ${address.ward}, ${address.district}, ${address.city}`
+      );
       if (customer.value.city) {
         await fetchDistricts(customer.value.city);
         if (customer.value.district) {
           await fetchWards(customer.value.district);
         }
       }
-
-      if (customerData.id) {
-        const pggResult = await getPhieuGiamGiaByKhachHangApi(
-          customerData.id
-        );
-        if (pggResult.success && Array.isArray(pggResult.data)) {
-          privateDiscountCodes.value = pggResult.data
-            .filter(
-              (item) =>
-                item.idPhieuGiamGia?.riengTu === true &&
-                isValidDiscount(item.idPhieuGiamGia?.ngayKetThuc)
-            )
-            .map((item, index) => ({
-              id: item.id || index + 1,
-              code: item.ma || "Unknown",
-              value: item.idPhieuGiamGia?.soTienGiamToiDa || 0,
-              expiry: formatDate(item.idPhieuGiamGia?.ngayKetThuc),
-              rawExpiry: item.idPhieuGiamGia?.ngayKetThuc,
-              type: "private",
-            }));
-          showToast(
-            "success",
-            `Tìm thấy khách hàng: ${customer.value.name} với ${privateDiscountCodes.value.length} mã giảm giá cá nhân`
-          );
-        } else {
-          privateDiscountCodes.value = [];
-          showToast(
-            "warning",
-            `Tìm thấy khách hàng: ${customer.value.name}, nhưng không có mã giảm giá cá nhân`
-          );
-        }
-      } else {
-        privateDiscountCodes.value = [];
-        showToast(
-          "warning",
-          `Tìm thấy khách hàng: ${customer.value.name}, nhưng không có ID để lấy mã giảm giá`
-        );
-      }
-      await applyBestDiscount();
-    } else {
-      selectedCustomer.value = null;
-      customer.value = {
-        id: null,
-        name: "",
-        phone: "",
-        city: "",
-        district: "",
-        ward: "",
-        address: "",
-      };
-      privateDiscountCodes.value = [];
-      const invoiceIndex = pendingInvoices.value.findIndex(
-        (inv) => inv.id === activeInvoiceId.value
-      );
-      if (invoiceIndex !== -1) {
-        pendingInvoices.value[invoiceIndex].customer = null;
-        pendingInvoices.value[invoiceIndex].idKhachHang = null;
-        pendingInvoices.value[invoiceIndex].tenKhachHang = "";
-        pendingInvoices.value[invoiceIndex].soDienThoaiKhachHang = "";
-      }
-      showToast("warning", result.message || "Không tìm thấy khách hàng");
-      await applyBestDiscount();
-    }
-  } catch (error) {
-    selectedCustomer.value = null;
-    customer.value = {
-      id: null,
-      name: "",
-      phone: "",
-      city: "",
-      district: "",
-      ward: "",
-      address: "",
     };
-    privateDiscountCodes.value = [];
-    const invoiceIndex = pendingInvoices.value.findIndex(
-      (inv) => inv.id === activeInvoiceId.value
-    );
-    if (invoiceIndex !== -1) {
-      pendingInvoices.value[invoiceIndex].customer = null;
-      pendingInvoices.value[invoiceIndex].idKhachHang = null;
-      pendingInvoices.value[invoiceIndex].tenKhachHang = "";
-      pendingInvoices.value[invoiceIndex].soDienThoaiKhachHang = "";
-    }
-    showToast("error", `Lỗi khi tìm kiếm khách hàng: ${error.response?.data || error.message}`);
-    await applyBestDiscount();
-  }
-};
 
+    const applySelectedAddress = async () => {
+      const selectedAddress = customerAddresses.value.find(
+        (addr) => addr.id === selectedAddressId.value
+      );
+      if (selectedAddress) {
+        await selectAddress(selectedAddress);
+        showToast(
+          "success",
+          `Đã chọn địa chỉ: ${selectedAddress.address}, ${selectedAddress.ward}, ${selectedAddress.district}, ${selectedAddress.city}`
+        );
+      }
+      showAddressModal.value = false;
+    };
+
+
+    const openAddressModal = () => {
+      if (!selectedCustomer.value || !selectedCustomer.value.id) {
+        showToast("error", "Vui lòng chọn khách hàng trước khi chọn địa chỉ");
+        return;
+      }
+      console.log("Customer addresses:", customerAddresses.value); // Log để kiểm tra
+      if (customerAddresses.value.length === 0) {
+        showToast("warning", "Khách hàng này chưa có địa chỉ nào");
+        return;
+      }
+      showAddressModal.value = true;
+    };
     const confirmCancelInvoice = (invoice) => {
       showConfirm(
         `Bạn có chắc chắn muốn hủy hóa đơn ${invoice.ma}?`,
@@ -1397,182 +1400,242 @@ export default {
     };
 
     const applyBestDiscount = async () => {
-  if (!cartItems.value.length || tongTien.value <= 0) {
-    selectedDiscount.value = null;
-    manualDiscountSelected.value = false;
-    // Xóa id_phieu_giam_gia khỏi hóa đơn nếu không có giỏ hàng
-    if (activeInvoiceId.value) {
-      try {
-        const updateResult = await updatePhieuGiamGiaApi(activeInvoiceId.value, null);
-        if (updateResult.success) {
-          showToast("info", "Đã xóa mã giảm giá khỏi hóa đơn do giỏ hàng trống");
-        } else {
-          showToast("error", updateResult.message || "Lỗi khi xóa mã giảm giá khỏi hóa đơn");
-        }
-      } catch (error) {
-        showToast("error", `Lỗi khi xóa mã giảm giá: ${error.message}`);
-      }
-    }
-    return;
-  }
-
-  if (manualDiscountSelected.value) {
-    const result = await validateDiscountApi(
-      selectedDiscount.value.code,
-      tongTien.value,
-      customer.value?.id || null
-    );
-    if (!result.success || !result.data || Number(result.data.soLuongDung) <= 0) {
-      selectedDiscount.value = null;
-      manualDiscountSelected.value = false;
-      // Xóa id_phieu_giam_gia khỏi hóa đơn nếu mã không hợp lệ
-      if (activeInvoiceId.value) {
-        try {
-          const updateResult = await updatePhieuGiamGiaApi(activeInvoiceId.value, null);
-          if (updateResult.success) {
-            showToast("info", "Mã giảm giá đã chọn không còn hợp lệ và đã được xóa khỏi hóa đơn");
-          } else {
-            showToast("error", updateResult.message || "Lỗi khi xóa mã giảm giá khỏi hóa đơn");
-          }
-        } catch (error) {
-          showToast("error", `Lỗi khi xóa mã giảm giá: ${error.message}`);
-        }
-      }
-      showToast("info", "Mã giảm giá đã chọn không còn hợp lệ hoặc đã hết số lượng");
-    }
-    return;
-  }
-
-  if (!activeInvoiceId.value) {
-    showToast("error", "Vui lòng chọn hoặc tạo một hóa đơn trước khi áp dụng mã giảm giá");
-    return;
-  }
-
-  try {
-    await fetchPGG();
-
-    if (customer.value?.id) {
-      const pggResult = await getPhieuGiamGiaByKhachHangApi(
-        customer.value.id
-      );
-      if (pggResult.success && Array.isArray(pggResult.data)) {
-        privateDiscountCodes.value = pggResult.data
-          .filter((item) => {
-            const pgg = item.idPhieuGiamGia || {};
-            const isPrivate = pgg.riengTu === true;
-            const isValid = isValidDiscount(
-              pgg.ngayKetThuc || item.ngayHetHan
-            );
-            const hasQuantity = Number(pgg.soLuongDung || item.soLuongDung) > 0;
-            return isPrivate && isValid && hasQuantity;
-          })
-          .map((item, index) => ({
-            id: item.id || index + 1,
-            code: item.idPhieuGiamGia?.ma || item.ma || "Unknown",
-            tenPhieuGiamGia:
-              item.idPhieuGiamGia?.tenPhieuGiamGia || "Unknown",
-            value: item.idPhieuGiamGia?.soTienGiamToiDa || 0,
-            percent: item.idPhieuGiamGia?.phanTramGiamGia || 0,
-            expiry: formatDate(
-              item.idPhieuGiamGia?.ngayKetThuc || item.ngayHetHan
-            ),
-            rawExpiry: item.idPhieuGiamGia?.ngayKetThuc || item.ngayHetHan,
-            minOrder: item.idPhieuGiamGia?.hoaDonToiThieu || 0,
-            soLuongDung: Number(item.idPhieuGiamGia?.soLuongDung || item.soLuongDung) || 0,
-            type: "private",
-          }));
-      }
-    }
-
-    const allDiscounts = [
-      ...publicDiscountCodes.value.map((code) => ({
-        ...code,
-        type: "public",
-      })),
-      ...privateDiscountCodes.value,
-    ];
-
-    let bestDiscount = null;
-    for (const code of allDiscounts) {
-      const result = await validateDiscountApi(
-        code.code,
-        tongTien.value,
-        customer.value?.id || null
-      );
-      if (result.success && result.data && Number(result.data.soLuongDung) > 0) {
-        const fixedDiscount = code.value || 0;
-        const percentDiscount = code.percent
-          ? Math.min(
-              (code.percent / 100) * tongTien.value,
-              code.value || Infinity
-            )
-          : 0;
-        const actualDiscount = Math.max(fixedDiscount, percentDiscount);
-
-        if (
-          (code.type === "public" && tongTien.value >= code.minOrder) ||
-          code.type === "private"
-        ) {
-          if (!bestDiscount || actualDiscount > bestDiscount.value) {
-            bestDiscount = { ...code, value: actualDiscount };
-          }
-        }
-      }
-    }
-
-    if (bestDiscount) {
-      selectedDiscount.value = { ...bestDiscount };
-      const discountText = bestDiscount.percent
-        ? `${bestDiscount.percent}% (${formatPrice(bestDiscount.value)})`
-        : formatPrice(bestDiscount.value);
-
-      // Gọi API để lưu id_phieu_giam_gia vào hóa đơn
-      const updateResult = await updatePhieuGiamGiaApi(activeInvoiceId.value, bestDiscount.id);
-      if (updateResult.success) {
-        showToast(
-          "success",
-          `Đã áp dụng mã giảm giá ${
-            bestDiscount.tenPhieuGiamGia || bestDiscount.code
-          } (-${discountText}) và lưu vào hóa đơn`
-        );
-      } else {
+      if (!cartItems.value.length || tongTien.value <= 0) {
         selectedDiscount.value = null;
-        showToast("error", updateResult.message || "Lỗi khi lưu mã giảm giá vào hóa đơn");
+        manualDiscountSelected.value = false;
+        // Xóa id_phieu_giam_gia khỏi hóa đơn nếu không có giỏ hàng
+        if (activeInvoiceId.value) {
+          try {
+            const updateResult = await updatePhieuGiamGiaApi(
+              activeInvoiceId.value,
+              null
+            );
+            if (updateResult.success) {
+              showToast(
+                "info",
+                "Đã xóa mã giảm giá khỏi hóa đơn do giỏ hàng trống"
+              );
+            } else {
+              showToast(
+                "error",
+                updateResult.message || "Lỗi khi xóa mã giảm giá khỏi hóa đơn"
+              );
+            }
+          } catch (error) {
+            showToast("error", `Lỗi khi xóa mã giảm giá: ${error.message}`);
+          }
+        }
+        return;
       }
-    } else {
-      selectedDiscount.value = null;
-      // Xóa id_phieu_giam_gia khỏi hóa đơn nếu không có mã hợp lệ
+
+      if (manualDiscountSelected.value) {
+        const result = await validateDiscountApi(
+          selectedDiscount.value.code,
+          tongTien.value,
+          customer.value?.id || null
+        );
+        if (
+          !result.success ||
+          !result.data ||
+          Number(result.data.soLuongDung) <= 0
+        ) {
+          selectedDiscount.value = null;
+          manualDiscountSelected.value = false;
+          // Xóa id_phieu_giam_gia khỏi hóa đơn nếu mã không hợp lệ
+          if (activeInvoiceId.value) {
+            try {
+              const updateResult = await updatePhieuGiamGiaApi(
+                activeInvoiceId.value,
+                null
+              );
+              if (updateResult.success) {
+                showToast(
+                  "info",
+                  "Mã giảm giá đã chọn không còn hợp lệ và đã được xóa khỏi hóa đơn"
+                );
+              } else {
+                showToast(
+                  "error",
+                  updateResult.message || "Lỗi khi xóa mã giảm giá khỏi hóa đơn"
+                );
+              }
+            } catch (error) {
+              showToast("error", `Lỗi khi xóa mã giảm giá: ${error.message}`);
+            }
+          }
+          showToast(
+            "info",
+            "Mã giảm giá đã chọn không còn hợp lệ hoặc đã hết số lượng"
+          );
+        }
+        return;
+      }
+
+      if (!activeInvoiceId.value) {
+        showToast(
+          "error",
+          "Vui lòng chọn hoặc tạo một hóa đơn trước khi áp dụng mã giảm giá"
+        );
+        return;
+      }
+
       try {
-        const updateResult = await updatePhieuGiamGiaApi(activeInvoiceId.value, null);
-        if (updateResult.success) {
-          showToast("info", "Không có mã giảm giá nào khả dụng, đã xóa mã giảm giá khỏi hóa đơn");
+        await fetchPGG();
+
+        if (customer.value?.id) {
+          const pggResult = await getPhieuGiamGiaByKhachHangApi(
+            customer.value.id
+          );
+          if (pggResult.success && Array.isArray(pggResult.data)) {
+            privateDiscountCodes.value = pggResult.data
+              .filter((item) => {
+                const pgg = item.idPhieuGiamGia || {};
+                const isPrivate = pgg.riengTu === true;
+                const isValid = isValidDiscount(
+                  pgg.ngayKetThuc || item.ngayHetHan
+                );
+                const hasQuantity =
+                  Number(pgg.soLuongDung || item.soLuongDung) > 0;
+                return isPrivate && isValid && hasQuantity;
+              })
+              .map((item, index) => ({
+                id: item.id || index + 1,
+                code: item.idPhieuGiamGia?.ma || item.ma || "Unknown",
+                tenPhieuGiamGia:
+                  item.idPhieuGiamGia?.tenPhieuGiamGia || "Unknown",
+                value: item.idPhieuGiamGia?.soTienGiamToiDa || 0,
+                percent: item.idPhieuGiamGia?.phanTramGiamGia || 0,
+                expiry: formatDate(
+                  item.idPhieuGiamGia?.ngayKetThuc || item.ngayHetHan
+                ),
+                rawExpiry: item.idPhieuGiamGia?.ngayKetThuc || item.ngayHetHan,
+                minOrder: item.idPhieuGiamGia?.hoaDonToiThieu || 0,
+                soLuongDung:
+                  Number(
+                    item.idPhieuGiamGia?.soLuongDung || item.soLuongDung
+                  ) || 0,
+                type: "private",
+              }));
+          }
+        }
+
+        const allDiscounts = [
+          ...publicDiscountCodes.value.map((code) => ({
+            ...code,
+            type: "public",
+          })),
+          ...privateDiscountCodes.value,
+        ];
+
+        let bestDiscount = null;
+        for (const code of allDiscounts) {
+          const result = await validateDiscountApi(
+            code.code,
+            tongTien.value,
+            customer.value?.id || null
+          );
+          if (
+            result.success &&
+            result.data &&
+            Number(result.data.soLuongDung) > 0
+          ) {
+            const fixedDiscount = code.value || 0;
+            const percentDiscount = code.percent
+              ? Math.min(
+                  (code.percent / 100) * tongTien.value,
+                  code.value || Infinity
+                )
+              : 0;
+            const actualDiscount = Math.max(fixedDiscount, percentDiscount);
+
+            if (
+              (code.type === "public" && tongTien.value >= code.minOrder) ||
+              code.type === "private"
+            ) {
+              if (!bestDiscount || actualDiscount > bestDiscount.value) {
+                bestDiscount = { ...code, value: actualDiscount };
+              }
+            }
+          }
+        }
+
+        if (bestDiscount) {
+          selectedDiscount.value = { ...bestDiscount };
+          const discountText = bestDiscount.percent
+            ? `${bestDiscount.percent}% (${formatPrice(bestDiscount.value)})`
+            : formatPrice(bestDiscount.value);
+
+          // Gọi API để lưu id_phieu_giam_gia vào hóa đơn
+          const updateResult = await updatePhieuGiamGiaApi(
+            activeInvoiceId.value,
+            bestDiscount.id
+          );
+          if (updateResult.success) {
+            showToast(
+              "success",
+              `Đã áp dụng mã giảm giá ${
+                bestDiscount.tenPhieuGiamGia || bestDiscount.code
+              } (-${discountText}) và lưu vào hóa đơn`
+            );
+          } else {
+            selectedDiscount.value = null;
+            showToast(
+              "error",
+              updateResult.message || "Lỗi khi lưu mã giảm giá vào hóa đơn"
+            );
+          }
         } else {
-          showToast("error", updateResult.message || "Lỗi khi xóa mã giảm giá khỏi hóa đơn");
+          selectedDiscount.value = null;
+          // Xóa id_phieu_giam_gia khỏi hóa đơn nếu không có mã hợp lệ
+          try {
+            const updateResult = await updatePhieuGiamGiaApi(
+              activeInvoiceId.value,
+              null
+            );
+            if (updateResult.success) {
+              showToast(
+                "info",
+                "Không có mã giảm giá nào khả dụng, đã xóa mã giảm giá khỏi hóa đơn"
+              );
+            } else {
+              showToast(
+                "error",
+                updateResult.message || "Lỗi khi xóa mã giảm giá khỏi hóa đơn"
+              );
+            }
+          } catch (error) {
+            showToast("error", `Lỗi khi xóa mã giảm giá: ${error.message}`);
+          }
+          showToast("info", "Không có mã giảm giá nào khả dụng");
         }
       } catch (error) {
-        showToast("error", `Lỗi khi xóa mã giảm giá: ${error.message}`);
-      }
-      showToast("info", "Không có mã giảm giá nào khả dụng");
-    }
-  } catch (error) {
-    selectedDiscount.value = null;
-    manualDiscountSelected.value = false;
-    // Xóa id_phieu_giam_gia khỏi hóa đơn nếu có lỗi
-    if (activeInvoiceId.value) {
-      try {
-        const updateResult = await updatePhieuGiamGiaApi(activeInvoiceId.value, null);
-        if (updateResult.success) {
-          showToast("info", "Đã xóa mã giảm giá khỏi hóa đơn do lỗi");
-        } else {
-          showToast("error", updateResult.message || "Lỗi khi xóa mã giảm giá khỏi hóa đơn");
+        selectedDiscount.value = null;
+        manualDiscountSelected.value = false;
+        // Xóa id_phieu_giam_gia khỏi hóa đơn nếu có lỗi
+        if (activeInvoiceId.value) {
+          try {
+            const updateResult = await updatePhieuGiamGiaApi(
+              activeInvoiceId.value,
+              null
+            );
+            if (updateResult.success) {
+              showToast("info", "Đã xóa mã giảm giá khỏi hóa đơn do lỗi");
+            } else {
+              showToast(
+                "error",
+                updateResult.message || "Lỗi khi xóa mã giảm giá khỏi hóa đơn"
+              );
+            }
+          } catch (error) {
+            showToast("error", `Lỗi khi xóa mã giảm giá: ${error.message}`);
+          }
         }
-      } catch (error) {
-        showToast("error", `Lỗi khi xóa mã giảm giá: ${error.message}`);
+        showToast(
+          "error",
+          `Lỗi khi tìm mã giảm giá tốt nhất: ${error.message}`
+        );
       }
-    }
-    showToast("error", `Lỗi khi tìm mã giảm giá tốt nhất: ${error.message}`);
-  }
-};
+    };
     const bankInfo = ref({
       description: `Thanh toán hóa đơn ${
         activeInvoiceId.value || "HDXXX"
@@ -2159,112 +2222,112 @@ export default {
     };
 
     const createOrder = async (
-  idHD = activeInvoiceId.value,
-  hoaDonRequest = null
-) => {
-  isCreatingOrder.value = true;
-  try {
-    const requestBody = hoaDonRequest || {
-      idKhachHang: customer.value?.id || null,
-      tenKhachHang: customer.value?.name || "Khách vãng lai",
-      soDienThoaiKhachHang: customer.value?.phone || null,
-      diaChiKhachHang:
-        customer.value && isDelivery.value
-          ? {
-              thanhPho: customer.value.city,
-              quan: customer.value.district,
-              phuong: customer.value.ward,
-              diaChiCuThe: customer.value.address,
+      idHD = activeInvoiceId.value,
+      hoaDonRequest = null
+    ) => {
+      isCreatingOrder.value = true;
+      try {
+        const requestBody = hoaDonRequest || {
+          idKhachHang: customer.value?.id || null,
+          tenKhachHang: customer.value?.name || "Khách vãng lai",
+          soDienThoaiKhachHang: customer.value?.phone || null,
+          diaChiKhachHang:
+            customer.value && isDelivery.value
+              ? {
+                  thanhPho: customer.value.city,
+                  quan: customer.value.district,
+                  phuong: customer.value.ward,
+                  diaChiCuThe: customer.value.address,
+                }
+              : {
+                  thanhPho: "",
+                  quan: "",
+                  phuong: "",
+                  diaChiCuThe: "",
+                },
+          hinhThucThanhToan: (() => {
+            const hinhThucThanhToan = [];
+            if (paymentMethod.value === "cash") {
+              hinhThucThanhToan.push({
+                phuongThucThanhToanId: 1,
+                tienMat: totalPayment.value,
+                tienChuyenKhoan: 0,
+              });
+            } else if (paymentMethod.value === "transfer") {
+              hinhThucThanhToan.push({
+                phuongThucThanhToanId: 2,
+                tienMat: 0,
+                tienChuyenKhoan: totalPayment.value,
+              });
+            } else if (paymentMethod.value === "both") {
+              hinhThucThanhToan.push({
+                phuongThucThanhToanId: 3,
+                tienMat: tienMat.value,
+                tienChuyenKhoan: tienChuyenKhoan.value,
+              });
             }
-          : {
-              thanhPho: "",
-              quan: "",
-              phuong: "",
-              diaChiCuThe: "",
-            },
-      hinhThucThanhToan: (() => {
-        const hinhThucThanhToan = [];
-        if (paymentMethod.value === "cash") {
-          hinhThucThanhToan.push({
-            phuongThucThanhToanId: 1,
-            tienMat: totalPayment.value,
-            tienChuyenKhoan: 0,
-          });
-        } else if (paymentMethod.value === "transfer") {
-          hinhThucThanhToan.push({
-            phuongThucThanhToanId: 2,
-            tienMat: 0,
-            tienChuyenKhoan: totalPayment.value,
-          });
-        } else if (paymentMethod.value === "both") {
-          hinhThucThanhToan.push({
-            phuongThucThanhToanId: 3,
-            tienMat: tienMat.value,
-            tienChuyenKhoan: tienChuyenKhoan.value,
-          });
-        }
-        return hinhThucThanhToan;
-      })(),
-      idPhieuGiamGia: selectedDiscount.value?.id || null,
-      giamGia: selectedDiscount.value?.value || 0,
-      phiVanChuyen: isDelivery.value ? shippingFee.value : 0,
-      loaiDon: isDelivery.value ? "online" : "trực tiếp",
-      tongTien: tongTien.value,
-      tongTienSauGiam: totalPayment.value,
-      chiTietGioHang: cartItems.value.map((item) => ({
-        chiTietSanPhamId: item.id,
-        soLuong: item.quantity,
-        maImel: item.imei,
-        giaBan: item.currentPrice,
-        ghiChuGia: item.ghiChuGia || "",
-      })),
+            return hinhThucThanhToan;
+          })(),
+          idPhieuGiamGia: selectedDiscount.value?.id || null,
+          giamGia: selectedDiscount.value?.value || 0,
+          phiVanChuyen: isDelivery.value ? shippingFee.value : 0,
+          loaiDon: isDelivery.value ? "online" : "trực tiếp",
+          tongTien: tongTien.value,
+          tongTienSauGiam: totalPayment.value,
+          chiTietGioHang: cartItems.value.map((item) => ({
+            chiTietSanPhamId: item.id,
+            soLuong: item.quantity,
+            maImel: item.imei,
+            giaBan: item.currentPrice,
+            ghiChuGia: item.ghiChuGia || "",
+          })),
+        };
+
+        const response = await completeOrderApi(idHD, requestBody);
+        const invoiceId = response.id || idHD;
+
+        pendingInvoices.value = pendingInvoices.value.filter(
+          (inv) => inv.id !== idHD
+        );
+        cartItems.value = [];
+        activeInvoiceId.value = null;
+        selectedCustomer.value = null;
+        customer.value = {
+          id: null,
+          name: "",
+          phone: "",
+          city: "",
+          district: "",
+          ward: "",
+          address: "",
+        };
+        receiver.value = {
+          name: "",
+          phone: "",
+          city: "",
+          district: "",
+          ward: "",
+          address: "",
+        };
+        discount.value = 0;
+        selectedDiscount.value = null;
+
+        showToast(
+          "success",
+          "Thanh toán thành công, chuẩn bị hiện hóa đơn chi tiết sau vài giây"
+        );
+        resetNotification();
+
+        setTimeout(() => {
+          router.push(`/hoaDon/${invoiceId}/detail`);
+        }, 1000);
+      } catch (error) {
+        const errorMessage = error.message;
+        showToast("error", `Lỗi khi thanh toán: ${errorMessage}`);
+      } finally {
+        isCreatingOrder.value = false;
+      }
     };
-
-    const response = await completeOrderApi(idHD, requestBody);
-    const invoiceId = response.id || idHD;
-
-    pendingInvoices.value = pendingInvoices.value.filter(
-      (inv) => inv.id !== idHD
-    );
-    cartItems.value = [];
-    activeInvoiceId.value = null;
-    selectedCustomer.value = null;
-    customer.value = {
-      id: null,
-      name: "",
-      phone: "",
-      city: "",
-      district: "",
-      ward: "",
-      address: "",
-    };
-    receiver.value = {
-      name: "",
-      phone: "",
-      city: "",
-      district: "",
-      ward: "",
-      address: "",
-    };
-    discount.value = 0;
-    selectedDiscount.value = null;
-
-    showToast(
-      "success",
-      "Thanh toán thành công, chuẩn bị hiện hóa đơn chi tiết sau vài giây"
-    );
-    resetNotification();
-
-    setTimeout(() => {
-      router.push(`/hoaDon/${invoiceId}/detail`);
-    }, 1000);
-  } catch (error) {
-    const errorMessage = error.message;
-    showToast("error", `Lỗi khi thanh toán: ${errorMessage}`);
-  } finally {
-    isCreatingOrder.value = false;
-  }
-};
 
     const updateShippingFee = async () => {
       if (!isDelivery.value || !isHomeDelivery.value) {
@@ -2509,6 +2572,12 @@ export default {
       selectedPaymentProvider,
       selectPaymentProvider,
       closePaymentProviderModal,
+      showAddressModal,
+      customerAddresses,
+      openAddressModal,
+      selectAddress,
+      applySelectedAddress,
+      closeAddressModal,
     };
   },
 };
