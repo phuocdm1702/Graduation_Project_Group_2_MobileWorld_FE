@@ -484,10 +484,7 @@
                       <!-- Hình ảnh sản phẩm -->
                       <div class="col-md-3 text-center">
                         <img
-                          :src="
-                            item.image ||
-                            'https://bachlongstore.vn/vnt_upload/product/04_2024/Untitled_2.png'
-                          "
+                          :src="item.image"
                           class="img-fluid rounded"
                           :alt="item.name"
                           style="
