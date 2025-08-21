@@ -326,14 +326,6 @@
             <div class="d-flex flex-column gap-3">
               <button
                 class="btn btn-light p-3 d-flex align-items-center gap-3"
-                @click="selectPaymentProvider('vietqr')"
-                style="border: 1px solid #34d399; border-radius: 0.5rem"
-              >
-                <i class="bi bi-qr-code"></i>
-                <span class="fw-semibold">VietQR</span>
-              </button>
-              <button
-                class="btn btn-light p-3 d-flex align-items-center gap-3"
                 @click="selectPaymentProvider('vnpay')"
                 style="border: 1px solid #34d399; border-radius: 0.5rem"
               >
@@ -2112,41 +2104,6 @@ export default defineComponent({
           : 0;
 
       console.log("Cập nhật phí vận chuyển:", finalShippingFee);
-    },
-
-    addProductWithIMEIs() {
-      console.log("Dữ liệu sản phẩm trước khi thêm:", {
-        selectedProduct: this.selectedProduct,
-        selectedIMEIs: this.selectedIMEIs,
-      });
-
-      const item = {
-        id: this.selectedProduct.idSanPham,
-        name: this.selectedProduct.tenSanPham,
-        code: this.selectedProduct.ma,
-        color: this.selectedProduct.mauSac,
-        ram: this.selectedProduct.dungLuongRam,
-        storage: this.selectedProduct.dungLuongBoNhoTrong,
-        price: this.selectedProduct.giaBan,
-        currentPrice: this.selectedProduct.giaBan,
-        quantity: this.selectedIMEIs.length,
-        total: this.selectedProduct.giaBan * this.selectedIMEIs.length,
-        imei: this.selectedIMEIs.length
-          ? this.selectedIMEIs.join(", ")
-          : `IMEI-${Date.now()}`,
-      };
-
-      this.cartItems = this.cartItems || [];
-      this.cartItems.push(item);
-
-      console.log("Thêm sản phẩm vào giỏ:", item);
-      this.$refs.toastNotification.showToast({
-        message: `Đã thêm ${item.name} vào giỏ hàng`,
-        type: "success",
-        duration: 3000,
-      });
-      this.pendingInvoices = [...this.pendingInvoices];
-      this.closeIMEIModal();
     },
 
     removeItem(item) {
