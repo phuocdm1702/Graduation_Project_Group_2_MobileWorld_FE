@@ -476,29 +476,15 @@ export default {
     const fetchPendingInvoices = async () => {
       try {
         const data = await fetchPendingInvoicesApi();
-        pendingInvoices.value = await Promise.all(
-          data.map(async (hd) => {
-            const cartData = await loadPendingInvoiceApi(hd.id);
-            const items = cartData.chiTietGioHangDTOS.map((item) => ({
-              id: item.chiTietSanPhamId,
-              name: item.tenSanPham,
-              color: item.mauSac,
-              ram: item.boNhoTrong,
-              storage: item.dungLuongRam,
-              imei: item.maImel,
-              originalPrice: Number(item.giaBanGoc) || Number(item.giaBan) || 0,
-              currentPrice: Number(item.giaBan) || 0,
-              quantity: item.soLuong,
-              ghiChuGia: item.ghiChuGia || "",
-            }));
-            return {
-              id: hd.id,
-              ma: hd.ma,
-              status: hd.trangThai === 0 ? "Chờ xử lý" : "Khác",
-              items: items,
-            };
-          })
-        );
+        // Chỉ lấy thông tin cơ bản của hóa đơn, không load chi tiết giỏ hàng
+        pendingInvoices.value = data.map((hd) => ({
+          id: hd.id,
+          ma: hd.ma,
+          status: hd.trangThai === 0 ? "Chờ xử lý" : "Khác",
+          items: [], // Khởi tạo items rỗng, sẽ load khi người dùng chọn
+          customer: null, // Khởi tạo customer null, sẽ load khi người dùng chọn
+          isLoaded: false, // Thêm flag để biết hóa đơn đã được load chi tiết chưa
+        }));
       } catch (error) {
         showToast("error", "Lỗi khi tải hóa đơn chờ");
       }
@@ -2378,8 +2364,7 @@ export default {
     onMounted(async () => {
       try {
         await fetchPGG();
-        setInterval(fetchPendingInvoices, 1000); // Refresh pending invoices every 30 seconds
-        // fetchPendingInvoices();
+        fetchPendingInvoices();
         fetchProducts();
         fetchLocations();
         await applyBestDiscount();
