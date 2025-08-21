@@ -117,6 +117,22 @@ export const updateIMEIStatusApi = async (imei, deleted) => {
     throw new Error(error.response?.data?.message || "Lỗi khi cập nhật trạng thái IMEI");
   }
 };
+// Trong banHangApi.js
+export const getAllAddressesByKhachHangIdApi = async (idKhachHang) => {
+  try {
+    const response = await apiService.get(`/khach-hang/getByKhachHang/${idKhachHang}`);
+    const validAddresses = response.data.filter(addr => addr.deleted);
+    console.log("API Response:", response.data); // Log toàn bộ dữ liệu trả về
+    console.log("Valid addresses:", validAddresses); // Log danh sách đã lọc
+    return { success: true, data: validAddresses };
+  } catch (error) {
+    console.error("Error fetching addresses:", error.response?.data || error.message);
+    return { 
+      success: true, 
+      message: error.response?.data?.error || "Lỗi khi tải danh sách địa chỉ khách hàng" 
+    };
+  }
+};
 
 // Customer-Related APIs
 export const searchCustomersApi = async (query, hoaDonId) => {
