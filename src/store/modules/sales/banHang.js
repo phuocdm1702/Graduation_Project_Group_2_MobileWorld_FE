@@ -122,8 +122,8 @@ export default {
     const notificationType = ref("confirm");
     const notificationMessage = ref("");
     const isNotificationLoading = ref(false);
-    const notificationOnConfirm = ref(() => {});
-    const notificationOnCancel = ref(() => {});
+    const notificationOnConfirm = ref(() => { });
+    const notificationOnCancel = ref(() => { });
     const notificationModal = ref(null);
     const toastNotification = ref(null);
     const qrCodeValue = ref("");
@@ -234,9 +234,9 @@ export default {
         const fixedDiscount = selectedDiscount.value.value || 0;
         const percentDiscount = selectedDiscount.value.percent
           ? Math.min(
-              (selectedDiscount.value.percent / 100) * tongTien.value,
-              selectedDiscount.value.value || Infinity
-            )
+            (selectedDiscount.value.percent / 100) * tongTien.value,
+            selectedDiscount.value.value || Infinity
+          )
           : 0;
         return Math.max(fixedDiscount, percentDiscount);
       },
@@ -399,9 +399,8 @@ export default {
 
       if (tongTien.value >= bestDiscount.minOrder) {
         return {
-          message: `Bạn có thể áp dụng mã ${
-            bestDiscount.code
-          } để được giảm ${formatPrice(bestDiscount.value)}.`,
+          message: `Bạn có thể áp dụng mã ${bestDiscount.code
+            } để được giảm ${formatPrice(bestDiscount.value)}.`,
           additionalAmount: 0,
           bestDiscount,
         };
@@ -409,9 +408,8 @@ export default {
 
       const additionalAmount = bestDiscount.minOrder - tongTien.value;
       return {
-        message: `Mua thêm ${formatPrice(additionalAmount)} để sử dụng mã ${
-          bestDiscount.code
-        } và được giảm ${formatPrice(bestDiscount.value)}.`,
+        message: `Mua thêm ${formatPrice(additionalAmount)} để sử dụng mã ${bestDiscount.code
+          } và được giảm ${formatPrice(bestDiscount.value)}.`,
         additionalAmount,
         bestDiscount,
       };
@@ -436,7 +434,7 @@ export default {
       toastNotification.value.addToast({ type, message, isLoading, duration });
     };
 
-    const showConfirm = (message, onConfirm, onCancel = () => {}) => {
+    const showConfirm = (message, onConfirm, onCancel = () => { }) => {
       notificationType.value = "confirm";
       notificationMessage.value = message;
       notificationOnConfirm.value = onConfirm;
@@ -454,8 +452,8 @@ export default {
       notificationType.value = "confirm";
       notificationMessage.value = "";
       isNotificationLoading.value = false;
-      notificationOnConfirm.value = () => {};
-      notificationOnCancel.value = () => {};
+      notificationOnConfirm.value = () => { };
+      notificationOnCancel.value = () => { };
     };
 
     // Debounced Search Functions
@@ -501,7 +499,7 @@ export default {
         showToast(
           "error",
           giaoCaStore.error ||
-            "Nhân viên chưa bắt đầu ca làm việc. Vui lòng bắt đầu ca làm việc trước khi tạo hóa đơn."
+          "Nhân viên chưa bắt đầu ca làm việc. Vui lòng bắt đầu ca làm việc trước khi tạo hóa đơn."
         );
         return;
       }
@@ -641,88 +639,88 @@ export default {
     };
 
     const closeAddressModal = () => {
-  showAddressModal.value = false;
-  selectedAddressId.value = null; // Reset any related state
-  console.log('Modal closed'); // Optional debug log
-};
+      showAddressModal.value = false;
+      selectedAddressId.value = null; // Reset any related state
+      console.log('Modal closed'); // Optional debug log
+    };
 
     // Cập nhật hàm searchCustomers
-   const searchCustomers = async () => {
-  if (!activeInvoiceId.value) {
-    showToast("error", "Vui lòng chọn hoặc tạo một hóa đơn trước khi tìm kiếm khách hàng");
-    return;
-  }
-
-  isSearching.value = true; // Bắt đầu loading
-  try {
-    const keyword = searchCustomer.value || "";
-    const result = await searchCustomersApi(keyword, activeInvoiceId.value);
-
-    if (result.success && result.data) {
-      const customerData = {
-        id: result.data.idKhachHang?.id || 1,
-        ten: searchCustomer.value ? result.data.tenKhachHang || "" : "",
-        soDienThoai: result.data.soDienThoaiKhachHang || "",
-        diaChi: result.data.diaChiKhachHang || "",
-        email: result.data.email || "",
-      };
-
-      selectedCustomer.value = customerData;
-      customer.value = {
-        id: customerData.id,
-        name: customerData.ten,
-        phone: customerData.soDienThoai,
-        city: result.data.diaChiKhachHang?.thanhPho || "",
-        district: result.data.diaChiKhachHang?.quan || "",
-        ward: result.data.diaChiKhachHang?.phuong || "",
-        address: result.data.diaChiKhachHang?.diaChiCuThe || "",
-      };
-
-      // Lấy danh sách địa chỉ khách hàng
-      if (customerData.id) {
-        const addressResult = await getAllAddressesByKhachHangIdApi(customerData.id);
-        customerAddresses.value = addressResult.success && Array.isArray(addressResult.data)
-          ? addressResult.data.map((addr, index) => ({
-              id: addr.id || index + 1,
-              city: addr.thanhPho || "",
-              district: addr.quan || "",
-              ward: addr.phuong || "",
-              address: addr.diaChiCuThe || "",
-            }))
-          : [];
+    const searchCustomers = async () => {
+      if (!activeInvoiceId.value) {
+        showToast("error", "Vui lòng chọn hoặc tạo một hóa đơn trước khi tìm kiếm khách hàng");
+        return;
       }
 
-      // Gắn vào hóa đơn
-      const invoiceIndex = pendingInvoices.value.findIndex((inv) => inv.id === activeInvoiceId.value);
-      if (invoiceIndex !== -1) {
-        pendingInvoices.value[invoiceIndex].customer = {
-          ...customer.value,
-          idKhachHang: customerData.id,
-          tenKhachHang: customerData.ten,
-          soDienThoaiKhachHang: customerData.soDienThoai,
-        };
-      }
+      isSearching.value = true; // Bắt đầu loading
+      try {
+        const keyword = searchCustomer.value || "";
+        const result = await searchCustomersApi(keyword, activeInvoiceId.value);
 
-      await applyBestDiscount();
-    } else {
-      selectedCustomer.value = null;
-      customer.value = { id: null, name: "", phone: "", city: "", district: "", ward: "", address: "" };
-      customerAddresses.value = [];
-      privateDiscountCodes.value = [];
-      showToast("warning", result.message || "Không tìm thấy khách hàng");
-      await applyBestDiscount();
-    }
-  } catch (error) {
-    selectedCustomer.value = null;
-    customer.value = { id: null, name: "", phone: "", city: "", district: "", ward: "", address: "" };
-    customerAddresses.value = [];
-    privateDiscountCodes.value = [];
-    showToast("error", `Lỗi khi tìm kiếm khách hàng: ${error.response?.data || error.message}`);
-    await applyBestDiscount();
-  } finally {
-    isSearching.value = false; // Kết thúc loading
-  }
-};
+        if (result.success && result.data) {
+          const customerData = {
+            id: result.data.idKhachHang?.id || 1,
+            ten: searchCustomer.value ? result.data.tenKhachHang || "" : "",
+            soDienThoai: result.data.soDienThoaiKhachHang || "",
+            diaChi: result.data.diaChiKhachHang || "",
+            email: result.data.email || "",
+          };
+
+          selectedCustomer.value = customerData;
+          customer.value = {
+            id: customerData.id,
+            name: customerData.ten,
+            phone: customerData.soDienThoai,
+            city: result.data.diaChiKhachHang?.thanhPho || "",
+            district: result.data.diaChiKhachHang?.quan || "",
+            ward: result.data.diaChiKhachHang?.phuong || "",
+            address: result.data.diaChiKhachHang?.diaChiCuThe || "",
+          };
+
+          // Lấy danh sách địa chỉ khách hàng
+          if (customerData.id) {
+            const addressResult = await getAllAddressesByKhachHangIdApi(customerData.id);
+            customerAddresses.value = addressResult.success && Array.isArray(addressResult.data)
+              ? addressResult.data.map((addr, index) => ({
+                id: addr.id || index + 1,
+                city: addr.thanhPho || "",
+                district: addr.quan || "",
+                ward: addr.phuong || "",
+                address: addr.diaChiCuThe || "",
+              }))
+              : [];
+          }
+
+          // Gắn vào hóa đơn
+          const invoiceIndex = pendingInvoices.value.findIndex((inv) => inv.id === activeInvoiceId.value);
+          if (invoiceIndex !== -1) {
+            pendingInvoices.value[invoiceIndex].customer = {
+              ...customer.value,
+              idKhachHang: customerData.id,
+              tenKhachHang: customerData.ten,
+              soDienThoaiKhachHang: customerData.soDienThoai,
+            };
+          }
+
+          await applyBestDiscount();
+        } else {
+          selectedCustomer.value = null;
+          customer.value = { id: null, name: "", phone: "", city: "", district: "", ward: "", address: "" };
+          customerAddresses.value = [];
+          privateDiscountCodes.value = [];
+          showToast("warning", result.message || "Không tìm thấy khách hàng");
+          await applyBestDiscount();
+        }
+      } catch (error) {
+        selectedCustomer.value = null;
+        customer.value = { id: null, name: "", phone: "", city: "", district: "", ward: "", address: "" };
+        customerAddresses.value = [];
+        privateDiscountCodes.value = [];
+        showToast("error", `Lỗi khi tìm kiếm khách hàng: ${error.response?.data || error.message}`);
+        await applyBestDiscount();
+      } finally {
+        isSearching.value = false; // Kết thúc loading
+      }
+    };
 
 
     const selectAddress = async (address) => {
@@ -793,7 +791,7 @@ export default {
       showConfirm(
         `Bạn có chắc chắn muốn hủy hóa đơn ${invoice.ma}?`,
         () => cancelInvoice(invoice),
-        () => {}
+        () => { }
       );
     };
 
@@ -978,11 +976,10 @@ export default {
           Number(productData.giaBanBanDau) || latestPrice;
 
         if (latestInitialPrice !== selectedProduct.value.giaBan) {
-          const ghiChuGia = `Giá sản phẩm ${
-            selectedProduct.value.tenSanPham
-          } đã thay đổi thành ${formatPrice(
-            latestPrice
-          )} từ giá ban đầu ${formatPrice(latestInitialPrice)}`;
+          const ghiChuGia = `Giá sản phẩm ${selectedProduct.value.tenSanPham
+            } đã thay đổi thành ${formatPrice(
+              latestPrice
+            )} từ giá ban đầu ${formatPrice(latestInitialPrice)}`;
           showToast("warning", ghiChuGia);
         }
 
@@ -1048,11 +1045,6 @@ export default {
           pendingInvoices.value[invoiceIndex].items = cartItems.value;
         }
 
-        closeIMEIModal();
-        showToast(
-          "success",
-          `Đã thêm sản phẩm ${selectedProduct.value.tenSanPham} vào giỏ hàng`
-        );
         await applyBestDiscount();
         await fetchProducts();
       } catch (error) {
@@ -1060,6 +1052,12 @@ export default {
           "error",
           error.message || "Lỗi khi thêm sản phẩm vào giỏ hàng"
         );
+      } finally {
+        showToast(
+          "success",
+          `Đã thêm sản phẩm ${selectedProduct.value.tenSanPham} vào giỏ hàng`
+        );
+        closeIMEIModal();
       }
     };
 
@@ -1528,9 +1526,9 @@ export default {
             const fixedDiscount = code.value || 0;
             const percentDiscount = code.percent
               ? Math.min(
-                  (code.percent / 100) * tongTien.value,
-                  code.value || Infinity
-                )
+                (code.percent / 100) * tongTien.value,
+                code.value || Infinity
+              )
               : 0;
             const actualDiscount = Math.max(fixedDiscount, percentDiscount);
 
@@ -1559,8 +1557,7 @@ export default {
           if (updateResult.success) {
             showToast(
               "success",
-              `Đã áp dụng mã giảm giá ${
-                bestDiscount.tenPhieuGiamGia || bestDiscount.code
+              `Đã áp dụng mã giảm giá ${bestDiscount.tenPhieuGiamGia || bestDiscount.code
               } (-${discountText}) và lưu vào hóa đơn`
             );
           } else {
@@ -1621,22 +1618,6 @@ export default {
           `Lỗi khi tìm mã giảm giá tốt nhất: ${error.message}`
         );
       }
-    };
-    const bankInfo = ref({
-      description: `Thanh toán hóa đơn ${
-        activeInvoiceId.value || "HDXXX"
-      } qua VietQR`,
-    });
-
-    const generateQRCode = (amount) => {
-      const bankInfoData = {
-        bankName: "YourBank",
-        accountNumber: "1234567890",
-        accountHolder: "Your Company Name",
-        amount: amount,
-        description: `Thanh toán hóa đơn ${activeInvoiceId.value || "HDXXX"}`,
-      };
-      qrCodeValue.value = `Bank: ${bankInfoData.bankName}, Account: ${bankInfoData.accountNumber}, Holder: ${bankInfoData.accountHolder}, Amount: ${bankInfoData.amount}, Description: ${bankInfoData.description}`;
     };
 
     const scanQR = () => {
@@ -1780,11 +1761,10 @@ export default {
         );
 
         if (product.giaBanBanDau !== product.giaBan) {
-          const ghiChuGia = `Giá sản phẩm ${
-            product.tenSanPham
-          } đã thay đổi thành ${formatPrice(
-            product.giaBan
-          )} từ giá ban đầu ${formatPrice(product.giaBanBanDau)}`;
+          const ghiChuGia = `Giá sản phẩm ${product.tenSanPham
+            } đã thay đổi thành ${formatPrice(
+              product.giaBan
+            )} từ giá ban đầu ${formatPrice(product.giaBanBanDau)}`;
           showToast("warning", ghiChuGia);
         }
 
@@ -1880,27 +1860,6 @@ export default {
           ? totalPayment.value || 0
           : tienChuyenKhoan.value || 0;
       qrCodeAmount.value = amount;
-
-      if (provider === "vietqr") {
-        bankInfo.value = {
-          bankName: "VietQR",
-          accountNumber: "1234567890",
-          accountHolder: "Your Company Name",
-          amount: amount,
-          description: `Thanh toán hóa đơn ${
-            activeInvoiceId.value || "HDXXX"
-          } qua VietQR`,
-        };
-        qrCodeValue.value = `vietqr://pay?account=${
-          bankInfo.value.accountNumber
-        }&amount=${bankInfo.value.amount}&desc=${encodeURIComponent(
-          bankInfo.value.description
-        )}`;
-        showQRCode.value = true;
-      } else {
-        qrCodeValue.value = "";
-        showQRCode.value = false;
-      }
     };
 
     const closePaymentProviderModal = () => {
@@ -1985,7 +1944,7 @@ export default {
                   item.idPhieuGiamGia?.trangThai === true &&
                   isValidDiscount(item.idPhieuGiamGia?.ngayKetThuc) &&
                   Number(item.idPhieuGiamGia?.soLuongDung || item.soLuongDung) >
-                    0 // Thêm điều kiện soLuongDung > 0
+                  0 // Thêm điều kiện soLuongDung > 0
               )
               .map((item, index) => ({
                 id: item.id || index + 1,
@@ -2052,8 +2011,7 @@ export default {
                   tongTien.value
                 )}) nhỏ hơn giá trị đơn tối thiểu yêu cầu (${formatPrice(
                   selectedDiscount.value.minOrder
-                )}) của mã giảm giá ${
-                  selectedDiscount.value.code
+                )}) của mã giảm giá ${selectedDiscount.value.code
                 }. Vui lòng chọn mã khác hoặc tiếp tục thanh toán mà không sử dụng mã giảm giá.`
               );
               selectedDiscount.value = null;
@@ -2090,9 +2048,9 @@ export default {
             const fixedDiscount = code.value || 0;
             const percentDiscount = code.percent
               ? Math.min(
-                  (code.percent / 100) * tongTien.value,
-                  code.value || Infinity
-                )
+                (code.percent / 100) * tongTien.value,
+                code.value || Infinity
+              )
               : 0;
             const actualDiscountValue = Math.max(
               fixedDiscount,
@@ -2138,9 +2096,8 @@ export default {
 
         if (selectedPaymentProvider.value === "vnpay") {
           try {
-            const orderInfo = `Thanh toán hóa đơn ${
-              activeInvoiceId.value || "HDXXX"
-            }`;
+            const orderInfo = `Thanh toán hóa đơn ${activeInvoiceId.value || "HDXXX"
+              }`;
             const amountToSend = totalPayment.value || 100000;
 
             const hoaDonRequest = {
@@ -2150,11 +2107,11 @@ export default {
               diaChiKhachHang:
                 customer.value && isDelivery.value
                   ? {
-                      thanhPho: customer.value.city,
-                      quan: customer.value.district,
-                      phuong: customer.value.ward,
-                      diaChiCuThe: customer.value.address,
-                    }
+                    thanhPho: customer.value.city,
+                    quan: customer.value.district,
+                    phuong: customer.value.ward,
+                    diaChiCuThe: customer.value.address,
+                  }
                   : { thanhPho: "", quan: "", phuong: "", diaChiCuThe: "" },
               hinhThucThanhToan: [
                 {
@@ -2220,17 +2177,17 @@ export default {
           diaChiKhachHang:
             customer.value && isDelivery.value
               ? {
-                  thanhPho: customer.value.city,
-                  quan: customer.value.district,
-                  phuong: customer.value.ward,
-                  diaChiCuThe: customer.value.address,
-                }
+                thanhPho: customer.value.city,
+                quan: customer.value.district,
+                phuong: customer.value.ward,
+                diaChiCuThe: customer.value.address,
+              }
               : {
-                  thanhPho: "",
-                  quan: "",
-                  phuong: "",
-                  diaChiCuThe: "",
-                },
+                thanhPho: "",
+                quan: "",
+                phuong: "",
+                diaChiCuThe: "",
+              },
           hinhThucThanhToan: (() => {
             const hinhThucThanhToan = [];
             if (paymentMethod.value === "cash") {
@@ -2525,7 +2482,6 @@ export default {
       toggleDelivery,
       fetchPGG,
       applyBestDiscount,
-      generateQRCode,
       scanQR,
       ThanhToan,
       createOrder,
