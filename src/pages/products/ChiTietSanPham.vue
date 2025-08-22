@@ -446,9 +446,9 @@ export default {
       status: '',
     });
     const currentPage = ref(1);
-    const pageSize = ref(10);
+    const pageSize = ref(99999);
     const sharedCurrentPage = ref(1);
-    const sharedPageSize = ref(10);
+    const sharedPageSize = ref(99999);
     const minPrice = ref(0);
     const maxPrice = ref(100000000);
     const priceRange = ref([0, 100000000]);

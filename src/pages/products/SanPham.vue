@@ -251,8 +251,8 @@ export default defineComponent({
     const viewMode = ref("table");
     const currentPage = ref(1);
     const sharedCurrentPage = ref(1);
-    const itemsPerPage = ref(10);
-    const sharedPageSize = ref(10);
+    const itemsPerPage = ref(99999);
+    const sharedPageSize = ref(99999);
     const isLoading = ref(false);
     const totalElements = ref(0);
     const selectedProducts = ref([]);

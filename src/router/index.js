@@ -145,7 +145,7 @@ const routes = [
           breadcrumb: [
             { name: "Trang chủ", path: "/trangChu" },
             { name: "Sản phẩm", path: "/sanPham" },
-            { name: "Nhà Sản Xuất", path: "/nhaSanXuat" },
+            { name: "Nhà sản xuất", path: "/nhaSanXuat" },
           ],
           requiresAdmin: true,
         },
@@ -432,7 +432,7 @@ router.beforeEach((to, from, next) => {
   // Nếu route yêu cầu quyền admin và người dùng không phải admin (capQuyenHan !== 1)
   else if (to.meta.requiresAdmin && authStore.isAuthenticated && authStore.user?.capQuyenHan !== 1) {
     console.log('Access denied: Requires admin privileges');
-    next('/trangChu'); // Chuyển hướng về trang chủ nếu không có quyền admin
+    next('/trangChu'); // Chuyển hướng về Trang chủ nếu không có quyền admin
   }
   else {
     next();
