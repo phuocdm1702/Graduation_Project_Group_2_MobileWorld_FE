@@ -1,48 +1,34 @@
-<!-- HoTroCongNgheSac.vue - Template updated for charging technology support -->
+<!-- Ram.vue -->
 <template>
   <!-- Modal -->
   <div v-if="showModal" class="modal-overlay">
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title">
-          {{ isEditMode ? 'Chỉnh Sửa Hỗ Trợ Công Nghệ Sạc' : 'Thêm Hỗ Trợ Công Nghệ Sạc Mới' }}
+          {{ isEditMode ? 'Chỉnh Sửa RAM' : 'Thêm RAM Mới' }}
         </h5>
         <button @click="closeModal" class="close-button" aria-label="Close">&times;</button>
       </div>
       <div class="modal-body">
-        <form @submit.prevent="submitForm" id="chargingTechForm">
+        <form @submit.prevent="submitForm" id="ramForm">
           <div class="form-grid">
-            <!-- Cổng sạc -->
-            <div class="form-group">
+            <!-- Dung lượng RAM -->
+            <div class="form-group full-width">
               <label class="form-label">
-                Cổng Sạc <span class="required">*</span>
+                Dung Lượng RAM <span class="required">*</span>
               </label>
-              <input type="text" class="form-control" v-model="formData.congSac" 
-                     placeholder="Ví dụ: USB-C, Lightning, Micro USB"
-                     :class="{ 'is-invalid': errors.congSac }" 
-                     @blur="validateCongSacField"
-                     @input="clearFieldError('congSac')" />
-              <small class="form-hint">Nhập loại cổng sạc của thiết bị</small>
-            </div>
-
-            <!-- Công nghệ hỗ trợ -->
-            <div class="form-group">
-              <label class="form-label">
-                Công Nghệ Hỗ Trợ <span class="required">*</span>
-              </label>
-              <input type="text" class="form-control" v-model="formData.congNgheHoTro" 
-                     placeholder="Ví dụ: Quick Charge 4.0, Fast Charging, Wireless Charging"
-                     :class="{ 'is-invalid': errors.congNgheHoTro }" 
-                     @blur="validateCongNgheHoTroField"
-                     @input="clearFieldError('congNgheHoTro')" />
-              <small class="form-hint">Nhập tên công nghệ sạc mà thiết bị hỗ trợ</small>
+              <input type="text" class="form-control" v-model="formData.dungLuongRam" 
+                     placeholder="Nhập dung lượng RAM (VD: 8GB, 16GB)"
+                     :class="{ 'is-invalid': errors.dungLuongRam }" 
+                     @blur="validateDungLuongRamField"
+                     @input="clearFieldError('dungLuongRam')" />
             </div>
           </div>
         </form>
       </div>
       <div class="modal-footer">
         <button type="button" @click="closeModal" class="btn btn-reset">Hủy</button>
-        <button type="submit" form="chargingTechForm" class="btn btn-action btn-primary-custom"
+        <button type="submit" form="ramForm" class="btn btn-action btn-primary-custom"
           :disabled="isSubmitting">
           {{ isEditMode ? 'Cập nhật' : 'Thêm mới' }}
           <span v-if="isSubmitting" class="spinner-border spinner-border-sm ml-2"></span>
@@ -54,7 +40,7 @@
   <!-- Container chính -->
   <div class="container-fluid py-4">
     <!-- Header -->
-    <HeaderCard title="Quản Lý Hỗ Trợ Công Nghệ Sạc" badgeText="Hệ Thống POS" badgeClass="gradient-custom-teal"
+    <HeaderCard title="Quản Lý RAM" badgeText="Hệ Thống POS" badgeClass="gradient-custom-teal"
       :backgroundOpacity="0.95" />
 
     <!-- Filter Section -->
@@ -62,54 +48,15 @@
       <div class="m-3">
         <div class="row g-4 align-items-end">
           <!-- Search Input -->
-          <div class="col-lg-4 col-md-6">
+          <div class="col-lg-6 col-md-8">
             <div class="search-group">
               <label class="filter-label">Tìm kiếm</label>
               <div class="search-input-wrapper">
                 <i class="bi bi-search search-icon"></i>
                 <input v-model.trim="keyword" @input="debouncedSearch" type="text"
-                  placeholder="Tìm kiếm theo cổng sạc hoặc công nghệ hỗ trợ..." class="form-control search-input"
+                  placeholder="Tìm kiếm theo dung lượng RAM..." class="form-control search-input"
                   style="padding-left: 2.5rem;" />
               </div>
-            </div>
-          </div>
-
-          <!-- Filter for Charging Port -->
-          <div class="col-lg-4 col-md-6">
-            <div class="filter-group">
-              <label class="filter-label">Loại Cổng Sạc</label>
-              <select v-model="filters.congSacType" @change="searchHoTroCongNgheSac" class="form-select search-input">
-                <option value="">Tất cả</option>
-                <option v-for="option in congSacTypeOptions" :key="option.value" :value="option.value">
-                  {{ option.label }}
-                </option>
-              </select>
-            </div>
-          </div>
-
-          <!-- Filter for Charging Technology -->
-          <div class="col-lg-4 col-md-6">
-            <div class="filter-group">
-              <label class="filter-label">Loại Công Nghệ</label>
-              <select v-model="filters.congNgheType" @change="searchHoTroCongNgheSac" class="form-select search-input">
-                <option value="">Tất cả</option>
-                <option v-for="option in congNgheTypeOptions" :key="option.value" :value="option.value">
-                  {{ option.label }}
-                </option>
-              </select>
-            </div>
-          </div>
-
-          <!-- Filter for Charging Speed -->
-          <div class="col-lg-4 col-md-6">
-            <div class="filter-group">
-              <label class="filter-label">Tốc Độ Sạc</label>
-              <select v-model="filters.chargingSpeed" @change="searchHoTroCongNgheSac" class="form-select search-input">
-                <option value="">Tất cả</option>
-                <option v-for="option in chargingSpeedOptions" :key="option.value" :value="option.value">
-                  {{ option.label }}
-                </option>
-              </select>
             </div>
           </div>
         </div>
@@ -120,7 +67,7 @@
             <div class="col-lg-12">
               <div class="filter-stats d-flex">
                 <div class="stat-item d-flex gap-2">
-                  <span class="stat-label">Tổng số công nghệ sạc:</span>
+                  <span class="stat-label">Tổng số RAM:</span>
                   <span class="stat-value" style="color: rgb(21, 128, 61); font-weight: bold;">
                     {{ sharedFilteredItems.length }}
                   </span>
@@ -134,8 +81,8 @@
               title="Tải danh sách Excel">
               Tải Excel
             </button>
-            <button class="btn btn-action btn-primary-custom" @click="openAddModal" title="Thêm công nghệ sạc mới">
-              Thêm công nghệ sạc
+            <button class="btn btn-action btn-primary-custom" @click="openAddModal" title="Thêm RAM mới">
+              Thêm RAM
             </button>
             <button class="btn btn-reset" @click="resetFilters">
               Đặt lại bộ lọc
@@ -146,10 +93,10 @@
     </FilterTableSection>
 
     <!-- Table View -->
-    <FilterTableSection title="Danh Sách Hỗ Trợ Công Nghệ Sạc" icon="bi bi-table">
+    <FilterTableSection title="Danh Sách RAM" icon="bi bi-table">
       <div class="table-header">
         <div class="table-title-wrapper">
-          <span class="table-count">{{ sharedFilteredItems.length }} công nghệ sạc</span>
+          <span class="table-count">{{ sharedFilteredItems.length }} RAM</span>
         </div>
       </div>
       <div class="table-body">
@@ -162,23 +109,15 @@
           <template #stt="{ globalIndex }">
             {{ globalIndex + 1 }}
           </template>
-          <template #congSac="{ item }">
-            <div class="port-badge" :class="getChargingPortClass(item)">
-              <i :class="getChargingPortIcon(item)" class="me-1"></i>
-              {{ item.congSac }}
-            </div>
+          <template #ma="{ item }">
+            <div class="code-text">{{ item.ma }}</div>
           </template>
-          <template #congNgheHoTro="{ item }">
-            <div class="tech-text">{{ item.congNgheHoTro }}</div>
+          <template #dungLuongRam="{ item }">
+            <div class="name-text">{{ item.dungLuongRam }}</div>
           </template>
-          <template #chargingCategory="{ item }">
-            <span class="category-badge" :class="getChargingCategoryClass(item)">
-              {{ getChargingCategory(item) }}
-            </span>
-          </template>
-          <template #chargingSpeed="{ item }">
-            <span class="speed-badge" :class="getChargingSpeedClass(item)">
-              {{ getChargingSpeed(item) }}
+          <template #trangThai="{ item }">
+            <span class="status-badge" :class="getStatusBadgeClass(item)">
+              {{ getStatusText(item) }}
             </span>
           </template>
           <template #actions="{ item }">
@@ -200,9 +139,9 @@
   </div>
 </template>
 
-<!-- Phần script cập nhật của HoTroCongNgheSac.vue -->
 <script>
 import { defineComponent, ref, computed, onMounted, watch } from "vue";
+import { useRoute, useRouter } from "vue-router";
 import DataTable from "@/components/common/DataTable.vue";
 import NotificationModal from "@/components/common/NotificationModal.vue";
 import ToastNotification from "@/components/common/ToastNotification.vue";
@@ -213,11 +152,14 @@ import { saveAs } from "file-saver";
 
 // Import API services
 import {
-  fetchHoTroCongNgheSac,
-  searchHoTroCongNgheSac as searchHoTroCongNgheSacAPI,
-  createHoTroCongNgheSac,
-  updateHoTroCongNgheSac,
-} from "@/store/modules/products/thuocTinhSp/hoTroCongNgheSac";
+  fetchRam,
+  searchRam as searchRamAPI,
+  createRam,
+  updateRam,
+} from "@/store/modules/products/thuocTinhSp/ram";
+
+// Import API service để check trùng dung lượng
+import apiService from "@/services/api";
 
 // Debounce utility
 const debounce = (func, delay) => {
@@ -229,7 +171,7 @@ const debounce = (func, delay) => {
 };
 
 export default defineComponent({
-  name: "HoTroCongNgheSacManagement",
+  name: "RamManagement",
   components: {
     DataTable,
     NotificationModal,
@@ -238,6 +180,8 @@ export default defineComponent({
     FilterTableSection,
   },
   setup() {
+    const router = useRouter();
+    const route = useRoute();
     const toastNotification = ref(null);
     const notificationModal = ref(null);
     const currentPage = ref(1);
@@ -252,8 +196,7 @@ export default defineComponent({
     const isSubmitting = ref(false);
     const formData = ref({
       id: null,
-      congSac: "",
-      congNgheHoTro: "",
+      dungLuongRam: "",
     });
     const errors = ref({});
 
@@ -267,60 +210,30 @@ export default defineComponent({
     // State
     const keyword = ref("");
     const filters = ref({
-      congSacType: "",
-      congNgheType: "",
-      chargingSpeed: "",
+      // status: "",
     });
 
     // Data from API
-    const hoTroCongNgheSacList = ref([]);
-    const congSacTypeOptions = ref([]);
-    const congNgheTypeOptions = ref([]);
-    const chargingSpeedOptions = ref([]);
+    const ramList = ref([]);
 
     // Headers for DataTable
     const headers = ref([
       { text: "", value: "checkbox", isSelectAll: true },
       { text: "STT", value: "stt" },
-      { text: "Cổng Sạc", value: "congSac" },
-      { text: "Công Nghệ Hỗ Trợ", value: "congNgheHoTro" },
-      { text: "Loại", value: "chargingCategory" },
-      { text: "Tốc Độ", value: "chargingSpeed" },
+      { text: "Mã", value: "ma" },
+      { text: "Dung Lượng RAM", value: "dungLuongRam" },
       { text: "Thao Tác", value: "actions" },
     ]);
 
     // Computed properties
     const sharedFilteredItems = computed(() => {
-      let filtered = hoTroCongNgheSacList.value || [];
-      
-      // Filter by charging port type
-      if (filters.value.congSacType) {
-        filtered = filtered.filter(item => 
-          item.congSac === filters.value.congSacType
-        );
-      }
-      
-      // Filter by charging technology type
-      if (filters.value.congNgheType) {
-        filtered = filtered.filter(item => 
-          getChargingCategory(item) === filters.value.congNgheType
-        );
-      }
-      
-      // Filter by charging speed
-      if (filters.value.chargingSpeed) {
-        filtered = filtered.filter(item => 
-          getChargingSpeed(item) === filters.value.chargingSpeed
-        );
-      }
-      
-      return filtered;
+      return ramList.value || [];
     });
 
     const paginatedItems = computed(() => {
       const start = (currentPage.value - 1) * itemsPerPage.value;
       const end = start + itemsPerPage.value;
-      return sharedFilteredItems.value
+      return (ramList.value || [])
         .slice(start, end)
         .map((item, index) => ({
           ...item,
@@ -335,127 +248,74 @@ export default defineComponent({
       );
     });
 
-    // Charging port categorization functions
-    const getChargingPortIcon = (item) => {
-      const port = item.congSac.toLowerCase();
-      if (port.includes('usb-c') || port.includes('type-c')) return 'bi bi-usb-c';
-      if (port.includes('lightning')) return 'bi bi-lightning-charge';
-      if (port.includes('micro') || port.includes('micro-usb')) return 'bi bi-usb-micro';
-      if (port.includes('wireless') || port.includes('không dây')) return 'bi bi-wifi';
-      return 'bi bi-usb-plug';
-    };
-
-    const getChargingPortClass = (item) => {
-      const port = item.congSac.toLowerCase();
-      if (port.includes('usb-c') || port.includes('type-c')) return 'port-usbc';
-      if (port.includes('lightning')) return 'port-lightning';
-      if (port.includes('micro') || port.includes('micro-usb')) return 'port-micro';
-      if (port.includes('wireless') || port.includes('không dây')) return 'port-wireless';
-      return 'port-default';
-    };
-
-    // Charging technology categorization functions
-    const getChargingCategory = (item) => {
-      const tech = item.congNgheHoTro.toLowerCase();
-      if (tech.includes('wireless') || tech.includes('không dây')) return 'Sạc không dây';
-      if (tech.includes('fast') || tech.includes('quick') || tech.includes('nhanh')) return 'Sạc nhanh';
-      if (tech.includes('super') || tech.includes('siêu')) return 'Sạc siêu nhanh';
-      if (tech.includes('turbo') || tech.includes('tăng tốc')) return 'Sạc tăng tốc';
-      return 'Sạc thường';
-    };
-
-    const getChargingSpeed = (item) => {
-      const tech = item.congNgheHoTro.toLowerCase();
-      if (tech.includes('120w') || tech.includes('100w') || tech.includes('siêu')) return 'Siêu nhanh (100W+)';
-      if (tech.includes('67w') || tech.includes('65w') || tech.includes('50w')) return 'Rất nhanh (50-100W)';
-      if (tech.includes('33w') || tech.includes('30w') || tech.includes('25w')) return 'Nhanh (25-50W)';
-      if (tech.includes('18w') || tech.includes('15w') || tech.includes('quick')) return 'Trung bình (15-25W)';
-      return 'Thường (<15W)';
-    };
-
-    const getChargingCategoryClass = (item) => {
-      const category = getChargingCategory(item);
-      switch (category) {
-        case 'Sạc không dây': return 'category-wireless';
-        case 'Sạc siêu nhanh': return 'category-super-fast';
-        case 'Sạc nhanh': return 'category-fast';
-        case 'Sạc tăng tốc': return 'category-turbo';
-        default: return 'category-normal';
+    // API method để check trùng dung lượng RAM
+    const checkDungLuongRamExists = async (dungLuongRam, excludeId = null) => {
+      try {
+        const params = { dungLuongRam };
+        if (excludeId) {
+          params.excludeId = excludeId;
+        }
+        const response = await apiService.get('/api/ram/exists/dung-luong-ram', { params });
+        return response.data;
+      } catch (error) {
+        console.error('Error checking dungLuongRam exists:', error);
+        return false;
       }
-    };
-
-    const getChargingSpeedClass = (item) => {
-      const speed = getChargingSpeed(item);
-      if (speed.includes('Siêu nhanh')) return 'speed-ultra';
-      if (speed.includes('Rất nhanh')) return 'speed-very-fast';
-      if (speed.includes('Nhanh')) return 'speed-fast';
-      if (speed.includes('Trung bình')) return 'speed-medium';
-      return 'speed-normal';
     };
 
     // Validation methods
     const validateField = (fieldName) => {
       switch (fieldName) {
-        case "congSac":
-          if (!formData.value.congSac.trim()) {
-            errors.value.congSac = "Cổng sạc không được để trống";
-          } else if (formData.value.congSac.trim().length < 2) {
-            errors.value.congSac = "Cổng sạc phải có ít nhất 2 ký tự";
-          } else if (formData.value.congSac.trim().length > 50) {
-            errors.value.congSac = "Cổng sạc không được vượt quá 50 ký tự";
+        case "dungLuongRam":
+          if (!formData.value.dungLuongRam.trim()) {
+            errors.value.dungLuongRam = "Dung lượng RAM không được để trống";
+          } else if (formData.value.dungLuongRam.trim().length < 2) {
+            errors.value.dungLuongRam = "Dung lượng RAM phải có ít nhất 2 ký tự";
+          } else if (formData.value.dungLuongRam.trim().length > 50) {
+            errors.value.dungLuongRam = "Dung lượng RAM không được vượt quá 50 ký tự";
           } else {
-            delete errors.value.congSac;
-          }
-          break;
-        case "congNgheHoTro":
-          if (!formData.value.congNgheHoTro.trim()) {
-            errors.value.congNgheHoTro = "Công nghệ hỗ trợ không được để trống";
-          } else if (formData.value.congNgheHoTro.trim().length < 2) {
-            errors.value.congNgheHoTro = "Công nghệ hỗ trợ phải có ít nhất 2 ký tự";
-          } else if (formData.value.congNgheHoTro.trim().length > 100) {
-            errors.value.congNgheHoTro = "Công nghệ hỗ trợ không được vượt quá 100 ký tự";
-          } else {
-            delete errors.value.congNgheHoTro;
+            delete errors.value.dungLuongRam;
           }
           break;
       }
     };
 
-    const validateCongSacField = async () => {
-      validateField('congSac');
+    // Validate dung lượng RAM field với check trùng dung lượng
+    const validateDungLuongRamField = async () => {
+      // Kiểm tra validation cơ bản trước
+      validateField('dungLuongRam');
       
-      if (errors.value.congSac) {
+      // Nếu có lỗi validation cơ bản thì không check trùng dung lượng
+      if (errors.value.dungLuongRam) {
         return;
       }
 
-      const value = formData.value.congSac.trim();
+      const dungLuongRamValue = formData.value.dungLuongRam.trim();
       
-      if (value.includes('  ') || value !== value.trim()) {
-        errors.value.congSac = "Cổng sạc không được chứa ký tự trống thừa";
+      // Kiểm tra ký tự trống
+      if (dungLuongRamValue.includes('  ') || dungLuongRamValue !== dungLuongRamValue.trim()) {
+        errors.value.dungLuongRam = "Dung lượng RAM không được chứa ký tự trống thừa";
         toastNotification.value?.addToast({
           type: "warning",
-          message: "Cổng sạc không được chứa ký tự trống thừa",
+          message: "Dung lượng RAM không được chứa ký tự trống thừa",
           duration: 3000,
         });
-      }
-    };
-
-    const validateCongNgheHoTroField = async () => {
-      validateField('congNgheHoTro');
-      
-      if (errors.value.congNgheHoTro) {
         return;
       }
 
-      const value = formData.value.congNgheHoTro.trim();
-      
-      if (value.includes('  ') || value !== value.trim()) {
-        errors.value.congNgheHoTro = "Công nghệ hỗ trợ không được chứa ký tự trống thừa";
-        toastNotification.value?.addToast({
-          type: "warning",
-          message: "Công nghệ hỗ trợ không được chứa ký tự trống thừa",
-          duration: 3000,
-        });
+      // Check trùng dung lượng (không check khi edit với cùng dung lượng)
+      if (dungLuongRamValue) {
+        const excludeId = isEditMode.value ? formData.value.id : null;
+        const exists = await checkDungLuongRamExists(dungLuongRamValue, excludeId);
+        
+        if (exists) {
+          errors.value.dungLuongRam = "Dung lượng RAM đã tồn tại";
+          toastNotification.value?.addToast({
+            type: "warning", 
+            message: "Dung lượng RAM đã tồn tại trong hệ thống",
+            duration: 3000,
+          });
+        }
       }
     };
 
@@ -468,71 +328,50 @@ export default defineComponent({
     const validateForm = async () => {
       errors.value = {};
       
-      // Validate cổng sạc
-      if (!formData.value.congSac.trim()) {
+      // Validate dung lượng RAM
+      if (!formData.value.dungLuongRam.trim()) {
         toastNotification.value?.addToast({
           type: "warning",
-          message: "Cổng sạc không được để trống",
+          message: "Dung lượng RAM không được để trống",
           duration: 3000,
         });
         return false;
-      } else if (formData.value.congSac.trim().length < 2) {
+      } else if (formData.value.dungLuongRam.trim().length < 2) {
         toastNotification.value?.addToast({
           type: "warning", 
-          message: "Cổng sạc phải có ít nhất 2 ký tự",
+          message: "Dung lượng RAM phải có ít nhất 2 ký tự",
           duration: 3000,
         });
         return false;
-      } else if (formData.value.congSac.trim().length > 50) {
+      } else if (formData.value.dungLuongRam.trim().length > 50) {
         toastNotification.value?.addToast({
           type: "warning",
-          message: "Cổng sạc không được vượt quá 50 ký tự", 
+          message: "Dung lượng RAM không được vượt quá 50 ký tự", 
           duration: 3000,
         });
         return false;
       }
 
-      // Validate công nghệ hỗ trợ
-      if (!formData.value.congNgheHoTro.trim()) {
+      const dungLuongRamValue = formData.value.dungLuongRam.trim();
+      
+      // Kiểm tra ký tự trống
+      if (dungLuongRamValue.includes('  ') || dungLuongRamValue !== dungLuongRamValue.trim()) {
         toastNotification.value?.addToast({
           type: "warning",
-          message: "Công nghệ hỗ trợ không được để trống",
-          duration: 3000,
-        });
-        return false;
-      } else if (formData.value.congNgheHoTro.trim().length < 2) {
-        toastNotification.value?.addToast({
-          type: "warning", 
-          message: "Công nghệ hỗ trợ phải có ít nhất 2 ký tự",
-          duration: 3000,
-        });
-        return false;
-      } else if (formData.value.congNgheHoTro.trim().length > 100) {
-        toastNotification.value?.addToast({
-          type: "warning",
-          message: "Công nghệ hỗ trợ không được vượt quá 100 ký tự", 
+          message: "Dung lượng RAM không được chứa ký tự trống thừa",
           duration: 3000,
         });
         return false;
       }
 
-      // Kiểm tra ký tự trống cho cổng sạc
-      const congSacValue = formData.value.congSac.trim();
-      if (congSacValue.includes('  ') || congSacValue !== congSacValue.trim()) {
+      // Check trùng dung lượng trước khi submit
+      const excludeId = isEditMode.value ? formData.value.id : null;
+      const exists = await checkDungLuongRamExists(dungLuongRamValue, excludeId);
+      
+      if (exists) {
         toastNotification.value?.addToast({
           type: "warning",
-          message: "Cổng sạc không được chứa ký tự trống thừa",
-          duration: 3000,
-        });
-        return false;
-      }
-
-      // Kiểm tra ký tự trống cho công nghệ hỗ trợ
-      const congNgheHoTroValue = formData.value.congNgheHoTro.trim();
-      if (congNgheHoTroValue.includes('  ') || congNgheHoTroValue !== congNgheHoTroValue.trim()) {
-        toastNotification.value?.addToast({
-          type: "warning",
-          message: "Công nghệ hỗ trợ không được chứa ký tự trống thừa",
+          message: "Dung lượng RAM đã tồn tại trong hệ thống",
           duration: 3000,
         });
         return false;
@@ -542,38 +381,35 @@ export default defineComponent({
     };
 
     // API Methods
-    const loadHoTroCongNgheSac = async () => {
+    const loadRam = async () => {
       try {
         isLoading.value = true;
         const searchParams = {};
         if (keyword.value) searchParams.keyword = keyword.value;
 
         let response;
-        const hasFilters = keyword.value;
+        const hasFilters = keyword.value || filters.value.status;
         if (hasFilters) {
-          response = await searchHoTroCongNgheSacAPI(searchParams, currentPage.value - 1, itemsPerPage.value);
+          response = await searchRamAPI(searchParams, currentPage.value - 1, itemsPerPage.value);
         } else {
-          response = await fetchHoTroCongNgheSac(currentPage.value - 1, itemsPerPage.value);
+          response = await fetchRam(currentPage.value - 1, itemsPerPage.value);
         }
 
         if (response.data) {
-          hoTroCongNgheSacList.value = response.data.content || [];
+          ramList.value = response.data.content || [];
           totalElements.value = response.data.totalElements || 0;
-          
-          // Generate filter options from data
-          generateFilterOptions();
         } else {
-          hoTroCongNgheSacList.value = [];
+          ramList.value = [];
           totalElements.value = 0;
         }
       } catch (error) {
-        console.error("Error fetching hỗ trợ công nghệ sạc:", error);
+        console.error("Error fetching RAM:", error);
         toastNotification.value?.addToast({
           type: "error",
-          message: "Lỗi khi tải danh sách hỗ trợ công nghệ sạc: " + (error.response?.data?.message || error.message),
+          message: "Lỗi khi tải danh sách RAM: " + (error.response?.data?.message || error.message),
           duration: 5000,
         });
-        hoTroCongNgheSacList.value = [];
+        ramList.value = [];
         totalElements.value = 0;
       } finally {
         isLoading.value = false;
@@ -592,56 +428,22 @@ export default defineComponent({
 
     const debouncedSearch = debounce(() => {
       currentPage.value = 1;
-      loadHoTroCongNgheSac();
+      loadRam();
     }, 500);
 
-    const generateFilterOptions = () => {
-      // Generate charging port options
-      const portSet = new Set();
-      hoTroCongNgheSacList.value.forEach(item => {
-        portSet.add(item.congSac);
-      });
-      congSacTypeOptions.value = Array.from(portSet).map(value => ({
-        value: value,
-        label: value
-      })).sort((a, b) => a.label.localeCompare(b.label));
-
-      // Generate charging category options
-      const categorySet = new Set();
-      hoTroCongNgheSacList.value.forEach(item => {
-        categorySet.add(getChargingCategory(item));
-      });
-      congNgheTypeOptions.value = Array.from(categorySet).map(value => ({
-        value: value,
-        label: value
-      })).sort((a, b) => a.label.localeCompare(b.label));
-
-      // Generate charging speed options
-      const speedSet = new Set();
-      hoTroCongNgheSacList.value.forEach(item => {
-        speedSet.add(getChargingSpeed(item));
-      });
-      chargingSpeedOptions.value = Array.from(speedSet).map(value => ({
-        value: value,
-        label: value
-      })).sort((a, b) => a.label.localeCompare(b.label));
-    };
-
-    const searchHoTroCongNgheSac = () => {
+    const searchRam = () => {
       currentPage.value = 1;
-      // Filter được xử lý trong computed property, không cần gọi API
+      loadRam();
     };
 
     const resetFilters = () => {
       keyword.value = "";
       filters.value = {
-        congSacType: "",
-        congNgheType: "",
-        chargingSpeed: "",
+        // status: "",
       };
       currentPage.value = 1;
       selectedItems.value = [];
-      loadHoTroCongNgheSac();
+      loadRam();
 
       toastNotification.value?.addToast({
         type: "info",
@@ -654,8 +456,7 @@ export default defineComponent({
       isEditMode.value = false;
       formData.value = {
         id: null,
-        congSac: "",
-        congNgheHoTro: "",
+        dungLuongRam: "",
       };
       errors.value = {};
       showModal.value = true;
@@ -669,8 +470,7 @@ export default defineComponent({
       isEditMode.value = true;
       formData.value = {
         id: item.id,
-        congSac: item.congSac,
-        congNgheHoTro: item.congNgheHoTro,
+        dungLuongRam: item.dungLuongRam,
       };
       errors.value = {};
       showModal.value = true;
@@ -685,34 +485,42 @@ export default defineComponent({
       try {
         isSubmitting.value = true;
         const data = {
-          congSac: formData.value.congSac.trim(),
-          congNgheHoTro: formData.value.congNgheHoTro.trim(),
+          dungLuongRam: formData.value.dungLuongRam.trim(),
         };
 
+        // Khi edit, cần giữ nguyên mã cũ
         if (isEditMode.value) {
-          await updateHoTroCongNgheSac(formData.value.id, data);
+          // Tìm item hiện tại để lấy mã
+          const currentItem = ramList.value.find(item => item.id === formData.value.id);
+          if (currentItem) {
+            data.ma = currentItem.ma; // Giữ nguyên mã cũ
+          }
+        }
+
+        if (isEditMode.value) {
+          await updateRam(formData.value.id, data);
           toastNotification.value?.addToast({
             type: "success",
-            message: "Cập nhật hỗ trợ công nghệ sạc thành công",
+            message: "Cập nhật RAM thành công",
             duration: 3000,
           });
         } else {
-          await createHoTroCongNgheSac(data);
+          await createRam(data);
           toastNotification.value?.addToast({
             type: "success",
-            message: "Thêm hỗ trợ công nghệ sạc thành công",
+            message: "Thêm RAM thành công",
             duration: 3000,
           });
         }
 
         closeModal();
-        await loadHoTroCongNgheSac();
+        await loadRam();
       } catch (error) {
         console.error("Error submitting form:", error);
         toastNotification.value?.addToast({
           type: "error",
           message:
-            "Lỗi khi lưu hỗ trợ công nghệ sạc: " +
+            "Lỗi khi lưu RAM: " +
             (error.response?.data?.error || error.response?.data?.message || error.message),
           duration: 5000,
         });
@@ -731,13 +539,13 @@ export default defineComponent({
 
     const handlePageChange = (page) => {
       currentPage.value = page;
-      // Không cần gọi loadHoTroCongNgheSac() vì pagination hoạt động trên client-side với filtered data
+      loadRam();
     };
 
     const handleItemsPerPageChange = (size) => {
       itemsPerPage.value = size;
       currentPage.value = 1;
-      // Không cần gọi loadHoTroCongNgheSac() vì pagination hoạt động trên client-side với filtered data
+      loadRam();
     };
 
     const toggleSelectAll = () => {
@@ -752,34 +560,30 @@ export default defineComponent({
       if (selectedItems.value.length === 0) {
         toastNotification.value?.addToast({
           type: "warning",
-          message: "Vui lòng chọn ít nhất một hỗ trợ công nghệ sạc để tải danh sách Excel",
+          message: "Vui lòng chọn ít nhất một RAM để tải danh sách Excel",
           duration: 2000,
         });
         return;
       }
 
       try {
-        const selectedData = sharedFilteredItems.value.filter((item) => selectedItems.value.includes(item.id));
-        const data = selectedData.map((item, index) => ({
-          "STT": index + 1,
-          "Cổng Sạc": item.congSac || "N/A",
-          "Công Nghệ Hỗ Trợ": item.congNgheHoTro || "N/A",
-          "Loại": getChargingCategory(item),
-          "Tốc Độ Sạc": getChargingSpeed(item),
+        const selectedData = ramList.value.filter((item) => selectedItems.value.includes(item.id));
+        const data = selectedData.map((item) => ({
+          Mã: item.ma || "N/A",
+          "Dung Lượng RAM": item.dungLuongRam || "N/A",
+          "Mô Tả": item.moTa || "Không có mô tả",
           "Ngày Tạo": formatDate(item.ngayTao),
         }));
 
         const worksheet = XLSX.utils.json_to_sheet(data);
         const workbook = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(workbook, worksheet, "Hỗ Trợ Công Nghệ Sạc");
+        XLSX.utils.book_append_sheet(workbook, worksheet, "RAM");
 
         // Sửa lại độ rộng cột
         worksheet["!cols"] = [
-          { wch: 8 }, // STT
-          { wch: 20 }, // Cổng Sạc
-          { wch: 30 }, // Công Nghệ Hỗ Trợ
-          { wch: 20 }, // Loại
-          { wch: 20 }, // Tốc Độ Sạc
+          { wch: 15 }, // Mã
+          { wch: 25 }, // Dung Lượng RAM
+          { wch: 40 }, // Mô Tả
           { wch: 15 }, // Ngày Tạo
         ];
 
@@ -787,11 +591,11 @@ export default defineComponent({
         const blob = new Blob([excelBuffer], {
           type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         });
-        saveAs(blob, "danh_sach_ho_tro_cong_nghe_sac.xlsx");
+        saveAs(blob, "danh_sach_ram.xlsx");
 
         toastNotification.value?.addToast({
           type: "success",
-          message: `Đã tải xuống danh sách ${selectedItems.value.length} hỗ trợ công nghệ sạc dưới dạng Excel`,
+          message: `Đã tải xuống danh sách ${selectedItems.value.length} RAM dưới dạng Excel`,
           duration: 2000,
         });
       } catch (error) {
@@ -810,14 +614,14 @@ export default defineComponent({
       filters,
       () => {
         currentPage.value = 1;
-        // Filter được xử lý trong computed property, không cần gọi API
+        loadRam();
       },
       { deep: true }
     );
 
     // Lifecycle
     onMounted(async () => {
-      await loadHoTroCongNgheSac();
+      await loadRam();
     });
 
     return {
@@ -825,10 +629,7 @@ export default defineComponent({
       notificationModal,
       keyword,
       filters,
-      hoTroCongNgheSacList,
-      congSacTypeOptions,
-      congNgheTypeOptions,
-      chargingSpeedOptions,
+      ramList,
       headers,
       currentPage,
       itemsPerPage,
@@ -838,8 +639,7 @@ export default defineComponent({
       paginatedItems,
       formatDate,
       debouncedSearch,
-      generateFilterOptions,
-      searchHoTroCongNgheSac,
+      searchRam,
       resetFilters,
       openAddModal,
       closeModal,
@@ -863,16 +663,10 @@ export default defineComponent({
       errors,
       validateForm,
       validateField,
-      validateCongSacField,
-      validateCongNgheHoTroField,
+      validateDungLuongRamField,
       clearFieldError,
       showModal,
-      getChargingCategory,
-      getChargingSpeed,
-      getChargingCategoryClass,
-      getChargingSpeedClass,
-      getChargingPortIcon,
-      getChargingPortClass,
+      checkDungLuongRamExists,
     };
   },
 });
@@ -934,7 +728,7 @@ export default defineComponent({
   backdrop-filter: blur(12px);
   border-radius: 16px;
   width: 100%;
-  max-width: 700px;
+  max-width: 600px;
   padding: 24px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
   animation: slideUp 0.4s ease-out;
@@ -995,7 +789,8 @@ export default defineComponent({
   color: #ef4444;
 }
 
-.form-control {
+.form-control,
+.form-select {
   border: 1px solid rgba(0, 0, 0, 0.1);
   border-radius: 8px;
   padding: 12px;
@@ -1052,132 +847,27 @@ export default defineComponent({
 .btn-primary:hover:not(:disabled) {
   background: linear-gradient(135deg, #059669, #047857);
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(52, 211, 153, 0.3);
-}
-
-.btn-primary:disabled {
-  background: #9ca3af;
-  cursor: not-allowed;
-}
-
-.btn-secondary {
-  background: #e5e7eb;
-  color: #1a3c34;
-  border: none;
-}
-
-.btn-secondary:hover:not(:disabled) {
-  background: #d1d5db;
-  transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
-/* Charging port specific badges */
-.port-badge {
-  display: inline-flex;
-  align-items: center;
-  padding: 0.25rem 0.75rem;
-  border-radius: 1rem;
-  font-size: 0.75rem;
-  font-weight: 500;
-  text-align: center;
+.alert-danger {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+  border-radius: 8px;
+  padding: 12px;
+  margin-top: 16px;
 }
 
-.port-usbc {
-  background: linear-gradient(135deg, #3b82f6, #2563eb);
-  color: white;
+.alert h6 {
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin-bottom: 8px;
 }
 
-.port-lightning {
-  background: linear-gradient(135deg, #f59e0b, #d97706);
-  color: white;
-}
-
-.port-micro {
-  background: linear-gradient(135deg, #6b7280, #4b5563);
-  color: white;
-}
-
-.port-wireless {
-  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
-  color: white;
-}
-
-.port-default {
-  background: linear-gradient(135deg, #10b981, #059669);
-  color: white;
-}
-
-/* Charging technology specific badges */
-.tech-text {
-  font-weight: 500;
-  color: #1f3a44;
-}
-
-.category-badge {
-  padding: 0.25rem 0.75rem;
-  border-radius: 1rem;
-  font-size: 0.75rem;
-  font-weight: 500;
-  text-align: center;
-}
-
-.category-wireless {
-  background: #8b5cf6;
-  color: white;
-}
-
-.category-super-fast {
-  background: #ef4444;
-  color: white;
-}
-
-.category-fast {
-  background: #f59e0b;
-  color: white;
-}
-
-.category-turbo {
-  background: #10b981;
-  color: white;
-}
-
-.category-normal {
-  background: #6b7280;
-  color: white;
-}
-
-.speed-badge {
-  padding: 0.25rem 0.75rem;
-  border-radius: 1rem;
-  font-size: 0.75rem;
-  font-weight: 500;
-  text-align: center;
-}
-
-.speed-ultra {
-  background: linear-gradient(135deg, #ef4444, #dc2626);
-  color: white;
-}
-
-.speed-very-fast {
-  background: linear-gradient(135deg, #f59e0b, #d97706);
-  color: white;
-}
-
-.speed-fast {
-  background: linear-gradient(135deg, #10b981, #059669);
-  color: white;
-}
-
-.speed-medium {
-  background: linear-gradient(135deg, #3b82f6, #2563eb);
-  color: white;
-}
-
-.speed-normal {
-  background: #6b7280;
-  color: white;
+.alert ul {
+  font-size: 0.85rem;
+  margin: 0;
+  padding-left: 20px;
 }
 
 /* Existing styles (unchanged) */
@@ -1229,8 +919,7 @@ export default defineComponent({
   font-size: 0.875rem;
 }
 
-.search-group,
-.filter-group {
+.search-group {
   position: relative;
 }
 
@@ -1347,17 +1036,28 @@ export default defineComponent({
   font-weight: 500;
 }
 
+.code-text {
+  font-weight: 500;
+  color: #34d399;
+}
+
+.name-text {
+  font-weight: 500;
+  color: #1f3a44;
+}
+
+.description-text {
+  color: #6c757d;
+  font-size: 0.9rem;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .date-text {
   font-size: 0.9rem;
   color: #6c757d;
-}
-
-.status-badge {
-  padding: 0.25rem 0.75rem;
-  border-radius: 1rem;
-  font-size: 0.75rem;
-  font-weight: 500;
-  text-align: center;
 }
 
 .action-buttons-cell {
@@ -1431,6 +1131,10 @@ export default defineComponent({
     align-items: flex-start;
     gap: 1rem;
   }
+
+  .description-text {
+    max-width: 150px;
+  }
 }
 
 @media (max-width: 576px) {
@@ -1453,12 +1157,13 @@ export default defineComponent({
     font-size: 0.85rem;
   }
 
-  .status-badge,
-  .category-badge,
-  .speed-badge,
-  .port-badge {
+  .status-badge {
     font-size: 0.7rem;
     padding: 0.3rem 0.6rem;
+  }
+
+  .description-text {
+    max-width: 120px;
   }
 
   .btn-table {

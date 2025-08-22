@@ -15,6 +15,9 @@ const ThemChiTietSanPham = () => import("@/pages/products/ThemChiTietSanPham.vue
 const NhaSanXuat = () => import("@/pages/products/thuocTinhSp/NhaSanXuat.vue");
 const CumCamera = () => import("@/pages/products/thuocTinhSp/CumCamera.vue");
 const HoTroCongNgheSac = () => import("@/pages/products/thuocTinhSp/HoTroCongNgheSac.vue");
+const Ram = () => import("@/pages/products/thuocTinhSp/Ram.vue");
+const BoNhoTrong = () => import("@/pages/products/thuocTinhSp/BoNhoTrong.vue");
+const HoTroBoNhoNgoai = () => import("@/pages/products/thuocTinhSp/HoTroBoNhoNgoai.vue");
 const HoaDon = () => import("@/pages/bills/HoaDon.vue");
 const HoaDonChiTiet = () => import("@/pages/bills/HoaDonChiTiet.vue");
 const PhieuGiamGia = () => import("@/pages/promotions/PhieuGiamGia.vue");
@@ -174,6 +177,48 @@ const routes = [
             { name: "Trang chủ", path: "/trangChu" },
             { name: "Sản phẩm", path: "/sanPham" },
             { name: "Hỗ trợ công nghệ sạc", path: "/hoTroCongNgheSac" },
+          ],
+          requiresAdmin: true,
+        },
+      },
+      {
+        path: "/ram",
+        name: "Ram",
+        component: Ram,
+        meta: {
+          title: "RAM",
+          breadcrumb: [
+            { name: "Trang chủ", path: "/trangChu" },
+            { name: "Sản phẩm", path: "/sanPham" },
+            { name: "RAM", path: "/ram" },
+          ],
+          requiresAdmin: true,
+        },
+      },
+      {
+        path: "/boNhoTrong",
+        name: "BoNhoTrong",
+        component: BoNhoTrong,
+        meta: {
+          title: "Bộ nhớ trong",
+          breadcrumb: [
+            { name: "Trang chủ", path: "/trangChu" },
+            { name: "Sản phẩm", path: "/sanPham" },
+            { name: "Bộ nhớ trong", path: "/boNhoTrong" },
+          ],
+          requiresAdmin: true,
+        },
+      },
+      {
+        path: "/boNhoNgoai",
+        name: "HoTroBoNhoNgoai",
+        component: HoTroBoNhoNgoai,
+        meta: {
+          title: "Hỗ trợ bộ nhớ ngoài",
+          breadcrumb: [
+            { name: "Trang chủ", path: "/trangChu" },
+            { name: "Sản phẩm", path: "/sanPham" },
+            { name: "Hỗ trợ bộ nhớ ngoài", path: "/boNhoNgoai" },
           ],
           requiresAdmin: true,
         },
