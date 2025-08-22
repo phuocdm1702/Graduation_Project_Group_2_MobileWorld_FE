@@ -121,7 +121,7 @@ export const updateIMEIStatusApi = async (imei, deleted) => {
 export const getAllAddressesByKhachHangIdApi = async (idKhachHang) => {
   try {
     const response = await apiService.get(`/khach-hang/getByKhachHang/${idKhachHang}`);
-    const validAddresses = response.data.filter(addr => addr.deleted);
+    const validAddresses = response.data.filter(addr => !addr.deleted);
     console.log("API Response:", response.data); // Log toàn bộ dữ liệu trả về
     console.log("Valid addresses:", validAddresses); // Log danh sách đã lọc
     return { success: true, data: validAddresses };
