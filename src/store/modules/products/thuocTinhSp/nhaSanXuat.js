@@ -25,11 +25,6 @@ export const updateNhaSanXuat = (id, data) => {
   return apiService.put(`/api/nha-san-xuat/${id}`, data);
 };
 
-// Xóa nhà sản xuất
-export const deleteNhaSanXuat = (id) => {
-  return apiService.delete(`/api/nha-san-xuat/${id}`);
-};
-
 // Cập nhật trạng thái nhà sản xuất
 export const updateNhaSanXuatStatus = (id, trangThai) => {
   return apiService.put(`/api/nha-san-xuat/update-status/${id}`, { trangThai });

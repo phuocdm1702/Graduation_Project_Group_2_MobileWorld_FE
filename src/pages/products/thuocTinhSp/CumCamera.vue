@@ -1,34 +1,45 @@
-<!-- NhaSanXuat.vue -->
+<!-- CumCamera.vue - Template updated without Ma field -->
 <template>
   <!-- Modal -->
   <div v-if="showModal" class="modal-overlay">
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title">
-          {{ isEditMode ? 'Chỉnh Sửa Nhà Sản Xuất' : 'Thêm Nhà Sản Xuất Mới' }}
+          {{ isEditMode ? 'Chỉnh Sửa Cụm Camera' : 'Thêm Cụm Camera Mới' }}
         </h5>
         <button @click="closeModal" class="close-button" aria-label="Close">&times;</button>
       </div>
       <div class="modal-body">
-        <form @submit.prevent="submitForm" id="manufacturerForm">
+        <form @submit.prevent="submitForm" id="cameraClusterForm">
           <div class="form-grid">
-            <!-- Tên nhà sản xuất -->
+            <!-- Thông số camera sau -->
             <div class="form-group full-width">
               <label class="form-label">
-                Tên Nhà Sản Xuất <span class="required">*</span>
+                Thông Số Camera Sau <span class="required">*</span>
               </label>
-              <input type="text" class="form-control" v-model="formData.nhaSanXuat" 
-                     placeholder="Nhập tên nhà sản xuất"
-                     :class="{ 'is-invalid': errors.nhaSanXuat }" 
-                     @blur="validateNhaSanXuatField"
-                     @input="clearFieldError('nhaSanXuat')" />
+              <input type="text" class="form-control" v-model="formData.thongSoCameraSau" 
+                     placeholder="Ví dụ: 108MP + 12MP + 12MP"
+                     :class="{ 'is-invalid': errors.thongSoCameraSau }" 
+                     @blur="validateThongSoCameraSauField"
+                     @input="clearFieldError('thongSoCameraSau')" />
+            </div>
+            <!-- Thông số camera trước -->
+            <div class="form-group full-width">
+              <label class="form-label">
+                Thông Số Camera Trước <span class="required">*</span>
+              </label>
+              <input type="text" class="form-control" v-model="formData.thongSoCameraTruoc" 
+                     placeholder="Ví dụ: 32MP"
+                     :class="{ 'is-invalid': errors.thongSoCameraTruoc }" 
+                     @blur="validateThongSoCameraTruocField"
+                     @input="clearFieldError('thongSoCameraTruoc')" />
             </div>
           </div>
         </form>
       </div>
       <div class="modal-footer">
         <button type="button" @click="closeModal" class="btn btn-reset">Hủy</button>
-        <button type="submit" form="manufacturerForm" class="btn btn-action btn-primary-custom"
+        <button type="submit" form="cameraClusterForm" class="btn btn-action btn-primary-custom"
           :disabled="isSubmitting">
           {{ isEditMode ? 'Cập nhật' : 'Thêm mới' }}
           <span v-if="isSubmitting" class="spinner-border spinner-border-sm ml-2"></span>
@@ -40,7 +51,7 @@
   <!-- Container chính -->
   <div class="container-fluid py-4">
     <!-- Header -->
-    <HeaderCard title="Quản Lý Nhà Sản Xuất" badgeText="Hệ Thống POS" badgeClass="gradient-custom-teal"
+    <HeaderCard title="Quản Lý Cụm Camera" badgeText="Hệ Thống POS" badgeClass="gradient-custom-teal"
       :backgroundOpacity="0.95" />
 
     <!-- Filter Section -->
@@ -48,15 +59,41 @@
       <div class="m-3">
         <div class="row g-4 align-items-end">
           <!-- Search Input -->
-          <div class="col-lg-6 col-md-8">
+          <div class="col-lg-4 col-md-6">
             <div class="search-group">
               <label class="filter-label">Tìm kiếm</label>
               <div class="search-input-wrapper">
                 <i class="bi bi-search search-icon"></i>
                 <input v-model.trim="keyword" @input="debouncedSearch" type="text"
-                  placeholder="Tìm kiếm theo tên nhà sản xuất..." class="form-control search-input"
+                  placeholder="Tìm kiếm theo thông số camera..." class="form-control search-input"
                   style="padding-left: 2.5rem;" />
               </div>
+            </div>
+          </div>
+
+          <!-- Filter for Camera Sau -->
+          <div class="col-lg-4 col-md-6">
+            <div class="filter-group">
+              <label class="filter-label">Camera Sau</label>
+              <select v-model="filters.cameraSau" @change="searchCumCamera" class="form-select search-input">
+                <option value="">Tất cả</option>
+                <option v-for="option in cameraSauOptions" :key="option.value" :value="option.value">
+                  {{ option.label }}
+                </option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Filter for Camera Truoc -->
+          <div class="col-lg-4 col-md-6">
+            <div class="filter-group">
+              <label class="filter-label">Camera Trước</label>
+              <select v-model="filters.cameraTruoc" @change="searchCumCamera" class="form-select search-input">
+                <option value="">Tất cả</option>
+                <option v-for="option in cameraTruocOptions" :key="option.value" :value="option.value">
+                  {{ option.label }}
+                </option>
+              </select>
             </div>
           </div>
         </div>
@@ -67,7 +104,7 @@
             <div class="col-lg-12">
               <div class="filter-stats d-flex">
                 <div class="stat-item d-flex gap-2">
-                  <span class="stat-label">Tổng số nhà sản xuất:</span>
+                  <span class="stat-label">Tổng số cụm camera:</span>
                   <span class="stat-value" style="color: rgb(21, 128, 61); font-weight: bold;">
                     {{ sharedFilteredItems.length }}
                   </span>
@@ -81,8 +118,8 @@
               title="Tải danh sách Excel">
               Tải Excel
             </button>
-            <button class="btn btn-action btn-primary-custom" @click="openAddModal" title="Thêm nhà sản xuất mới">
-              Thêm nhà sản xuất
+            <button class="btn btn-action btn-primary-custom" @click="openAddModal" title="Thêm cụm camera mới">
+              Thêm cụm camera
             </button>
             <button class="btn btn-reset" @click="resetFilters">
               Đặt lại bộ lọc
@@ -93,10 +130,10 @@
     </FilterTableSection>
 
     <!-- Table View -->
-    <FilterTableSection title="Danh Sách Nhà Sản Xuất" icon="bi bi-table">
+    <FilterTableSection title="Danh Sách Cụm Camera" icon="bi bi-table">
       <div class="table-header">
         <div class="table-title-wrapper">
-          <span class="table-count">{{ sharedFilteredItems.length }} nhà sản xuất</span>
+          <span class="table-count">{{ sharedFilteredItems.length }} cụm camera</span>
         </div>
       </div>
       <div class="table-body">
@@ -109,11 +146,11 @@
           <template #stt="{ globalIndex }">
             {{ globalIndex + 1 }}
           </template>
-          <template #ma="{ item }">
-            <div class="code-text">{{ item.ma }}</div>
+          <template #thongSoCameraSau="{ item }">
+            <div class="spec-text">{{ item.thongSoCameraSau }}</div>
           </template>
-          <template #nhaSanXuat="{ item }">
-            <div class="name-text">{{ item.nhaSanXuat }}</div>
+          <template #thongSoCameraTruoc="{ item }">
+            <div class="spec-text">{{ item.thongSoCameraTruoc }}</div>
           </template>
           <template #trangThai="{ item }">
             <span class="status-badge" :class="getStatusBadgeClass(item)">
@@ -139,9 +176,9 @@
   </div>
 </template>
 
+<!-- Phần script cập nhật của CumCamera.vue -->
 <script>
 import { defineComponent, ref, computed, onMounted, watch } from "vue";
-import { useRoute, useRouter } from "vue-router";
 import DataTable from "@/components/common/DataTable.vue";
 import NotificationModal from "@/components/common/NotificationModal.vue";
 import ToastNotification from "@/components/common/ToastNotification.vue";
@@ -152,14 +189,11 @@ import { saveAs } from "file-saver";
 
 // Import API services
 import {
-  fetchNhaSanXuat,
-  searchNhaSanXuat as searchNhaSanXuatAPI,
-  createNhaSanXuat,
-  updateNhaSanXuat,
-} from "@/store/modules/products/thuocTinhSp/nhaSanXuat";
-
-// Import API service để check trùng tên
-import apiService from "@/services/api";
+  fetchCumCamera,
+  searchCumCamera as searchCumCameraAPI,
+  createCumCamera,
+  updateCumCamera,
+} from "@/store/modules/products/thuocTinhSp/cumCamera";
 
 // Debounce utility
 const debounce = (func, delay) => {
@@ -171,7 +205,7 @@ const debounce = (func, delay) => {
 };
 
 export default defineComponent({
-  name: "NhaSanXuatManagement",
+  name: "CumCameraManagement",
   components: {
     DataTable,
     NotificationModal,
@@ -180,8 +214,6 @@ export default defineComponent({
     FilterTableSection,
   },
   setup() {
-    const router = useRouter();
-    const route = useRoute();
     const toastNotification = ref(null);
     const notificationModal = ref(null);
     const currentPage = ref(1);
@@ -196,7 +228,8 @@ export default defineComponent({
     const isSubmitting = ref(false);
     const formData = ref({
       id: null,
-      nhaSanXuat: "",
+      thongSoCameraSau: "",
+      thongSoCameraTruoc: "",
     });
     const errors = ref({});
 
@@ -210,30 +243,49 @@ export default defineComponent({
     // State
     const keyword = ref("");
     const filters = ref({
-      // status: "",
+      cameraSau: "",
+      cameraTruoc: "",
     });
 
     // Data from API
-    const nhaSanXuatList = ref([]);
+    const cumCameraList = ref([]);
+    const cameraSauOptions = ref([]);
+    const cameraTruocOptions = ref([]);
 
-    // Headers for DataTable
+    // Headers for DataTable (bỏ cột mã)
     const headers = ref([
       { text: "", value: "checkbox", isSelectAll: true },
       { text: "STT", value: "stt" },
-      { text: "Mã", value: "ma" },
-      { text: "Tên Nhà Sản Xuất", value: "nhaSanXuat" },
+      { text: "Camera Sau", value: "thongSoCameraSau" },
+      { text: "Camera Trước", value: "thongSoCameraTruoc" },
       { text: "Thao Tác", value: "actions" },
     ]);
 
     // Computed properties
     const sharedFilteredItems = computed(() => {
-      return nhaSanXuatList.value || [];
+      let filtered = cumCameraList.value || [];
+      
+      // Filter by camera sau
+      if (filters.value.cameraSau) {
+        filtered = filtered.filter(item => 
+          item.thongSoCameraSau === filters.value.cameraSau
+        );
+      }
+      
+      // Filter by camera truoc
+      if (filters.value.cameraTruoc) {
+        filtered = filtered.filter(item => 
+          item.thongSoCameraTruoc === filters.value.cameraTruoc
+        );
+      }
+      
+      return filtered;
     });
 
     const paginatedItems = computed(() => {
       const start = (currentPage.value - 1) * itemsPerPage.value;
       const end = start + itemsPerPage.value;
-      return (nhaSanXuatList.value || [])
+      return sharedFilteredItems.value
         .slice(start, end)
         .map((item, index) => ({
           ...item,
@@ -248,74 +300,69 @@ export default defineComponent({
       );
     });
 
-    // API method để check trùng tên nhà sản xuất
-    const checkNhaSanXuatExists = async (nhaSanXuat, excludeId = null) => {
-      try {
-        const params = { nhaSanXuat };
-        if (excludeId) {
-          params.excludeId = excludeId;
-        }
-        const response = await apiService.get('/api/nha-san-xuat/exists/nha-san-xuat', { params });
-        return response.data;
-      } catch (error) {
-        console.error('Error checking nhaSanXuat exists:', error);
-        return false;
-      }
-    };
-
-    // Validation methods
+    // Validation methods (không còn validation mã)
     const validateField = (fieldName) => {
       switch (fieldName) {
-        case "nhaSanXuat":
-          if (!formData.value.nhaSanXuat.trim()) {
-            errors.value.nhaSanXuat = "Tên nhà sản xuất không được để trống";
-          } else if (formData.value.nhaSanXuat.trim().length < 2) {
-            errors.value.nhaSanXuat = "Tên nhà sản xuất phải có ít nhất 2 ký tự";
-          } else if (formData.value.nhaSanXuat.trim().length > 100) {
-            errors.value.nhaSanXuat = "Tên nhà sản xuất không được vượt quá 100 ký tự";
+        case "thongSoCameraSau":
+          if (!formData.value.thongSoCameraSau.trim()) {
+            errors.value.thongSoCameraSau = "Thông số camera sau không được để trống";
+          } else if (formData.value.thongSoCameraSau.trim().length < 2) {
+            errors.value.thongSoCameraSau = "Thông số camera sau phải có ít nhất 2 ký tự";
+          } else if (formData.value.thongSoCameraSau.trim().length > 100) {
+            errors.value.thongSoCameraSau = "Thông số camera sau không được vượt quá 100 ký tự";
           } else {
-            delete errors.value.nhaSanXuat;
+            delete errors.value.thongSoCameraSau;
+          }
+          break;
+        case "thongSoCameraTruoc":
+          if (!formData.value.thongSoCameraTruoc.trim()) {
+            errors.value.thongSoCameraTruoc = "Thông số camera trước không được để trống";
+          } else if (formData.value.thongSoCameraTruoc.trim().length < 2) {
+            errors.value.thongSoCameraTruoc = "Thông số camera trước phải có ít nhất 2 ký tự";
+          } else if (formData.value.thongSoCameraTruoc.trim().length > 100) {
+            errors.value.thongSoCameraTruoc = "Thông số camera trước không được vượt quá 100 ký tự";
+          } else {
+            delete errors.value.thongSoCameraTruoc;
           }
           break;
       }
     };
 
-    // Validate nhà sản xuất field với check trùng tên
-    const validateNhaSanXuatField = async () => {
-      // Kiểm tra validation cơ bản trước
-      validateField('nhaSanXuat');
+    const validateThongSoCameraSauField = async () => {
+      validateField('thongSoCameraSau');
       
-      // Nếu có lỗi validation cơ bản thì không check trùng tên
-      if (errors.value.nhaSanXuat) {
+      if (errors.value.thongSoCameraSau) {
         return;
       }
 
-      const nhaSanXuatValue = formData.value.nhaSanXuat.trim();
+      const value = formData.value.thongSoCameraSau.trim();
       
-      // Kiểm tra ký tự trống
-      if (nhaSanXuatValue.includes('  ') || nhaSanXuatValue !== nhaSanXuatValue.trim()) {
-        errors.value.nhaSanXuat = "Tên nhà sản xuất không được chứa ký tự trống thừa";
+      if (value.includes('  ') || value !== value.trim()) {
+        errors.value.thongSoCameraSau = "Thông số camera sau không được chứa ký tự trống thừa";
         toastNotification.value?.addToast({
           type: "warning",
-          message: "Tên nhà sản xuất không được chứa ký tự trống thừa",
+          message: "Thông số camera sau không được chứa ký tự trống thừa",
           duration: 3000,
         });
+      }
+    };
+
+    const validateThongSoCameraTruocField = async () => {
+      validateField('thongSoCameraTruoc');
+      
+      if (errors.value.thongSoCameraTruoc) {
         return;
       }
 
-      // Check trùng tên (không check khi edit với cùng tên)
-      if (nhaSanXuatValue) {
-        const excludeId = isEditMode.value ? formData.value.id : null;
-        const exists = await checkNhaSanXuatExists(nhaSanXuatValue, excludeId);
-        
-        if (exists) {
-          errors.value.nhaSanXuat = "Tên nhà sản xuất đã tồn tại";
-          toastNotification.value?.addToast({
-            type: "warning", 
-            message: "Tên nhà sản xuất đã tồn tại trong hệ thống",
-            duration: 3000,
-          });
-        }
+      const value = formData.value.thongSoCameraTruoc.trim();
+      
+      if (value.includes('  ') || value !== value.trim()) {
+        errors.value.thongSoCameraTruoc = "Thông số camera trước không được chứa ký tự trống thừa";
+        toastNotification.value?.addToast({
+          type: "warning",
+          message: "Thông số camera trước không được chứa ký tự trống thừa",
+          duration: 3000,
+        });
       }
     };
 
@@ -328,50 +375,71 @@ export default defineComponent({
     const validateForm = async () => {
       errors.value = {};
       
-      // Validate tên nhà sản xuất
-      if (!formData.value.nhaSanXuat.trim()) {
+      // Validate thông số camera sau
+      if (!formData.value.thongSoCameraSau.trim()) {
         toastNotification.value?.addToast({
           type: "warning",
-          message: "Tên nhà sản xuất không được để trống",
+          message: "Thông số camera sau không được để trống",
           duration: 3000,
         });
         return false;
-      } else if (formData.value.nhaSanXuat.trim().length < 2) {
+      } else if (formData.value.thongSoCameraSau.trim().length < 2) {
         toastNotification.value?.addToast({
           type: "warning", 
-          message: "Tên nhà sản xuất phải có ít nhất 2 ký tự",
+          message: "Thông số camera sau phải có ít nhất 2 ký tự",
           duration: 3000,
         });
         return false;
-      } else if (formData.value.nhaSanXuat.trim().length > 100) {
+      } else if (formData.value.thongSoCameraSau.trim().length > 100) {
         toastNotification.value?.addToast({
           type: "warning",
-          message: "Tên nhà sản xuất không được vượt quá 100 ký tự", 
+          message: "Thông số camera sau không được vượt quá 100 ký tự", 
           duration: 3000,
         });
         return false;
       }
 
-      const nhaSanXuatValue = formData.value.nhaSanXuat.trim();
-      
+      // Validate thông số camera trước
+      if (!formData.value.thongSoCameraTruoc.trim()) {
+        toastNotification.value?.addToast({
+          type: "warning",
+          message: "Thông số camera trước không được để trống",
+          duration: 3000,
+        });
+        return false;
+      } else if (formData.value.thongSoCameraTruoc.trim().length < 2) {
+        toastNotification.value?.addToast({
+          type: "warning", 
+          message: "Thông số camera trước phải có ít nhất 2 ký tự",
+          duration: 3000,
+        });
+        return false;
+      } else if (formData.value.thongSoCameraTruoc.trim().length > 100) {
+        toastNotification.value?.addToast({
+          type: "warning",
+          message: "Thông số camera trước không được vượt quá 100 ký tự", 
+          duration: 3000,
+        });
+        return false;
+      }
+
       // Kiểm tra ký tự trống
-      if (nhaSanXuatValue.includes('  ') || nhaSanXuatValue !== nhaSanXuatValue.trim()) {
+      const cameraSauValue = formData.value.thongSoCameraSau.trim();
+      const cameraTruocValue = formData.value.thongSoCameraTruoc.trim();
+
+      if (cameraSauValue.includes('  ') || cameraSauValue !== cameraSauValue.trim()) {
         toastNotification.value?.addToast({
           type: "warning",
-          message: "Tên nhà sản xuất không được chứa ký tự trống thừa",
+          message: "Thông số camera sau không được chứa ký tự trống thừa",
           duration: 3000,
         });
         return false;
       }
 
-      // Check trùng tên trước khi submit
-      const excludeId = isEditMode.value ? formData.value.id : null;
-      const exists = await checkNhaSanXuatExists(nhaSanXuatValue, excludeId);
-      
-      if (exists) {
+      if (cameraTruocValue.includes('  ') || cameraTruocValue !== cameraTruocValue.trim()) {
         toastNotification.value?.addToast({
           type: "warning",
-          message: "Tên nhà sản xuất đã tồn tại trong hệ thống",
+          message: "Thông số camera trước không được chứa ký tự trống thừa",
           duration: 3000,
         });
         return false;
@@ -381,35 +449,38 @@ export default defineComponent({
     };
 
     // API Methods
-    const loadNhaSanXuat = async () => {
+    const loadCumCamera = async () => {
       try {
         isLoading.value = true;
         const searchParams = {};
         if (keyword.value) searchParams.keyword = keyword.value;
 
         let response;
-        const hasFilters = keyword.value || filters.value.status;
+        const hasFilters = keyword.value;
         if (hasFilters) {
-          response = await searchNhaSanXuatAPI(searchParams, currentPage.value - 1, itemsPerPage.value);
+          response = await searchCumCameraAPI(searchParams, currentPage.value - 1, itemsPerPage.value);
         } else {
-          response = await fetchNhaSanXuat(currentPage.value - 1, itemsPerPage.value);
+          response = await fetchCumCamera(currentPage.value - 1, itemsPerPage.value);
         }
 
         if (response.data) {
-          nhaSanXuatList.value = response.data.content || [];
+          cumCameraList.value = response.data.content || [];
           totalElements.value = response.data.totalElements || 0;
+          
+          // Generate filter options from data
+          generateFilterOptions();
         } else {
-          nhaSanXuatList.value = [];
+          cumCameraList.value = [];
           totalElements.value = 0;
         }
       } catch (error) {
-        console.error("Error fetching nhà sản xuất:", error);
+        console.error("Error fetching cụm camera:", error);
         toastNotification.value?.addToast({
           type: "error",
-          message: "Lỗi khi tải danh sách nhà sản xuất: " + (error.response?.data?.message || error.message),
+          message: "Lỗi khi tải danh sách cụm camera: " + (error.response?.data?.message || error.message),
           duration: 5000,
         });
-        nhaSanXuatList.value = [];
+        cumCameraList.value = [];
         totalElements.value = 0;
       } finally {
         isLoading.value = false;
@@ -428,22 +499,54 @@ export default defineComponent({
 
     const debouncedSearch = debounce(() => {
       currentPage.value = 1;
-      loadNhaSanXuat();
+      loadCumCamera();
     }, 500);
 
-    const searchNhaSanXuat = () => {
+    const debouncedFilterSearch = debounce(() => {
       currentPage.value = 1;
-      loadNhaSanXuat();
+      // Không cần gọi API vì đã filter ở computed
+    }, 300);
+
+    const generateFilterOptions = () => {
+      // Generate camera sau options
+      const cameraSauSet = new Set();
+      cumCameraList.value.forEach(item => {
+        if (item.thongSoCameraSau) {
+          cameraSauSet.add(item.thongSoCameraSau);
+        }
+      });
+      cameraSauOptions.value = Array.from(cameraSauSet).map(value => ({
+        value: value,
+        label: value
+      })).sort((a, b) => a.label.localeCompare(b.label));
+
+      // Generate camera truoc options
+      const cameraTruocSet = new Set();
+      cumCameraList.value.forEach(item => {
+        if (item.thongSoCameraTruoc) {
+          cameraTruocSet.add(item.thongSoCameraTruoc);
+        }
+      });
+      cameraTruocOptions.value = Array.from(cameraTruocSet).map(value => ({
+        value: value,
+        label: value
+      })).sort((a, b) => a.label.localeCompare(b.label));
+    };
+
+    const searchCumCamera = () => {
+      currentPage.value = 1;
+      // Filter được xử lý trong computed property, không cần gọi API
     };
 
     const resetFilters = () => {
       keyword.value = "";
       filters.value = {
-        // status: "",
+        cameraSau: "",
+        cameraTruoc: "",
       };
       currentPage.value = 1;
       selectedItems.value = [];
-      loadNhaSanXuat();
+      loadCumCamera();
 
       toastNotification.value?.addToast({
         type: "info",
@@ -456,7 +559,8 @@ export default defineComponent({
       isEditMode.value = false;
       formData.value = {
         id: null,
-        nhaSanXuat: "",
+        thongSoCameraSau: "",
+        thongSoCameraTruoc: "",
       };
       errors.value = {};
       showModal.value = true;
@@ -470,7 +574,8 @@ export default defineComponent({
       isEditMode.value = true;
       formData.value = {
         id: item.id,
-        nhaSanXuat: item.nhaSanXuat,
+        thongSoCameraSau: item.thongSoCameraSau,
+        thongSoCameraTruoc: item.thongSoCameraTruoc,
       };
       errors.value = {};
       showModal.value = true;
@@ -485,42 +590,34 @@ export default defineComponent({
       try {
         isSubmitting.value = true;
         const data = {
-          nhaSanXuat: formData.value.nhaSanXuat.trim(),
+          thongSoCameraSau: formData.value.thongSoCameraSau.trim(),
+          thongSoCameraTruoc: formData.value.thongSoCameraTruoc.trim(),
         };
 
-        // Khi edit, cần giữ nguyên mã cũ
         if (isEditMode.value) {
-          // Tìm item hiện tại để lấy mã
-          const currentItem = nhaSanXuatList.value.find(item => item.id === formData.value.id);
-          if (currentItem) {
-            data.ma = currentItem.ma; // Giữ nguyên mã cũ
-          }
-        }
-
-        if (isEditMode.value) {
-          await updateNhaSanXuat(formData.value.id, data);
+          await updateCumCamera(formData.value.id, data);
           toastNotification.value?.addToast({
             type: "success",
-            message: "Cập nhật nhà sản xuất thành công",
+            message: "Cập nhật cụm camera thành công",
             duration: 3000,
           });
         } else {
-          await createNhaSanXuat(data);
+          await createCumCamera(data);
           toastNotification.value?.addToast({
             type: "success",
-            message: "Thêm nhà sản xuất thành công",
+            message: "Thêm cụm camera thành công",
             duration: 3000,
           });
         }
 
         closeModal();
-        await loadNhaSanXuat();
+        await loadCumCamera();
       } catch (error) {
         console.error("Error submitting form:", error);
         toastNotification.value?.addToast({
           type: "error",
           message:
-            "Lỗi khi lưu nhà sản xuất: " +
+            "Lỗi khi lưu cụm camera: " +
             (error.response?.data?.error || error.response?.data?.message || error.message),
           duration: 5000,
         });
@@ -539,13 +636,13 @@ export default defineComponent({
 
     const handlePageChange = (page) => {
       currentPage.value = page;
-      loadNhaSanXuat();
+      // Không cần gọi loadCumCamera() vì pagination hoạt động trên client-side với filtered data
     };
 
     const handleItemsPerPageChange = (size) => {
       itemsPerPage.value = size;
       currentPage.value = 1;
-      loadNhaSanXuat();
+      // Không cần gọi loadCumCamera() vì pagination hoạt động trên client-side với filtered data
     };
 
     const toggleSelectAll = () => {
@@ -560,30 +657,30 @@ export default defineComponent({
       if (selectedItems.value.length === 0) {
         toastNotification.value?.addToast({
           type: "warning",
-          message: "Vui lòng chọn ít nhất một nhà sản xuất để tải danh sách Excel",
+          message: "Vui lòng chọn ít nhất một cụm camera để tải danh sách Excel",
           duration: 2000,
         });
         return;
       }
 
       try {
-        const selectedData = nhaSanXuatList.value.filter((item) => selectedItems.value.includes(item.id));
-        const data = selectedData.map((item) => ({
-          Mã: item.ma || "N/A",
-          "Tên Nhà Sản Xuất": item.nhaSanXuat || "N/A",
-          "Mô Tả": item.moTa || "Không có mô tả",
+        const selectedData = sharedFilteredItems.value.filter((item) => selectedItems.value.includes(item.id));
+        const data = selectedData.map((item, index) => ({
+          "STT": index + 1,
+          "Camera Sau": item.thongSoCameraSau || "N/A",
+          "Camera Trước": item.thongSoCameraTruoc || "N/A",
           "Ngày Tạo": formatDate(item.ngayTao),
         }));
 
         const worksheet = XLSX.utils.json_to_sheet(data);
         const workbook = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(workbook, worksheet, "Nhà Sản Xuất");
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Cụm Camera");
 
-        // Sửa lại độ rộng cột
+        // Sửa lại độ rộng cột (bỏ cột mã)
         worksheet["!cols"] = [
-          { wch: 15 }, // Mã
-          { wch: 25 }, // Tên Nhà Sản Xuất
-          { wch: 40 }, // Mô Tả
+          { wch: 8 }, // STT
+          { wch: 25 }, // Camera Sau
+          { wch: 25 }, // Camera Trước
           { wch: 15 }, // Ngày Tạo
         ];
 
@@ -591,11 +688,11 @@ export default defineComponent({
         const blob = new Blob([excelBuffer], {
           type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         });
-        saveAs(blob, "danh_sach_nha_san_xuat.xlsx");
+        saveAs(blob, "danh_sach_cum_camera.xlsx");
 
         toastNotification.value?.addToast({
           type: "success",
-          message: `Đã tải xuống danh sách ${selectedItems.value.length} nhà sản xuất dưới dạng Excel`,
+          message: `Đã tải xuống danh sách ${selectedItems.value.length} cụm camera dưới dạng Excel`,
           duration: 2000,
         });
       } catch (error) {
@@ -607,6 +704,16 @@ export default defineComponent({
       }
     };
 
+    const getStatusBadgeClass = (item) => {
+      // Placeholder for status logic
+      return "badge-completed";
+    };
+
+    const getStatusText = (item) => {
+      // Placeholder for status text
+      return "Hoạt động";
+    };
+
     // Watchers
     watch(keyword, debouncedSearch);
 
@@ -614,14 +721,14 @@ export default defineComponent({
       filters,
       () => {
         currentPage.value = 1;
-        loadNhaSanXuat();
+        // Filter được xử lý trong computed property, không cần gọi API
       },
       { deep: true }
     );
 
     // Lifecycle
     onMounted(async () => {
-      await loadNhaSanXuat();
+      await loadCumCamera();
     });
 
     return {
@@ -629,7 +736,9 @@ export default defineComponent({
       notificationModal,
       keyword,
       filters,
-      nhaSanXuatList,
+      cumCameraList,
+      cameraSauOptions,
+      cameraTruocOptions,
       headers,
       currentPage,
       itemsPerPage,
@@ -639,7 +748,9 @@ export default defineComponent({
       paginatedItems,
       formatDate,
       debouncedSearch,
-      searchNhaSanXuat,
+      debouncedFilterSearch,
+      generateFilterOptions,
+      searchCumCamera,
       resetFilters,
       openAddModal,
       closeModal,
@@ -663,10 +774,12 @@ export default defineComponent({
       errors,
       validateForm,
       validateField,
-      validateNhaSanXuatField,
+      validateThongSoCameraSauField,
+      validateThongSoCameraTruocField,
       clearFieldError,
       showModal,
-      checkNhaSanXuatExists,
+      getStatusBadgeClass,
+      getStatusText,
     };
   },
 });
@@ -789,8 +902,7 @@ export default defineComponent({
   color: #ef4444;
 }
 
-.form-control,
-.form-select {
+.form-control {
   border: 1px solid rgba(0, 0, 0, 0.1);
   border-radius: 8px;
   padding: 12px;
@@ -936,7 +1048,8 @@ export default defineComponent({
   font-size: 0.875rem;
 }
 
-.search-group {
+.search-group,
+.filter-group {
   position: relative;
 }
 
@@ -1058,7 +1171,7 @@ export default defineComponent({
   color: #34d399;
 }
 
-.name-text {
+.spec-text {
   font-weight: 500;
   color: #1f3a44;
 }
@@ -1075,6 +1188,24 @@ export default defineComponent({
 .date-text {
   font-size: 0.9rem;
   color: #6c757d;
+}
+
+.status-badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 1rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-align: center;
+}
+
+.badge-completed {
+  background: #34d399;
+  color: white;
+}
+
+.badge-canceled {
+  background: #dc3545;
+  color: white;
 }
 
 .action-buttons-cell {

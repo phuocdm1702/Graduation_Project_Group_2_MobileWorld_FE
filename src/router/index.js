@@ -13,6 +13,8 @@ const ChiTietSanPham = () => import("@/pages/products/ChiTietSanPham.vue");
 const EditChiTietSanPham = () => import("@/pages/products/EditChiTietSanPham.vue");
 const ThemChiTietSanPham = () => import("@/pages/products/ThemChiTietSanPham.vue");
 const NhaSanXuat = () => import("@/pages/products/thuocTinhSp/NhaSanXuat.vue");
+const CumCamera = () => import("@/pages/products/thuocTinhSp/CumCamera.vue");
+const HoTroCongNgheSac = () => import("@/pages/products/thuocTinhSp/HoTroCongNgheSac.vue");
 const HoaDon = () => import("@/pages/bills/HoaDon.vue");
 const HoaDonChiTiet = () => import("@/pages/bills/HoaDonChiTiet.vue");
 const PhieuGiamGia = () => import("@/pages/promotions/PhieuGiamGia.vue");
@@ -144,6 +146,34 @@ const routes = [
             { name: "Trang chủ", path: "/trangChu" },
             { name: "Sản phẩm", path: "/sanPham" },
             { name: "Nhà Sản Xuất", path: "/nhaSanXuat" },
+          ],
+          requiresAdmin: true,
+        },
+      },
+      {
+        path: "/cumCamera",
+        name: "CumCamera",
+        component: CumCamera,
+        meta: {
+          title: "Cụm camera",
+          breadcrumb: [
+            { name: "Trang chủ", path: "/trangChu" },
+            { name: "Sản phẩm", path: "/sanPham" },
+            { name: "Cụm camera", path: "/cumCamera" },
+          ],
+          requiresAdmin: true,
+        },
+      },
+      {
+        path: "/hoTroCongNgheSac",
+        name: "HoTroCongNgheSac",
+        component: HoTroCongNgheSac,
+        meta: {
+          title: "Hỗ trợ công nghệ sạc",
+          breadcrumb: [
+            { name: "Trang chủ", path: "/trangChu" },
+            { name: "Sản phẩm", path: "/sanPham" },
+            { name: "Hỗ trợ công nghệ sạc", path: "/hoTroCongNgheSac" },
           ],
           requiresAdmin: true,
         },

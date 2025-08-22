@@ -1,34 +1,48 @@
-<!-- NhaSanXuat.vue -->
+<!-- HoTroCongNgheSac.vue - Template updated for charging technology support -->
 <template>
   <!-- Modal -->
   <div v-if="showModal" class="modal-overlay">
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title">
-          {{ isEditMode ? 'Chỉnh Sửa Nhà Sản Xuất' : 'Thêm Nhà Sản Xuất Mới' }}
+          {{ isEditMode ? 'Chỉnh Sửa Hỗ Trợ Công Nghệ Sạc' : 'Thêm Hỗ Trợ Công Nghệ Sạc Mới' }}
         </h5>
         <button @click="closeModal" class="close-button" aria-label="Close">&times;</button>
       </div>
       <div class="modal-body">
-        <form @submit.prevent="submitForm" id="manufacturerForm">
+        <form @submit.prevent="submitForm" id="chargingTechForm">
           <div class="form-grid">
-            <!-- Tên nhà sản xuất -->
-            <div class="form-group full-width">
+            <!-- Cổng sạc -->
+            <div class="form-group">
               <label class="form-label">
-                Tên Nhà Sản Xuất <span class="required">*</span>
+                Cổng Sạc <span class="required">*</span>
               </label>
-              <input type="text" class="form-control" v-model="formData.nhaSanXuat" 
-                     placeholder="Nhập tên nhà sản xuất"
-                     :class="{ 'is-invalid': errors.nhaSanXuat }" 
-                     @blur="validateNhaSanXuatField"
-                     @input="clearFieldError('nhaSanXuat')" />
+              <input type="text" class="form-control" v-model="formData.congSac" 
+                     placeholder="Ví dụ: USB-C, Lightning, Micro USB"
+                     :class="{ 'is-invalid': errors.congSac }" 
+                     @blur="validateCongSacField"
+                     @input="clearFieldError('congSac')" />
+              <small class="form-hint">Nhập loại cổng sạc của thiết bị</small>
+            </div>
+
+            <!-- Công nghệ hỗ trợ -->
+            <div class="form-group">
+              <label class="form-label">
+                Công Nghệ Hỗ Trợ <span class="required">*</span>
+              </label>
+              <input type="text" class="form-control" v-model="formData.congNgheHoTro" 
+                     placeholder="Ví dụ: Quick Charge 4.0, Fast Charging, Wireless Charging"
+                     :class="{ 'is-invalid': errors.congNgheHoTro }" 
+                     @blur="validateCongNgheHoTroField"
+                     @input="clearFieldError('congNgheHoTro')" />
+              <small class="form-hint">Nhập tên công nghệ sạc mà thiết bị hỗ trợ</small>
             </div>
           </div>
         </form>
       </div>
       <div class="modal-footer">
         <button type="button" @click="closeModal" class="btn btn-reset">Hủy</button>
-        <button type="submit" form="manufacturerForm" class="btn btn-action btn-primary-custom"
+        <button type="submit" form="chargingTechForm" class="btn btn-action btn-primary-custom"
           :disabled="isSubmitting">
           {{ isEditMode ? 'Cập nhật' : 'Thêm mới' }}
           <span v-if="isSubmitting" class="spinner-border spinner-border-sm ml-2"></span>
@@ -40,7 +54,7 @@
   <!-- Container chính -->
   <div class="container-fluid py-4">
     <!-- Header -->
-    <HeaderCard title="Quản Lý Nhà Sản Xuất" badgeText="Hệ Thống POS" badgeClass="gradient-custom-teal"
+    <HeaderCard title="Quản Lý Hỗ Trợ Công Nghệ Sạc" badgeText="Hệ Thống POS" badgeClass="gradient-custom-teal"
       :backgroundOpacity="0.95" />
 
     <!-- Filter Section -->
@@ -48,15 +62,54 @@
       <div class="m-3">
         <div class="row g-4 align-items-end">
           <!-- Search Input -->
-          <div class="col-lg-6 col-md-8">
+          <div class="col-lg-4 col-md-6">
             <div class="search-group">
               <label class="filter-label">Tìm kiếm</label>
               <div class="search-input-wrapper">
                 <i class="bi bi-search search-icon"></i>
                 <input v-model.trim="keyword" @input="debouncedSearch" type="text"
-                  placeholder="Tìm kiếm theo tên nhà sản xuất..." class="form-control search-input"
+                  placeholder="Tìm kiếm theo cổng sạc hoặc công nghệ hỗ trợ..." class="form-control search-input"
                   style="padding-left: 2.5rem;" />
               </div>
+            </div>
+          </div>
+
+          <!-- Filter for Charging Port -->
+          <div class="col-lg-4 col-md-6">
+            <div class="filter-group">
+              <label class="filter-label">Loại Cổng Sạc</label>
+              <select v-model="filters.congSacType" @change="searchHoTroCongNgheSac" class="form-select search-input">
+                <option value="">Tất cả</option>
+                <option v-for="option in congSacTypeOptions" :key="option.value" :value="option.value">
+                  {{ option.label }}
+                </option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Filter for Charging Technology -->
+          <div class="col-lg-4 col-md-6">
+            <div class="filter-group">
+              <label class="filter-label">Loại Công Nghệ</label>
+              <select v-model="filters.congNgheType" @change="searchHoTroCongNgheSac" class="form-select search-input">
+                <option value="">Tất cả</option>
+                <option v-for="option in congNgheTypeOptions" :key="option.value" :value="option.value">
+                  {{ option.label }}
+                </option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Filter for Charging Speed -->
+          <div class="col-lg-4 col-md-6">
+            <div class="filter-group">
+              <label class="filter-label">Tốc Độ Sạc</label>
+              <select v-model="filters.chargingSpeed" @change="searchHoTroCongNgheSac" class="form-select search-input">
+                <option value="">Tất cả</option>
+                <option v-for="option in chargingSpeedOptions" :key="option.value" :value="option.value">
+                  {{ option.label }}
+                </option>
+              </select>
             </div>
           </div>
         </div>
@@ -67,7 +120,7 @@
             <div class="col-lg-12">
               <div class="filter-stats d-flex">
                 <div class="stat-item d-flex gap-2">
-                  <span class="stat-label">Tổng số nhà sản xuất:</span>
+                  <span class="stat-label">Tổng số công nghệ sạc:</span>
                   <span class="stat-value" style="color: rgb(21, 128, 61); font-weight: bold;">
                     {{ sharedFilteredItems.length }}
                   </span>
@@ -81,8 +134,8 @@
               title="Tải danh sách Excel">
               Tải Excel
             </button>
-            <button class="btn btn-action btn-primary-custom" @click="openAddModal" title="Thêm nhà sản xuất mới">
-              Thêm nhà sản xuất
+            <button class="btn btn-action btn-primary-custom" @click="openAddModal" title="Thêm công nghệ sạc mới">
+              Thêm công nghệ sạc
             </button>
             <button class="btn btn-reset" @click="resetFilters">
               Đặt lại bộ lọc
@@ -93,10 +146,10 @@
     </FilterTableSection>
 
     <!-- Table View -->
-    <FilterTableSection title="Danh Sách Nhà Sản Xuất" icon="bi bi-table">
+    <FilterTableSection title="Danh Sách Hỗ Trợ Công Nghệ Sạc" icon="bi bi-table">
       <div class="table-header">
         <div class="table-title-wrapper">
-          <span class="table-count">{{ sharedFilteredItems.length }} nhà sản xuất</span>
+          <span class="table-count">{{ sharedFilteredItems.length }} công nghệ sạc</span>
         </div>
       </div>
       <div class="table-body">
@@ -109,11 +162,24 @@
           <template #stt="{ globalIndex }">
             {{ globalIndex + 1 }}
           </template>
-          <template #ma="{ item }">
-            <div class="code-text">{{ item.ma }}</div>
+          <template #congSac="{ item }">
+            <div class="port-badge" :class="getChargingPortClass(item)">
+              <i :class="getChargingPortIcon(item)" class="me-1"></i>
+              {{ item.congSac }}
+            </div>
           </template>
-          <template #nhaSanXuat="{ item }">
-            <div class="name-text">{{ item.nhaSanXuat }}</div>
+          <template #congNgheHoTro="{ item }">
+            <div class="tech-text">{{ item.congNgheHoTro }}</div>
+          </template>
+          <template #chargingCategory="{ item }">
+            <span class="category-badge" :class="getChargingCategoryClass(item)">
+              {{ getChargingCategory(item) }}
+            </span>
+          </template>
+          <template #chargingSpeed="{ item }">
+            <span class="speed-badge" :class="getChargingSpeedClass(item)">
+              {{ getChargingSpeed(item) }}
+            </span>
           </template>
           <template #trangThai="{ item }">
             <span class="status-badge" :class="getStatusBadgeClass(item)">
@@ -139,9 +205,9 @@
   </div>
 </template>
 
+<!-- Phần script cập nhật của HoTroCongNgheSac.vue -->
 <script>
 import { defineComponent, ref, computed, onMounted, watch } from "vue";
-import { useRoute, useRouter } from "vue-router";
 import DataTable from "@/components/common/DataTable.vue";
 import NotificationModal from "@/components/common/NotificationModal.vue";
 import ToastNotification from "@/components/common/ToastNotification.vue";
@@ -152,14 +218,11 @@ import { saveAs } from "file-saver";
 
 // Import API services
 import {
-  fetchNhaSanXuat,
-  searchNhaSanXuat as searchNhaSanXuatAPI,
-  createNhaSanXuat,
-  updateNhaSanXuat,
-} from "@/store/modules/products/thuocTinhSp/nhaSanXuat";
-
-// Import API service để check trùng tên
-import apiService from "@/services/api";
+  fetchHoTroCongNgheSac,
+  searchHoTroCongNgheSac as searchHoTroCongNgheSacAPI,
+  createHoTroCongNgheSac,
+  updateHoTroCongNgheSac,
+} from "@/store/modules/products/thuocTinhSp/hoTroCongNgheSac";
 
 // Debounce utility
 const debounce = (func, delay) => {
@@ -171,7 +234,7 @@ const debounce = (func, delay) => {
 };
 
 export default defineComponent({
-  name: "NhaSanXuatManagement",
+  name: "HoTroCongNgheSacManagement",
   components: {
     DataTable,
     NotificationModal,
@@ -180,8 +243,6 @@ export default defineComponent({
     FilterTableSection,
   },
   setup() {
-    const router = useRouter();
-    const route = useRoute();
     const toastNotification = ref(null);
     const notificationModal = ref(null);
     const currentPage = ref(1);
@@ -196,7 +257,8 @@ export default defineComponent({
     const isSubmitting = ref(false);
     const formData = ref({
       id: null,
-      nhaSanXuat: "",
+      congSac: "",
+      congNgheHoTro: "",
     });
     const errors = ref({});
 
@@ -210,30 +272,61 @@ export default defineComponent({
     // State
     const keyword = ref("");
     const filters = ref({
-      // status: "",
+      congSacType: "",
+      congNgheType: "",
+      chargingSpeed: "",
     });
 
     // Data from API
-    const nhaSanXuatList = ref([]);
+    const hoTroCongNgheSacList = ref([]);
+    const congSacTypeOptions = ref([]);
+    const congNgheTypeOptions = ref([]);
+    const chargingSpeedOptions = ref([]);
 
     // Headers for DataTable
     const headers = ref([
       { text: "", value: "checkbox", isSelectAll: true },
       { text: "STT", value: "stt" },
-      { text: "Mã", value: "ma" },
-      { text: "Tên Nhà Sản Xuất", value: "nhaSanXuat" },
+      { text: "Cổng Sạc", value: "congSac" },
+      { text: "Công Nghệ Hỗ Trợ", value: "congNgheHoTro" },
+      { text: "Loại", value: "chargingCategory" },
+      { text: "Tốc Độ", value: "chargingSpeed" },
+      { text: "Trạng Thái", value: "trangThai" },
       { text: "Thao Tác", value: "actions" },
     ]);
 
     // Computed properties
     const sharedFilteredItems = computed(() => {
-      return nhaSanXuatList.value || [];
+      let filtered = hoTroCongNgheSacList.value || [];
+      
+      // Filter by charging port type
+      if (filters.value.congSacType) {
+        filtered = filtered.filter(item => 
+          item.congSac === filters.value.congSacType
+        );
+      }
+      
+      // Filter by charging technology type
+      if (filters.value.congNgheType) {
+        filtered = filtered.filter(item => 
+          getChargingCategory(item) === filters.value.congNgheType
+        );
+      }
+      
+      // Filter by charging speed
+      if (filters.value.chargingSpeed) {
+        filtered = filtered.filter(item => 
+          getChargingSpeed(item) === filters.value.chargingSpeed
+        );
+      }
+      
+      return filtered;
     });
 
     const paginatedItems = computed(() => {
       const start = (currentPage.value - 1) * itemsPerPage.value;
       const end = start + itemsPerPage.value;
-      return (nhaSanXuatList.value || [])
+      return sharedFilteredItems.value
         .slice(start, end)
         .map((item, index) => ({
           ...item,
@@ -248,74 +341,127 @@ export default defineComponent({
       );
     });
 
-    // API method để check trùng tên nhà sản xuất
-    const checkNhaSanXuatExists = async (nhaSanXuat, excludeId = null) => {
-      try {
-        const params = { nhaSanXuat };
-        if (excludeId) {
-          params.excludeId = excludeId;
-        }
-        const response = await apiService.get('/api/nha-san-xuat/exists/nha-san-xuat', { params });
-        return response.data;
-      } catch (error) {
-        console.error('Error checking nhaSanXuat exists:', error);
-        return false;
+    // Charging port categorization functions
+    const getChargingPortIcon = (item) => {
+      const port = item.congSac.toLowerCase();
+      if (port.includes('usb-c') || port.includes('type-c')) return 'bi bi-usb-c';
+      if (port.includes('lightning')) return 'bi bi-lightning-charge';
+      if (port.includes('micro') || port.includes('micro-usb')) return 'bi bi-usb-micro';
+      if (port.includes('wireless') || port.includes('không dây')) return 'bi bi-wifi';
+      return 'bi bi-usb-plug';
+    };
+
+    const getChargingPortClass = (item) => {
+      const port = item.congSac.toLowerCase();
+      if (port.includes('usb-c') || port.includes('type-c')) return 'port-usbc';
+      if (port.includes('lightning')) return 'port-lightning';
+      if (port.includes('micro') || port.includes('micro-usb')) return 'port-micro';
+      if (port.includes('wireless') || port.includes('không dây')) return 'port-wireless';
+      return 'port-default';
+    };
+
+    // Charging technology categorization functions
+    const getChargingCategory = (item) => {
+      const tech = item.congNgheHoTro.toLowerCase();
+      if (tech.includes('wireless') || tech.includes('không dây')) return 'Sạc không dây';
+      if (tech.includes('fast') || tech.includes('quick') || tech.includes('nhanh')) return 'Sạc nhanh';
+      if (tech.includes('super') || tech.includes('siêu')) return 'Sạc siêu nhanh';
+      if (tech.includes('turbo') || tech.includes('tăng tốc')) return 'Sạc tăng tốc';
+      return 'Sạc thường';
+    };
+
+    const getChargingSpeed = (item) => {
+      const tech = item.congNgheHoTro.toLowerCase();
+      if (tech.includes('120w') || tech.includes('100w') || tech.includes('siêu')) return 'Siêu nhanh (100W+)';
+      if (tech.includes('67w') || tech.includes('65w') || tech.includes('50w')) return 'Rất nhanh (50-100W)';
+      if (tech.includes('33w') || tech.includes('30w') || tech.includes('25w')) return 'Nhanh (25-50W)';
+      if (tech.includes('18w') || tech.includes('15w') || tech.includes('quick')) return 'Trung bình (15-25W)';
+      return 'Thường (<15W)';
+    };
+
+    const getChargingCategoryClass = (item) => {
+      const category = getChargingCategory(item);
+      switch (category) {
+        case 'Sạc không dây': return 'category-wireless';
+        case 'Sạc siêu nhanh': return 'category-super-fast';
+        case 'Sạc nhanh': return 'category-fast';
+        case 'Sạc tăng tốc': return 'category-turbo';
+        default: return 'category-normal';
       }
+    };
+
+    const getChargingSpeedClass = (item) => {
+      const speed = getChargingSpeed(item);
+      if (speed.includes('Siêu nhanh')) return 'speed-ultra';
+      if (speed.includes('Rất nhanh')) return 'speed-very-fast';
+      if (speed.includes('Nhanh')) return 'speed-fast';
+      if (speed.includes('Trung bình')) return 'speed-medium';
+      return 'speed-normal';
     };
 
     // Validation methods
     const validateField = (fieldName) => {
       switch (fieldName) {
-        case "nhaSanXuat":
-          if (!formData.value.nhaSanXuat.trim()) {
-            errors.value.nhaSanXuat = "Tên nhà sản xuất không được để trống";
-          } else if (formData.value.nhaSanXuat.trim().length < 2) {
-            errors.value.nhaSanXuat = "Tên nhà sản xuất phải có ít nhất 2 ký tự";
-          } else if (formData.value.nhaSanXuat.trim().length > 100) {
-            errors.value.nhaSanXuat = "Tên nhà sản xuất không được vượt quá 100 ký tự";
+        case "congSac":
+          if (!formData.value.congSac.trim()) {
+            errors.value.congSac = "Cổng sạc không được để trống";
+          } else if (formData.value.congSac.trim().length < 2) {
+            errors.value.congSac = "Cổng sạc phải có ít nhất 2 ký tự";
+          } else if (formData.value.congSac.trim().length > 50) {
+            errors.value.congSac = "Cổng sạc không được vượt quá 50 ký tự";
           } else {
-            delete errors.value.nhaSanXuat;
+            delete errors.value.congSac;
+          }
+          break;
+        case "congNgheHoTro":
+          if (!formData.value.congNgheHoTro.trim()) {
+            errors.value.congNgheHoTro = "Công nghệ hỗ trợ không được để trống";
+          } else if (formData.value.congNgheHoTro.trim().length < 2) {
+            errors.value.congNgheHoTro = "Công nghệ hỗ trợ phải có ít nhất 2 ký tự";
+          } else if (formData.value.congNgheHoTro.trim().length > 100) {
+            errors.value.congNgheHoTro = "Công nghệ hỗ trợ không được vượt quá 100 ký tự";
+          } else {
+            delete errors.value.congNgheHoTro;
           }
           break;
       }
     };
 
-    // Validate nhà sản xuất field với check trùng tên
-    const validateNhaSanXuatField = async () => {
-      // Kiểm tra validation cơ bản trước
-      validateField('nhaSanXuat');
+    const validateCongSacField = async () => {
+      validateField('congSac');
       
-      // Nếu có lỗi validation cơ bản thì không check trùng tên
-      if (errors.value.nhaSanXuat) {
+      if (errors.value.congSac) {
         return;
       }
 
-      const nhaSanXuatValue = formData.value.nhaSanXuat.trim();
+      const value = formData.value.congSac.trim();
       
-      // Kiểm tra ký tự trống
-      if (nhaSanXuatValue.includes('  ') || nhaSanXuatValue !== nhaSanXuatValue.trim()) {
-        errors.value.nhaSanXuat = "Tên nhà sản xuất không được chứa ký tự trống thừa";
+      if (value.includes('  ') || value !== value.trim()) {
+        errors.value.congSac = "Cổng sạc không được chứa ký tự trống thừa";
         toastNotification.value?.addToast({
           type: "warning",
-          message: "Tên nhà sản xuất không được chứa ký tự trống thừa",
+          message: "Cổng sạc không được chứa ký tự trống thừa",
           duration: 3000,
         });
+      }
+    };
+
+    const validateCongNgheHoTroField = async () => {
+      validateField('congNgheHoTro');
+      
+      if (errors.value.congNgheHoTro) {
         return;
       }
 
-      // Check trùng tên (không check khi edit với cùng tên)
-      if (nhaSanXuatValue) {
-        const excludeId = isEditMode.value ? formData.value.id : null;
-        const exists = await checkNhaSanXuatExists(nhaSanXuatValue, excludeId);
-        
-        if (exists) {
-          errors.value.nhaSanXuat = "Tên nhà sản xuất đã tồn tại";
-          toastNotification.value?.addToast({
-            type: "warning", 
-            message: "Tên nhà sản xuất đã tồn tại trong hệ thống",
-            duration: 3000,
-          });
-        }
+      const value = formData.value.congNgheHoTro.trim();
+      
+      if (value.includes('  ') || value !== value.trim()) {
+        errors.value.congNgheHoTro = "Công nghệ hỗ trợ không được chứa ký tự trống thừa";
+        toastNotification.value?.addToast({
+          type: "warning",
+          message: "Công nghệ hỗ trợ không được chứa ký tự trống thừa",
+          duration: 3000,
+        });
       }
     };
 
@@ -328,50 +474,71 @@ export default defineComponent({
     const validateForm = async () => {
       errors.value = {};
       
-      // Validate tên nhà sản xuất
-      if (!formData.value.nhaSanXuat.trim()) {
+      // Validate cổng sạc
+      if (!formData.value.congSac.trim()) {
         toastNotification.value?.addToast({
           type: "warning",
-          message: "Tên nhà sản xuất không được để trống",
+          message: "Cổng sạc không được để trống",
           duration: 3000,
         });
         return false;
-      } else if (formData.value.nhaSanXuat.trim().length < 2) {
+      } else if (formData.value.congSac.trim().length < 2) {
         toastNotification.value?.addToast({
           type: "warning", 
-          message: "Tên nhà sản xuất phải có ít nhất 2 ký tự",
+          message: "Cổng sạc phải có ít nhất 2 ký tự",
           duration: 3000,
         });
         return false;
-      } else if (formData.value.nhaSanXuat.trim().length > 100) {
+      } else if (formData.value.congSac.trim().length > 50) {
         toastNotification.value?.addToast({
           type: "warning",
-          message: "Tên nhà sản xuất không được vượt quá 100 ký tự", 
-          duration: 3000,
-        });
-        return false;
-      }
-
-      const nhaSanXuatValue = formData.value.nhaSanXuat.trim();
-      
-      // Kiểm tra ký tự trống
-      if (nhaSanXuatValue.includes('  ') || nhaSanXuatValue !== nhaSanXuatValue.trim()) {
-        toastNotification.value?.addToast({
-          type: "warning",
-          message: "Tên nhà sản xuất không được chứa ký tự trống thừa",
+          message: "Cổng sạc không được vượt quá 50 ký tự", 
           duration: 3000,
         });
         return false;
       }
 
-      // Check trùng tên trước khi submit
-      const excludeId = isEditMode.value ? formData.value.id : null;
-      const exists = await checkNhaSanXuatExists(nhaSanXuatValue, excludeId);
-      
-      if (exists) {
+      // Validate công nghệ hỗ trợ
+      if (!formData.value.congNgheHoTro.trim()) {
         toastNotification.value?.addToast({
           type: "warning",
-          message: "Tên nhà sản xuất đã tồn tại trong hệ thống",
+          message: "Công nghệ hỗ trợ không được để trống",
+          duration: 3000,
+        });
+        return false;
+      } else if (formData.value.congNgheHoTro.trim().length < 2) {
+        toastNotification.value?.addToast({
+          type: "warning", 
+          message: "Công nghệ hỗ trợ phải có ít nhất 2 ký tự",
+          duration: 3000,
+        });
+        return false;
+      } else if (formData.value.congNgheHoTro.trim().length > 100) {
+        toastNotification.value?.addToast({
+          type: "warning",
+          message: "Công nghệ hỗ trợ không được vượt quá 100 ký tự", 
+          duration: 3000,
+        });
+        return false;
+      }
+
+      // Kiểm tra ký tự trống cho cổng sạc
+      const congSacValue = formData.value.congSac.trim();
+      if (congSacValue.includes('  ') || congSacValue !== congSacValue.trim()) {
+        toastNotification.value?.addToast({
+          type: "warning",
+          message: "Cổng sạc không được chứa ký tự trống thừa",
+          duration: 3000,
+        });
+        return false;
+      }
+
+      // Kiểm tra ký tự trống cho công nghệ hỗ trợ
+      const congNgheHoTroValue = formData.value.congNgheHoTro.trim();
+      if (congNgheHoTroValue.includes('  ') || congNgheHoTroValue !== congNgheHoTroValue.trim()) {
+        toastNotification.value?.addToast({
+          type: "warning",
+          message: "Công nghệ hỗ trợ không được chứa ký tự trống thừa",
           duration: 3000,
         });
         return false;
@@ -381,35 +548,38 @@ export default defineComponent({
     };
 
     // API Methods
-    const loadNhaSanXuat = async () => {
+    const loadHoTroCongNgheSac = async () => {
       try {
         isLoading.value = true;
         const searchParams = {};
         if (keyword.value) searchParams.keyword = keyword.value;
 
         let response;
-        const hasFilters = keyword.value || filters.value.status;
+        const hasFilters = keyword.value;
         if (hasFilters) {
-          response = await searchNhaSanXuatAPI(searchParams, currentPage.value - 1, itemsPerPage.value);
+          response = await searchHoTroCongNgheSacAPI(searchParams, currentPage.value - 1, itemsPerPage.value);
         } else {
-          response = await fetchNhaSanXuat(currentPage.value - 1, itemsPerPage.value);
+          response = await fetchHoTroCongNgheSac(currentPage.value - 1, itemsPerPage.value);
         }
 
         if (response.data) {
-          nhaSanXuatList.value = response.data.content || [];
+          hoTroCongNgheSacList.value = response.data.content || [];
           totalElements.value = response.data.totalElements || 0;
+          
+          // Generate filter options from data
+          generateFilterOptions();
         } else {
-          nhaSanXuatList.value = [];
+          hoTroCongNgheSacList.value = [];
           totalElements.value = 0;
         }
       } catch (error) {
-        console.error("Error fetching nhà sản xuất:", error);
+        console.error("Error fetching hỗ trợ công nghệ sạc:", error);
         toastNotification.value?.addToast({
           type: "error",
-          message: "Lỗi khi tải danh sách nhà sản xuất: " + (error.response?.data?.message || error.message),
+          message: "Lỗi khi tải danh sách hỗ trợ công nghệ sạc: " + (error.response?.data?.message || error.message),
           duration: 5000,
         });
-        nhaSanXuatList.value = [];
+        hoTroCongNgheSacList.value = [];
         totalElements.value = 0;
       } finally {
         isLoading.value = false;
@@ -428,22 +598,56 @@ export default defineComponent({
 
     const debouncedSearch = debounce(() => {
       currentPage.value = 1;
-      loadNhaSanXuat();
+      loadHoTroCongNgheSac();
     }, 500);
 
-    const searchNhaSanXuat = () => {
+    const generateFilterOptions = () => {
+      // Generate charging port options
+      const portSet = new Set();
+      hoTroCongNgheSacList.value.forEach(item => {
+        portSet.add(item.congSac);
+      });
+      congSacTypeOptions.value = Array.from(portSet).map(value => ({
+        value: value,
+        label: value
+      })).sort((a, b) => a.label.localeCompare(b.label));
+
+      // Generate charging category options
+      const categorySet = new Set();
+      hoTroCongNgheSacList.value.forEach(item => {
+        categorySet.add(getChargingCategory(item));
+      });
+      congNgheTypeOptions.value = Array.from(categorySet).map(value => ({
+        value: value,
+        label: value
+      })).sort((a, b) => a.label.localeCompare(b.label));
+
+      // Generate charging speed options
+      const speedSet = new Set();
+      hoTroCongNgheSacList.value.forEach(item => {
+        speedSet.add(getChargingSpeed(item));
+      });
+      chargingSpeedOptions.value = Array.from(speedSet).map(value => ({
+        value: value,
+        label: value
+      })).sort((a, b) => a.label.localeCompare(b.label));
+    };
+
+    const searchHoTroCongNgheSac = () => {
       currentPage.value = 1;
-      loadNhaSanXuat();
+      // Filter được xử lý trong computed property, không cần gọi API
     };
 
     const resetFilters = () => {
       keyword.value = "";
       filters.value = {
-        // status: "",
+        congSacType: "",
+        congNgheType: "",
+        chargingSpeed: "",
       };
       currentPage.value = 1;
       selectedItems.value = [];
-      loadNhaSanXuat();
+      loadHoTroCongNgheSac();
 
       toastNotification.value?.addToast({
         type: "info",
@@ -456,7 +660,8 @@ export default defineComponent({
       isEditMode.value = false;
       formData.value = {
         id: null,
-        nhaSanXuat: "",
+        congSac: "",
+        congNgheHoTro: "",
       };
       errors.value = {};
       showModal.value = true;
@@ -470,7 +675,8 @@ export default defineComponent({
       isEditMode.value = true;
       formData.value = {
         id: item.id,
-        nhaSanXuat: item.nhaSanXuat,
+        congSac: item.congSac,
+        congNgheHoTro: item.congNgheHoTro,
       };
       errors.value = {};
       showModal.value = true;
@@ -485,42 +691,34 @@ export default defineComponent({
       try {
         isSubmitting.value = true;
         const data = {
-          nhaSanXuat: formData.value.nhaSanXuat.trim(),
+          congSac: formData.value.congSac.trim(),
+          congNgheHoTro: formData.value.congNgheHoTro.trim(),
         };
 
-        // Khi edit, cần giữ nguyên mã cũ
         if (isEditMode.value) {
-          // Tìm item hiện tại để lấy mã
-          const currentItem = nhaSanXuatList.value.find(item => item.id === formData.value.id);
-          if (currentItem) {
-            data.ma = currentItem.ma; // Giữ nguyên mã cũ
-          }
-        }
-
-        if (isEditMode.value) {
-          await updateNhaSanXuat(formData.value.id, data);
+          await updateHoTroCongNgheSac(formData.value.id, data);
           toastNotification.value?.addToast({
             type: "success",
-            message: "Cập nhật nhà sản xuất thành công",
+            message: "Cập nhật hỗ trợ công nghệ sạc thành công",
             duration: 3000,
           });
         } else {
-          await createNhaSanXuat(data);
+          await createHoTroCongNgheSac(data);
           toastNotification.value?.addToast({
             type: "success",
-            message: "Thêm nhà sản xuất thành công",
+            message: "Thêm hỗ trợ công nghệ sạc thành công",
             duration: 3000,
           });
         }
 
         closeModal();
-        await loadNhaSanXuat();
+        await loadHoTroCongNgheSac();
       } catch (error) {
         console.error("Error submitting form:", error);
         toastNotification.value?.addToast({
           type: "error",
           message:
-            "Lỗi khi lưu nhà sản xuất: " +
+            "Lỗi khi lưu hỗ trợ công nghệ sạc: " +
             (error.response?.data?.error || error.response?.data?.message || error.message),
           duration: 5000,
         });
@@ -539,13 +737,13 @@ export default defineComponent({
 
     const handlePageChange = (page) => {
       currentPage.value = page;
-      loadNhaSanXuat();
+      // Không cần gọi loadHoTroCongNgheSac() vì pagination hoạt động trên client-side với filtered data
     };
 
     const handleItemsPerPageChange = (size) => {
       itemsPerPage.value = size;
       currentPage.value = 1;
-      loadNhaSanXuat();
+      // Không cần gọi loadHoTroCongNgheSac() vì pagination hoạt động trên client-side với filtered data
     };
 
     const toggleSelectAll = () => {
@@ -560,30 +758,34 @@ export default defineComponent({
       if (selectedItems.value.length === 0) {
         toastNotification.value?.addToast({
           type: "warning",
-          message: "Vui lòng chọn ít nhất một nhà sản xuất để tải danh sách Excel",
+          message: "Vui lòng chọn ít nhất một hỗ trợ công nghệ sạc để tải danh sách Excel",
           duration: 2000,
         });
         return;
       }
 
       try {
-        const selectedData = nhaSanXuatList.value.filter((item) => selectedItems.value.includes(item.id));
-        const data = selectedData.map((item) => ({
-          Mã: item.ma || "N/A",
-          "Tên Nhà Sản Xuất": item.nhaSanXuat || "N/A",
-          "Mô Tả": item.moTa || "Không có mô tả",
+        const selectedData = sharedFilteredItems.value.filter((item) => selectedItems.value.includes(item.id));
+        const data = selectedData.map((item, index) => ({
+          "STT": index + 1,
+          "Cổng Sạc": item.congSac || "N/A",
+          "Công Nghệ Hỗ Trợ": item.congNgheHoTro || "N/A",
+          "Loại": getChargingCategory(item),
+          "Tốc Độ Sạc": getChargingSpeed(item),
           "Ngày Tạo": formatDate(item.ngayTao),
         }));
 
         const worksheet = XLSX.utils.json_to_sheet(data);
         const workbook = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(workbook, worksheet, "Nhà Sản Xuất");
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Hỗ Trợ Công Nghệ Sạc");
 
         // Sửa lại độ rộng cột
         worksheet["!cols"] = [
-          { wch: 15 }, // Mã
-          { wch: 25 }, // Tên Nhà Sản Xuất
-          { wch: 40 }, // Mô Tả
+          { wch: 8 }, // STT
+          { wch: 20 }, // Cổng Sạc
+          { wch: 30 }, // Công Nghệ Hỗ Trợ
+          { wch: 20 }, // Loại
+          { wch: 20 }, // Tốc Độ Sạc
           { wch: 15 }, // Ngày Tạo
         ];
 
@@ -591,11 +793,11 @@ export default defineComponent({
         const blob = new Blob([excelBuffer], {
           type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         });
-        saveAs(blob, "danh_sach_nha_san_xuat.xlsx");
+        saveAs(blob, "danh_sach_ho_tro_cong_nghe_sac.xlsx");
 
         toastNotification.value?.addToast({
           type: "success",
-          message: `Đã tải xuống danh sách ${selectedItems.value.length} nhà sản xuất dưới dạng Excel`,
+          message: `Đã tải xuống danh sách ${selectedItems.value.length} hỗ trợ công nghệ sạc dưới dạng Excel`,
           duration: 2000,
         });
       } catch (error) {
@@ -607,6 +809,16 @@ export default defineComponent({
       }
     };
 
+    const getStatusBadgeClass = (item) => {
+      // Placeholder for status logic
+      return "badge-completed";
+    };
+
+    const getStatusText = (item) => {
+      // Placeholder for status text
+      return "Hoạt động";
+    };
+
     // Watchers
     watch(keyword, debouncedSearch);
 
@@ -614,14 +826,14 @@ export default defineComponent({
       filters,
       () => {
         currentPage.value = 1;
-        loadNhaSanXuat();
+        // Filter được xử lý trong computed property, không cần gọi API
       },
       { deep: true }
     );
 
     // Lifecycle
     onMounted(async () => {
-      await loadNhaSanXuat();
+      await loadHoTroCongNgheSac();
     });
 
     return {
@@ -629,7 +841,10 @@ export default defineComponent({
       notificationModal,
       keyword,
       filters,
-      nhaSanXuatList,
+      hoTroCongNgheSacList,
+      congSacTypeOptions,
+      congNgheTypeOptions,
+      chargingSpeedOptions,
       headers,
       currentPage,
       itemsPerPage,
@@ -639,7 +854,8 @@ export default defineComponent({
       paginatedItems,
       formatDate,
       debouncedSearch,
-      searchNhaSanXuat,
+      generateFilterOptions,
+      searchHoTroCongNgheSac,
       resetFilters,
       openAddModal,
       closeModal,
@@ -663,10 +879,18 @@ export default defineComponent({
       errors,
       validateForm,
       validateField,
-      validateNhaSanXuatField,
+      validateCongSacField,
+      validateCongNgheHoTroField,
       clearFieldError,
       showModal,
-      checkNhaSanXuatExists,
+      getStatusBadgeClass,
+      getStatusText,
+      getChargingCategory,
+      getChargingSpeed,
+      getChargingCategoryClass,
+      getChargingSpeedClass,
+      getChargingPortIcon,
+      getChargingPortClass,
     };
   },
 });
@@ -728,7 +952,7 @@ export default defineComponent({
   backdrop-filter: blur(12px);
   border-radius: 16px;
   width: 100%;
-  max-width: 600px;
+  max-width: 700px;
   padding: 24px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
   animation: slideUp 0.4s ease-out;
@@ -789,8 +1013,7 @@ export default defineComponent({
   color: #ef4444;
 }
 
-.form-control,
-.form-select {
+.form-control {
   border: 1px solid rgba(0, 0, 0, 0.1);
   border-radius: 8px;
   padding: 12px;
@@ -867,24 +1090,112 @@ export default defineComponent({
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
-.alert-danger {
-  background: rgba(239, 68, 68, 0.1);
-  color: #ef4444;
-  border-radius: 8px;
-  padding: 12px;
-  margin-top: 16px;
+/* Charging port specific badges */
+.port-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.75rem;
+  border-radius: 1rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-align: center;
 }
 
-.alert h6 {
-  font-size: 0.9rem;
-  font-weight: 600;
-  margin-bottom: 8px;
+.port-usbc {
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  color: white;
 }
 
-.alert ul {
-  font-size: 0.85rem;
-  margin: 0;
-  padding-left: 20px;
+.port-lightning {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: white;
+}
+
+.port-micro {
+  background: linear-gradient(135deg, #6b7280, #4b5563);
+  color: white;
+}
+
+.port-wireless {
+  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+  color: white;
+}
+
+.port-default {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: white;
+}
+
+/* Charging technology specific badges */
+.tech-text {
+  font-weight: 500;
+  color: #1f3a44;
+}
+
+.category-badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 1rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-align: center;
+}
+
+.category-wireless {
+  background: #8b5cf6;
+  color: white;
+}
+
+.category-super-fast {
+  background: #ef4444;
+  color: white;
+}
+
+.category-fast {
+  background: #f59e0b;
+  color: white;
+}
+
+.category-turbo {
+  background: #10b981;
+  color: white;
+}
+
+.category-normal {
+  background: #6b7280;
+  color: white;
+}
+
+.speed-badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 1rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-align: center;
+}
+
+.speed-ultra {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: white;
+}
+
+.speed-very-fast {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: white;
+}
+
+.speed-fast {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: white;
+}
+
+.speed-medium {
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  color: white;
+}
+
+.speed-normal {
+  background: #6b7280;
+  color: white;
 }
 
 /* Existing styles (unchanged) */
@@ -936,7 +1247,8 @@ export default defineComponent({
   font-size: 0.875rem;
 }
 
-.search-group {
+.search-group,
+.filter-group {
   position: relative;
 }
 
@@ -1053,28 +1365,27 @@ export default defineComponent({
   font-weight: 500;
 }
 
-.code-text {
-  font-weight: 500;
-  color: #34d399;
-}
-
-.name-text {
-  font-weight: 500;
-  color: #1f3a44;
-}
-
-.description-text {
-  color: #6c757d;
-  font-size: 0.9rem;
-  max-width: 200px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
 .date-text {
   font-size: 0.9rem;
   color: #6c757d;
+}
+
+.status-badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 1rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-align: center;
+}
+
+.badge-completed {
+  background: #34d399;
+  color: white;
+}
+
+.badge-canceled {
+  background: #dc3545;
+  color: white;
 }
 
 .action-buttons-cell {
@@ -1148,10 +1459,6 @@ export default defineComponent({
     align-items: flex-start;
     gap: 1rem;
   }
-
-  .description-text {
-    max-width: 150px;
-  }
 }
 
 @media (max-width: 576px) {
@@ -1174,13 +1481,12 @@ export default defineComponent({
     font-size: 0.85rem;
   }
 
-  .status-badge {
+  .status-badge,
+  .category-badge,
+  .speed-badge,
+  .port-badge {
     font-size: 0.7rem;
     padding: 0.3rem 0.6rem;
-  }
-
-  .description-text {
-    max-width: 120px;
   }
 
   .btn-table {
