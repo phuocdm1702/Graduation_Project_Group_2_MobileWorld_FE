@@ -1810,75 +1810,95 @@
       </div>
 
       <!-- Customer Modal -->
+     <div
+  v-if="isCustomerModalOpen"
+  class="modal fade show d-block"
+  tabindex="-1"
+  style="background: rgba(0, 0, 0, 0.5)"
+>
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div
+      class="modal-content shadow-lg animate__animated animate__zoomIn"
+      style="
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(15px);
+        border-radius: 1rem;
+      "
+    >
+      <!-- Header -->
       <div
-        v-if="isCustomerModalOpen"
-        class="modal fade show d-block"
-        tabindex="-1"
-        style="background: rgba(0, 0, 0, 0.5)"
+        class="modal-header border-0 d-flex justify-content-between align-items-center"
+        style="background: linear-gradient(90deg, #20c997, #2dd4bf); border-radius: 1rem 1rem 0 0;"
       >
-        <div class="modal-dialog modal-dialog-centered modal-lg">
-          <div
-            class="modal-content shadow-lg p-3 gradient-modal animate__animated animate__zoomIn"
-            style="
-              background: rgba(255, 255, 255, 0.95);
-              backdrop-filter: blur(15px);
-              border-radius: 0.5rem;
-            "
-          >
-            <div
-              class="modal-header border-0 d-flex justify-content-between align-items-center"
-            >
-              <h5 class="modal-title fw-bold text-dark">Thêm khách hàng mới</h5>
-              <button
-                class="btn btn-outline-secondary btn-close-custom"
-                @click="isCustomerModalOpen = false"
-              >
-                <i class="bi bi-x-lg"></i>
-              </button>
+        <h5 class="modal-title fw-bold text-white d-flex align-items-center">
+          <i class="bi bi-person-circle fs-3 me-2"></i>
+          Thêm khách hàng mới
+        </h5>
+        <button
+          class="btn btn-sm btn-light rounded-circle shadow-sm"
+          @click="isCustomerModalOpen = false"
+        >
+          <i class="bi bi-x-lg"></i>
+        </button>
+      </div>
+
+      <!-- Body -->
+      <div class="modal-body p-4">
+        <div class="row g-4">
+          <div class="col-md-6">
+            <label class="form-label fw-semibold text-dark mb-2">
+              Tên khách hàng <span class="text-danger">*</span>
+            </label>
+            <div class="input-group">
+              <span class="input-group-text bg-light">
+                <i class="bi bi-person text-teal"></i>
+              </span>
+              <input
+                v-model="newCustomer.name"
+                type="text"
+                class="form-control"
+                placeholder="Nhập tên khách hàng"
+              />
             </div>
-            <div class="modal-body p-4">
-              <div class="row g-auto">
-                <div class="col-md-6">
-                  <label class="form-label fw-medium text-dark mb-2">
-                    Tên khách hàng <span class="text-danger">*</span>
-                  </label>
-                  <input
-                    v-model="newCustomer.name"
-                    type="text"
-                    class="form-control search-input"
-                    placeholder="Nhập tên khách hàng"
-                  />
-                </div>
-                <div class="col-md-6">
-                  <label class="form-label fw-medium text-dark mb-2">
-                    Số điện thoại <span class="text-danger">*</span>
-                  </label>
-                  <input
-                    v-model="newCustomer.phone"
-                    type="tel"
-                    class="form-control search-input"
-                    placeholder="Nhập số điện thoại"
-                  />
-                </div>
-              </div>
-            </div>
-            <div class="modal-footer border-0">
-              <button
-                class="btn btn-light px-4 py-2"
-                @click="isCustomerModalOpen = false"
-              >
-                Hủy
-              </button>
-              <button
-                class="btn btn-light px-4 py-2 teal text-white"
-                @click="addNewCustomer"
-              >
-                Thêm khách hàng
-              </button>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-semibold text-dark mb-2">
+              Số điện thoại <span class="text-danger">*</span>
+            </label>
+            <div class="input-group">
+              <span class="input-group-text bg-light">
+                <i class="bi bi-telephone text-teal"></i>
+              </span>
+              <input
+                v-model="newCustomer.phone"
+                type="tel"
+                class="form-control"
+                placeholder="Nhập số điện thoại"
+              />
             </div>
           </div>
         </div>
       </div>
+
+      <!-- Footer -->
+      <div class="modal-footer border-0 d-flex justify-content-end">
+        <button
+          class="btn btn-outline-secondary px-4 py-2 rounded-3"
+          @click="isCustomerModalOpen = false"
+        >
+          <i class="bi bi-x-circle me-1"></i> Hủy
+        </button>
+        <button
+          class="btn px-4 py-2 rounded-3 shadow-sm text-white"
+          style="background: linear-gradient(90deg, #20c997, #2dd4bf);"
+          @click="addNewCustomer"
+        >
+          <i class="bi bi-check-circle me-1"></i> Thêm khách hàng
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
 
       <!-- Address Selection Modal -->
 <div
