@@ -1909,7 +1909,7 @@
       </div>
 
       <!-- Body -->
-      <div class="modal-body p-4">
+      <div class="modal-body p-4 address-scroll">
         <div
           v-if="customerAddresses.length === 0"
           class="empty-cart-container py-4 text-muted"
@@ -1962,18 +1962,10 @@
         >
           <i class="bi bi-x-circle me-2"></i> Hủy
         </button>
-        <button
-          class="btn teal text-white px-4 py-2 select-btn"
-          @click="applySelectedAddress"
-          :disabled="!selectedAddressId"
-        >
-          <i class="bi bi-check-circle me-2"></i> Xác nhận
-        </button>
       </div>
     </div>
   </div>
 </div>
-
 
       <!-- Notification Modal -->
       <NotificationModal
@@ -2469,6 +2461,30 @@ export default defineComponent({
   background-color: rgba(52, 211, 153, 0.1);
 }
 
+.address-scroll {
+  max-height: 400px;       /* giới hạn chiều cao body */
+  overflow-y: auto;        /* bật cuộn dọc khi nội dung dài */
+}
+
+/* Custom scrollbar (chỉ hiệu lực trên Chrome, Edge, Safari) */
+.address-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+.address-scroll::-webkit-scrollbar-thumb {
+  background-color: #34d399;  /* xanh lá */
+  border-radius: 10px;
+}
+
+.address-scroll::-webkit-scrollbar-thumb:hover {
+  background-color: #2ca37c;
+}
+
+.address-scroll::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
 .qr-code-container {
   background: rgba(255, 255, 255, 0.9);
   padding: 1rem;
@@ -2498,4 +2514,5 @@ export default defineComponent({
     flex-direction: column;
   }
 }
+
 </style>
