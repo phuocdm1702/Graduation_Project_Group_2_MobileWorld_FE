@@ -369,35 +369,33 @@ const baseMenuItems = ref([
     requiresAdmin: true 
   },
   { 
-    name: 'Bán Hàng', 
+    name: 'Bán hàng', 
     path: '/banHang', 
     icon: ShoppingCartIcon 
   },
   { 
-    name: 'Quản Lý Hóa đơn', 
+    name: 'Quản lý hóa đơn', 
     path: '/hoaDon', 
     icon: DocumentTextIcon,
   },
   { 
-    name: 'Quản Lý Sản phẩm', 
+    name: 'Quản lý sản phẩm', 
     path: '/quanLySanPham', 
     icon: CubeIcon,
     requiresAdmin: true,
     children: [
       { name: 'Sản phẩm', path: '/sanPham' },
       { name: 'Nhà sản xuất', path: '/nhaSanXuat' },
-      { name: 'Cụm Camera', path: '/cumCamera' },
-      { name: 'Hình Ảnh', path: '/hinhAnh' },
-      { name: 'Hỗ trợ Cổng Sạc', path: '/hoTroCongSac' },
-      { name: 'Sạc', path: '/sac' },
+      { name: 'Cụm camera', path: '/cumCamera' },
+      { name: 'Hỗ trợ công nghệ sạc', path: '/hoTroCongNgheSac' },
       { name: 'RAM', path: '/ram' },
-      { name: 'Bộ Nhớ Trong', path: '/boNhoTrong' },
-      { name: 'Bộ Nhớ Ngoài', path: '/boNhoNgoai' },
+      { name: 'Bộ nhớ trong', path: '/boNhoTrong' },
+      { name: 'Bộ nhớ ngoài', path: '/boNhoNgoai' },
       { name: 'CPU', path: '/cpu' },
       { name: 'GPU', path: '/gpu' },
-      { name: 'Công Nghệ Mạng', path: '/congNgheMang' },
+      { name: 'Công nghệ mạng', path: '/congNgheMang' },
       { name: 'Hệ điều hành', path: '/heDieuHanh' },
-      { name: 'Kháng bụi - Kháng Nước', path: '/khangBuiKhangNuoc' },
+      { name: 'Kháng bụi - Kháng nước', path: '/khangBuiKhangNuoc' },
       { name: 'Màu sắc', path: '/mauSac' },
       { name: 'Pin', path: '/pin' },
       { name: 'Sim', path: '/sim' },
@@ -406,7 +404,7 @@ const baseMenuItems = ref([
     isOpen: false,
   },
   { 
-    name: 'Quản Lý Giảm giá',
+    name: 'Quản lý giảm giá',
     path: '/quanLyGiamGia',
     icon: TagIcon,
     requiresAdmin: true,
@@ -417,7 +415,7 @@ const baseMenuItems = ref([
     isOpen: false,
   },
   { 
-    name: 'Quản Lý Tài khoản',
+    name: 'Quản lý tài khoản',
     path: '/quanLyTaiKhoan',
     icon: UserIcon,
     requiresAdmin: true,
@@ -428,7 +426,7 @@ const baseMenuItems = ref([
     isOpen: false,
   },
   { 
-    name: 'Giao Ca', 
+    name: 'Giao ca', 
     path: '/giao-ca', 
     icon: ClockIcon 
   },
