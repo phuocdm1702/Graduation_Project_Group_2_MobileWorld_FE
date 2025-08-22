@@ -73,11 +73,8 @@
     <FilterTableSection title="Danh Sách Sản Phẩm" icon="bi bi-box-seam">
       <div class="section-body m-3">
         <div class="product-actions mb-3 d-flex justify-content-end gap-2">
-          <button class="btn btn-action" @click="showAddProductModal" :disabled="isActionButtonsDisabled">
+          <button class="btn btn-action" @click="isAddProductModalVisible = true" :disabled="isActionButtonsDisabled">
             Thêm Sản Phẩm
-          </button>
-          <button class="btn btn-action" @click="showDivinationModal" :disabled="isActionButtonsDisabled">
-            Quét QR
           </button>
         </div>
         <div class="products-list">
@@ -119,6 +116,176 @@
         </div>
       </div>
     </FilterTableSection>
+
+    <!-- Modal thêm sản phẩm mới (mở rộng để hiển thị danh sách sản phẩm với phân trang) -->
+    <div v-if="isAddProductModalVisible" class="modal fade show d-block" tabindex="-1"
+      style="background: rgba(0, 0, 0, 0.5)">
+      <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content shadow-lg p-3 gradient-modal"
+          style="background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(15px); border-radius: 0.5rem;">
+          <div class="modal-header border-0 d-flex justify-content-between align-items-center">
+            <h5 class="modal-title fw-bold text-dark">Thêm Sản Phẩm Mới</h5>
+            <button class="btn btn-outline-secondary btn-close-custom" @click="isAddProductModalVisible = false">
+              <i class="bi bi-x-lg"></i>
+            </button>
+          </div>
+          <div class="modal-body p-4">
+            <!-- Tìm kiếm và lọc sản phẩm -->
+            <div class="row g-3 mb-4">
+              <div class="col-md-3 search-input-wrapper">
+                <i class="bi bi-search search-icon"></i>
+                <input v-model="productSearchQuery" type="text" class="form-control search-input"
+                  style="padding-left: 2rem" placeholder="Tìm sản phẩm..." />
+              </div>
+              <div class="col-md-3">
+                <select v-model="filterColor" class="form-select search-input">
+                  <option value="">Tất cả màu</option>
+                  <option v-for="color in uniqueColors" :key="color" :value="color">{{ color }}</option>
+                </select>
+              </div>
+              <div class="col-md-3">
+                <select v-model="filterRam" class="form-select search-input">
+                  <option value="">Tất cả RAM</option>
+                  <option v-for="ram in uniqueRams" :key="ram" :value="ram">{{ ram }}</option>
+                </select>
+              </div>
+              <div class="col-md-3">
+                <select v-model="filterStorage" class="form-select search-input">
+                  <option value="">Tất cả bộ nhớ</option>
+                  <option v-for="storage in uniqueStorages" :key="storage" :value="storage">{{ storage }}</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Danh sách sản phẩm với phân trang -->
+            <div v-if="filteredProducts.length === 0" class="empty-cart-container text-center py-5">
+              <p class="text-muted mb-0 fw-medium">Không tìm thấy sản phẩm</p>
+            </div>
+            <div v-else>
+              <div class="cart-items-container">
+                <div v-for="(product, index) in paginatedProducts" :key="product.id" class="mb-4">
+                  <div class="cart-item-card shadow-sm p-4"
+                    style="background: rgba(255, 255, 255, 0.95); border-radius: 0.5rem;">
+                    <div class="row align-items-center">
+                      <div class="col-md-1 text-center">
+                        <span class="fw-bold text-dark">{{ (productCurrentPage - 1) * productItemsPerPage + index + 1
+                        }}</span>
+                      </div>
+                      <div class="col-md-3 text-center">
+                        <img :src="product.image || product.duongDan" class="img-fluid rounded"
+                          :alt="product.tenSanPham" style="max-height: 120px;" />
+                      </div>
+                      <div class="col-md-5">
+                        <h5 class="fw-bold text-dark mb-0">{{ product.tenSanPham }}</h5>
+                        <div class="d-flex flex-wrap gap-2 mb-2">
+                          <span class="badge text-white px-3 py-1" style="background-color: #1f3a44">{{ product.mauSac
+                          }}</span>
+                          <span class="badge text-white px-3 py-1" style="background-color: #1f3a44">{{
+                            product.dungLuongRam }}</span>
+                          <span class="badge text-white px-3 py-1" style="background-color: #1f3a44">{{
+                            product.dungLuongBoNhoTrong }}</span>
+                        </div>
+                        <div class="fw-semibold">Giá: {{ formatPrice(product.giaBan) }}</div>
+                      </div>
+                      <div class="col-md-3 text-end">
+                        <button class="btn btn-light px-4 py-2 teal text-white" @click="showNewIMEIList(product)">Chọn
+                          IMEI</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <!-- Controls phân trang cho sản phẩm -->
+              <div class="d-flex justify-content-between align-items-center mt-3">
+                <div>
+                  <select v-model="productItemsPerPage" class="form-select" style="width: auto;"
+                    @change="updateProductItemsPerPage">
+                    <option v-for="size in productPageSizeOptions" :key="size" :value="size">{{ size }} / trang</option>
+                  </select>
+                </div>
+                <div class="d-flex gap-2">
+                  <button class="btn btn-light" :disabled="productCurrentPage === 1"
+                    @click="updateProductPage(productCurrentPage - 1)">
+                    <i class="bi bi-chevron-left"></i>
+                  </button>
+                  <span class="align-self-center">Trang {{ productCurrentPage }} / {{ totalProductPages }}</span>
+                  <button class="btn btn-light" :disabled="productCurrentPage === totalProductPages"
+                    @click="updateProductPage(productCurrentPage + 1)">
+                    <i class="bi bi-chevron-right"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer border-0">
+            <button class="btn btn-light px-4 py-2" @click="isAddProductModalVisible = false">Hủy</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal IMEI mới khi chọn sản phẩm (giữ nguyên, đảm bảo style nhất quán) -->
+    <div v-if="showNewIMEIModal" class="modal fade show d-block" tabindex="-1" style="background: rgba(0, 0, 0, 0.5)">
+      <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content shadow-lg p-3 gradient-modal"
+          style="background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(15px); border-radius: 0.5rem;">
+          <div class="modal-header border-0 d-flex justify-content-between align-items-center">
+            <h5 class="modal-title fw-bold text-dark">Chọn IMEI cho {{ selectedNewProduct?.tenSanPham }}</h5>
+            <button class="btn btn-outline-secondary btn-close-custom" @click="closeNewIMEIModal">
+              <i class="bi bi-x-lg"></i>
+            </button>
+          </div>
+          <div class="modal-body p-4">
+            <div class="product-info mb-4">
+              <div class="row align-items-center">
+                <div class="col-md-3">
+                  <img :src="selectedNewProduct?.anhSanPham || selectedNewProduct?.duongDan" class="img-fluid rounded"
+                    :alt="selectedNewProduct?.tenSanPham" style="max-height: 150px; object-fit: contain;" />
+                </div>
+                <div class="col-md-9">
+                  <h5 class="fw-bold text-dark mb-2">{{ selectedNewProduct?.tenSanPham }}</h5>
+                  <div class="d-flex gap-2 mb-2">
+                    <span class="badge text-white px-3 py-1" style="background-color: #1f3a44">{{
+                      selectedNewProduct?.mauSac }}</span>
+                    <span class="badge text-white px-3 py-1" style="background-color: #1f3a44">{{
+                      selectedNewProduct?.dungLuongRam }}</span>
+                    <span class="badge text-white px-3 py-1" style="background-color: #1f3a44">{{
+                      selectedNewProduct?.dungLuongBoNhoTrong }}</span>
+                  </div>
+                  <div class="fw-semibold">Giá: <span class="badge gradient-custom-yellow text-white px-3 py-1">{{
+                    formatPrice(selectedNewProduct?.giaBan) }}</span></div>
+                </div>
+              </div>
+            </div>
+            <div class="imei-list-container">
+              <h6 class="fw-semibold text-dark mb-3">Danh sách IMEI khả dụng</h6>
+              <div v-if="availableIMEIsNew.length === 0" class="text-center text-muted py-4">
+                <i class="bi bi-info-circle me-2"></i>Không có IMEI nào khả dụng.
+              </div>
+              <div v-else class="d-flex flex-column gap-3">
+                <div v-for="(imei, index) in availableIMEIsNew" :key="imei.id" class="imei-card p-3 rounded shadow-sm"
+                  style="background: #fff; border: 1px solid rgba(52, 211, 153, 0.1);">
+                  <div class="d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center">
+                      <input type="checkbox" :value="imei.imei" v-model="selectedIMEIsNew" class="form-check-input me-3"
+                        style="border-color: #34d399" />
+                      <span class="fw-bold text-teal me-3" style="min-width: 30px">{{ index + 1 }}.</span>
+                      <i class="bi bi-upc-scan me-3 text-teal" style="font-size: 1.2rem"></i>
+                      <span class="text-dark fw-medium">{{ imei.imei }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer border-0">
+            <button class="btn btn-light px-4 py-2" @click="closeNewIMEIModal">Hủy</button>
+            <button class="btn btn-light px-4 py-2 teal text-white" @click="addProductWithIMEIsNew"
+              :disabled="selectedIMEIsNew.length === 0">Thêm vào hóa đơn</button>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <!-- Lịch sử thanh toán & Lịch sử hóa đơn & Tổng kết đơn hàng -->
     <div class="d-flex flex-wrap g-4 mb-4 animate__animated animate__fadeIn" style="--animate-delay: 0.5s;">
@@ -274,7 +441,7 @@
         <div class="modal-header">
           <h5 class="modal-title">
             IMEI - {{ selectedProduct?.name }} {{ selectedProduct?.color }} {{ selectedProduct?.ram }} {{
-            selectedProduct?.capacity }}
+              selectedProduct?.capacity }}
           </h5>
           <button class="btn-close-glass" @click="closeIMEIModal">
             <i class="bi bi-x-lg"></i>
@@ -323,7 +490,7 @@
         <div class="modal-header">
           <h5 class="modal-title">
             Xác Nhận IMEI - {{ selectedProduct?.name }} {{ selectedProduct?.color }} {{ selectedProduct?.ram }} {{
-            selectedProduct?.capacity }}
+              selectedProduct?.capacity }}
           </h5>
           <button class="btn-close-glass" @click="closeConfirmIMEIModal">
             <i class="bi bi-x-lg"></i>

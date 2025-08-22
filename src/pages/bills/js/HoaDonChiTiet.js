@@ -8,6 +8,12 @@ import ToastNotification from '@/components/common/ToastNotification.vue';
 import DataTable from '@/components/common/DataTable.vue';
 import { apiService } from '@/services/api';
 
+import {
+  fetchProductsApi,
+  fetchIMEIsApi,
+  getProductDetailsByIdApi,
+} from '@/store/modules/sales/banHangApi';
+
 export default {
   name: 'InvoiceDetail',
   components: {
@@ -68,6 +74,21 @@ export default {
     const imeiCurrentPage = ref(1);
     const imeiItemsPerPage = ref(100);
     const imeiPageSizeOptions = ref([5, 10, 15, 20, 50]);
+    // Thêm state cho phân trang sản phẩm
+    const productCurrentPage = ref(1);
+    const productItemsPerPage = ref(10);  // Mặc định 10 sản phẩm/trang
+    const productPageSizeOptions = ref([5, 10, 15, 20, 50]);
+
+    // Thêm state mới cho hiển thị sản phẩm và IMEI (không trùng với IMEI hiện có)
+    const productList = ref([]);  // Danh sách sản phẩm từ API
+    const availableIMEIsNew = ref([]);  // IMEI mới
+    const selectedIMEIsNew = ref([]);
+    const showNewIMEIModal = ref(false);  // Modal IMEI mới
+    const productSearchQuery = ref('');
+    const filterColor = ref('');
+    const filterRam = ref('');
+    const filterStorage = ref('');
+    const selectedNewProduct = ref(null);
 
     // Computed properties
     const orderInfo = computed(() => [
@@ -86,6 +107,36 @@ export default {
       { label: 'Ghi chú:', value: invoice.value.ghiChu || 'Không có', icon: 'bi bi-sticky', key: 'ghiChu' },
     ]);
 
+    // Thêm computed mới cho lọc sản phẩm
+    const uniqueColors = computed(() => [...new Set(productList.value.map((p) => p.mauSac))]);
+    const uniqueRams = computed(() => [...new Set(productList.value.map((p) => p.dungLuongRam))]);
+    const uniqueStorages = computed(() => [...new Set(productList.value.map((p) => p.dungLuongBoNhoTrong))]);
+
+    const filteredProducts = computed(() => {
+      let filtered = productList.value;
+      if (productSearchQuery.value) {
+        const query = productSearchQuery.value.toLowerCase();
+        filtered = filtered.filter(
+          (p) =>
+            p.tenSanPham.toLowerCase().includes(query) ||
+            p.maSanPham.toLowerCase().includes(query) ||
+            p.mauSac.toLowerCase().includes(query)
+        );
+      }
+      if (filterColor.value) {
+        filtered = filtered.filter((p) => p.mauSac === filterColor.value);
+      }
+      if (filterRam.value) {
+        filtered = filtered.filter((p) => p.dungLuongRam === filterRam.value);
+      }
+      if (filterStorage.value) {
+        filtered = filtered.filter(
+          (p) => p.dungLuongBoNhoTrong === filterStorage.value
+        );
+      }
+      return filtered;
+    });
+
     const filteredIMEIs = computed(() => {
       const imeiList = hoaDonStore.getImelList;
       if (!searchIMEI.value) return imeiList;
@@ -98,10 +149,20 @@ export default {
       return Math.ceil(filteredIMEIs.value.length / imeiItemsPerPage.value);
     });
 
+    const totalProductPages = computed(() => {
+      return Math.ceil(filteredProducts.value.length / productItemsPerPage.value);
+    });
+
     const paginatedIMEIs = computed(() => {
       const start = (imeiCurrentPage.value - 1) * imeiItemsPerPage.value;
       const end = start + imeiItemsPerPage.value;
       return filteredIMEIs.value.slice(start, end);
+    });
+
+    const paginatedProducts = computed(() => {
+      const start = (productCurrentPage.value - 1) * productItemsPerPage.value;
+      const end = start + productItemsPerPage.value;
+      return filteredProducts.value.slice(start, end);
     });
 
     const imeiHeaders = ref([
@@ -158,6 +219,97 @@ export default {
       }
     };
 
+    // Thêm methods mới cho gọi API sản phẩm và IMEI (sử dụng selectedNewProduct)
+    const fetchProductsNew = async () => {
+      try {
+        const data = await fetchProductsApi();
+        productList.value = data.content || data;  // Điều chỉnh theo cấu trúc response
+      } catch (error) {
+        toastNotification.value.addToast({
+          type: 'error',
+          message: 'Lỗi khi tải danh sách sản phẩm',
+          duration: 3000,
+        });
+      }
+    };
+
+    // Thêm methods cho phân trang sản phẩm
+    const updateProductPage = (page) => {
+      productCurrentPage.value = page;
+    };
+
+    const updateProductItemsPerPage = (value) => {
+      productItemsPerPage.value = value;
+      productCurrentPage.value = 1;
+    };
+
+    const showNewIMEIList = async (product) => {
+      selectedNewProduct.value = product;
+      try {
+        availableIMEIsNew.value = await fetchIMEIsApi(
+          product.sanPhamId || product.idSanPham,
+          product.mauSac,
+          product.dungLuongRam,
+          product.dungLuongBoNhoTrong
+        );
+        showNewIMEIModal.value = true;
+      } catch (error) {
+        toastNotification.value.addToast({
+          type: 'error',
+          message: error.message,
+          duration: 3000,
+        });
+      }
+    };
+
+    const closeNewIMEIModal = () => {
+      showNewIMEIModal.value = false;
+      selectedIMEIsNew.value = [];
+      selectedNewProduct.value = null;
+      availableIMEIsNew.value = [];
+    };
+
+    const addProductWithIMEIsNew = async () => {
+      try {
+        const productDetails = await getProductDetailsByIdApi(
+          selectedNewProduct.value.sanPhamId || selectedNewProduct.value.idSanPham,
+          selectedNewProduct.value.mauSac,
+          selectedNewProduct.value.dungLuongRam,
+          selectedNewProduct.value.dungLuongBoNhoTrong
+        );
+        // Logic thêm sản phẩm vào hóa đơn chi tiết (tích hợp với products hiện có)
+        const newAddedProduct = {
+          ...productDetails,
+          imei: selectedIMEIsNew.value.join(','),
+          quantity: selectedIMEIsNew.value.length,
+          // Thêm các trường khác nếu cần từ hóa đơn
+        };
+        products.value.push(newAddedProduct);  // Thêm vào danh sách sản phẩm của hóa đơn
+        toastNotification.value.addToast({
+          type: 'success',
+          message: 'Thêm sản phẩm với IMEI thành công',
+          duration: 3000,
+        });
+        closeNewIMEIModal();
+        // Cập nhật lịch sử hoặc tổng giá nếu cần
+        history.value.push({
+          id: Date.now(),
+          code: `LSHD_${Date.now()}`,
+          invoice: invoice.value.ma,
+          employee: 'Hệ thống',
+          action: `Thêm sản phẩm ${newAddedProduct.name} với IMEI ${newAddedProduct.imei}`,
+          timestamp: new Date().toLocaleString('vi-VN'),
+          status: 'completed',
+        });
+      } catch (error) {
+        toastNotification.value.addToast({
+          type: 'error',
+          message: error.message,
+          duration: 3000,
+        });
+      }
+    };
+
     watch(() => invoice.value.loaiDon, (newLoaiDon) => {
       updateTimelineStatuses();
     }, { immediate: true });
@@ -202,6 +354,7 @@ export default {
           });
         }
       }
+      await fetchProductsNew();
     });
 
     const formatPrice = (price) => {
@@ -919,6 +1072,31 @@ export default {
       getRowClass,
       updateIMEIPage,
       updateIMEIItemsPerPage,
+      // Thêm return mới
+      productList,
+      availableIMEIsNew,
+      selectedIMEIsNew,
+      showNewIMEIModal,
+      productSearchQuery,
+      filterColor,
+      filterRam,
+      filterStorage,
+      filteredProducts,
+      uniqueColors,
+      uniqueRams,
+      uniqueStorages,
+      selectedNewProduct,  // Thêm biến riêng
+      fetchProductsNew,
+      showNewIMEIList,
+      closeNewIMEIModal,
+      addProductWithIMEIsNew,
+      productCurrentPage,
+      productItemsPerPage,
+      productPageSizeOptions,
+      totalProductPages,
+      paginatedProducts,
+      updateProductPage,
+      updateProductItemsPerPage,
     };
   },
 };
