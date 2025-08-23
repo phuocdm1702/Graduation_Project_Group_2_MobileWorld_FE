@@ -29,8 +29,8 @@
               <input type="date" class="form-control" id="workDate" v-model="currentSchedule.ngayLam" required />
             </div>
             <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
-              <button type="submit" class="btn btn-primary">{{ currentSchedule.id ? 'Cập nhật' : 'Thêm mới' }}</button>
+              <button type="button" class="btn btn-reset" data-bs-dismiss="modal">Đóng</button>
+              <button type="submit" class="btn btn-action">{{ currentSchedule.id ? 'Cập nhật' : 'Thêm mới' }}</button>
             </div>
           </form>
         </div>
@@ -49,3 +49,36 @@ export default {
   }
 }
 </script>
+
+<style scoped>
+.btn-reset,
+.btn-action {
+  padding: 0.6rem 1.2rem;
+  font-size: 0.9rem;
+  border-radius: 8px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  min-width: 140px;
+}
+
+.btn-reset {
+  background: #6c757d;
+  color: white;
+  border: none;
+}
+
+.btn-reset:hover {
+  background: #5c636a;
+  color: white;
+}
+
+.btn-action {
+  background: #34d399;
+  color: white;
+  border: none;
+}
+
+.btn-action:hover {
+  background: #16a34a;
+  color: white;
+}
+</style>
