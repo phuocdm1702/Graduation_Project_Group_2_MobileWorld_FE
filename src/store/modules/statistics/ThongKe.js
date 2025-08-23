@@ -287,9 +287,11 @@ const updateRevenueChart = () => {
                     }
                 },
                 datalabels: {
-                    color: '#fff',
+                    color: '#1f3a44', // Đổi màu thành xanh đậm
                     formatter: (value) => formatCurrency(value),
-                    font: { weight: 'bold' }
+                    font: { weight: 'bold' },
+                    borderRadius: 4,
+                    padding: 4
                 }
             },
             scales: {
@@ -357,9 +359,12 @@ const updateHangBanChayChart = () => {
                     }
                 },
                 datalabels: {
-                    color: '#fff',
+                    color: '#1f3a44', // Đổi màu thành xanh đậm
                     formatter: (value) => value > 0 ? formatCurrency(value) : '',
-                    font: { weight: 'bold', size: 10 }
+                    font: { weight: 'bold', size: 10 },
+                    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+                    borderRadius: 4,
+                    padding: 4
                 }
             }
         }

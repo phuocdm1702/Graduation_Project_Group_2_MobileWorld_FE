@@ -672,10 +672,6 @@ export default {
   position: relative;
 }
 
-.revenue-chart-container {
-  background: #535353;
-}
-
 .revenue-chart,
 .status-chart {
   max-width: 100%;

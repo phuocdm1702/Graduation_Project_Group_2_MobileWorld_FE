@@ -1,34 +1,23 @@
 <template>
   <div class="container-fluid py-4">
     <!-- Header -->
-    <HeaderCard
-      title="Quản Lý Bán Hàng"
-      badgeText="Hệ Thống POS"
-      badgeClass="teal"
-      :backgroundOpacity="0.95"
-    />
+    <HeaderCard title="Quản Lý Bán Hàng" badgeText="Hệ Thống POS" badgeClass="teal" :backgroundOpacity="0.95" />
 
     <!-- Invoice and Customer Cluster -->
     <div class="row d-flex align-items-stretch">
       <div class="col-lg-8 d-flex flex-column">
         <!-- Invoice Search and Pending Invoices -->
-        <div
-          class="card shadow-sm mb-4 flex-fill"
-          style="
+        <div class="card shadow-sm mb-4 flex-fill" style="
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
             border: none;
-          "
-        >
+          ">
           <div class="card-body p-3">
             <!-- Invoice Search -->
-            <div
-              class="search-card mb-4"
-              style="
+            <div class="search-card mb-4" style="
                 background: linear-gradient(135deg, #60a5fa, #34d399);
                 border-radius: 0.5rem;
-              "
-            >
+              ">
               <div class="card-body p-3">
                 <div class="d-flex gap-3 align-items-center flex-wrap">
                   <div class="flex-grow-1">
@@ -36,20 +25,12 @@
                       <span class="input-group-text bg-white">
                         <i class="bi bi-search text-muted"></i>
                       </span>
-                      <input
-                        type="text"
-                        class="form-control search-input"
-                        placeholder="Tìm kiếm hóa đơn..."
-                        :value="invoiceSearchQuery"
-                        @input="debouncedInvoiceSearch($event.target.value)"
-                      />
+                      <input type="text" class="form-control search-input" placeholder="Tìm kiếm hóa đơn..."
+                        :value="invoiceSearchQuery" @input="debouncedInvoiceSearch($event.target.value)" />
                     </div>
                   </div>
-                  <button
-                    class="btn btn-light px-4 py-2 fw-semibold add-bill-btn text-dark"
-                    @click="createNewPendingInvoice"
-                    :disabled="isCreatingInvoice || pendingInvoices.length >= 5"
-                  >
+                  <button class="btn btn-light px-4 py-2 fw-semibold add-bill-btn text-dark"
+                    @click="createNewPendingInvoice" :disabled="isCreatingInvoice || pendingInvoices.length >= 5">
                     Tạo hóa đơn
                   </button>
                 </div>
@@ -58,21 +39,15 @@
 
             <!-- Pending Invoices -->
             <FilterTableSection title="Hóa đơn chờ" icon="bi bi-receipt-cutoff">
-              <div
-                class="bill-card"
-                style="
+              <div class="bill-card" style="
                   border-bottom-right-radius: 12px;
                   border-bottom-left-radius: 12px;
-                "
-              >
+                ">
                 <div class="card-body p-4">
                   <div class="d-flex gap-3 overflow-x-auto pb-2">
-                    <div
-                      v-for="invoice in filteredPendingInvoices"
-                      :key="invoice.id"
+                    <div v-for="invoice in filteredPendingInvoices" :key="invoice.id"
                       @click="loadPendingInvoice(invoice)"
-                      class="card shadow-sm bill-card p-2 cursor-pointer min-w-[160px] flex-shrink-0"
-                      :style="{
+                      class="card shadow-sm bill-card p-2 cursor-pointer min-w-[160px] flex-shrink-0" :style="{
                         background:
                           activeInvoiceId === invoice.id
                             ? 'rgba(52, 211, 153, 0.05)'
@@ -81,36 +56,21 @@
                           activeInvoiceId === invoice.id
                             ? '2px solid #34d399'
                             : 'none',
-                      }"
-                    >
-                      <div
-                        class="card-body p-2"
-                        style="
+                      }">
+                      <div class="card-body p-2" style="
                           border-bottom-right-radius: 12px;
                           border-bottom-left-radius: 12px;
-                        "
-                      >
-                        <div
-                          class="d-flex gap-3 justify-content-between align-items-center mb-2"
-                        >
+                        ">
+                        <div class="d-flex gap-3 justify-content-between align-items-center mb-2">
                           <span class="fw-bold text-dark">{{
                             invoice.ma
                           }}</span>
-                          <span
-                            class="badge gradient-custom-yellow text-white px-3 py-1"
-                            >{{ invoice.status }}</span
-                          >
+                          <span class="badge gradient-custom-yellow text-white px-3 py-1">{{ invoice.status }}</span>
                         </div>
-                        <div
-                          class="d-flex align-items-center justify-content-between mt-2"
-                        >
-                          <small class="text-muted"
-                            >{{ totalQuantity(invoice.items) }} sản phẩm</small
-                          >
-                          <button
-                            class="btn btn-sm btn-outline-danger delete-invoice-btn"
-                            @click.stop="confirmCancelInvoice(invoice)"
-                          >
+                        <div class="d-flex align-items-center justify-content-between mt-2">
+                          <small class="text-muted">{{ totalQuantity(invoice.items) }} sản phẩm</small>
+                          <button class="btn btn-sm btn-outline-danger delete-invoice-btn"
+                            @click.stop="confirmCancelInvoice(invoice)">
                             <i class="bi bi-trash"></i>
                           </button>
                         </div>
@@ -126,97 +86,61 @@
 
       <!-- Customer Section -->
       <div class="col-lg-4 d-flex flex-column">
-        <FilterTableSection
-          title="Khách Hàng"
-          icon="bi bi-people"
-          class="flex-fill"
-        >
-          <div
-            class="customer-card bg-white shadow-sm animate__animated animate__fadeIn flex-fill"
-            style="border-radius: 0.5rem"
-          >
+        <FilterTableSection title="Khách Hàng" icon="bi bi-people" class="flex-fill">
+          <div class="customer-card bg-white shadow-sm animate__animated animate__fadeIn flex-fill"
+            style="border-radius: 0.5rem">
             <div class="card-body p-4 d-flex flex-column h-100">
               <div class="mb-4">
                 <div class="input-group input-group-lg">
                   <span class="input-group-text bg-light border-end-0">
                     <i class="bi bi-search text-teal"></i>
                   </span>
-                  <input
-                    type="text"
-                    class="form-control search-input border-start-0"
-                    placeholder="Tìm kiếm khách hàng, sdt..."
-                    v-model="searchCustomer"
-                    @input="debouncedCustomerSearch($event.target.value)"
-                    style="
+                  <input type="text" class="form-control search-input border-start-0"
+                    placeholder="Tìm kiếm khách hàng, sdt..." v-model="searchCustomer"
+                    @input="debouncedCustomerSearch($event.target.value)" style="
                       border-radius: 0 0.5rem 0.5rem 0;
                       transition: all 0.3s ease;
-                    "
-                    @focus="this.classList.add('border-teal')"
-                    @blur="this.classList.remove('border-teal')"
-                  />
+                    " @focus="this.classList.add('border-teal')" @blur="this.classList.remove('border-teal')" />
                 </div>
               </div>
               <div class="row flex-grow-1">
                 <div class="col-md-6">
-                  <label
-                    class="form-label fw-medium text-dark mb-2"
-                    style="font-size: 0.95rem"
-                  >
+                  <label class="form-label fw-medium text-dark mb-2" style="font-size: 0.95rem">
                     Tên khách hàng <span class="text-danger">*</span>
                   </label>
                   <div class="input-group">
                     <span class="input-group-text bg-light border-end-0">
                       <i class="bi bi-person text-teal"></i>
                     </span>
-                    <input
-                      v-model="customer.name"
-                      type="text"
-                      class="form-control search-input border-start-0"
-                      placeholder="Tên khách hàng"
-                      disabled
-                      style="
+                    <input v-model="customer.name" type="text" class="form-control search-input border-start-0"
+                      placeholder="Tên khách hàng" disabled style="
                         border-radius: 0 0.5rem 0.5rem 0;
                         transition: all 0.3s ease;
-                      "
-                    />
+                      " />
                   </div>
                 </div>
                 <div class="col-md-6">
-                  <label
-                    class="form-label fw-medium text-dark mb-2"
-                    style="font-size: 0.95rem"
-                  >
+                  <label class="form-label fw-medium text-dark mb-2" style="font-size: 0.95rem">
                     Số điện thoại <span class="text-danger">*</span>
                   </label>
                   <div class="input-group">
                     <span class="input-group-text bg-light border-end-0">
                       <i class="bi bi-telephone text-teal"></i>
                     </span>
-                    <input
-                      v-model="customer.phone"
-                      type="tel"
-                      class="form-control search-input border-start-0"
-                      placeholder="Số điện thoại"
-                      disabled
-                      style="
+                    <input v-model="customer.phone" type="tel" class="form-control search-input border-start-0"
+                      placeholder="Số điện thoại" disabled style="
                         border-radius: 0 0.5rem 0.5rem 0;
                         transition: all 0.3s ease;
-                      "
-                    />
+                      " />
                   </div>
                 </div>
               </div>
-              <button
-                class="btn teal text-white w-100 mt-3 py-2 fw-medium add-customer-btn"
-                @click="openCustomerModal"
+              <button class="btn teal text-white w-100 mt-3 py-2 fw-medium add-customer-btn" @click="openCustomerModal"
                 style="
                   border-radius: 0.5rem;
                   transition: all 0.3s ease;
                   font-size: 1rem;
-                "
-                @mouseover="this.style.transform = 'scale(1.02)'"
-                @mouseout="this.style.transform = 'scale(1)'"
-              >
+                " @mouseover="this.style.transform = 'scale(1.02)'" @mouseout="this.style.transform = 'scale(1)'">
                 Thêm khách hàng
               </button>
             </div>
@@ -228,48 +152,27 @@
     <NotificationModal ref="notificationModal" />
     <ToastNotification ref="toastNotification" />
     <!-- Scan Barcode Modal -->
-    <div
-      v-if="showScanModal"
-      class="modal fade show d-block"
-      tabindex="-1"
-      style="background: rgba(0, 0, 0, 0.5)"
-    >
+    <div v-if="showScanModal" class="modal fade show d-block" tabindex="-1" style="background: rgba(0, 0, 0, 0.5)">
       <div class="modal-dialog modal-dialog-centered modal-lg">
-        <div
-          class="modal-content shadow-lg p-3 gradient-modal animate__animated animate__zoomIn"
-          style="
+        <div class="modal-content shadow-lg p-3 gradient-modal animate__animated animate__zoomIn" style="
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(15px);
             border-radius: 0.5rem;
-          "
-        >
-          <div
-            class="modal-header border-0 d-flex justify-content-between align-items-center"
-          >
+          ">
+          <div class="modal-header border-0 d-flex justify-content-between align-items-center">
             <h5 class="modal-title fw-bold text-dark">Quét Barcode</h5>
-            <button
-              class="btn btn-outline-secondary btn-close-custom"
-              @click="closeScanModal"
-            >
+            <button class="btn btn-outline-secondary btn-close-custom" @click="closeScanModal">
               <i class="bi bi-x-lg"></i>
             </button>
           </div>
           <div class="modal-body p-4">
             <div id="barcode-scanner" style="position: relative">
-              <video
-                id="barcode-scanner-video"
-                ref="videoElement"
-                style="width: 100%; height: auto"
-                autoplay
-              ></video>
+              <video id="barcode-scanner-video" ref="videoElement" style="width: 100%; height: auto" autoplay></video>
               <div id="scan-region" ref="scanRegion" class="scan-region">
                 <div class="scan-border"></div>
               </div>
               <div v-if="isScanning" class="text-center mt-2">
-                <span
-                  class="spinner-border spinner-border-sm text-teal"
-                  role="status"
-                ></span>
+                <span class="spinner-border spinner-border-sm text-teal" role="status"></span>
                 <span class="text-muted ms-2">Đang quét...</span>
               </div>
               <div v-if="scanError" class="text-danger text-center mt-2">
@@ -281,11 +184,7 @@
             <button @click="closeScanModal" class="btn btn-secondary me-2">
               Đóng
             </button>
-            <button
-              @click="startZXingScan"
-              class="btn btn-success"
-              :disabled="isCameraActive"
-            >
+            <button @click="startZXingScan" class="btn btn-success" :disabled="isCameraActive">
               Bắt đầu quét
             </button>
           </div>
@@ -294,51 +193,33 @@
     </div>
 
     <!-- Payment Provider Modal -->
-    <div
-      v-if="showPaymentProviderModal"
-      class="modal fade show d-block"
-      tabindex="-1"
-      style="background: rgba(0, 0, 0, 0.5)"
-    >
+    <div v-if="showPaymentProviderModal" class="modal fade show d-block" tabindex="-1"
+      style="background: rgba(0, 0, 0, 0.5)">
       <div class="modal-dialog modal-dialog-centered">
-        <div
-          class="modal-content shadow-lg p-3 gradient-modal animate__animated animate__zoomIn"
-          style="
+        <div class="modal-content shadow-lg p-3 gradient-modal animate__animated animate__zoomIn" style="
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(15px);
             border-radius: 0.5rem;
-          "
-        >
-          <div
-            class="modal-header border-0 d-flex justify-content-between align-items-center"
-          >
+          ">
+          <div class="modal-header border-0 d-flex justify-content-between align-items-center">
             <h5 class="modal-title fw-bold text-dark">
               Chọn phương thức thanh toán
             </h5>
-            <button
-              class="btn btn-outline-secondary btn-close-custom"
-              @click="closePaymentProviderModal"
-            >
+            <button class="btn btn-outline-secondary btn-close-custom" @click="closePaymentProviderModal">
               <i class="bi bi-x-lg"></i>
             </button>
           </div>
           <div class="modal-body p-4">
             <div class="d-flex flex-column gap-3">
-              <button
-                class="btn btn-light p-3 d-flex align-items-center gap-3"
-                @click="selectPaymentProvider('vnpay')"
-                style="border: 1px solid #34d399; border-radius: 0.5rem"
-              >
+              <button class="btn btn-light p-3 d-flex align-items-center gap-3" @click="selectPaymentProvider('vnpay')"
+                style="border: 1px solid #34d399; border-radius: 0.5rem">
                 <i class="bi bi-credit-card"></i>
                 <span class="fw-semibold">VNPAY</span>
               </button>
             </div>
           </div>
           <div class="modal-footer border-0">
-            <button
-              class="btn btn-secondary"
-              @click="closePaymentProviderModal"
-            >
+            <button class="btn btn-secondary" @click="closePaymentProviderModal">
               Hủy
             </button>
           </div>
@@ -350,26 +231,15 @@
     <div class="row d-flex align-items-stretch">
       <div class="col-lg-8 d-flex flex-column">
         <!-- Cart Section -->
-        <FilterTableSection
-          title="Sản Phẩm Trong Giỏ hàng"
-          icon="bi bi-basket"
-          class="flex-fill"
-        >
-          <div
-            class="shadow-sm product-card"
-            style="
+        <FilterTableSection title="Sản Phẩm Trong Giỏ hàng" icon="bi bi-basket" class="flex-fill">
+          <div class="shadow-sm product-card" style="
               border-bottom-right-radius: 12px;
               border-bottom-left-radius: 8px;
               flex: 1;
-            "
-          >
+            ">
             <div class="d-flex justify-content-end">
-              <button
-                class="btn add-to-cart-btn teal text-white"
-                style="width: 120px; margin-top: 1rem; margin-right: 1rem"
-                @click="scanQR"
-                :disabled="!activeInvoiceId"
-              >
+              <button class="btn add-to-cart-btn teal text-white"
+                style="width: 120px; margin-top: 1rem; margin-right: 1rem" @click="scanQR" :disabled="!activeInvoiceId">
                 Quét QR
               </button>
             </div>
@@ -378,56 +248,30 @@
               <div class="row g-3 mb-4">
                 <div class="col-md-3 search-input-wrapper">
                   <i class="bi bi-search search-icon"></i>
-                  <input
-                    v-model="cartSearchQuery"
-                    type="text"
-                    class="form-control search-input"
-                    style="padding-left: 2rem"
-                    placeholder="Tìm sản phẩm, IMEI..."
-                    @input="debouncedCartSearch($event.target.value)"
-                  />
+                  <input v-model="cartSearchQuery" type="text" class="form-control search-input"
+                    style="padding-left: 2rem" placeholder="Tìm sản phẩm, IMEI..."
+                    @input="debouncedCartSearch($event.target.value)" />
                 </div>
                 <div class="col-md-3">
-                  <select
-                    v-model="cartFilterColor"
-                    class="form-select search-input"
-                  >
+                  <select v-model="cartFilterColor" class="form-select search-input">
                     <option value="">Tất cả màu</option>
-                    <option
-                      v-for="color in uniqueCartColors"
-                      :key="color"
-                      :value="color"
-                    >
+                    <option v-for="color in uniqueCartColors" :key="color" :value="color">
                       {{ color }}
                     </option>
                   </select>
                 </div>
                 <div class="col-md-3">
-                  <select
-                    v-model="cartFilterRam"
-                    class="form-select search-input"
-                  >
+                  <select v-model="cartFilterRam" class="form-select search-input">
                     <option value="">Tất cả RAM</option>
-                    <option
-                      v-for="ram in uniqueCartRams"
-                      :key="ram"
-                      :value="ram"
-                    >
+                    <option v-for="ram in uniqueCartRams" :key="ram" :value="ram">
                       {{ ram }}
                     </option>
                   </select>
                 </div>
                 <div class="col-md-3">
-                  <select
-                    v-model="cartFilterStorage"
-                    class="form-select search-input"
-                  >
+                  <select v-model="cartFilterStorage" class="form-select search-input">
                     <option value="">Tất cả bộ nhớ</option>
-                    <option
-                      v-for="storage in uniqueCartStorages"
-                      :key="storage"
-                      :value="storage"
-                    >
+                    <option v-for="storage in uniqueCartStorages" :key="storage" :value="storage">
                       {{ storage }}
                     </option>
                   </select>
@@ -435,47 +279,30 @@
               </div>
 
               <!-- Container giỏ hàng với thanh cuộn -->
-              <div
-                v-if="!filteredCartItems || filteredCartItems.length === 0"
-                class="empty-cart-container text-center py-5"
-              >
+              <div v-if="!filteredCartItems || filteredCartItems.length === 0"
+                class="empty-cart-container text-center py-5">
                 <div
                   class="empty-icon-container rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center teal"
-                  style="width: 80px; height: 80px"
-                >
-                  <i
-                    class="bi bi-cart-x text-white"
-                    style="font-size: 2.5rem"
-                  ></i>
+                  style="width: 80px; height: 80px">
+                  <i class="bi bi-cart-x text-white" style="font-size: 2.5rem"></i>
                 </div>
                 <p class="text-muted mb-0 fw-medium">
                   Giỏ hàng trống hoặc không tìm thấy sản phẩm
                 </p>
               </div>
-              <div
-                v-else
-                class="cart-items-container"
-                style="
+              <div v-else class="cart-items-container" style="
                   max-height: 400px;
                   overflow-y: auto;
                   overflow-x: hidden;
                   padding-right: 10px;
-                "
-              >
-                <div
-                  v-for="(item, index) in filteredCartItems"
-                  :key="item.id"
-                  class="mb-4"
-                >
-                  <div
-                    class="cart-item-card shadow-sm p-4 animate__animated animate__fadeInUp"
-                    style="
+                ">
+                <div v-for="(item, index) in filteredCartItems" :key="item.id" class="mb-4">
+                  <div class="cart-item-card shadow-sm p-4 animate__animated animate__fadeInUp" style="
                       background: rgba(255, 255, 255, 0.95);
                       border-radius: 0.5rem;
                       border: 1px solid rgba(52, 211, 153, 0.1);
                       transition: all 0.3s ease;
-                    "
-                  >
+                    ">
                     <div class="row align-items-center">
                       <!-- S Virgin Mary -->
                       <div class="col-md-1 text-center">
@@ -483,16 +310,11 @@
                       </div>
                       <!-- Hình ảnh sản phẩm -->
                       <div class="col-md-3 text-center">
-                        <img
-                          :src="item.image"
-                          class="img-fluid rounded"
-                          :alt="item.name"
-                          style="
+                        <img :src="item.image" class="img-fluid rounded" :alt="item.name" style="
                             max-height: 120px;
                             object-fit: contain;
                             transition: transform 0.3s ease;
-                          "
-                        />
+                          " />
                       </div>
                       <!-- Thông tin sản phẩm -->
                       <div class="col-md-5">
@@ -500,40 +322,22 @@
                           <h5 class="fw-bold text-dark mb-0">
                             {{ item.name }}
                           </h5>
-                          <span
-                            class="info-icon"
-                            @mouseenter="showProductDetailsModal(item, $event)"
-                            @mouseleave="hideProductDetailsModal"
-                          >
-                            <i
-                              class="bi bi-info-circle text-teal"
-                              style="font-size: 1.2rem"
-                            ></i>
+                          <span class="info-icon" @mouseenter="showProductDetailsModal(item, $event)"
+                            @mouseleave="hideProductDetailsModal">
+                            <i class="bi bi-info-circle text-teal" style="font-size: 1.2rem"></i>
                           </span>
                         </div>
                         <div class="d-flex flex-wrap gap-2 mb-2">
-                          <span
-                            class="badge text-white px-3 py-1"
-                            style="background-color: #1f3a44"
-                            >{{ item.color }}</span
-                          >
-                          <span
-                            class="badge text-white px-3 py-1"
-                            style="background-color: #1f3a44"
-                            >{{ item.ram }}</span
-                          >
-                          <span
-                            class="badge text-white px-3 py-1"
-                            style="background-color: #1f3a44"
-                            >{{ item.storage }}</span
-                          >
+                          <span class="badge text-white px-3 py-1" style="background-color: #1f3a44">{{ item.color
+                            }}</span>
+                          <span class="badge text-white px-3 py-1" style="background-color: #1f3a44">{{ item.ram
+                            }}</span>
+                          <span class="badge text-white px-3 py-1" style="background-color: #1f3a44">{{ item.storage
+                            }}</span>
                         </div>
                         <div class="d-flex align-items-center gap-2 mb-2">
                           <span class="text-muted">IMEI:</span>
-                          <button
-                            class="btn btn-sm btn-outline-teal"
-                            @click="showIMEIModalForItem(item)"
-                          >
+                          <button class="btn btn-sm btn-outline-teal" @click="showIMEIModalForItem(item)">
                             Xem IMEI
                           </button>
                         </div>
@@ -541,16 +345,10 @@
                           <span class="text-muted">Số lượng:</span>
                           <span class="fw-semibold">{{ item.quantity }}</span>
                         </div>
-                        <div
-                          v-if="item.priceChangeText"
-                          class="text-muted small mb-2"
-                        >
+                        <div v-if="item.priceChangeText" class="text-muted small mb-2">
                           {{ item.priceChangeText }}
                         </div>
-                        <div
-                          v-if="selectedDiscount"
-                          class="d-flex align-items-center gap-2"
-                        >
+                        <div v-if="selectedDiscount" class="d-flex align-items-center gap-2">
                           <span class="text-muted">Mã giảm giá:</span>
                           <span class="badge bg-success text-white px-3 py-2">
                             {{ selectedDiscount.code }} (-{{
@@ -569,10 +367,7 @@
                             Đơn giá: {{ formatPrice(item.currentPrice) }}
                           </div>
                         </div>
-                        <button
-                          class="btn btn-sm btn-outline-danger"
-                          @click="removeItem(item)"
-                        >
+                        <button class="btn btn-sm btn-outline-danger" @click="removeItem(item)">
                           Xóa
                         </button>
                       </div>
@@ -585,32 +380,19 @@
         </FilterTableSection>
 
         <!-- Product List Section -->
-        <FilterTableSection
-          title="Danh Sách Sản Phẩm"
-          icon="bi bi-table"
-          class="flex-fill"
-        >
+        <FilterTableSection title="Danh Sách Sản Phẩm" icon="bi bi-table" class="flex-fill">
           <div class="mt-4" style="flex: 1">
             <div class="row g-3 p-2">
               <div class="col-md-3 search-input-wrapper">
                 <i class="bi bi-search search-icon"></i>
-                <input
-                  :value="productSearchQuery"
-                  type="text"
-                  class="form-control search-input"
-                  style="padding-left: 2rem"
-                  placeholder="Tìm kiếm sản phẩm..."
-                  @input="debouncedProductSearch($event.target.value)"
-                />
+                <input :value="productSearchQuery" type="text" class="form-control search-input"
+                  style="padding-left: 2rem" placeholder="Tìm kiếm sản phẩm..."
+                  @input="debouncedProductSearch($event.target.value)" />
               </div>
               <div class="col-md-3">
                 <select v-model="filterColor" class="form-select search-input">
                   <option value="">Tất cả màu</option>
-                  <option
-                    v-for="color in uniqueColors"
-                    :key="color"
-                    :value="color"
-                  >
+                  <option v-for="color in uniqueColors" :key="color" :value="color">
                     {{ color }}
                   </option>
                 </select>
@@ -624,28 +406,16 @@
                 </select>
               </div>
               <div class="col-md-3">
-                <select
-                  v-model="filterStorage"
-                  class="form-select search-input"
-                >
+                <select v-model="filterStorage" class="form-select search-input">
                   <option value="">Tất cả bộ nhớ</option>
-                  <option
-                    v-for="storage in uniqueStorages"
-                    :key="storage"
-                    :value="storage"
-                  >
+                  <option v-for="storage in uniqueStorages" :key="storage" :value="storage">
                     {{ storage }}
                   </option>
                 </select>
               </div>
             </div>
-            <DataTable
-              title=""
-              :headers="productHeaders"
-              :data="filteredProducts"
-              :pageSizeOptions="[5, 10, 15, 20, 30, 40, 50]"
-              @scroll="handleScroll"
-            >
+            <DataTable title="" :headers="productHeaders" :data="filteredProducts"
+              :pageSizeOptions="[5, 10, 15, 20, 30, 40, 50]" @scroll="handleScroll">
               <template #stt="{ globalIndex }">
                 {{ globalIndex + 1 }}
               </template>
@@ -672,11 +442,8 @@
                 }}</span>
               </template>
               <template #actions="{ item }">
-                <button
-                  class="btn btn-sm px-4 py-2 add-to-cart-btn teal text-white"
-                  @click="showIMEIList(item)"
-                  :disabled="!activeInvoiceId"
-                >
+                <button class="btn btn-sm px-4 py-2 add-to-cart-btn teal text-white" @click="showIMEIList(item)"
+                  :disabled="!activeInvoiceId">
                   <i class="bi bi-cart-plus-fill"></i>
                 </button>
               </template>
@@ -687,47 +454,24 @@
 
       <!-- Order Info Section -->
       <div class="col-lg-4 d-flex flex-column">
-        <FilterTableSection
-          title="Thông tin đơn"
-          icon="bi bi-info-circle"
-          class="flex-fill"
-        >
+        <FilterTableSection title="Thông tin đơn" icon="bi bi-info-circle" class="flex-fill">
           <div class="order-card">
             <div
-              class="card-header p-3 d-flex justify-content-end align-items-center border-bottom bg-white rounded-top"
-            >
-              <div
-                class="form-check form-switch d-flex align-items-center gap-2"
-              >
-                <input
-                  class="form-check-input"
-                  type="checkbox"
-                  v-model="isDelivery"
-                  @change="toggleDelivery"
-                  style="border-color: #34d399"
-                />
-                <label class="form-check-label text-muted mb-0"
-                  >Bán giao hàng</label
-                >
+              class="card-header p-3 d-flex justify-content-end align-items-center border-bottom bg-white rounded-top">
+              <div class="form-check form-switch d-flex align-items-center gap-2">
+                <input class="form-check-input" type="checkbox" v-model="isDelivery" @change="toggleDelivery"
+                  style="border-color: #34d399" />
+                <label class="form-check-label text-muted mb-0">Bán giao hàng</label>
               </div>
             </div>
 
-            <div
-              class="card-body p-3 pt-0 d-flex flex-column variant-scroll-container"
-            >
+            <div class="card-body p-3 pt-0 d-flex flex-column variant-scroll-container">
               <!-- Hiển thị placeholder khi giỏ hàng trống -->
-              <div
-                v-if="!cartItems || cartItems.length === 0"
-                class="empty-cart-message text-center py-4"
-              >
+              <div v-if="!cartItems || cartItems.length === 0" class="empty-cart-message text-center py-4">
                 <div
                   class="empty-icon-container rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center teal"
-                  style="width: 60px; height: 60px"
-                >
-                  <i
-                    class="bi bi-info-circle text-white"
-                    style="font-size: 2rem"
-                  ></i>
+                  style="width: 60px; height: 60px">
+                  <i class="bi bi-info-circle text-white" style="font-size: 2rem"></i>
                 </div>
                 <p class="text-muted mb-0 fw-medium">
                   Chưa có sản phẩm trong đơn hàng
@@ -736,279 +480,176 @@
               <!-- Nội dung thông tin đơn khi có sản phẩm -->
               <div v-else class="d-flex flex-column flex-grow-1">
                 <div v-if="isDelivery" class="mb-5">
-              <div
-                class="d-flex justify-content-between align-items-center mt-3 mb-3"
-              >
-                <h6
-                  class="fw-bold text-dark"
-                  style="font-size: 1.3rem; letter-spacing: 0.5px"
-                >
-                  Thông tin người nhận
-                </h6>
+                  <div class="d-flex justify-content-between align-items-center mt-3 mb-3">
+                    <h6 class="fw-bold text-dark" style="font-size: 1.3rem; letter-spacing: 0.5px">
+                      Thông tin người nhận
+                    </h6>
 
-                <button
-                  class="btn btn-outline-teal btn-sm px-4 py-2"
-                  @click="openAddressModal"
-                  style="border-radius: 0.5rem; transition: all 0.3s ease"
-                >
-                  <i class="bi bi-geo-alt-fill me-2"></i>Chọn địa chỉ
-                </button>
-              </div>
+                    <button class="btn btn-outline-teal btn-sm px-4 py-2" @click="openAddressModal"
+                      style="border-radius: 0.5rem; transition: all 0.3s ease">
+                      <i class="bi bi-geo-alt-fill me-2"></i>Chọn địa chỉ
+                    </button>
+                  </div>
 
-              <div
-                class="receiver-form bg-white p-3 shadow-sm animate__animated animate__fadeIn"
-                style="
+                  <div class="receiver-form bg-white p-3 shadow-sm animate__animated animate__fadeIn" style="
                   border: 1px solid rgba(52, 211, 153, 0.1);
                   border-radius: 0.5rem;
                   backdrop-filter: blur(5px);
-                "
-              >
-                <div class="row g-3">
-                  <div class="col-md-6">
-                    <label
-                      class="form-label fw-medium text-dark mb-2"
-                      style="font-size: 0.95rem"
-                    >
-                      Tên người nhận <span class="text-danger">*</span>
-                    </label>
-                    <div class="input-group">
-                      <span class="input-group-text bg-light border-end-0">
-                        <i class="bi bi-person text-teal"></i>
-                      </span>
-                      <input
-                        v-model="customer.name"
-                        type="text"
-                        class="form-control search-input border-start-0"
-                        placeholder="Nhập tên người nhận"
-                        disabled
-                        style="
+                ">
+                    <div class="row g-3">
+                      <div class="col-md-6">
+                        <label class="form-label fw-medium text-dark mb-2" style="font-size: 0.95rem">
+                          Tên người nhận <span class="text-danger">*</span>
+                        </label>
+                        <div class="input-group">
+                          <span class="input-group-text bg-light border-end-0">
+                            <i class="bi bi-person text-teal"></i>
+                          </span>
+                          <input v-model="customer.name" type="text" class="form-control search-input border-start-0"
+                            placeholder="Nhập tên người nhận" disabled style="
                           border-radius: 0 0.5rem 0.5rem 0;
                           transition: all 0.3s ease;
-                        "
-                      />
-                    </div>
-                  </div>
-                  <div class="col-md-6">
-                    <label
-                      class="form-label fw-medium text-dark mb-2"
-                      style="font-size: 0.95rem"
-                    >
-                      Số điện thoại <span class="text-danger">*</span>
-                    </label>
-                    <div class="input-group">
-                      <span class="input-group-text bg-light border-end-0">
-                        <i class="bi bi-telephone text-teal"></i>
-                      </span>
-                      <input
-                        v-model="customer.phone"
-                        type="tel"
-                        class="form-control search-input border-start-0"
-                        placeholder="Nhập số điện thoại"
-                        disabled
-                        style="
+                        " />
+                        </div>
+                      </div>
+                      <div class="col-md-6">
+                        <label class="form-label fw-medium text-dark mb-2" style="font-size: 0.95rem">
+                          Số điện thoại <span class="text-danger">*</span>
+                        </label>
+                        <div class="input-group">
+                          <span class="input-group-text bg-light border-end-0">
+                            <i class="bi bi-telephone text-teal"></i>
+                          </span>
+                          <input v-model="customer.phone" type="tel" class="form-control search-input border-start-0"
+                            placeholder="Nhập số điện thoại" disabled style="
                           border-radius: 0 0.5rem 0.5rem 0;
                           transition: all 0.3s ease;
-                        "
-                      />
-                    </div>
-                  </div>
-                  <div class="col-md-6">
-                    <label
-                      class="form-label fw-medium text-dark mb-2"
-                      style="font-size: 0.95rem"
-                    >
-                      Tỉnh/Thành phố <span class="text-danger">*</span>
-                    </label>
-                    <div class="input-group">
-                      <span class="input-group-text bg-light border-end-0">
-                        <i class="bi bi-geo-alt text-teal"></i>
-                      </span>
-                      <select
-                        v-model="customer.city"
-                        class="form-select search-input border-start-0"
-                        @change="handleCustomerProvinceChange"
-                        style="
+                        " />
+                        </div>
+                      </div>
+                      <div class="col-md-6">
+                        <label class="form-label fw-medium text-dark mb-2" style="font-size: 0.95rem">
+                          Tỉnh/Thành phố <span class="text-danger">*</span>
+                        </label>
+                        <div class="input-group">
+                          <span class="input-group-text bg-light border-end-0">
+                            <i class="bi bi-geo-alt text-teal"></i>
+                          </span>
+                          <select v-model="customer.city" class="form-select search-input border-start-0"
+                            @change="handleCustomerProvinceChange" style="
                           border-radius: 0 0.5rem 0.5rem 0;
                           transition: all 0.3s ease;
-                        "
-                        disabled
-                      >
-                        <option value="" disabled>
-                          Chọn tỉnh/thành phố
-                        </option>
-                        <option
-                          v-for="province in provinces"
-                          :key="province.code"
-                          :value="province.name"
-                        >
-                          {{ province.name }}
-                        </option>
-                      </select>
-                    </div>
-                  </div>
-                  <div class="col-md-6">
-                    <label
-                      class="form-label fw-medium text-dark mb-2"
-                      style="font-size: 0.95rem"
-                    >
-                      Quận/Huyện <span class="text-danger">*</span>
-                    </label>
-                    <div class="input-group">
-                      <span class="input-group-text bg-light border-end-0">
-                        <i class="bi bi-geo text-teal"></i>
-                      </span>
-                      <select
-                        v-model="customer.district"
-                        class="form-select search-input border-start-0"
-                        @change="handleCustomerDistrictChange"
-                        style="
+                        " disabled>
+                            <option value="" disabled>
+                              Chọn tỉnh/thành phố
+                            </option>
+                            <option v-for="province in provinces" :key="province.code" :value="province.name">
+                              {{ province.name }}
+                            </option>
+                          </select>
+                        </div>
+                      </div>
+                      <div class="col-md-6">
+                        <label class="form-label fw-medium text-dark mb-2" style="font-size: 0.95rem">
+                          Quận/Huyện <span class="text-danger">*</span>
+                        </label>
+                        <div class="input-group">
+                          <span class="input-group-text bg-light border-end-0">
+                            <i class="bi bi-geo text-teal"></i>
+                          </span>
+                          <select v-model="customer.district" class="form-select search-input border-start-0"
+                            @change="handleCustomerDistrictChange" style="
                           border-radius: 0 0.5rem 0.5rem 0;
                           transition: all 0.3s ease;
-                        "
-                        disabled
-                      >
-                        <option value="" disabled>Chọn quận/huyện</option>
-                        <option
-                          v-for="district in districts"
-                          :key="district.code"
-                          :value="district.name"
-                        >
-                          {{ district.name }}
-                        </option>
-                      </select>
-                    </div>
-                  </div>
-                  <div class="col-md-6">
-                    <label
-                      class="form-label fw-medium text-dark mb-2"
-                      style="font-size: 0.95rem"
-                    >
-                      Phường/Xã <span class="text-danger">*</span>
-                    </label>
-                    <div class="input-group">
-                      <span class="input-group-text bg-light border-end-0">
-                        <i class="bi bi-geo-fill text-teal"></i>
-                      </span>
-                      <select
-                        v-model="customer.ward"
-                        class="form-select search-input border-start-0"
-                        style="
+                        " disabled>
+                            <option value="" disabled>Chọn quận/huyện</option>
+                            <option v-for="district in districts" :key="district.code" :value="district.name">
+                              {{ district.name }}
+                            </option>
+                          </select>
+                        </div>
+                      </div>
+                      <div class="col-md-6">
+                        <label class="form-label fw-medium text-dark mb-2" style="font-size: 0.95rem">
+                          Phường/Xã <span class="text-danger">*</span>
+                        </label>
+                        <div class="input-group">
+                          <span class="input-group-text bg-light border-end-0">
+                            <i class="bi bi-geo-fill text-teal"></i>
+                          </span>
+                          <select v-model="customer.ward" class="form-select search-input border-start-0" style="
                           border-radius: 0 0.5rem 0.5rem 0;
                           transition: all 0.3s ease;
-                        "
-                        disabled
-                      >
-                        <option value="" disabled>Chọn phường/xã</option>
-                        <option
-                          v-for="ward in wards"
-                          :key="ward.code"
-                          :value="ward.name"
-                        >
-                          {{ ward.name }}
-                        </option>
-                      </select>
-                    </div>
-                  </div>
-                  <div class="col-12">
-                    <label
-                      class="form-label fw-medium text-dark mb-2"
-                      style="font-size: 0.95rem"
-                    >
-                      Địa chỉ cụ thể <span class="text-danger">*</span>
-                    </label>
-                    <div class="input-group">
-                      <span class="input-group-text bg-light border-end-0">
-                        <i class="bi bi-house-door text-teal"></i>
-                      </span>
-                      <input
-                        v-model="customer.address"
-                        type="text"
-                        class="form-control search-input border-start-0"
-                        placeholder="Nhập địa chỉ cụ thể (số nhà, tên đường,...)"
-                        style="
+                        " disabled>
+                            <option value="" disabled>Chọn phường/xã</option>
+                            <option v-for="ward in wards" :key="ward.code" :value="ward.name">
+                              {{ ward.name }}
+                            </option>
+                          </select>
+                        </div>
+                      </div>
+                      <div class="col-12">
+                        <label class="form-label fw-medium text-dark mb-2" style="font-size: 0.95rem">
+                          Địa chỉ cụ thể <span class="text-danger">*</span>
+                        </label>
+                        <div class="input-group">
+                          <span class="input-group-text bg-light border-end-0">
+                            <i class="bi bi-house-door text-teal"></i>
+                          </span>
+                          <input v-model="customer.address" type="text" class="form-control search-input border-start-0"
+                            placeholder="Nhập địa chỉ cụ thể (số nhà, tên đường,...)" style="
                           border-radius: 0 0.5rem 0.5rem 0;
                           transition: all 0.3s ease;
-                        "
-                      />
-                    </div>
-                  </div>
-                  <div class="d-flex align-items-center gap-2 mt-2">
-                    <label
-                      class="form-label fw-medium text-dark mb-2"
-                      style="font-size: 0.95rem; margin-top: 10px"
-                    >
-                      Giao hàng tận nhà <span class="text-danger"></span>
-                    </label>
-                    <input
-                      type="checkbox"
-                      class="form-check-input"
-                      v-model="isHomeDelivery"
-                      style="
+                        " />
+                        </div>
+                      </div>
+                      <div class="d-flex align-items-center gap-2 mt-2">
+                        <label class="form-label fw-medium text-dark mb-2" style="font-size: 0.95rem; margin-top: 10px">
+                          Giao hàng tận nhà <span class="text-danger"></span>
+                        </label>
+                        <input type="checkbox" class="form-check-input" v-model="isHomeDelivery" style="
                         margin-top: 10px;
                         border-color: #34d399;
                         margin-left: auto;
-                      "
-                    />
-                  </div>
-                  <div v-if="isHomeDelivery" class="mt-2">
-                    <label
-                      class="form-label fw-medium text-dark mb-2"
-                      style="font-size: 0.95rem"
-                    >
-                      Phí vận chuyển <span class="text-danger">*</span>
-                    </label>
-                    <div class="input-group">
-                      <span class="input-group-text bg-light border-end-0">
-                        <i class="bi bi-truck text-teal"></i>
-                      </span>
-                      <input
-                        v-model.number="shippingFee"
-                        type="number"
-                        class="form-control search-input border-start-0"
-                        placeholder="Nhập phí vận chuyển (VND)"
-                        min="0"
-                        style="
+                      " />
+                      </div>
+                      <div v-if="isHomeDelivery" class="mt-2">
+                        <label class="form-label fw-medium text-dark mb-2" style="font-size: 0.95rem">
+                          Phí vận chuyển <span class="text-danger">*</span>
+                        </label>
+                        <div class="input-group">
+                          <span class="input-group-text bg-light border-end-0">
+                            <i class="bi bi-truck text-teal"></i>
+                          </span>
+                          <input v-model.number="shippingFee" type="number"
+                            class="form-control search-input border-start-0" placeholder="Nhập phí vận chuyển (VND)"
+                            min="0" style="
                           border-radius: 0 0.5rem 0.5rem 0;
                           transition: all 0.3s ease;
-                        "
-                        @input="updateShippingFee"
-                      />
+                        " @input="updateShippingFee" />
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            </div>
 
                 <!-- Voucher Section -->
                 <div class="voucher-section mb-2 mt-3">
-                  <h6
-                    class="fw-bold text-dark mb-3 d-flex align-items-center gap-2"
-                    style="font-size: 1.2rem; letter-spacing: 0.5px"
-                  >
+                  <h6 class="fw-bold text-dark mb-3 d-flex align-items-center gap-2"
+                    style="font-size: 1.2rem; letter-spacing: 0.5px">
                     Mã Giảm Giá <span class="text-danger">*</span>
                   </h6>
                   <!-- Voucher Tabs -->
-                  <ul
-                    class="nav nav-tabs mb-3"
-                    style="border-bottom: 2px solid #34d399"
-                  >
+                  <ul class="nav nav-tabs mb-3" style="border-bottom: 2px solid #34d399">
                     <li class="nav-item">
-                      <button
-                        class="nav-link"
-                        :class="{ active: activeTab === 'best' }"
-                        @click="setActiveTab('best')"
-                        style="color: #1f3a44; font-weight: 600"
-                      >
+                      <button class="nav-link" :class="{ active: activeTab === 'best' }" @click="setActiveTab('best')"
+                        style="color: #1f3a44; font-weight: 600">
                         Mã Tốt Nhất
                       </button>
                     </li>
                     <li class="nav-item">
-                      <button
-                        class="nav-link"
-                        :class="{ active: activeTab === 'alternative' }"
-                        @click="setActiveTab('alternative')"
-                        style="color: #1f3a44; font-weight: 600"
-                      >
+                      <button class="nav-link" :class="{ active: activeTab === 'alternative' }"
+                        @click="setActiveTab('alternative')" style="color: #1f3a44; font-weight: 600">
                         Mã Thay Thế
                       </button>
                     </li>
@@ -1016,221 +657,136 @@
                   <!-- Voucher Content -->
                   <div class="voucher-carousel-container position-relative">
                     <!-- Best Voucher -->
-                    <div
-                      v-if="activeTab === 'best'"
-                      class="best-voucher-card p-4 shadow-sm animate__animated animate__fadeIn"
-                      style="
+                    <div v-if="activeTab === 'best'"
+                      class="best-voucher-card p-4 shadow-sm animate__animated animate__fadeIn" style="
                         border: 2px solid #34d399;
                         background: linear-gradient(135deg, #ecfdf5, #d1fae5);
                         border-radius: 0.5rem;
                         overflow: hidden;
                         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-                      "
-                    >
-                      <div
-                        class="voucher-ribbon position-absolute top-0 end-0 bg-success text-white px-4 py-1"
-                        style="
+                      ">
+                      <div class="voucher-ribbon position-absolute top-0 end-0 bg-success text-white px-4 py-1" style="
                           font-size: 0.9rem;
                           font-weight: 600;
                           border-bottom-left-radius: 0.5rem;
                           box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
-                        "
-                      >
+                        ">
                         Mã Tốt Nhất
                       </div>
-                      <div
-                        v-if="selectedDiscount"
-                        class="d-flex justify-content-between align-items-center"
-                      >
+                      <div v-if="selectedDiscount" class="d-flex justify-content-between align-items-center">
                         <div class="text-dark">
                           <div class="badge bg-success text-white px-4 py-2">
                             {{ selectedDiscount.code }}
                           </div>
-                          <div
-                            class="fw-semibold mt-2 d-flex align-items-center gap-2"
-                            style="font-size: 1.2rem"
-                          >
+                          <div class="fw-semibold mt-2 d-flex align-items-center gap-2" style="font-size: 1.2rem">
                             <i class="bi bi-tag-fill text-teal"></i>
                             Giảm:
                             <span class="text-danger fw-bold">
                               −{{
                                 selectedDiscount.percent
-                                  ? `${
-                                      selectedDiscount.percent
-                                    }% (${formatPrice(discount)})`
+                                  ? `${selectedDiscount.percent
+                                  }% (${formatPrice(discount)})`
                                   : formatPrice(discount)
                               }}
                             </span>
                           </div>
-                          <div
-                            class="text-muted mt-1"
-                            style="font-size: 0.85rem"
-                          >
+                          <div class="text-muted mt-1" style="font-size: 0.85rem">
                             Hết hạn: {{ selectedDiscount.expiry }}
                           </div>
-                          <div
-                            class="text-muted mt-1"
-                            style="font-size: 0.85rem"
-                          >
+                          <div class="text-muted mt-1" style="font-size: 0.85rem">
                             Đơn tối thiểu:
                             {{ formatPrice(selectedDiscount.minOrder) }}
                           </div>
                         </div>
                       </div>
                       <div v-else class="text-center text-muted py-3">
-                        <i
-                          class="bi bi-ticket-perforated me-2"
-                          style="font-size: 1.2rem"
-                        ></i>
+                        <i class="bi bi-ticket-perforated me-2" style="font-size: 1.2rem"></i>
                         Chưa chọn mã giảm giá
                       </div>
                       <div v-else class="text-center text-muted py-3">
-                        <i
-                          class="bi bi-ticket-perforated me-2"
-                          style="font-size: 1.2rem"
-                        ></i>
+                        <i class="bi bi-ticket-perforated me-2" style="font-size: 1.2rem"></i>
                         Chưa chọn mã giảm giá
                       </div>
                     </div>
                     <!-- Alternative Vouchers -->
-                    <div
-                      v-if="activeTab === 'alternative'"
-                      class="voucher-carousel position-relative"
-                    >
+                    <div v-if="activeTab === 'alternative'" class="voucher-carousel position-relative">
                       <div class="mb-3">
-                        <input
-                          v-model="alternativeSearchQuery"
-                          type="text"
-                          class="form-control search-input"
-                          placeholder="Tìm kiếm mã giảm giá..."
-                          @input="
+                        <input v-model="alternativeSearchQuery" type="text" class="form-control search-input"
+                          placeholder="Tìm kiếm mã giảm giá..." @input="
                             debouncedAlternativeSearch($event.target.value)
-                          "
-                        />
+                            " />
                       </div>
-                      <div
-                        class="d-flex gap-3 overflow-x-hidden pb-2"
-                        ref="alternativeCarousel"
-                      >
-                        <div
-                          v-for="(
-                            discount, index
-                          ) in filteredAlternativeDiscountsComputed"
-                          :key="discount.id"
-                          v-show="index === currentAlternativeIndex"
-                          @click="selectDiscount(discount)"
-                          class="voucher-card p-3 shadow-sm animate__animated animate__fadeInUp w-100"
-                          style="
+                      <div class="d-flex gap-3 overflow-x-hidden pb-2" ref="alternativeCarousel">
+                        <div v-for="(
+discount, index
+                          ) in filteredAlternativeDiscountsComputed" :key="discount.id"
+                          v-show="index === currentAlternativeIndex" @click="selectDiscount(discount)"
+                          class="voucher-card p-3 shadow-sm animate__animated animate__fadeInUp w-100" style="
                             background: #ffffff;
                             border: 1px solid #34d399;
                             border-radius: 0.5rem;
                             transition: all 0.3s ease;
                             cursor: pointer;
-                          "
-                          :class="{
+                          " :class="{
                             'selected-voucher':
                               selectedDiscount &&
                               selectedDiscount.id === discount.id,
-                          }"
-                        >
-                          <div
-                            class="d-flex flex-column justify-content-between h-100"
-                          >
+                          }">
+                          <div class="d-flex flex-column justify-content-between h-100">
                             <div>
-                              <div
-                                class="fw-bold d-flex align-items-center gap-2 mb-2"
-                                style="font-size: 1rem"
-                              >
-                                <i
-                                  class="bi bi-ticket-perforated text-teal"
-                                ></i>
+                              <div class="fw-bold d-flex align-items-center gap-2 mb-2" style="font-size: 1rem">
+                                <i class="bi bi-ticket-perforated text-teal"></i>
                                 {{ discount.code }}
-                                <span
-                                  v-if="
-                                    selectedDiscount &&
-                                    selectedDiscount.id === discount.id
-                                  "
-                                  class="badge bg-success text-white px-2 py-1"
-                                  >Đã chọn</span
-                                >
+                                <span v-if="
+                                  selectedDiscount &&
+                                  selectedDiscount.id === discount.id
+                                " class="badge bg-success text-white px-2 py-1">Đã chọn</span>
                               </div>
-                              <div
-                                class="text-secondary mb-1"
-                                style="font-size: 0.9rem"
-                              >
+                              <div class="text-secondary mb-1" style="font-size: 0.9rem">
                                 Giảm:
                                 <strong>{{
                                   discount.percent
-                                    ? `${
-                                        discount.percent
-                                      }% (ước tính ${formatPrice(
-                                        (discount.percent / 100) * tongTien
-                                      )})`
+                                    ? `${discount.percent
+                                    }% (ước tính ${formatPrice(
+                                      (discount.percent / 100) * tongTien
+                                    )})`
                                     : formatPrice(discount.value)
                                 }}</strong>
                               </div>
-                              <div
-                                class="text-secondary"
-                                style="font-size: 0.9rem"
-                              >
+                              <div class="text-secondary" style="font-size: 0.9rem">
                                 Đơn tối thiểu:
                                 {{ formatPrice(discount.minOrder) }}
                               </div>
-                              <div
-                                class="text-secondary"
-                                style="font-size: 0.9rem"
-                              >
+                              <div class="text-secondary" style="font-size: 0.9rem">
                                 Hết hạn: {{ discount.expiry }}
                               </div>
                             </div>
-                            <button
-                              class="btn btn-outline-teal btn-sm px-3 py-1 mt-2"
-                              @click.stop="selectDiscount(discount)"
-                            >
+                            <button class="btn btn-outline-teal btn-sm px-3 py-1 mt-2"
+                              @click.stop="selectDiscount(discount)">
                               Áp dụng
                             </button>
                           </div>
                         </div>
-                        <div
-                          v-if="
-                            filteredAlternativeDiscountsComputed.length === 0
-                          "
-                          class="text-center text-muted py-4 w-100"
-                        >
-                          <i
-                            class="bi bi-ticket-perforated me-2"
-                            style="font-size: 1.2rem"
-                          ></i>
+                        <div v-if="
+                          filteredAlternativeDiscountsComputed.length === 0
+                        " class="text-center text-muted py-4 w-100">
+                          <i class="bi bi-ticket-perforated me-2" style="font-size: 1.2rem"></i>
                           Không có mã giảm giá thay thế khả dụng
                         </div>
                       </div>
                       <!-- Updated control section -->
-                      <div
-                        class="carousel-controls d-flex align-items-center justify-content-center gap-3 mt-3"
-                      >
-                        <button
-                          class="carousel-control-prev"
-                          type="button"
-                          @click="scrollCarousel('left')"
-                          :disabled="currentAlternativeIndex === 0"
-                        >
+                      <div class="carousel-controls d-flex align-items-center justify-content-center gap-3 mt-3">
+                        <button class="carousel-control-prev" type="button" @click="scrollCarousel('left')"
+                          :disabled="currentAlternativeIndex === 0">
                           <i class="bi bi-chevron-left text-white"></i>
                         </button>
-                        <span class="text-muted fw-medium"
-                          >{{ currentAlternativeIndex + 1 }} /
+                        <span class="text-muted fw-medium">{{ currentAlternativeIndex + 1 }} /
                           {{
                             filteredAlternativeDiscountsComputed.length
-                          }}</span
-                        >
-                        <button
-                          class="carousel-control-next"
-                          type="button"
-                          @click="scrollCarousel('right')"
-                          :disabled="
-                            currentAlternativeIndex ===
-                            filteredAlternativeDiscountsComputed.length - 1
-                          "
-                        >
+                          }}</span>
+                        <button class="carousel-control-next" type="button" @click="scrollCarousel('right')" :disabled="currentAlternativeIndex ===
+                          filteredAlternativeDiscountsComputed.length - 1
+                          ">
                           <i class="bi bi-chevron-right text-white"></i>
                         </button>
                       </div>
@@ -1238,70 +794,44 @@
                   </div>
                   <!-- Suggested Vouchers -->
                   <div class="suggested-voucher-section mt-4">
-                    <h6
-                      class="fw-bold text-dark d-flex align-items-center gap-2"
-                      style="font-size: 1.2rem; letter-spacing: 0.5px"
-                    >
+                    <h6 class="fw-bold text-dark d-flex align-items-center gap-2"
+                      style="font-size: 1.2rem; letter-spacing: 0.5px">
                       Gợi Ý Mã Giảm Giá <span class="text-danger">*</span>
                     </h6>
                     <div class="voucher-carousel">
                       <div class="d-flex gap-3 overflow-x-auto pb-2">
-                        <div
-                          v-for="discount in suggestedDiscounts"
-                          :key="discount.id"
-                          class="voucher-card p-3 shadow-sm animate__animated animate__fadeInUp w-100"
-                          style="
+                        <div v-for="discount in suggestedDiscounts" :key="discount.id"
+                          class="voucher-card p-3 shadow-sm animate__animated animate__fadeInUp w-100" style="
                             background: #ffffff;
                             border: 1px solid #fed7aa;
                             border-radius: 0.5rem;
                             transition: all 0.3s ease;
-                          "
-                        >
-                          <div
-                            class="d-flex flex-column justify-content-between h-100"
-                          >
+                          ">
+                          <div class="d-flex flex-column justify-content-between h-100">
                             <div>
-                              <div
-                                class="fw-bold mb-2 d-flex align-items-center gap-2"
-                                style="font-size: 1rem"
-                              >
-                                <i
-                                  class="bi bi-ticket-perforated text-warning"
-                                ></i>
+                              <div class="fw-bold mb-2 d-flex align-items-center gap-2" style="font-size: 1rem">
+                                <i class="bi bi-ticket-perforated text-warning"></i>
                                 {{ discount.code }}
                               </div>
-                              <div
-                                class="text-secondary"
-                                style="font-size: 0.9rem"
-                              >
+                              <div class="text-secondary" style="font-size: 0.9rem">
                                 Giảm:
                                 <strong>{{
                                   discount.percent
-                                    ? `${
-                                        discount.percent
-                                      }% (ước tính ${formatPrice(
-                                        (discount.percent / 100) * tongTien
-                                      )})`
+                                    ? `${discount.percent
+                                    }% (ước tính ${formatPrice(
+                                      (discount.percent / 100) * tongTien
+                                    )})`
                                     : formatPrice(discount.value)
                                 }}</strong>
                               </div>
-                              <div
-                                class="text-secondary"
-                                style="font-size: 0.9rem"
-                              >
+                              <div class="text-secondary" style="font-size: 0.9rem">
                                 Đơn tối thiểu:
                                 {{ formatPrice(discount.minOrder) }}
                               </div>
-                              <div
-                                class="text-secondary"
-                                style="font-size: 0.9rem"
-                              >
+                              <div class="text-secondary" style="font-size: 0.9rem">
                                 Hết hạn: {{ discount.expiry }}
                               </div>
-                              <div
-                                class="text-warning fw-semibold mt-1"
-                                style="font-size: 0.9rem"
-                              >
+                              <div class="text-warning fw-semibold mt-1" style="font-size: 0.9rem">
                                 Còn thiếu:
                                 {{ formatPrice(discount.missingAmount) }} để áp
                                 dụng
@@ -1309,14 +839,8 @@
                             </div>
                           </div>
                         </div>
-                        <div
-                          v-if="suggestedDiscounts.length === 0"
-                          class="text-center text-muted py-4 w-100"
-                        >
-                          <i
-                            class="bi bi-ticket-perforated me-2"
-                            style="font-size: 1.2rem"
-                          ></i>
+                        <div v-if="suggestedDiscounts.length === 0" class="text-center text-muted py-4 w-100">
+                          <i class="bi bi-ticket-perforated me-2" style="font-size: 1.2rem"></i>
                           Không có mã giảm giá gợi ý khả dụng
                         </div>
                       </div>
@@ -1325,37 +849,20 @@
                 </div>
 
                 <!-- Payment Info -->
-                <div
-                  class="price-info p-4 bg-light shadow-sm animate__animated animate__fadeInUp mt-2 mb-3"
-                  style="border-left: 5px solid #34d399; border-radius: 0.5rem"
-                >
-                  <div
-                    class="d-flex justify-content-between align-items-center mb-3"
-                  >
-                    <span class="fw-medium text-dark" style="font-size: 0.95rem"
-                      >Tổng tiền hàng:</span
-                    >
+                <div class="price-info p-4 bg-light shadow-sm animate__animated animate__fadeInUp mt-2 mb-3"
+                  style="border-left: 5px solid #34d399; border-radius: 0.5rem">
+                  <div class="d-flex justify-content-between align-items-center mb-3">
+                    <span class="fw-medium text-dark" style="font-size: 0.95rem">Tổng tiền hàng:</span>
                     <span class="fw-bold text-dark">{{
                       formatPrice(tongTien)
                     }}</span>
                   </div>
-                  <div
-                    class="d-flex justify-content-between align-items-center mb-3"
-                  >
-                    <span class="fw-medium text-dark" style="font-size: 0.95rem"
-                      >Giảm giá:</span
-                    >
-                    <span class="fw-bold text-danger"
-                      >−{{ formatPrice(discount) }}</span
-                    >
+                  <div class="d-flex justify-content-between align-items-center mb-3">
+                    <span class="fw-medium text-dark" style="font-size: 0.95rem">Giảm giá:</span>
+                    <span class="fw-bold text-danger">−{{ formatPrice(discount) }}</span>
                   </div>
-                  <div
-                    v-if="isDelivery"
-                    class="d-flex justify-content-between align-items-center mb-3"
-                  >
-                    <span class="fw-medium text-dark" style="font-size: 0.95rem"
-                      >Phí vận chuyển:</span
-                    >
+                  <div v-if="isDelivery" class="d-flex justify-content-between align-items-center mb-3">
+                    <span class="fw-medium text-dark" style="font-size: 0.95rem">Phí vận chuyển:</span>
                     <span class="fw-bold text-dark">
                       {{
                         tongTien >= FREE_SHIP_THRESHOLD
@@ -1364,16 +871,9 @@
                       }}
                     </span>
                   </div>
-                  <hr
-                    class="my-3"
-                    style="border-color: rgba(52, 211, 153, 0.2)"
-                  />
-                  <div
-                    class="d-flex justify-content-between align-items-center"
-                  >
-                    <span class="fw-bold text-dark" style="font-size: 1rem"
-                      >Tổng thanh toán:</span
-                    >
+                  <hr class="my-3" style="border-color: rgba(52, 211, 153, 0.2)" />
+                  <div class="d-flex justify-content-between align-items-center">
+                    <span class="fw-bold text-dark" style="font-size: 1rem">Tổng thanh toán:</span>
                     <span class="fw-bold fs-5 text-success">{{
                       formatPrice(totalPayment)
                     }}</span>
@@ -1383,64 +883,35 @@
                 <div>
                   <h6 class="fw-semibold text-dark">Phương thức thanh toán</h6>
                   <div class="d-flex flex-wrap gap-2 mb-3">
-                    <button
-                      class="btn px-4 py-2 select-btn"
-                      @click="selectPayment('transfer')"
-                      :class="{
-                        'teal text-white': paymentMethod === 'transfer',
-                        border: paymentMethod !== 'transfer',
-                      }"
-                      style="border: 1px solid rgba(52, 211, 153, 0.2)"
-                    >
+                    <button class="btn px-4 py-2 select-btn" @click="selectPayment('transfer')" :class="{
+                      'teal text-white': paymentMethod === 'transfer',
+                      border: paymentMethod !== 'transfer',
+                    }" style="border: 1px solid rgba(52, 211, 153, 0.2)">
                       Chuyển khoản
                     </button>
-                    <button
-                      class="btn px-4 py-2 select-btn"
-                      @click="selectPayment('cash')"
-                      :class="{
-                        'teal text-white': paymentMethod === 'cash',
-                        border: paymentMethod !== 'cash',
-                      }"
-                      style="border: 1px solid rgba(52, 211, 153, 0.2)"
-                    >
+                    <button class="btn px-4 py-2 select-btn" @click="selectPayment('cash')" :class="{
+                      'teal text-white': paymentMethod === 'cash',
+                      border: paymentMethod !== 'cash',
+                    }" style="border: 1px solid rgba(52, 211, 153, 0.2)">
                       Tiền mặt
                     </button>
-                    <button
-                      class="btn px-4 py-2 select-btn"
-                      @click="selectPayment('both')"
-                      :class="{
-                        'teal text-white': paymentMethod === 'both',
-                        border: paymentMethod !== 'both',
-                      }"
-                      style="border: 1px solid rgba(52, 211, 153, 0.2)"
-                    >
+                    <button class="btn px-4 py-2 select-btn" @click="selectPayment('both')" :class="{
+                      'teal text-white': paymentMethod === 'both',
+                      border: paymentMethod !== 'both',
+                    }" style="border: 1px solid rgba(52, 211, 153, 0.2)">
                       Cả hai
                     </button>
                   </div>
                   <div v-if="paymentMethod === 'both'" class="row g-3 mt-3">
                     <div class="col-md-6">
-                      <label class="form-label fw-medium text-dark"
-                        >Tiền chuyển khoản</label
-                      >
-                      <input
-                        v-model.number="tienChuyenKhoan"
-                        type="number"
-                        class="form-control search-input"
-                        placeholder="Nhập số tiền chuyển khoản"
-                        min="0"
-                      />
+                      <label class="form-label fw-medium text-dark">Tiền chuyển khoản</label>
+                      <input v-model.number="tienChuyenKhoan" type="number" class="form-control search-input"
+                        placeholder="Nhập số tiền chuyển khoản" min="0" />
                     </div>
                     <div class="col-md-6">
-                      <label class="form-label fw-medium text-dark"
-                        >Tiền mặt</label
-                      >
-                      <input
-                        v-model.number="tienMat"
-                        type="number"
-                        class="form-control search-input"
-                        placeholder="Nhập số tiền mặt"
-                        min="0"
-                      />
+                      <label class="form-label fw-medium text-dark">Tiền mặt</label>
+                      <input v-model.number="tienMat" type="number" class="form-control search-input"
+                        placeholder="Nhập số tiền mặt" min="0" />
                     </div>
                   </div>
                   <div v-if="selectedPaymentProvider" class="mt-3">
@@ -1451,10 +922,8 @@
                       }}</span>
                     </p>
                   </div>
-                  <div
-                    v-if="showQRCode && selectedPaymentProvider !== 'vnpay'"
-                    class="mt-3 text-center qr-code-container"
-                  >
+                  <div v-if="showQRCode && selectedPaymentProvider !== 'vnpay'"
+                    class="mt-3 text-center qr-code-container">
                     <h6 class="fw-bold text-dark">
                       Quét mã QR để thanh toán ({{ selectedPaymentProvider }})
                     </h6>
@@ -1467,16 +936,11 @@
                 </div>
 
                 <!-- Pay Button -->
-                <button
-                  class="btn w-100 py-3 pay-btn gradient-custom-green text-white mt-3"
-                  :disabled="
-                    !activeInvoiceId ||
-                    !cartItems ||
-                    cartItems.length === 0 ||
-                    isCreatingOrder
-                  "
-                  @click="confirmPayment"
-                >
+                <button class="btn w-100 py-3 pay-btn gradient-custom-green text-white mt-3" :disabled="!activeInvoiceId ||
+                  !cartItems ||
+                  cartItems.length === 0 ||
+                  isCreatingOrder
+                  " @click="confirmPayment">
                   <span class="fw-semibold">Thanh toán</span>
                 </button>
               </div>
@@ -1486,14 +950,11 @@
       </div>
 
       <!-- Product Details Modal -->
-      <div
-        v-if="showProductDetails"
-        class="product-details-modal shadow-lg p-3 animate__animated animate__fadeIn"
+      <div v-if="showProductDetails" class="product-details-modal shadow-lg p-3 animate__animated animate__fadeIn"
         :style="{
           top: modalPosition.top + 'px',
           left: modalPosition.left + 'px',
-        }"
-      >
+        }">
         <div class="modal-content bg-white p-4" style="border-radius: 0.5rem">
           <h5 class="fw-bold text-dark mb-3">{{ selectedCartItem?.name }}</h5>
           <div class="row">
@@ -1525,77 +986,50 @@
       </div>
 
       <!-- IMEI Modal for Cart Item -->
-      <div
-        v-if="showCartIMEIModal"
-        class="modal fade show d-block"
-        tabindex="-1"
-        style="background: rgba(0, 0, 0, 0.5)"
-      >
+      <div v-if="showCartIMEIModal" class="modal fade show d-block" tabindex="-1"
+        style="background: rgba(0, 0, 0, 0.5)">
         <div class="modal-dialog modal-dialog-centered modal-lg">
-          <div
-            class="modal-content shadow-lg p-3 gradient-modal animate__animated animate__zoomIn"
-            style="
+          <div class="modal-content shadow-lg p-3 gradient-modal animate__animated animate__zoomIn" style="
               background: rgba(255, 255, 255, 0.95);
               backdrop-filter: blur(15px);
               border-radius: 0.5rem;
-            "
-          >
-            <div
-              class="modal-header border-0 d-flex justify-content-between align-items-center"
-            >
+            ">
+            <div class="modal-header border-0 d-flex justify-content-between align-items-center">
               <h5 class="modal-title fw-bold text-dark">
                 IMEI của sản phẩm trong giỏ hàng
               </h5>
-              <button
-                class="btn btn-outline-secondary btn-close-custom"
-                @click="closeCartIMEIModal"
-              >
+              <button class="btn btn-outline-secondary btn-close-custom" @click="closeCartIMEIModal">
                 <i class="bi bi-x-lg"></i>
               </button>
             </div>
             <div class="modal-body p-4">
-              <div
-                class="product-info-card mb-4 p-3 rounded shadow-sm animate__animated animate__fadeInDown"
-                style="background: linear-gradient(135deg, #f8f9fa, #e9ecef)"
-              >
+              <div class="product-info-card mb-4 p-3 rounded shadow-sm animate__animated animate__fadeInDown"
+                style="background: linear-gradient(135deg, #f8f9fa, #e9ecef)">
                 <div class="row align-items-center">
                   <div class="col-md-4 text-center">
-                    <img
-                      :src="
-                        selectedCartItem?.image ||
-                        'https://bachlongstore.vn/vnt_upload/product/04_2024/Untitled_2.png'
-                      "
-                      class="phone-img img-fluid rounded"
-                      :alt="selectedCartItem?.name"
-                      style="
+                    <img :src="selectedCartItem?.image ||
+                      'https://bachlongstore.vn/vnt_upload/product/04_2024/Untitled_2.png'
+                      " class="phone-img img-fluid rounded" :alt="selectedCartItem?.name" style="
                         max-height: 150px;
                         object-fit: contain;
                         transition: transform 0.3s ease;
-                      "
-                      @mouseover="this.style.transform = 'scale(1.05)'"
-                      @mouseout="this.style.transform = 'scale(1)'"
-                    />
+                      " @mouseover="this.style.transform = 'scale(1.05)'"
+                      @mouseout="this.style.transform = 'scale(1)'" />
                   </div>
                   <div class="col-md-8">
                     <h4 class="fw-bold text-dark mb-2">
                       {{ selectedCartItem?.name }}
                     </h4>
                     <div class="d-flex flex-wrap gap-3">
-                      <span
-                        class="badge text-white px-3 py-1"
-                        style="background-color: #1f3a44"
-                        >{{ selectedCartItem?.color }}</span
-                      >
-                      <span
-                        class="badge text-white px-3 py-1"
-                        style="background-color: #1f3a44"
-                        >{{ selectedCartItem?.ram }}</span
-                      >
-                      <span
-                        class="badge text-white px-3 py-1"
-                        style="background-color: #1f3a44"
-                        >{{ selectedCartItem?.storage }}</span
-                      >
+                      <span class="badge text-white px-3 py-1" style="background-color: #1f3a44">{{
+                        selectedCartItem?.color
+                        }}</span>
+                      <span class="badge text-white px-3 py-1" style="background-color: #1f3a44">{{
+                        selectedCartItem?.ram
+                        }}</span>
+                      <span class="badge text-white px-3 py-1" style="background-color: #1f3a44">{{
+                        selectedCartItem?.storage
+                        }}</span>
                       <span class="badge teal text-white px-3 py-1">{{
                         formatPrice(selectedCartItem?.currentPrice)
                       }}</span>
@@ -1607,45 +1041,27 @@
                 <h6 class="fw-semibold text-dark mb-3">
                   Danh sách IMEI đã chọn
                 </h6>
-                <div
-                  v-if="
-                    !selectedCartItem?.imei ||
-                    selectedCartItem.imei.split(', ').length === 0
-                  "
-                  class="text-center text-muted py-4 animate__animated animate__fadeIn"
-                >
+                <div v-if="
+                  !selectedCartItem?.imei ||
+                  selectedCartItem.imei.split(', ').length === 0
+                " class="text-center text-muted py-4 animate__animated animate__fadeIn">
                   <i class="bi bi-info-circle me-2"></i>Không có IMEI nào được
                   chọn.
                 </div>
                 <div v-else class="d-flex flex-column gap-3">
-                  <div
-                    v-for="(imei, index) in selectedCartItem.imei.split(', ')"
-                    :key="imei"
-                    class="imei-card p-3 rounded shadow-sm animate__animated animate__fadeInUp"
-                    style="
+                  <div v-for="(imei, index) in selectedCartItem.imei.split(', ')" :key="imei"
+                    class="imei-card p-3 rounded shadow-sm animate__animated animate__fadeInUp" style="
                       background: #fff;
                       border: 1px solid rgba(52, 211, 153, 0.1);
-                    "
-                  >
-                    <div
-                      class="d-flex justify-content-between align-items-center"
-                    >
+                    ">
+                    <div class="d-flex justify-content-between align-items-center">
                       <div class="d-flex align-items-center">
-                        <span
-                          class="fw-bold text-teal me-3"
-                          style="min-width: 30px"
-                          >{{ index + 1 }}.</span
-                        >
-                        <i
-                          class="bi bi-upc-scan me-3 text-teal"
-                          style="font-size: 1.2rem"
-                        ></i>
+                        <span class="fw-bold text-teal me-3" style="min-width: 30px">{{ index + 1 }}.</span>
+                        <i class="bi bi-upc-scan me-3 text-teal" style="font-size: 1.2rem"></i>
                         <span class="text-dark fw-medium">{{ imei }}</span>
                       </div>
-                      <button
-                        class="btn btn-danger btn-sm delete-imei-btn animate__animated animate__bounceIn"
-                        @click="deleteIMEI(imei)"
-                      >
+                      <button class="btn btn-danger btn-sm delete-imei-btn animate__animated animate__bounceIn"
+                        @click="deleteIMEI(imei)">
                         <i class="bi bi-x-lg"></i>
                       </button>
                     </div>
@@ -1654,10 +1070,7 @@
               </div>
             </div>
             <div class="modal-footer border-0">
-              <button
-                class="btn btn-light px-4 py-2 teal text-white"
-                @click="closeCartIMEIModal"
-              >
+              <button class="btn btn-light px-4 py-2 teal text-white" @click="closeCartIMEIModal">
                 Đóng
               </button>
             </div>
@@ -1666,77 +1079,48 @@
       </div>
 
       <!-- IMEI Modal for Product Selection -->
-      <div
-        v-if="showIMEIModal"
-        class="modal fade show d-block"
-        tabindex="-1"
-        style="background: rgba(0, 0, 0, 0.5); gap: 0"
-      >
+      <div v-if="showIMEIModal" class="modal fade show d-block" tabindex="-1"
+        style="background: rgba(0, 0, 0, 0.5); gap: 0">
         <div class="modal-dialog modal-dialog-centered modal-lg">
-          <div
-            class="modal-content shadow-lg p-3 gradient-modal animate__animated animate__zoomIn"
-            style="
+          <div class="modal-content shadow-lg p-3 gradient-modal animate__animated animate__zoomIn" style="
               background: rgba(255, 255, 255, 0.95);
               backdrop-filter: blur(15px);
               border-radius: 0.5rem;
-            "
-          >
-            <div
-              class="modal-header border-0 d-flex justify-content-between align-items-center"
-            >
+            ">
+            <div class="modal-header border-0 d-flex justify-content-between align-items-center">
               <h5 class="modal-title fw-bold text-dark">
                 Chọn IMEI cho sản phẩm
               </h5>
-              <button
-                class="btn btn-outline-secondary btn-close-custom"
-                @click="closeIMEIModal"
-              >
+              <button class="btn btn-outline-secondary btn-close-custom" @click="closeIMEIModal">
                 <i class="bi bi-x-lg"></i>
               </button>
             </div>
             <div class="modal-body p-4">
-              <div
-                class="product-info-card mb-4 p-3 rounded shadow-sm animate__animated animate__fadeInDown"
-                style="background: linear-gradient(135deg, #f8f9fa, #e9ecef)"
-              >
+              <div class="product-info-card mb-4 p-3 rounded shadow-sm animate__animated animate__fadeInDown"
+                style="background: linear-gradient(135deg, #f8f9fa, #e9ecef)">
                 <div class="row align-items-center">
                   <div class="col-md-4 text-center">
-                    <img
-                      :src="
-                        selectedProduct?.image ||
-                        'https://bachlongstore.vn/vnt_upload/product/04_2024/Untitled_2.png'
-                      "
-                      class="phone-image img-fluid rounded"
-                      :alt="selectedProduct?.tenSanPham"
-                      style="
+                    <img :src="selectedProduct?.image ||
+                      'https://bachlongstore.vn/vnt_upload/product/04_2024/Untitled_2.png'
+                      " class="phone-image img-fluid rounded" :alt="selectedProduct?.tenSanPham" style="
                         max-height: 150px;
                         object-fit: contain;
                         transition: transform 0.3s ease;
-                      "
-                      @mouseover="this.style.transform = 'scale(1.05)'"
-                      @mouseout="this.style.transform = 'scale(1)'"
-                    />
+                      " @mouseover="this.style.transform = 'scale(1.05)'"
+                      @mouseout="this.style.transform = 'scale(1)'" />
                   </div>
                   <div class="col-md-8">
                     <h4 class="fw-bold text-dark mb-2">
                       {{ selectedProduct?.tenSanPham }}
                     </h4>
                     <div class="d-flex flex-wrap gap-3">
-                      <span
-                        class="badge text-white px-3 py-1"
-                        style="background-color: #1f3a44"
-                        >{{ selectedProduct?.mauSac }}</span
-                      >
-                      <span
-                        class="badge text-white px-3 py-1"
-                        style="background-color: #1f3a44"
-                        >{{ selectedProduct?.ram }}</span
-                      >
-                      <span
-                        class="badge text-white px-3 py-1"
-                        style="background-color: #1f3a44"
-                        >{{ selectedProduct?.boNhoTrong }}</span
-                      >
+                      <span class="badge text-white px-3 py-1" style="background-color: #1f3a44">{{
+                        selectedProduct?.mauSac
+                        }}</span>
+                      <span class="badge text-white px-3 py-1" style="background-color: #1f3a44">{{ selectedProduct?.ram
+                        }}</span>
+                      <span class="badge text-white px-3 py-1" style="background-color: #1f3a44">{{
+                        selectedProduct?.boNhoTrong }}</span>
                       <span class="badge teal text-white px-3 py-1">{{
                         formatPrice(selectedProduct?.giaBan)
                       }}</span>
@@ -1748,44 +1132,23 @@
                 <h6 class="fw-semibold text-dark mb-3">
                   Danh sách IMEI khả dụng
                 </h6>
-                <div
-                  v-if="availableIMEIs.length === 0"
-                  class="text-center text-muted py-4 animate__animated animate__fadeIn"
-                >
+                <div v-if="availableIMEIs.length === 0"
+                  class="text-center text-muted py-4 animate__animated animate__fadeIn">
                   <i class="bi bi-info-circle me-2"></i>Không có IMEI nào khả
                   dụng.
                 </div>
                 <div v-else class="d-flex flex-column gap-3">
-                  <div
-                    v-for="(imei, index) in availableIMEIs"
-                    :key="imei.id"
-                    class="imei-card p-3 rounded shadow-sm animate__animated animate__fadeInUp"
-                    style="
+                  <div v-for="(imei, index) in availableIMEIs" :key="imei.id"
+                    class="imei-card p-3 rounded shadow-sm animate__animated animate__fadeInUp" style="
                       background: #fff;
                       border: 1px solid rgba(52, 211, 153, 0.1);
-                    "
-                  >
-                    <div
-                      class="d-flex justify-content-between align-items-center"
-                    >
+                    ">
+                    <div class="d-flex justify-content-between align-items-center">
                       <div class="d-flex align-items-center">
-                        <input
-                          type="checkbox"
-                          :value="imei.imei"
-                          v-model="selectedIMEIs"
-                          class="form-check-input me-3"
-                          style="border-color: #34d399"
-                          @change="handleIMEISelection"
-                        />
-                        <span
-                          class="fw-bold text-teal me-3"
-                          style="min-width: 30px"
-                          >{{ index + 1 }}.</span
-                        >
-                        <i
-                          class="bi bi-upc-scan me-3 text-teal"
-                          style="font-size: 1.2rem"
-                        ></i>
+                        <input type="checkbox" :value="imei.imei" v-model="selectedIMEIs" class="form-check-input me-3"
+                          style="border-color: #34d399" @change="handleIMEISelection" />
+                        <span class="fw-bold text-teal me-3" style="min-width: 30px">{{ index + 1 }}.</span>
+                        <i class="bi bi-upc-scan me-3 text-teal" style="font-size: 1.2rem"></i>
                         <span class="text-dark fw-medium">{{ imei.imei }}</span>
                       </div>
                     </div>
@@ -1797,11 +1160,8 @@
               <button class="btn btn-light px-4 py-2" @click="closeIMEIModal">
                 Hủy
               </button>
-              <button
-                class="btn btn-light px-4 py-2 teal text-white"
-                @click="addProductWithIMEIs"
-                :disabled="selectedIMEIs.length === 0"
-              >
+              <button class="btn btn-light px-4 py-2 teal text-white" @click="addProductWithIMEIs"
+                :disabled="selectedIMEIs.length === 0">
                 Thêm vào giỏ
               </button>
             </div>
@@ -1810,192 +1170,127 @@
       </div>
 
       <!-- Customer Modal -->
-     <div
-  v-if="isCustomerModalOpen"
-  class="modal fade show d-block"
-  tabindex="-1"
-  style="background: rgba(0, 0, 0, 0.5)"
->
-  <div class="modal-dialog modal-dialog-centered modal-lg">
-    <div
-      class="modal-content shadow-lg animate__animated animate__zoomIn"
-      style="
-        background: rgba(255, 255, 255, 0.95);
-        backdrop-filter: blur(15px);
-        border-radius: 1rem;
-      "
-    >
-      <!-- Header -->
-      <div
-        class="modal-header border-0 d-flex justify-content-between align-items-center"
-        style="background: linear-gradient(90deg, #20c997, #2dd4bf); border-radius: 1rem 1rem 0 0;"
-      >
-        <h5 class="modal-title fw-bold text-white d-flex align-items-center">
-          <i class="bi bi-person-circle fs-3 me-2"></i>
-          Thêm khách hàng mới
-        </h5>
-        <button
-          class="btn btn-sm btn-light rounded-circle shadow-sm"
-          @click="isCustomerModalOpen = false"
-        >
-          <i class="bi bi-x-lg"></i>
-        </button>
-      </div>
-
-      <!-- Body -->
-      <div class="modal-body p-4">
-        <div class="row g-4">
-          <div class="col-md-6">
-            <label class="form-label fw-semibold text-dark mb-2">
-              Tên khách hàng <span class="text-danger">*</span>
-            </label>
-            <div class="input-group">
-              <span class="input-group-text bg-light">
-                <i class="bi bi-person text-teal"></i>
-              </span>
-              <input
-                v-model="newCustomer.name"
-                type="text"
-                class="form-control"
-                placeholder="Nhập tên khách hàng"
-              />
+      <div v-if="isCustomerModalOpen" class="modal fade show d-block" tabindex="-1"
+        style="background: rgba(0, 0, 0, 0.5)">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+          <div class="modal-content shadow-lg p-3 animate__animated animate__zoomIn"
+            style="background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(15px); border-radius: 0.5rem;">
+            <!-- Header -->
+            <div class="modal-header border-0 d-flex justify-content-between align-items-center">
+              <h5 class="modal-title fw-bold text-dark">
+                Thêm khách hàng mới
+              </h5>
+              <button class="btn btn-outline-secondary btn-close-custom" @click="isCustomerModalOpen = false">
+                <i class="bi bi-x-lg"></i>
+              </button>
             </div>
-          </div>
-          <div class="col-md-6">
-            <label class="form-label fw-semibold text-dark mb-2">
-              Số điện thoại <span class="text-danger">*</span>
-            </label>
-            <div class="input-group">
-              <span class="input-group-text bg-light">
-                <i class="bi bi-telephone text-teal"></i>
-              </span>
-              <input
-                v-model="newCustomer.phone"
-                type="tel"
-                class="form-control"
-                placeholder="Nhập số điện thoại"
-              />
-            </div>
-          </div>
-        </div>
-      </div>
 
-      <!-- Footer -->
-      <div class="modal-footer border-0 d-flex justify-content-end">
-        <button
-          class="btn btn-outline-secondary px-4 py-2 rounded-3"
-          @click="isCustomerModalOpen = false"
-        >
-          <i class="bi bi-x-circle me-1"></i> Hủy
-        </button>
-        <button
-          class="btn px-4 py-2 rounded-3 shadow-sm text-white"
-          style="background: linear-gradient(90deg, #20c997, #2dd4bf);"
-          @click="addNewCustomer"
-        >
-          <i class="bi bi-check-circle me-1"></i> Thêm khách hàng
-        </button>
-      </div>
-    </div>
-  </div>
-</div>
-
-      <!-- Address Selection Modal -->
-<div
-  v-if="showAddressModal"
-  class="modal fade show d-block"
-  tabindex="-1"
-  style="background: rgba(0, 0, 0, 0.5)"
->
-  <div class="modal-dialog modal-dialog-centered modal-lg">
-    <div
-      class="modal-content shadow-lg p-3 gradient-modal animate__animated animate__zoomIn"
-      style="border-radius: 0.75rem"
-    >
-      <!-- Header -->
-      <div
-        class="modal-header border-0 d-flex justify-content-between align-items-center"
-      >
-        <h5 class="modal-title fw-bold text-dark">
-          <i class="bi bi-geo-alt-fill text-success me-2"></i>
-          Chọn địa chỉ khách hàng
-        </h5>
-        <button
-          class="btn btn-outline-secondary btn-close-custom"
-          @click="closeAddressModal"
-        >
-          <i class="bi bi-x-lg"></i>
-        </button>
-      </div>
-
-      <!-- Body -->
-      <div class="modal-body p-4 address-scroll">
-        <div
-          v-if="customerAddresses.length === 0"
-          class="empty-cart-container py-4 text-muted"
-        >
-          <div
-            class="empty-icon-container d-flex align-items-center justify-content-center mb-3 rounded-circle p-3"
-            style="width: 60px; height: 60px"
-          >
-            <i class="bi bi-info-circle text-white" style="font-size: 1.5rem"></i>
-          </div>
-          <p class="fw-medium">Không có địa chỉ nào được lưu</p>
-        </div>
-
-        <div v-else class="d-flex flex-column gap-3">
-          <div
-            v-for="(address, index) in customerAddresses"
-            :key="address.id"
-            class="address-card p-3 rounded shadow-sm animate__animated animate__fadeInUp"
-            :class="{ 'border border-2 border-success bg-light': selectedAddressId === address.id }"
-            style="cursor: pointer; transition: all 0.3s ease"
-            @click="selectAddress(address)"
-          >
-            <div class="d-flex align-items-start">
-              <input
-                type="radio"
-                :value="address.id"
-                v-model="selectedAddressId"
-                class="form-check-input me-3 mt-1"
-                style="border-color: #34d399"
-              />
-              <div>
-                <div class="fw-bold text-dark">
-                  <i class="bi bi-house-door-fill text-success me-2"></i>
-                  Địa chỉ {{ index + 1 }}
-                </div>
-                <div class="text-muted small">
-                  {{ address.address }}, {{ address.ward }}, {{ address.district }}, {{ address.city }}
+            <!-- Body -->
+            <div class="modal-body">
+              <div class="customer-form animate__animated animate__fadeIn" style="border-radius: 0.5rem">
+                <div class="row g-4">
+                  <div class="col-md-6">
+                    <label class="form-label fw-medium text-dark mb-2">
+                      Tên khách hàng <span class="text-danger">*</span>
+                    </label>
+                    <div class="input-group">
+                      <span class="input-group-text bg-light border-end-0">
+                        <i class="bi bi-person text-teal"></i>
+                      </span>
+                      <input v-model="newCustomer.name" type="text" class="form-control search-input border-start-0"
+                        placeholder="Nhập tên khách hàng"
+                        style="border-radius: 0 0.5rem 0.5rem 0; transition: all 0.3s ease" />
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label fw-medium text-dark mb-2">
+                      Số điện thoại <span class="text-danger">*</span>
+                    </label>
+                    <div class="input-group">
+                      <span class="input-group-text bg-light border-end-0">
+                        <i class="bi bi-telephone text-teal"></i>
+                      </span>
+                      <input v-model="newCustomer.phone" type="tel" class="form-control search-input border-start-0"
+                        placeholder="Nhập số điện thoại"
+                        style="border-radius: 0 0.5rem 0.5rem 0; transition: all 0.3s ease" />
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
+
+            <!-- Footer -->
+            <div class="modal-footer border-0">
+              <button class="btn teal px-4 py-2 text-white" @click="addNewCustomer">
+                Thêm khách hàng
+              </button>
+            </div>
           </div>
         </div>
       </div>
 
-      <!-- Footer -->
-      <div class="modal-footer border-0">
-        <button
-          class="btn btn-outline-teal px-4 py-2"
-          @click="closeAddressModal"
-        >
-          <i class="bi bi-x-circle me-2"></i> Hủy
-        </button>
+      <!-- Address Selection Modal -->
+      <div v-if="showAddressModal" class="modal fade show d-block" tabindex="-1" style="background: rgba(0, 0, 0, 0.5)">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+          <div class="modal-content shadow-lg p-3 gradient-modal animate__animated animate__zoomIn"
+            style="border-radius: 0.75rem">
+            <!-- Header -->
+            <div class="modal-header border-0 d-flex justify-content-between align-items-center">
+              <h5 class="modal-title fw-bold text-dark">
+                <i class="bi bi-geo-alt-fill text-success me-2"></i>
+                Chọn địa chỉ khách hàng
+              </h5>
+              <button class="btn btn-outline-secondary btn-close-custom" @click="closeAddressModal">
+                <i class="bi bi-x-lg"></i>
+              </button>
+            </div>
+
+            <!-- Body -->
+            <div class="modal-body p-4 address-scroll">
+              <div v-if="customerAddresses.length === 0" class="empty-cart-container py-4 text-muted">
+                <div
+                  class="empty-icon-container d-flex align-items-center justify-content-center mb-3 rounded-circle p-3"
+                  style="width: 60px; height: 60px">
+                  <i class="bi bi-info-circle text-white" style="font-size: 1.5rem"></i>
+                </div>
+                <p class="fw-medium">Không có địa chỉ nào được lưu</p>
+              </div>
+
+              <div v-else class="d-flex flex-column gap-3">
+                <div v-for="(address, index) in customerAddresses" :key="address.id"
+                  class="address-card p-3 rounded shadow-sm animate__animated animate__fadeInUp"
+                  :class="{ 'border border-2 border-success bg-light': selectedAddressId === address.id }"
+                  style="cursor: pointer; transition: all 0.3s ease" @click="selectAddress(address)">
+                  <div class="d-flex align-items-start">
+                    <input type="radio" :value="address.id" v-model="selectedAddressId"
+                      class="form-check-input me-3 mt-1" style="border-color: #34d399" />
+                    <div>
+                      <div class="fw-bold text-dark">
+                        <i class="bi bi-house-door-fill text-success me-2"></i>
+                        Địa chỉ {{ index + 1 }}
+                      </div>
+                      <div class="text-muted small">
+                        {{ address.address }}, {{ address.ward }}, {{ address.district }}, {{ address.city }}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="modal-footer border-0">
+              <button class="btn btn-outline-teal px-4 py-2" @click="closeAddressModal">
+                <i class="bi bi-x-circle me-2"></i> Hủy
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
-    </div>
-  </div>
-</div>
 
       <!-- Notification Modal -->
-      <NotificationModal
-        ref="notificationModal"
-        :type="notificationType"
-        :message="notificationMessage"
-        :isLoading="isNotificationLoading"
-        :onConfirm="notificationOnConfirm"
-        :onCancel="notificationOnCancel"
-      />
+      <NotificationModal ref="notificationModal" :type="notificationType" :message="notificationMessage"
+        :isLoading="isNotificationLoading" :onConfirm="notificationOnConfirm" :onCancel="notificationOnCancel" />
 
       <!-- Toast Notification -->
       <ToastNotification ref="toastNotification" />
@@ -2090,7 +1385,7 @@ export default defineComponent({
       this.notificationOnConfirm = () => {
         this.ThanhToan();
       };
-      this.notificationOnCancel = () => {};
+      this.notificationOnCancel = () => { };
       this.$refs.notificationModal.openModal();
     },
 
@@ -2428,10 +1723,12 @@ export default defineComponent({
     transform: scale(1);
     opacity: 0.8;
   }
+
   50% {
     transform: scale(1.05);
     opacity: 0.4;
   }
+
   100% {
     transform: scale(1);
     opacity: 0.8;
@@ -2439,11 +1736,9 @@ export default defineComponent({
 }
 
 .gradient-modal {
-  background: linear-gradient(
-    135deg,
-    rgba(255, 255, 255, 0.95),
-    rgba(240, 253, 244, 0.95)
-  );
+  background: linear-gradient(135deg,
+      rgba(255, 255, 255, 0.95),
+      rgba(240, 253, 244, 0.95));
 }
 
 .select-btn {
@@ -2482,8 +1777,10 @@ export default defineComponent({
 }
 
 .address-scroll {
-  max-height: 400px;       /* giới hạn chiều cao body */
-  overflow-y: auto;        /* bật cuộn dọc khi nội dung dài */
+  max-height: 400px;
+  /* giới hạn chiều cao body */
+  overflow-y: auto;
+  /* bật cuộn dọc khi nội dung dài */
 }
 
 /* Custom scrollbar (chỉ hiệu lực trên Chrome, Edge, Safari) */
@@ -2492,7 +1789,8 @@ export default defineComponent({
 }
 
 .address-scroll::-webkit-scrollbar-thumb {
-  background-color: #34d399;  /* xanh lá */
+  background-color: #34d399;
+  /* xanh lá */
   border-radius: 10px;
 }
 
@@ -2534,5 +1832,4 @@ export default defineComponent({
     flex-direction: column;
   }
 }
-
 </style>
