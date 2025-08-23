@@ -17,22 +17,18 @@
               <label class="form-label">
                 Thông Số Camera Sau <span class="required">*</span>
               </label>
-              <input type="text" class="form-control" v-model="formData.thongSoCameraSau" 
-                     placeholder="Ví dụ: 108MP + 12MP + 12MP"
-                     :class="{ 'is-invalid': errors.thongSoCameraSau }" 
-                     @blur="validateThongSoCameraSauField"
-                     @input="clearFieldError('thongSoCameraSau')" />
+              <input type="text" class="form-control" v-model="formData.thongSoCameraSau"
+                placeholder="Ví dụ: 108MP + 12MP + 12MP" :class="{ 'is-invalid': errors.thongSoCameraSau }"
+                @blur="validateThongSoCameraSauField" @input="clearFieldError('thongSoCameraSau')" />
             </div>
             <!-- Thông số camera trước -->
             <div class="form-group full-width">
               <label class="form-label">
                 Thông Số Camera Trước <span class="required">*</span>
               </label>
-              <input type="text" class="form-control" v-model="formData.thongSoCameraTruoc" 
-                     placeholder="Ví dụ: 32MP"
-                     :class="{ 'is-invalid': errors.thongSoCameraTruoc }" 
-                     @blur="validateThongSoCameraTruocField"
-                     @input="clearFieldError('thongSoCameraTruoc')" />
+              <input type="text" class="form-control" v-model="formData.thongSoCameraTruoc" placeholder="Ví dụ: 32MP"
+                :class="{ 'is-invalid': errors.thongSoCameraTruoc }" @blur="validateThongSoCameraTruocField"
+                @input="clearFieldError('thongSoCameraTruoc')" />
             </div>
           </div>
         </form>
@@ -146,6 +142,9 @@
           <template #stt="{ globalIndex }">
             {{ globalIndex + 1 }}
           </template>
+          <template #ma="{ item }">
+            <div class="code-text">{{ item.ma }}</div>
+          </template>
           <template #thongSoCameraSau="{ item }">
             <div class="spec-text">{{ item.thongSoCameraSau }}</div>
           </template>
@@ -252,10 +251,10 @@ export default defineComponent({
     const cameraSauOptions = ref([]);
     const cameraTruocOptions = ref([]);
 
-    // Headers for DataTable (bỏ cột mã)
     const headers = ref([
       { text: "", value: "checkbox", isSelectAll: true },
       { text: "STT", value: "stt" },
+      { text: "Mã", value: "ma" },
       { text: "Camera Sau", value: "thongSoCameraSau" },
       { text: "Camera Trước", value: "thongSoCameraTruoc" },
       { text: "Thao Tác", value: "actions" },
@@ -264,21 +263,21 @@ export default defineComponent({
     // Computed properties
     const sharedFilteredItems = computed(() => {
       let filtered = cumCameraList.value || [];
-      
+
       // Filter by camera sau
       if (filters.value.cameraSau) {
-        filtered = filtered.filter(item => 
+        filtered = filtered.filter(item =>
           item.thongSoCameraSau === filters.value.cameraSau
         );
       }
-      
+
       // Filter by camera truoc
       if (filters.value.cameraTruoc) {
-        filtered = filtered.filter(item => 
+        filtered = filtered.filter(item =>
           item.thongSoCameraTruoc === filters.value.cameraTruoc
         );
       }
-      
+
       return filtered;
     });
 
@@ -330,13 +329,13 @@ export default defineComponent({
 
     const validateThongSoCameraSauField = async () => {
       validateField('thongSoCameraSau');
-      
+
       if (errors.value.thongSoCameraSau) {
         return;
       }
 
       const value = formData.value.thongSoCameraSau.trim();
-      
+
       if (value.includes('  ') || value !== value.trim()) {
         errors.value.thongSoCameraSau = "Thông số camera sau không được chứa ký tự trống thừa";
         toastNotification.value?.addToast({
@@ -349,13 +348,13 @@ export default defineComponent({
 
     const validateThongSoCameraTruocField = async () => {
       validateField('thongSoCameraTruoc');
-      
+
       if (errors.value.thongSoCameraTruoc) {
         return;
       }
 
       const value = formData.value.thongSoCameraTruoc.trim();
-      
+
       if (value.includes('  ') || value !== value.trim()) {
         errors.value.thongSoCameraTruoc = "Thông số camera trước không được chứa ký tự trống thừa";
         toastNotification.value?.addToast({
@@ -374,7 +373,7 @@ export default defineComponent({
 
     const validateForm = async () => {
       errors.value = {};
-      
+
       // Validate thông số camera sau
       if (!formData.value.thongSoCameraSau.trim()) {
         toastNotification.value?.addToast({
@@ -385,7 +384,7 @@ export default defineComponent({
         return false;
       } else if (formData.value.thongSoCameraSau.trim().length < 2) {
         toastNotification.value?.addToast({
-          type: "warning", 
+          type: "warning",
           message: "Thông số camera sau phải có ít nhất 2 ký tự",
           duration: 3000,
         });
@@ -393,7 +392,7 @@ export default defineComponent({
       } else if (formData.value.thongSoCameraSau.trim().length > 100) {
         toastNotification.value?.addToast({
           type: "warning",
-          message: "Thông số camera sau không được vượt quá 100 ký tự", 
+          message: "Thông số camera sau không được vượt quá 100 ký tự",
           duration: 3000,
         });
         return false;
@@ -409,7 +408,7 @@ export default defineComponent({
         return false;
       } else if (formData.value.thongSoCameraTruoc.trim().length < 2) {
         toastNotification.value?.addToast({
-          type: "warning", 
+          type: "warning",
           message: "Thông số camera trước phải có ít nhất 2 ký tự",
           duration: 3000,
         });
@@ -417,7 +416,7 @@ export default defineComponent({
       } else if (formData.value.thongSoCameraTruoc.trim().length > 100) {
         toastNotification.value?.addToast({
           type: "warning",
-          message: "Thông số camera trước không được vượt quá 100 ký tự", 
+          message: "Thông số camera trước không được vượt quá 100 ký tự",
           duration: 3000,
         });
         return false;
@@ -466,7 +465,7 @@ export default defineComponent({
         if (response.data) {
           cumCameraList.value = response.data.content || [];
           totalElements.value = response.data.totalElements || 0;
-          
+
           // Generate filter options from data
           generateFilterOptions();
         } else {
@@ -594,6 +593,14 @@ export default defineComponent({
           thongSoCameraTruoc: formData.value.thongSoCameraTruoc.trim(),
         };
 
+        // Khi edit, cần giữ nguyên mã cũ
+        if (isEditMode.value) {
+          const currentItem = cumCameraList.value.find(item => item.id === formData.value.id);
+          if (currentItem) {
+            data.ma = currentItem.ma;
+          }
+        }
+
         if (isEditMode.value) {
           await updateCumCamera(formData.value.id, data);
           toastNotification.value?.addToast({
@@ -667,6 +674,7 @@ export default defineComponent({
         const selectedData = sharedFilteredItems.value.filter((item) => selectedItems.value.includes(item.id));
         const data = selectedData.map((item, index) => ({
           "STT": index + 1,
+          "Mã": item.ma || "N/A",
           "Camera Sau": item.thongSoCameraSau || "N/A",
           "Camera Trước": item.thongSoCameraTruoc || "N/A",
           "Ngày Tạo": formatDate(item.ngayTao),
@@ -679,6 +687,7 @@ export default defineComponent({
         // Sửa lại độ rộng cột (bỏ cột mã)
         worksheet["!cols"] = [
           { wch: 8 }, // STT
+          { wch: 8 }, // Mã
           { wch: 25 }, // Camera Sau
           { wch: 25 }, // Camera Trước
           { wch: 15 }, // Ngày Tạo
