@@ -530,6 +530,127 @@ export const useHoaDonStore = defineStore('hoaDon', {
             }
         },
 
+        async addProductToInvoiceDetail(idHD, chiTietSanPhamId, imei) {
+            this.isLoading = true;
+            this.error = null;
+
+            try {
+                const response = await apiService.post(`/api/hoa-don/${idHD}/add-product-to-detail`, {
+                    chiTietSanPhamId,
+                    imei,
+                });
+
+                const updatedInvoice = response.data;
+
+                // Cập nhật invoiceDetail nếu idHD khớp
+                if (this.invoiceDetail && this.invoiceDetail.id === idHD) {
+                    this.invoiceDetail = {
+                        ...this.invoiceDetail,
+                        products: updatedInvoice.sanPhamChiTietInfos.map(product => ({
+                            chiTietSanPhamId: product.chiTietSanPhamId,
+                            idSanPham: product.idSanPham,
+                            id: product.chiTietSanPhamId,
+                            maSanPham: product.maSanPham,
+                            maHinhSanPhamChiTiet: product.maHinhSanPhamChiTiet,
+                            name: product.tenSanPham,
+                            imei: product.imel,
+                            ram: product.dungLuongRam,
+                            capacity: product.dungLuongBoNhoTrong,
+                            color: product.mauSac,
+                            price: product.giaBan,
+                            quantity: 1,
+                            image: product.duongDan,
+                        })),
+                        history: updatedInvoice.lichSuHoaDonInfos.map(history => ({
+                            id: history.ma,
+                            code: history.ma,
+                            invoice: updatedInvoice.maHoaDon,
+                            employee: updatedInvoice.maNhanVien,
+                            action: history.hanhDong,
+                            timestamp: this.formatDate(history.thoiGian),
+                            status: 'completed',
+                        })),
+                        tongTienSauGiam: updatedInvoice.tongTienSauGiam,
+                    };
+                }
+
+                // Cập nhật danh sách invoices nếu cần
+                const invoiceIndex = this.invoices.findIndex(inv => inv.id === idHD);
+                if (invoiceIndex !== -1) {
+                    this.invoices[invoiceIndex] = {
+                        ...this.invoices[invoiceIndex],
+                        tongTienSauGiam: updatedInvoice.tongTienSauGiam,
+                    };
+                }
+
+                return { success: true, data: updatedInvoice };
+            } catch (error) {
+                this.error = error.response?.data?.message || 'Không thể thêm sản phẩm vào hóa đơn chi tiết';
+                console.error('Lỗi khi gọi API thêm sản phẩm:', error);
+                return { success: false, message: this.error };
+            } finally {
+                this.isLoading = false;
+            }
+        },
+
+        async deleteProductFromInvoiceDetail(idHD, idHoaDonChiTiet) {
+            this.isLoading = true;
+            this.error = null;
+
+            try {
+                const response = await apiService.delete(`/api/hoa-don/${idHD}/delete-product-from-detail/${idHoaDonChiTiet}`);
+                const updatedInvoice = response.data;
+
+                // Cập nhật invoiceDetail nếu idHD khớp
+                if (this.invoiceDetail && this.invoiceDetail.id === idHD) {
+                    this.invoiceDetail = {
+                        ...this.invoiceDetail,
+                        products: updatedInvoice.sanPhamChiTietInfos.map(product => ({
+                            chiTietSanPhamId: product.chiTietSanPhamId,
+                            idSanPham: product.idSanPham,
+                            id: product.chiTietSanPhamId,
+                            maSanPham: product.maSanPham,
+                            maHinhSanPhamChiTiet: product.maHinhSanPhamChiTiet,
+                            name: product.tenSanPham,
+                            imei: product.imel,
+                            ram: product.dungLuongRam,
+                            capacity: product.dungLuongBoNhoTrong,
+                            color: product.mauSac,
+                            price: product.giaBan,
+                            quantity: 1,
+                            image: product.duongDan,
+                        })),
+                        history: updatedInvoice.lichSuHoaDonInfos.map(history => ({
+                            id: history.ma,
+                            code: history.ma,
+                            invoice: updatedInvoice.maHoaDon,
+                            employee: updatedInvoice.maNhanVien,
+                            action: history.hanhDong,
+                            timestamp: this.formatDate(history.thoiGian),
+                            status: 'completed',
+                        })),
+                    };
+                }
+
+                // Cập nhật danh sách invoices nếu cần
+                const invoiceIndex = this.invoices.findIndex(inv => inv.id === idHD);
+                if (invoiceIndex !== -1) {
+                    this.invoices[invoiceIndex] = {
+                        ...this.invoices[invoiceIndex],
+                        tongTienSauGiam: updatedInvoice.tongTienSauGiam,
+                    };
+                }
+
+                return { success: true, data: updatedInvoice };
+            } catch (error) {
+                this.error = error.response?.data?.message || 'Không thể xóa sản phẩm khỏi hóa đơn chi tiết';
+                console.error('Lỗi khi gọi API xóa sản phẩm:', error);
+                return { success: false, message: this.error };
+            } finally {
+                this.isLoading = false;
+            }
+        },
+
         formatDate(dateString) {
             const date = new Date(dateString);
             const time = date.toLocaleTimeString('en-GB', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });

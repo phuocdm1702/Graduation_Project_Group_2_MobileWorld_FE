@@ -192,6 +192,7 @@ export default {
     // DataTable headers
     const cartHeaders = ref([
       { text: "STT", value: "stt" },
+      { text: "Ảnh", value: "imageUrl", width: "100px" },
       { text: "Tên sản phẩm", value: "name" },
       { text: "Màu sắc", value: "color" },
       { text: "RAM", value: "ram" },
@@ -205,6 +206,7 @@ export default {
 
     const productHeaders = ref([
       { value: "stt", formatter: (_, __, index) => index + 1, text: "#" },
+      { text: "Ảnh", value: "imageUrl", width: "100px" },
       { value: "tenSanPham", text: "Tên sản phẩm" },
       { value: "maSanPham", text: "Mã" },
       { value: "mauSac", text: "Màu", formatter: (value) => value || "N/A" },
@@ -571,6 +573,7 @@ export default {
           currentPrice: Number(item.giaBan) || 0,
           quantity: item.soLuong,
           ghiChuGia: item.ghiChuGia || "",
+          imageUrl: item.image || '/assets/images/placeholder.jpg',
         }));
         const index = pendingInvoices.value.findIndex(
           (inv) => inv.id === invoice.id
@@ -830,6 +833,7 @@ export default {
           dungLuongBoNhoTrong: sp.dungLuongBoNhoTrong || "N/A",
           soLuong: sp.soLuong || 0,
           giaBan: sp.giaBan || 0,
+          imageUrl: sp.duongDan || '/assets/images/placeholder.jpg',
         }));
       } catch (error) {
         const message = error.message || "Lỗi khi tải danh sách sản phẩm";
@@ -911,7 +915,8 @@ export default {
           product.sanPhamId,
           product.mauSac,
           product.dungLuongRam,
-          product.dungLuongBoNhoTrong
+          product.dungLuongBoNhoTrong,
+          product.duongDan
         );
         selectedIMEIs.value = [];
       } catch (error) {
@@ -960,7 +965,8 @@ export default {
           selectedProduct.value.sanPhamId,
           selectedProduct.value.mauSac,
           selectedProduct.value.dungLuongRam,
-          selectedProduct.value.dungLuongBoNhoTrong
+          selectedProduct.value.dungLuongBoNhoTrong,
+          selectedProduct.value.duongDan
         );
 
         const productData = (
@@ -989,6 +995,8 @@ export default {
           maImel: selectedIMEIs.value.join(", "),
           idPhieuGiamGia: selectedDiscount.value?.id || null,
           giaBan: latestPrice,
+          imageUrl: selectedProduct.value.duongDan || '/assets/images/placeholder.jpg',
+
         };
 
         const postResponseData = await addProductToCartApi(
@@ -1012,6 +1020,7 @@ export default {
             currentPrice: Number(item.giaBan) || 0,
             quantity: Number(item.soLuong) || 1,
             ghiChuGia: item.ghiChuGia || "",
+            imageUrl: item.image || '/assets/images/placeholder.jpg',
           }));
 
         cartItems.value = [...existingItems, ...newItems];

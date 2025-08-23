@@ -305,44 +305,48 @@ export default {
     };
 
     const addProductWithIMEIsNew = async () => {
-      try {
-        const productDetails = await getProductDetailsByIdApi(
-          selectedNewProduct.value.sanPhamId || selectedNewProduct.value.idSanPham,
-          selectedNewProduct.value.mauSac,
-          selectedNewProduct.value.dungLuongRam,
-          selectedNewProduct.value.dungLuongBoNhoTrong
-        );
-        // Logic thêm sản phẩm vào hóa đơn chi tiết (tích hợp với products hiện có)
-        const newAddedProduct = {
-          ...productDetails,
-          imei: selectedIMEIsNew.value.join(','),
-          quantity: selectedIMEIsNew.value.length,
-          // Thêm các trường khác nếu cần từ hóa đơn
-        };
-        products.value.push(newAddedProduct);  // Thêm vào danh sách sản phẩm của hóa đơn
-        toastNotification.value.addToast({
-          type: 'success',
-          message: 'Thêm sản phẩm với IMEI thành công',
-          duration: 3000,
-        });
-        closeNewIMEIModal();
-        // Cập nhật lịch sử hoặc tổng giá nếu cần
-        history.value.push({
-          id: Date.now(),
-          code: `LSHD_${Date.now()}`,
-          invoice: invoice.value.ma,
-          employee: 'Hệ thống',
-          action: `Thêm sản phẩm ${newAddedProduct.name} với IMEI ${newAddedProduct.imei}`,
-          timestamp: new Date().toLocaleString('vi-VN'),
-          status: 'completed',
-        });
-      } catch (error) {
+      if (!selectedNewProduct.value || !selectedIMEIsNew.value.length) {
         toastNotification.value.addToast({
           type: 'error',
-          message: error.message,
+          message: 'Vui lòng chọn sản phẩm và ít nhất một IMEI',
           duration: 3000,
         });
+        return;
       }
+
+      isNotificationLoading.value = true;
+      notificationType.value = 'confirm';
+      notificationMessage.value = `Xác nhận gán ${selectedIMEIsNew.value.length} IMEI cho sản phẩm ${selectedNewProduct.value.tenSanPham} vào hóa đơn?`;
+      notificationOnConfirm.value = async () => {
+        try {
+          const imelMap = {};
+          selectedIMEIsNew.value.forEach(imei => {
+            imelMap[selectedNewProduct.value.chiTietSanPhamId] = imei; // Gửi một hoặc nhiều IMEI
+          });
+          const response = await apiService.post(`/api/hoa-don/${invoiceId.value}/add-product-to-detail`, imelMap);
+          toastNotification.value.addToast({
+            type: 'success',
+            message: 'Thêm sản phẩm và gán IMEI thành công',
+            duration: 3000,
+          });
+          closeNewIMEIModal();
+          resetProductFilters();
+          await hoaDonStore.fetchInvoiceDetail(invoiceId.value);
+        } catch (error) {
+          toastNotification.value.addToast({
+            type: 'error',
+            message: error.response?.data?.message || 'Lỗi khi thêm sản phẩm',
+            duration: 3000,
+          });
+        } finally {
+          isNotificationLoading.value = false;
+          resetNotification();
+        }
+      };
+      notificationOnCancel.value = () => {
+        resetNotification();
+      };
+      notificationModal.value.openModal();
     };
 
     watch(() => invoice.value.loaiDon, (newLoaiDon) => {
@@ -709,35 +713,35 @@ export default {
       newProduct.value = { name: '', price: 0, quantity: 1, image: '', imei: '', ram: '', capacity: '', color: '' };
     };
 
-    const addProduct = () => {
-      if (newProduct.value.name && newProduct.value.price && newProduct.value.ram && newProduct.value.capacity && newProduct.value.color) {
-        const newProductData = {
-          id: Date.now(),
-          ...newProduct.value,
-          imeiList: newProduct.value.imei ? [{ imei: newProduct.value.imei, status: 'pending' }] : [],
-        };
-        products.value.push(newProductData);
-        history.value.push({
-          id: Date.now(),
-          action: `Thêm sản phẩm ${newProduct.value.name}`,
-          employee: 'Hệ thống',
-          timestamp: new Date().toLocaleString('vi-VN'),
-          status: 'completed',
-        });
-        toastNotification.value.addToast({
-          type: 'success',
-          message: `Đã thêm sản phẩm ${newProduct.value.name}`,
-          duration: 3000,
-        });
-        closeAddProductModal();
-      } else {
-        toastNotification.value.addToast({
-          type: 'warning',
-          message: 'Vui lòng nhập đầy đủ thông tin sản phẩm (Tên, Giá, RAM, Dung lượng, Màu sắc)',
-          duration: 3000,
-        });
-      }
-    };
+    // const addProduct = () => {
+    //   if (newProduct.value.name && newProduct.value.price && newProduct.value.ram && newProduct.value.capacity && newProduct.value.color) {
+    //     const newProductData = {
+    //       id: Date.now(),
+    //       ...newProduct.value,
+    //       imeiList: newProduct.value.imei ? [{ imei: newProduct.value.imei, status: 'pending' }] : [],
+    //     };
+    //     products.value.push(newProductData);
+    //     history.value.push({
+    //       id: Date.now(),
+    //       action: `Thêm sản phẩm ${newProduct.value.name}`,
+    //       employee: 'Hệ thống',
+    //       timestamp: new Date().toLocaleString('vi-VN'),
+    //       status: 'completed',
+    //     });
+    //     toastNotification.value.addToast({
+    //       type: 'success',
+    //       message: `Đã thêm sản phẩm ${newProduct.value.name}`,
+    //       duration: 3000,
+    //     });
+    //     closeAddProductModal();
+    //   } else {
+    //     toastNotification.value.addToast({
+    //       type: 'warning',
+    //       message: 'Vui lòng nhập đầy đủ thông tin sản phẩm (Tên, Giá, RAM, Dung lượng, Màu sắc)',
+    //       duration: 3000,
+    //     });
+    //   }
+    // };
 
     const showUpdateModal = () => {
       isUpdateModalVisible.value = true;
@@ -862,35 +866,243 @@ export default {
       divinationResult.value = divinations[Math.floor(Math.random() * divinations.length)];
     };
 
-    const removeProduct = (item) => {
+    // const addProduct = async (product) => {
+    //   if (!product.chiTietSanPhamId || !selectedIMEIsNew.value.length) {
+    //     toastNotification.value.addToast({
+    //       type: 'error',
+    //       message: 'Vui lòng chọn sản phẩm và ít nhất một IMEI hợp lệ',
+    //       duration: 3000,
+    //     });
+    //     return;
+    //   }
+
+    //   isNotificationLoading.value = true;
+    //   try {
+    //     const result = await hoaDonStore.addProductToInvoiceDetail(
+    //       invoiceId.value,
+    //       product.chiTietSanPhamId,
+    //       selectedIMEIsNew.value[0] // Giả sử chỉ chọn 1 IMEI
+    //     );
+
+    //     if (result.success) {
+    //       products.value = result.data.sanPhamChiTietInfos.map(p => ({
+    //         ...p,
+    //         id: p.chiTietSanPhamId,
+    //         name: p.tenSanPham,
+    //         imei: p.imel,
+    //         ram: p.dungLuongRam,
+    //         capacity: p.dungLuongBoNhoTrong,
+    //         color: p.mauSac,
+    //         price: p.giaBan,
+    //         quantity: 1,
+    //         image: p.duongDan,
+    //       }));
+    //       history.value.push({
+    //         id: Date.now(),
+    //         action: `Thêm sản phẩm ${product.tenSanPham} với IMEI ${selectedIMEIsNew.value[0]}`,
+    //         employee: 'Hệ thống',
+    //         timestamp: new Date().toLocaleString('vi-VN'),
+    //         status: 'completed',
+    //       });
+    //       toastNotification.value.addToast({
+    //         type: 'success',
+    //         message: `Đã thêm sản phẩm ${product.tenSanPham}`,
+    //         duration: 3000,
+    //       });
+    //       isAddProductModalVisible.value = false;
+    //       resetProductFilters();
+    //       selectedIMEIsNew.value = [];
+    //     } else {
+    //       toastNotification.value.addToast({
+    //         type: 'error',
+    //         message: result.message,
+    //         duration: 3000,
+    //       });
+    //     }
+    //   } catch (error) {
+    //     toastNotification.value.addToast({
+    //       type: 'error',
+    //       message: 'Lỗi khi thêm sản phẩm',
+    //       duration: 3000,
+    //     });
+    //   } finally {
+    //     isNotificationLoading.value = false;
+    //   }
+    // };
+
+    const addProduct = async () => {
+      if (!selectedNewProduct.value || selectedIMEIsNew.value.length === 0) {
+        toastNotification.value.addToast({
+          type: 'warning',
+          message: 'Vui lòng chọn sản phẩm và ít nhất một IMEI hợp lệ',
+          duration: 3000,
+        });
+        return;
+      }
+
+      // Kiểm tra trạng thái hóa đơn
+      if (invoice.value.trangThai !== 'Chờ xác nhận' || invoice.value.loaiDon !== 'online') {
+        toastNotification.value.addToast({
+          type: 'error',
+          message: 'Chỉ có thể thêm sản phẩm vào hóa đơn online ở trạng thái "Chờ xác nhận"',
+          duration: 3000,
+        });
+        return;
+      }
+
       notificationType.value = 'confirm';
-      notificationMessage.value = `Bạn có chắc chắn muốn xóa sản phẩm ${item.name}?`;
-      notificationOnConfirm.value = () => {
+      notificationMessage.value = `Bạn có chắc chắn muốn thêm sản phẩm ${selectedNewProduct.value.tenSanPham} vào hóa đơn?`;
+      notificationOnConfirm.value = async () => {
         isNotificationLoading.value = true;
-        setTimeout(() => {
-          products.value = products.value.filter((p) => p.id !== item.id);
-          history.value.push({
-            id: Date.now(),
-            action: `Xóa sản phẩm ${item.name}`,
-            employee: 'Hệ thống',
-            timestamp: new Date().toLocaleString('vi-VN'),
-            status: 'completed',
+        try {
+          // Gọi API để thêm sản phẩm vào hóa đơn chi tiết
+          const response = await apiService.post(`/api/hoa-don/${invoiceId.value}/add-product-to-detail`, {
+            chiTietSanPhamId: selectedNewProduct.value.chiTietSanPhamId,
+            imei: selectedIMEIsNew.value[0], // Giả sử chỉ thêm một IMEI mỗi lần
           });
-          isNotificationLoading.value = false;
+
+          if (response.data) {
+            // Cập nhật danh sách sản phẩm
+            const newProduct = response.data.sanPhamChiTietInfos[response.data.sanPhamChiTietInfos.length - 1];
+            products.value.push({
+              chiTietSanPhamId: newProduct.chiTietSanPhamId,
+              idSanPham: newProduct.idSanPham,
+              id: newProduct.chiTietSanPhamId,
+              maSanPham: newProduct.maSanPham,
+              name: newProduct.tenSanPham,
+              imei: newProduct.imel,
+              ram: newProduct.dungLuongRam,
+              capacity: newProduct.dungLuongBoNhoTrong,
+              color: newProduct.mauSac,
+              price: newProduct.giaBan,
+              quantity: 1,
+              image: newProduct.duongDan,
+            });
+
+            // Cập nhật lịch sử hóa đơn
+            history.value.push({
+              id: `LSHD_${Date.now()}`,
+              code: `LSHD_${Date.now()}`,
+              invoice: response.data.maHoaDon,
+              employee: response.data.maNhanVien || 'Hệ thống',
+              action: `Thêm sản phẩm ${newProduct.tenSanPham} với IMEI: ${newProduct.imel}`,
+              timestamp: new Date().toLocaleString('vi-VN'),
+              status: 'completed',
+            });
+
+            // Cập nhật tổng tiền
+            invoice.value.tongTienSauGiam = response.data.tongTienSauGiam;
+
+            toastNotification.value.addToast({
+              type: 'success',
+              message: `Đã thêm sản phẩm ${newProduct.tenSanPham} thành công`,
+              duration: 3000,
+            });
+
+            // Đóng modal và reset state
+            isAddProductModalVisible.value = false;
+            selectedNewProduct.value = null;
+            selectedIMEIsNew.value = [];
+            productSearchQuery.value = '';
+            filterColor.value = '';
+            filterRam.value = '';
+            filterStorage.value = '';
+          }
+        } catch (error) {
           toastNotification.value.addToast({
-            type: 'success',
-            message: `Đã xóa sản phẩm ${item.name}`,
+            type: 'error',
+            message: error.response?.data?.message || 'Lỗi khi thêm sản phẩm vào hóa đơn',
             duration: 3000,
           });
+        } finally {
+          isNotificationLoading.value = false;
           resetNotification();
-        }, 500);
+        }
       };
+
       notificationOnCancel.value = () => {
         resetNotification();
       };
       isNotificationLoading.value = false;
       notificationModal.value.openModal();
     };
+
+    const removeProduct = (item) => {
+      notificationType.value = 'confirm';
+      notificationMessage.value = `Bạn có chắc chắn muốn xóa sản phẩm ${item.name}?`;
+      notificationOnConfirm.value = async () => {
+        isNotificationLoading.value = true;
+        try {
+          // Gọi API để xóa sản phẩm khỏi hóa đơn chi tiết
+          const response = await apiService.delete(`/api/hoa-don/${invoiceId.value}/delete-product-from-detail/${item.chiTietSanPhamId}`);
+
+          if (response.data) {
+            // Cập nhật danh sách sản phẩm
+            products.value = products.value.filter((p) => p.chiTietSanPhamId !== item.chiTietSanPhamId);
+
+            // Cập nhật lịch sử
+            history.value.push({
+              id: Date.now(),
+              action: `Xóa sản phẩm ${item.name}`,
+              employee: 'Hệ thống',
+              timestamp: new Date().toLocaleString('vi-VN'),
+              status: 'completed',
+            });
+
+            toastNotification.value.addToast({
+              type: 'success',
+              message: `Đã xóa sản phẩm ${item.name} thành công`,
+              duration: 3000,
+            });
+          }
+        } catch (error) {
+          toastNotification.value.addToast({
+            type: 'error',
+            message: error.response?.data?.message || 'Lỗi khi xóa sản phẩm',
+            duration: 3000,
+          });
+        } finally {
+          isNotificationLoading.value = false;
+          resetNotification();
+        }
+      };
+
+      notificationOnCancel.value = () => {
+        resetNotification();
+      };
+      isNotificationLoading.value = false;
+      notificationModal.value.openModal();
+    };
+
+    // const removeProduct = (item) => {
+    //   notificationType.value = 'confirm';
+    //   notificationMessage.value = `Bạn có chắc chắn muốn xóa sản phẩm ${item.name}?`;
+    //   notificationOnConfirm.value = () => {
+    //     isNotificationLoading.value = true;
+    //     setTimeout(() => {
+    //       products.value = products.value.filter((p) => p.id !== item.id);
+    //       history.value.push({
+    //         id: Date.now(),
+    //         action: `Xóa sản phẩm ${item.name}`,
+    //         employee: 'Hệ thống',
+    //         timestamp: new Date().toLocaleString('vi-VN'),
+    //         status: 'completed',
+    //       });
+    //       isNotificationLoading.value = false;
+    //       toastNotification.value.addToast({
+    //         type: 'success',
+    //         message: `Đã xóa sản phẩm ${item.name}`,
+    //         duration: 3000,
+    //       });
+    //       resetNotification();
+    //     }, 500);
+    //   };
+    //   notificationOnCancel.value = () => {
+    //     resetNotification();
+    //   };
+    //   isNotificationLoading.value = false;
+    //   notificationModal.value.openModal();
+    // };
 
     const printInvoice = async () => {
       const result = await hoaDonStore.printInvoice(invoiceId.value);
