@@ -17,11 +17,9 @@
               <label class="form-label">
                 Cổng Sạc <span class="required">*</span>
               </label>
-              <input type="text" class="form-control" v-model="formData.congSac" 
-                     placeholder="Ví dụ: USB-C, Lightning, Micro USB"
-                     :class="{ 'is-invalid': errors.congSac }" 
-                     @blur="validateCongSacField"
-                     @input="clearFieldError('congSac')" />
+              <input type="text" class="form-control" v-model="formData.congSac"
+                placeholder="Ví dụ: USB-C, Lightning, Micro USB" :class="{ 'is-invalid': errors.congSac }"
+                @blur="validateCongSacField" @input="clearFieldError('congSac')" />
               <small class="form-hint">Nhập loại cổng sạc của thiết bị</small>
             </div>
 
@@ -30,11 +28,10 @@
               <label class="form-label">
                 Công Nghệ Hỗ Trợ <span class="required">*</span>
               </label>
-              <input type="text" class="form-control" v-model="formData.congNgheHoTro" 
-                     placeholder="Ví dụ: Quick Charge 4.0, Fast Charging, Wireless Charging"
-                     :class="{ 'is-invalid': errors.congNgheHoTro }" 
-                     @blur="validateCongNgheHoTroField"
-                     @input="clearFieldError('congNgheHoTro')" />
+              <input type="text" class="form-control" v-model="formData.congNgheHoTro"
+                placeholder="Ví dụ: Quick Charge 4.0, Fast Charging, Wireless Charging"
+                :class="{ 'is-invalid': errors.congNgheHoTro }" @blur="validateCongNgheHoTroField"
+                @input="clearFieldError('congNgheHoTro')" />
               <small class="form-hint">Nhập tên công nghệ sạc mà thiết bị hỗ trợ</small>
             </div>
           </div>
@@ -162,6 +159,9 @@
           <template #stt="{ globalIndex }">
             {{ globalIndex + 1 }}
           </template>
+          <template #ma="{ item }">
+            <div class="code-text">{{ item.ma }}</div>
+          </template>
           <template #congSac="{ item }">
             <div class="port-badge" :class="getChargingPortClass(item)">
               <i :class="getChargingPortIcon(item)" class="me-1"></i>
@@ -282,6 +282,7 @@ export default defineComponent({
     const headers = ref([
       { text: "", value: "checkbox", isSelectAll: true },
       { text: "STT", value: "stt" },
+      { text: "Mã", value: "ma" },
       { text: "Cổng Sạc", value: "congSac" },
       { text: "Công Nghệ Hỗ Trợ", value: "congNgheHoTro" },
       { text: "Loại", value: "chargingCategory" },
@@ -292,28 +293,28 @@ export default defineComponent({
     // Computed properties
     const sharedFilteredItems = computed(() => {
       let filtered = hoTroCongNgheSacList.value || [];
-      
+
       // Filter by charging port type
       if (filters.value.congSacType) {
-        filtered = filtered.filter(item => 
+        filtered = filtered.filter(item =>
           item.congSac === filters.value.congSacType
         );
       }
-      
+
       // Filter by charging technology type
       if (filters.value.congNgheType) {
-        filtered = filtered.filter(item => 
+        filtered = filtered.filter(item =>
           getChargingCategory(item) === filters.value.congNgheType
         );
       }
-      
+
       // Filter by charging speed
       if (filters.value.chargingSpeed) {
-        filtered = filtered.filter(item => 
+        filtered = filtered.filter(item =>
           getChargingSpeed(item) === filters.value.chargingSpeed
         );
       }
-      
+
       return filtered;
     });
 
@@ -423,13 +424,13 @@ export default defineComponent({
 
     const validateCongSacField = async () => {
       validateField('congSac');
-      
+
       if (errors.value.congSac) {
         return;
       }
 
       const value = formData.value.congSac.trim();
-      
+
       if (value.includes('  ') || value !== value.trim()) {
         errors.value.congSac = "Cổng sạc không được chứa ký tự trống thừa";
         toastNotification.value?.addToast({
@@ -442,13 +443,13 @@ export default defineComponent({
 
     const validateCongNgheHoTroField = async () => {
       validateField('congNgheHoTro');
-      
+
       if (errors.value.congNgheHoTro) {
         return;
       }
 
       const value = formData.value.congNgheHoTro.trim();
-      
+
       if (value.includes('  ') || value !== value.trim()) {
         errors.value.congNgheHoTro = "Công nghệ hỗ trợ không được chứa ký tự trống thừa";
         toastNotification.value?.addToast({
@@ -467,7 +468,7 @@ export default defineComponent({
 
     const validateForm = async () => {
       errors.value = {};
-      
+
       // Validate cổng sạc
       if (!formData.value.congSac.trim()) {
         toastNotification.value?.addToast({
@@ -478,7 +479,7 @@ export default defineComponent({
         return false;
       } else if (formData.value.congSac.trim().length < 2) {
         toastNotification.value?.addToast({
-          type: "warning", 
+          type: "warning",
           message: "Cổng sạc phải có ít nhất 2 ký tự",
           duration: 3000,
         });
@@ -486,7 +487,7 @@ export default defineComponent({
       } else if (formData.value.congSac.trim().length > 50) {
         toastNotification.value?.addToast({
           type: "warning",
-          message: "Cổng sạc không được vượt quá 50 ký tự", 
+          message: "Cổng sạc không được vượt quá 50 ký tự",
           duration: 3000,
         });
         return false;
@@ -502,7 +503,7 @@ export default defineComponent({
         return false;
       } else if (formData.value.congNgheHoTro.trim().length < 2) {
         toastNotification.value?.addToast({
-          type: "warning", 
+          type: "warning",
           message: "Công nghệ hỗ trợ phải có ít nhất 2 ký tự",
           duration: 3000,
         });
@@ -510,7 +511,7 @@ export default defineComponent({
       } else if (formData.value.congNgheHoTro.trim().length > 100) {
         toastNotification.value?.addToast({
           type: "warning",
-          message: "Công nghệ hỗ trợ không được vượt quá 100 ký tự", 
+          message: "Công nghệ hỗ trợ không được vượt quá 100 ký tự",
           duration: 3000,
         });
         return false;
@@ -559,7 +560,7 @@ export default defineComponent({
         if (response.data) {
           hoTroCongNgheSacList.value = response.data.content || [];
           totalElements.value = response.data.totalElements || 0;
-          
+
           // Generate filter options from data
           generateFilterOptions();
         } else {
@@ -689,6 +690,14 @@ export default defineComponent({
           congNgheHoTro: formData.value.congNgheHoTro.trim(),
         };
 
+        // Khi edit, cần giữ nguyên mã cũ
+        if (isEditMode.value) {
+          const currentItem = hoTroCongNgheSacList.value.find(item => item.id === formData.value.id);
+          if (currentItem) {
+            data.ma = currentItem.ma;
+          }
+        }
+
         if (isEditMode.value) {
           await updateHoTroCongNgheSac(formData.value.id, data);
           toastNotification.value?.addToast({
@@ -762,6 +771,7 @@ export default defineComponent({
         const selectedData = sharedFilteredItems.value.filter((item) => selectedItems.value.includes(item.id));
         const data = selectedData.map((item, index) => ({
           "STT": index + 1,
+          "Mã": item.ma || "N/A",
           "Cổng Sạc": item.congSac || "N/A",
           "Công Nghệ Hỗ Trợ": item.congNgheHoTro || "N/A",
           "Loại": getChargingCategory(item),
@@ -776,6 +786,7 @@ export default defineComponent({
         // Sửa lại độ rộng cột
         worksheet["!cols"] = [
           { wch: 8 }, // STT
+          { wch: 8 }, // Mã
           { wch: 20 }, // Cổng Sạc
           { wch: 30 }, // Công Nghệ Hỗ Trợ
           { wch: 20 }, // Loại
@@ -1350,6 +1361,11 @@ export default defineComponent({
 .date-text {
   font-size: 0.9rem;
   color: #6c757d;
+}
+
+.code-text {
+    font-weight: 500;
+    color: #34d399;
 }
 
 .status-badge {

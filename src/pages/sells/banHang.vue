@@ -1221,7 +1221,7 @@ discount, index
 
             <!-- Footer -->
             <div class="modal-footer border-0">
-              <button class="btn teal px-4 py-2 text-white" @click="addNewCustomer">
+              <button class="btn teal text-white mt-3 py-2 fw-medium add-customer-btn" @click="addNewCustomer">
                 Thêm khách hàng
               </button>
             </div>

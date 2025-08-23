@@ -18,6 +18,7 @@ const HoTroCongNgheSac = () => import("@/pages/products/thuocTinhSp/HoTroCongNgh
 const Ram = () => import("@/pages/products/thuocTinhSp/Ram.vue");
 const BoNhoTrong = () => import("@/pages/products/thuocTinhSp/BoNhoTrong.vue");
 const HoTroBoNhoNgoai = () => import("@/pages/products/thuocTinhSp/HoTroBoNhoNgoai.vue");
+const Cpu = () => import("@/pages/products/thuocTinhSp/Cpu.vue");
 const HoaDon = () => import("@/pages/bills/HoaDon.vue");
 const HoaDonChiTiet = () => import("@/pages/bills/HoaDonChiTiet.vue");
 const PhieuGiamGia = () => import("@/pages/promotions/PhieuGiamGia.vue");
@@ -219,6 +220,20 @@ const routes = [
             { name: "Trang chủ", path: "/trangChu" },
             { name: "Sản phẩm", path: "/sanPham" },
             { name: "Hỗ trợ bộ nhớ ngoài", path: "/boNhoNgoai" },
+          ],
+          requiresAdmin: true,
+        },
+      },
+      {
+        path: "/cpu",
+        name: "Cpu",
+        component: Cpu,
+        meta: {
+          title: "CPU",
+          breadcrumb: [
+            { name: "Trang chủ", path: "/trangChu" },
+            { name: "Sản phẩm", path: "/sanPham" },
+            { name: "CPU", path: "/cpu" },
           ],
           requiresAdmin: true,
         },

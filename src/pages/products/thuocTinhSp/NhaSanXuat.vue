@@ -569,7 +569,8 @@ export default defineComponent({
       try {
         const selectedData = nhaSanXuatList.value.filter((item) => selectedItems.value.includes(item.id));
         const data = selectedData.map((item) => ({
-          Mã: item.ma || "N/A",
+          "STT": index + 1,
+          "Mã": item.ma || "N/A",
           "Tên Nhà Sản Xuất": item.nhaSanXuat || "N/A",
           "Mô Tả": item.moTa || "Không có mô tả",
           "Ngày Tạo": formatDate(item.ngayTao),
@@ -581,6 +582,7 @@ export default defineComponent({
 
         // Sửa lại độ rộng cột
         worksheet["!cols"] = [
+          { wch: 15 }, // STT
           { wch: 15 }, // Mã
           { wch: 25 }, // Tên Nhà Sản Xuất
           { wch: 40 }, // Mô Tả
