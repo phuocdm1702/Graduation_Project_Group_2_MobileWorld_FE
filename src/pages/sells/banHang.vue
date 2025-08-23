@@ -310,11 +310,9 @@
                       </div>
                       <!-- Hình ảnh sản phẩm -->
                       <div class="col-md-3 text-center">
-                        <img :src="item.image" class="img-fluid rounded" :alt="item.name" style="
-                            max-height: 120px;
-                            object-fit: contain;
-                            transition: transform 0.3s ease;
-                          " />
+                        <img :src="item.imageUrl" class="img-fluid rounded" :alt="item.tenSanPham || 'Ảnh sản phẩm'"
+                          style="max-height: 120px; object-fit: contain; transition: transform 0.3s ease;"
+                          loading="lazy" @error="handleImageError($event)" />
                       </div>
                       <!-- Thông tin sản phẩm -->
                       <div class="col-md-5">
@@ -329,11 +327,11 @@
                         </div>
                         <div class="d-flex flex-wrap gap-2 mb-2">
                           <span class="badge text-white px-3 py-1" style="background-color: #1f3a44">{{ item.color
-                            }}</span>
+                          }}</span>
                           <span class="badge text-white px-3 py-1" style="background-color: #1f3a44">{{ item.ram
-                            }}</span>
+                          }}</span>
                           <span class="badge text-white px-3 py-1" style="background-color: #1f3a44">{{ item.storage
-                            }}</span>
+                          }}</span>
                         </div>
                         <div class="d-flex align-items-center gap-2 mb-2">
                           <span class="text-muted">IMEI:</span>
@@ -418,6 +416,11 @@
               :pageSizeOptions="[5, 10, 15, 20, 30, 40, 50]" @scroll="handleScroll">
               <template #stt="{ globalIndex }">
                 {{ globalIndex + 1 }}
+              </template>
+              <template v-slot:imageUrl="{ item }">
+                <img :src="item.imageUrl" alt="Ảnh sản phẩm" class="product-img"
+                  style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px;"
+                  @error="handleImageError($event)" />
               </template>
               <template #tenSanPham="{ item }">
                 <span class="text-muted">{{ item.tenSanPham }}</span>
@@ -1022,14 +1025,11 @@ discount, index
                     </h4>
                     <div class="d-flex flex-wrap gap-3">
                       <span class="badge text-white px-3 py-1" style="background-color: #1f3a44">{{
-                        selectedCartItem?.color
-                        }}</span>
+                        selectedCartItem?.color }}</span>
                       <span class="badge text-white px-3 py-1" style="background-color: #1f3a44">{{
-                        selectedCartItem?.ram
-                        }}</span>
+                        selectedCartItem?.ram }}</span>
                       <span class="badge text-white px-3 py-1" style="background-color: #1f3a44">{{
-                        selectedCartItem?.storage
-                        }}</span>
+                        selectedCartItem?.storage }}</span>
                       <span class="badge teal text-white px-3 py-1">{{
                         formatPrice(selectedCartItem?.currentPrice)
                       }}</span>
@@ -1100,7 +1100,7 @@ discount, index
                 style="background: linear-gradient(135deg, #f8f9fa, #e9ecef)">
                 <div class="row align-items-center">
                   <div class="col-md-4 text-center">
-                    <img :src="selectedProduct?.image ||
+                    <img :src="selectedProduct?.imageUrl ||
                       'https://bachlongstore.vn/vnt_upload/product/04_2024/Untitled_2.png'
                       " class="phone-image img-fluid rounded" :alt="selectedProduct?.tenSanPham" style="
                         max-height: 150px;
@@ -1115,10 +1115,9 @@ discount, index
                     </h4>
                     <div class="d-flex flex-wrap gap-3">
                       <span class="badge text-white px-3 py-1" style="background-color: #1f3a44">{{
-                        selectedProduct?.mauSac
-                        }}</span>
+                        selectedProduct?.mauSac }}</span>
                       <span class="badge text-white px-3 py-1" style="background-color: #1f3a44">{{ selectedProduct?.ram
-                        }}</span>
+                      }}</span>
                       <span class="badge text-white px-3 py-1" style="background-color: #1f3a44">{{
                         selectedProduct?.boNhoTrong }}</span>
                       <span class="badge teal text-white px-3 py-1">{{
@@ -1173,56 +1172,61 @@ discount, index
       <div v-if="isCustomerModalOpen" class="modal fade show d-block" tabindex="-1"
         style="background: rgba(0, 0, 0, 0.5)">
         <div class="modal-dialog modal-dialog-centered modal-lg">
-          <div class="modal-content shadow-lg p-3 animate__animated animate__zoomIn"
-            style="background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(15px); border-radius: 0.5rem;">
+          <div class="modal-content shadow-lg animate__animated animate__zoomIn" style="
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(15px);
+        border-radius: 1rem;
+      ">
             <!-- Header -->
-            <div class="modal-header border-0 d-flex justify-content-between align-items-center">
-              <h5 class="modal-title fw-bold text-dark">
+            <div class="modal-header border-0 d-flex justify-content-between align-items-center"
+              style="background: linear-gradient(90deg, #20c997, #2dd4bf); border-radius: 1rem 1rem 0 0;">
+              <h5 class="modal-title fw-bold text-white d-flex align-items-center">
+                <i class="bi bi-person-circle fs-3 me-2"></i>
                 Thêm khách hàng mới
               </h5>
-              <button class="btn btn-outline-secondary btn-close-custom" @click="isCustomerModalOpen = false">
+              <button class="btn btn-sm btn-light rounded-circle shadow-sm" @click="isCustomerModalOpen = false">
                 <i class="bi bi-x-lg"></i>
               </button>
             </div>
 
             <!-- Body -->
-            <div class="modal-body">
-              <div class="customer-form animate__animated animate__fadeIn" style="border-radius: 0.5rem">
-                <div class="row g-4">
-                  <div class="col-md-6">
-                    <label class="form-label fw-medium text-dark mb-2">
-                      Tên khách hàng <span class="text-danger">*</span>
-                    </label>
-                    <div class="input-group">
-                      <span class="input-group-text bg-light border-end-0">
-                        <i class="bi bi-person text-teal"></i>
-                      </span>
-                      <input v-model="newCustomer.name" type="text" class="form-control search-input border-start-0"
-                        placeholder="Nhập tên khách hàng"
-                        style="border-radius: 0 0.5rem 0.5rem 0; transition: all 0.3s ease" />
-                    </div>
+            <div class="modal-body p-4">
+              <div class="row g-4">
+                <div class="col-md-6">
+                  <label class="form-label fw-semibold text-dark mb-2">
+                    Tên khách hàng <span class="text-danger">*</span>
+                  </label>
+                  <div class="input-group">
+                    <span class="input-group-text bg-light">
+                      <i class="bi bi-person text-teal"></i>
+                    </span>
+                    <input v-model="newCustomer.name" type="text" class="form-control"
+                      placeholder="Nhập tên khách hàng" />
                   </div>
-                  <div class="col-md-6">
-                    <label class="form-label fw-medium text-dark mb-2">
-                      Số điện thoại <span class="text-danger">*</span>
-                    </label>
-                    <div class="input-group">
-                      <span class="input-group-text bg-light border-end-0">
-                        <i class="bi bi-telephone text-teal"></i>
-                      </span>
-                      <input v-model="newCustomer.phone" type="tel" class="form-control search-input border-start-0"
-                        placeholder="Nhập số điện thoại"
-                        style="border-radius: 0 0.5rem 0.5rem 0; transition: all 0.3s ease" />
-                    </div>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label fw-semibold text-dark mb-2">
+                    Số điện thoại <span class="text-danger">*</span>
+                  </label>
+                  <div class="input-group">
+                    <span class="input-group-text bg-light">
+                      <i class="bi bi-telephone text-teal"></i>
+                    </span>
+                    <input v-model="newCustomer.phone" type="tel" class="form-control"
+                      placeholder="Nhập số điện thoại" />
                   </div>
                 </div>
               </div>
             </div>
 
             <!-- Footer -->
-            <div class="modal-footer border-0">
-              <button class="btn teal text-white mt-3 py-2 fw-medium add-customer-btn" @click="addNewCustomer">
-                Thêm khách hàng
+            <div class="modal-footer border-0 d-flex justify-content-end">
+              <button class="btn btn-outline-secondary px-4 py-2 rounded-3" @click="isCustomerModalOpen = false">
+                <i class="bi bi-x-circle me-1"></i> Hủy
+              </button>
+              <button class="btn px-4 py-2 rounded-3 shadow-sm text-white"
+                style="background: linear-gradient(90deg, #20c997, #2dd4bf);" @click="addNewCustomer">
+                <i class="bi bi-check-circle me-1"></i> Thêm khách hàng
               </button>
             </div>
           </div>
