@@ -117,145 +117,165 @@
       </div>
     </FilterTableSection>
 
-    <!-- Modal thêm sản phẩm mới -->
+    <!-- Modal Split View Thêm Sản Phẩm và IMEI -->
     <div v-if="isAddProductModalVisible" class="modal-backdrop-blur" @click.self="isAddProductModalVisible = false">
-      <div class="modal-container glass-modal animate__animated animate__zoomIn">
-        <div class="modal-header">
-          <h5 class="modal-title fw-bold text-dark">Thêm Sản Phẩm Mới</h5>
-          <button class="btn-close-glass" @click="isAddProductModalVisible = false">
-            <i class="bi bi-x-lg"></i>
-          </button>
-        </div>
-        <div class="modal-body">
-          <div class="m-4">
-            <!-- Tìm kiếm và lọc sản phẩm -->
-            <div class="row g-4 align-items-end">
-              <div class="col-lg-12">
-                <div class="search-group">
-                  <label class="filter-label">Tìm kiếm</label>
-                  <div class="search-input-wrapper">
-                    <i class="bi bi-search search-icon"></i>
-                    <input type="text" class="form-control search-input"
-                      placeholder="Nhập tên sản phẩm hoặc mã sản phẩm..." v-model="productSearchQuery"
-                      @input="debouncedSearchProduct($event.target.value)" style="padding-left: 2.5rem;" />
+      <div class="modal-container glass-modal split-modal animate__animated animate__zoomIn">
+        <!-- Left Side - Product List (60%) -->
+        <div class="split-view-left">
+          <div class="modal-header gradient-header">
+            <h5 class="modal-title">
+              <i class="bi bi-box-seam me-2"></i>
+              Thêm Sản Phẩm Mới
+            </h5>
+          </div>
+          <div class="modal-body">
+            <div class="m-4">
+              <!-- Tìm kiếm và lọc sản phẩm -->
+              <div class="row g-4 align-items-end">
+                <div class="col-lg-12">
+                  <div class="search-group">
+                    <label class="filter-label">Tìm kiếm</label>
+                    <div class="search-input-wrapper">
+                      <i class="bi bi-search search-icon"></i>
+                      <input type="text" class="form-control search-input"
+                        placeholder="Nhập tên sản phẩm hoặc mã sản phẩm..." v-model="productSearchQuery"
+                        @input="debouncedSearchProduct($event.target.value)" style="padding-left: 2.5rem;" />
+                    </div>
                   </div>
                 </div>
-              </div>
-              <div class="col-md-4">
-                <label class="filter-label">Màu sắc</label>
-                <select v-model="filterColor" class="form-select search-input">
-                  <option value="">Tất cả màu</option>
-                  <option v-for="color in uniqueColors" :key="color" :value="color">{{ color }}</option>
-                </select>
-              </div>
-              <div class="col-md-4">
-                <label class="filter-label">RAM</label>
-                <select v-model="filterRam" class="form-select search-input">
-                  <option value="">Tất cả RAM</option>
-                  <option v-for="ram in uniqueRams" :key="ram" :value="ram">{{ ram }}</option>
-                </select>
-              </div>
-              <div class="col-md-4">
-                <label class="filter-label">Bộ nhớ</label>
-                <select v-model="filterStorage" class="form-select search-input">
-                  <option value="">Tất cả bộ nhớ</option>
-                  <option v-for="storage in uniqueStorages" :key="storage" :value="storage">{{ storage }}</option>
-                </select>
-              </div>
-            </div>
-            <!-- Thống kê và nút đặt lại -->
-            <div class="filter-actions mt-3 d-flex justify-content-between align-items-center">
-              <div class="filter-stats">
-                <div class="stat-item">
-                  <span class="stat-label">Tổng số sản phẩm: </span>
-                  <span class="stat-value">{{ filteredProducts.length }}</span>
+                <div class="col-md-4">
+                  <label class="filter-label">Màu sắc</label>
+                  <select v-model="filterColor" class="form-select search-input">
+                    <option value="">Tất cả màu</option>
+                    <option v-for="color in uniqueColors" :key="color" :value="color">{{ color }}</option>
+                  </select>
+                </div>
+                <div class="col-md-4">
+                  <label class="filter-label">RAM</label>
+                  <select v-model="filterRam" class="form-select search-input">
+                    <option value="">Tất cả RAM</option>
+                    <option v-for="ram in uniqueRams" :key="ram" :value="ram">{{ ram }}</option>
+                  </select>
+                </div>
+                <div class="col-md-4">
+                  <label class="filter-label">Bộ nhớ</label>
+                  <select v-model="filterStorage" class="form-select search-input">
+                    <option value="">Tất cả bộ nhớ</option>
+                    <option v-for="storage in uniqueStorages" :key="storage" :value="storage">{{ storage }}</option>
+                  </select>
                 </div>
               </div>
-              <div class="action-buttons d-flex gap-2">
-                <button class="btn btn-reset" @click="resetProductFilters">Đặt lại</button>
+              <!-- Thống kê và nút đặt lại -->
+              <div class="filter-actions mt-3 d-flex justify-content-between align-items-center">
+                <div class="filter-stats">
+                  <div class="stat-item">
+                    <span class="stat-label">Tổng số sản phẩm: </span>
+                    <span class="stat-value">{{ filteredProducts.length }}</span>
+                  </div>
+                </div>
+                <div class="action-buttons d-flex gap-2">
+                  <button class="btn btn-reset" @click="resetProductFilters">Đặt lại</button>
+                </div>
               </div>
             </div>
-          </div>
-          <!-- DataTable cho danh sách sản phẩm -->
-          <div class="table-body">
-            <DataTable title="" :headers="productHeaders" :data="paginatedProducts"
-              :pageSizeOptions="productPageSizeOptions" :currentPage="productCurrentPage"
-              :itemsPerPage="productItemsPerPage" :totalPages="totalProductPages" :rowClass="getProductRowClass"
-              @update:currentPage="updateProductPage" @update:itemsPerPage="updateProductItemsPerPage">
-              <template #stt="{ globalIndex }">
-                {{ globalIndex + 1 }}
-              </template>
-              <template #actions="{ item }">
-                <i class="bi bi-plus-circle-fill action-icon text-success cursor-pointer" @click="showNewIMEIList(item)"
-                  :class="{ 'text-muted': item.trangThai !== 'Còn hàng' }"
-                  :disabled="item.trangThai !== 'Còn hàng'"></i>
-              </template>
-            </DataTable>
+            <!-- DataTable cho danh sách sản phẩm -->
+            <div class="table-body">
+              <DataTable title="" :headers="productHeaders" 
+              :data="paginatedProducts"
+                :pageSizeOptions="productPageSizeOptions" 
+                :currentPage="productCurrentPage"
+                :itemsPerPage="productItemsPerPage" 
+                :totalPages="totalProductPages" 
+                :rowClass="getProductRowClass"
+                @update:currentPage="updateProductPage" @update:itemsPerPage="updateProductItemsPerPage">
+                <template #stt="{ globalIndex }">
+                  {{ globalIndex + 1 }}
+                </template>
+                <template #actions="{ item }">
+                  <i class="bi bi-plus-circle-fill action-icon text-success cursor-pointer"
+                    @click="showNewIMEIList(item)" :class="{ 'text-muted': item.trangThai !== 'Còn hàng' }"
+                    :disabled="item.trangThai !== 'Còn hàng'"></i>
+                </template>
+              </DataTable>
+            </div>
           </div>
         </div>
-        <div class="modal-footer">
-          <button class="btn btn-reset" @click="isAddProductModalVisible = false">Đóng</button>
-        </div>
-      </div>
-    </div>
 
-    <!-- Modal IMEI mới khi chọn sản phẩm (giữ nguyên, đảm bảo style nhất quán) -->
-    <div v-if="showNewIMEIModal" class="modal fade show d-block" tabindex="-1" style="background: rgba(0, 0, 0, 0.5)">
-      <div class="modal-dialog modal-dialog-centered modal-lg">
-        <div class="modal-content shadow-lg p-3 gradient-modal"
-          style="background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(15px); border-radius: 0.5rem;">
-          <div class="modal-header border-0 d-flex justify-content-between align-items-center">
-            <h5 class="modal-title fw-bold text-dark">Chọn IMEI cho {{ selectedNewProduct?.tenSanPham }}</h5>
-            <button class="btn btn-outline-secondary btn-close-custom" @click="closeNewIMEIModal">
+        <!-- Right Side - IMEI List (40%) -->
+        <div class="split-view-right" v-if="showNewIMEIModal">
+          <div class="modal-header gradient-header">
+            <h5 class="modal-title">
+              <i class="bi bi-upc-scan me-2"></i>
+              Chọn IMEI
+            </h5>
+            <button class="btn-close-modern" @click="isAddProductModalVisible = false">
               <i class="bi bi-x-lg"></i>
             </button>
           </div>
-          <div class="modal-body p-4">
-            <div class="product-info mb-4">
-              <div class="row align-items-center">
-                <div class="col-md-3">
-                  <img :src="selectedNewProduct?.anhSanPham || selectedNewProduct?.duongDan" class="img-fluid rounded"
-                    :alt="selectedNewProduct?.tenSanPham" style="max-height: 150px; object-fit: contain;" />
+          <div class="modal-body imei-selection-container">
+            <!-- Product Info Card -->
+            <div class="product-info-card">
+              <div class="product-image-wrapper">
+                <img :src="selectedNewProduct?.anhSanPham || selectedNewProduct?.duongDan"
+                  :alt="selectedNewProduct?.tenSanPham" class="product-preview-image" />
+              </div>
+              <div class="product-details-wrapper">
+                <h5 class="product-title">{{ selectedNewProduct?.tenSanPham }}</h5>
+                <div class="product-badges">
+                  <span class="spec-badge">{{ selectedNewProduct?.mauSac }}</span>
+                  <span class="spec-badge">{{ selectedNewProduct?.dungLuongRam }}</span>
+                  <span class="spec-badge">{{ selectedNewProduct?.dungLuongBoNhoTrong }}</span>
                 </div>
-                <div class="col-md-9">
-                  <h5 class="fw-bold text-dark mb-2">{{ selectedNewProduct?.tenSanPham }}</h5>
-                  <div class="d-flex gap-2 mb-2">
-                    <span class="badge text-white px-3 py-1" style="background-color: #1f3a44">{{
-                      selectedNewProduct?.mauSac }}</span>
-                    <span class="badge text-white px-3 py-1" style="background-color: #1f3a44">{{
-                      selectedNewProduct?.dungLuongRam }}</span>
-                    <span class="badge text-white px-3 py-1" style="background-color: #1f3a44">{{
-                      selectedNewProduct?.dungLuongBoNhoTrong }}</span>
-                  </div>
-                  <div class="fw-semibold">Giá: <span class="badge gradient-custom-yellow text-white px-3 py-1">{{
-                    formatPrice(selectedNewProduct?.giaBan) }}</span></div>
+                <div class="product-price">
+                  <span class="price-label">Giá bán:</span>
+                  <span class="price-value">{{ formatPrice(selectedNewProduct?.giaBan) }}</span>
                 </div>
               </div>
             </div>
-            <div class="imei-list-container">
-              <h6 class="fw-semibold text-dark mb-3">Danh sách IMEI khả dụng</h6>
-              <div v-if="availableIMEIsNew.length === 0" class="text-center text-muted py-4">
-                <i class="bi bi-info-circle me-2"></i>Không có IMEI nào khả dụng.
+
+            <!-- IMEI Selection Section -->
+            <div class="imei-selection-section">
+              <div class="section-header">
+                <h6 class="section-title">
+                  <i class="bi bi-list-check me-2"></i>
+                  Danh sách IMEI khả dụng
+                </h6>
+                <span class="imei-counter">{{ selectedIMEIsNew.length }}/{{ availableIMEIsNew.length }}</span>
               </div>
-              <div v-else class="d-flex flex-column gap-3">
-                <div v-for="(imei, index) in availableIMEIsNew" :key="imei.id" class="imei-card p-3 rounded shadow-sm"
-                  style="background: #fff; border: 1px solid rgba(52, 211, 153, 0.1);">
-                  <div class="d-flex justify-content-between align-items-center">
-                    <div class="d-flex align-items-center">
-                      <input type="checkbox" :value="imei.imei" v-model="selectedIMEIsNew" class="form-check-input me-3"
-                        style="border-color: #34d399" />
-                      <span class="fw-bold text-teal me-3" style="min-width: 30px">{{ index + 1 }}.</span>
-                      <i class="bi bi-upc-scan me-3 text-teal" style="font-size: 1.2rem"></i>
-                      <span class="text-dark fw-medium">{{ imei.imei }}</span>
+
+              <!-- Empty State -->
+              <div v-if="availableIMEIsNew.length === 0" class="empty-imei-state">
+                <i class="bi bi-inbox"></i>
+                <p>Không có IMEI nào khả dụng</p>
+              </div>
+
+              <!-- IMEI List -->
+              <div v-else class="imei-list">
+                <div v-for="(imei, index) in availableIMEIsNew" :key="imei.id" class="imei-card"
+                  :class="{ 'selected': selectedIMEIsNew.includes(imei.imei) }">
+                  <div class="imei-card-content">
+                    <div class="imei-checkbox">
+                      <input type="checkbox" :id="'imei-' + imei.id" :value="imei.imei" v-model="selectedIMEIsNew"
+                        class="custom-checkbox" />
+                      <label :for="'imei-' + imei.id"></label>
+                    </div>
+                    <div class="imei-info">
+                      <span class="imei-number">{{ imei.imei }}</span>
+                      <span class="imei-index">#{{ index + 1 }}</span>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
           </div>
-          <div class="modal-footer border-0">
-            <button class="btn btn-reset" @click="closeNewIMEIModal">Hủy</button>
+
+          <div class="modal-footer">
+            <button class="btn btn-reset" @click="closeNewIMEIModal">
+              <i class="bi bi-x-circle me-2"></i>
+              Hủy bỏ
+            </button>
             <button class="btn btn-action" @click="addProductWithIMEIsNew" :disabled="selectedIMEIsNew.length === 0">
+              <i class="bi bi-check-circle me-2"></i>
               Thêm vào hóa đơn
             </button>
           </div>
@@ -1848,5 +1868,286 @@ export default {
 .modal-content::-webkit-scrollbar-thumb {
   background: rgba(52, 211, 153, 0.5);
   border-radius: 3px;
+}
+
+/* Style cho modal chia đôi */
+.split-modal {
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.split-view-left {
+  flex: 0 0 60%;
+  padding: 1rem;
+  border-right: 1px solid rgba(52, 211, 153, 0.1);
+}
+
+.split-view-right {
+  flex: 0 0 40%;
+  padding: 1rem;
+  background: rgba(52, 211, 153, 0.05);
+}
+
+.gradient-header {
+  background: linear-gradient(135deg, #34d399 0%, #16a34a 100%);
+  color: white;
+  border-bottom: none;
+}
+
+.gradient-header .modal-title {
+  color: white;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+}
+
+.btn-close-modern {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  color: white;
+  border-radius: 8px;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.btn-close-modern:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: rotate(90deg);
+}
+
+.imei-selection-container {
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.product-info-card {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+  display: flex;
+  gap: 1rem;
+  padding: 1rem;
+}
+
+.product-image-wrapper {
+  width: 100px;
+  height: 100px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #f8f9fa;
+}
+
+.product-preview-image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.product-details-wrapper {
+  flex: 1;
+}
+
+.product-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #1f3a44;
+  margin-bottom: 0.5rem;
+}
+
+.product-badges {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.spec-badge {
+  background: rgba(52, 211, 153, 0.1);
+  color: #16a34a;
+  padding: 0.25rem 0.75rem;
+  border-radius: 16px;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.product-price {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.price-label {
+  color: #6c757d;
+  font-size: 0.9rem;
+}
+
+.price-value {
+  color: #16a34a;
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+.imei-selection-section {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  border-bottom: 1px solid rgba(52, 211, 153, 0.1);
+}
+
+.section-title {
+  margin: 0;
+  color: #1f3a44;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+}
+
+.imei-counter {
+  background: rgba(52, 211, 153, 0.1);
+  color: #16a34a;
+  padding: 0.25rem 0.75rem;
+  border-radius: 16px;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.empty-imei-state {
+  padding: 3rem;
+  text-align: center;
+  color: #6c757d;
+}
+
+.empty-imei-state i {
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+  opacity: 0.5;
+}
+
+.imei-list {
+  max-height: 300px;
+  overflow-y: auto;
+  padding: 1rem;
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+}
+
+.imei-card {
+  background: #f8f9fa;
+  border: 1px solid rgba(52, 211, 153, 0.1);
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.imei-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+}
+
+.imei-card.selected {
+  background: rgba(52, 211, 153, 0.1);
+  border-color: #34d399;
+}
+
+.imei-card-content {
+  display: flex;
+  align-items: center;
+  padding: 0.75rem;
+  gap: 0.75rem;
+}
+
+.imei-checkbox {
+  position: relative;
+}
+
+.custom-checkbox {
+  display: none;
+}
+
+.custom-checkbox+label {
+  width: 20px;
+  height: 20px;
+  border: 2px solid #34d399;
+  border-radius: 4px;
+  display: inline-block;
+  position: relative;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.custom-checkbox:checked+label::after {
+  content: '✓';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: #34d399;
+  font-size: 14px;
+}
+
+.imei-info {
+  flex: 1;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.imei-number {
+  font-family: 'Monaco', 'Menlo', monospace;
+  font-size: 0.9rem;
+  color: #1f3a44;
+  font-weight: 500;
+}
+
+.imei-index {
+  color: #6c757d;
+  font-size: 0.8rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .split-modal {
+    flex-direction: column;
+  }
+
+  .split-view-left,
+  .split-view-right {
+    flex: none;
+    width: 100%;
+  }
+
+  .product-info-card {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .product-badges {
+    justify-content: center;
+  }
+
+  .imei-list {
+    grid-template-columns: 1fr;
+  }
 }
 </style>
