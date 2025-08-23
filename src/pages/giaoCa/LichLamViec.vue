@@ -7,47 +7,27 @@
       :backgroundOpacity="0.95"
     />
 
-    <!-- Form Thêm/Sửa Lịch Làm Việc -->
-    <FilterTableSection title="Thông Tin Lịch Làm Việc" icon="bi bi-calendar-check">
-      <div class="m-3 animate__animated animate__fadeInUp">
-        <form @submit.prevent="saveSchedule">
-          <div class="row g-4">
-            <div class="col-lg-4 col-md-6">
-              <div class="filter-group">
-                <label for="employeeId" class="filter-label">Nhân viên:</label>
-                <select class="form-select search-input" id="employeeId" v-model="currentSchedule.idNhanVien" required>
-                  <option :value="null" disabled>Chọn nhân viên</option>
-                  <option v-for="employee in employees" :key="employee.id" :value="employee.id">
-                    {{ employee.tenNhanVien }}
-                  </option>
-                </select>
-              </div>
-            </div>
-            <div class="col-lg-4 col-md-6">
-              <div class="filter-group">
-                <label for="shift" class="filter-label">Ca làm:</label>
-                <select class="form-select search-input" id="shift" v-model="currentSchedule.caLam" required>
-                  <option value="8h-15h">8h-15h</option>
-                  <option value="15h-22h">15h-22h</option>
-                </select>
-              </div>
-            </div>
-            <div class="col-lg-4 col-md-6">
-              <div class="filter-group">
-                <label for="workDate" class="filter-label">Ngày làm:</label>
-                <input type="date" class="form-control search-input" id="workDate" v-model="currentSchedule.ngayLam" required />
-              </div>
-            </div>
+    <!-- Add Schedule Button and Filters -->
+    <FilterTableSection title="Tùy chọn" icon="bi bi-sliders">
+      <div class="d-flex justify-content-between align-items-center m-3">
+        <button class="btn btn-action" @click="openAddModal">
+          <i class="bi bi-plus-circle-fill me-1"></i> Thêm mới lịch làm việc
+        </button>
+        <div class="d-flex">
+          <div class="me-3">
+            <label for="filterEmployee" class="form-label">Nhân viên:</label>
+            <select class="form-select" id="filterEmployee" v-model="filter.employeeId">
+              <option :value="null">Tất cả</option>
+              <option v-for="employee in employees" :key="employee.id" :value="employee.id">
+                {{ employee.tenNhanVien }}
+              </option>
+            </select>
           </div>
-          <div class="action-buttons mt-4 d-flex justify-content-end">
-            <button type="submit" class="btn btn-action me-2">
-              <i class="bi bi-save me-1"></i> {{ currentSchedule.id ? 'Cập nhật' : 'Thêm mới' }}
-            </button>
-            <button type="button" class="btn btn-reset" @click="resetForm">
-              <i class="bi bi-x-circle me-1"></i> Hủy
-            </button>
+          <div>
+            <label for="filterDate" class="form-label">Ngày làm:</label>
+            <input type="date" class="form-control" id="filterDate" v-model="filter.workDate" />
           </div>
-        </form>
+        </div>
       </div>
     </FilterTableSection>
 
@@ -74,7 +54,7 @@
     <FilterTableSection title="Danh Sách Lịch Làm Việc" icon="bi bi-table">
       <div class="table-header">
         <div class="table-title-wrapper">
-          <span class="table-count">{{ allSchedules.length }} lịch làm việc</span>
+          <span class="table-count">{{ filteredSchedules.length }} lịch làm việc</span>
         </div>
         <div class="view-toggle">
           <button class="btn btn-action me-2" :class="{ 'active': viewMode === 'table' }" @click="viewMode = 'table'">
@@ -98,7 +78,7 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="schedule in allSchedules" :key="schedule.id">
+              <tr v-for="schedule in filteredSchedules" :key="schedule.id">
                 <td>
                   <p class="text-xs font-weight-bold mb-0">{{ schedule.id }}</p>
                 </td>
@@ -128,6 +108,8 @@
         <FullCalendar :options="calendarOptions" />
       </div>
     </FilterTableSection>
+
+    <AddScheduleModal :currentSchedule="currentSchedule" :employees="employees" @save-schedule="saveSchedule" />
   </div>
 </template>
 
@@ -140,12 +122,15 @@ import FilterTableSection from "@/components/common/FilterTableSection.vue";
 import FullCalendar from '@fullcalendar/vue3';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
+import AddScheduleModal from './AddScheduleModal.vue';
+import { Modal } from 'bootstrap';
 
 export default {
   components: {
     HeaderCard,
     FilterTableSection,
     FullCalendar,
+    AddScheduleModal,
   },
   data() {
     return {
@@ -157,6 +142,10 @@ export default {
         caLam: '',
         ngayLam: null,
         deleted: false,
+      },
+      filter: {
+        employeeId: null,
+        workDate: null,
       },
       selectedFile: null,
       viewMode: 'table', // Default view mode
@@ -180,9 +169,26 @@ export default {
           right: 'dayGridMonth,dayGridWeek,dayGridDay',
         },
       },
+      addScheduleModal: null,
     };
   },
+  computed: {
+    filteredSchedules() {
+      let schedules = this.allSchedules;
+      if (this.filter.employeeId) {
+        schedules = schedules.filter(s => s.idNhanVien === this.filter.employeeId);
+      }
+      if (this.filter.workDate) {
+        schedules = schedules.filter(s => s.ngayLam === this.filter.workDate);
+      }
+      return schedules;
+    }
+  },
   methods: {
+    openAddModal() {
+      this.resetForm();
+      this.addScheduleModal.show();
+    },
     async fetchSchedules() {
       try {
         const response = await LichLamViecService.getAllLichLamViec();
@@ -214,20 +220,22 @@ export default {
     },
     editSchedule(schedule) {
       this.currentSchedule = { ...schedule, ngayLam: schedule.ngayLam };
+      this.addScheduleModal.show();
     },
-    async saveSchedule() {
+    async saveSchedule(schedule) {
       try {
-        if (this.currentSchedule.id) {
+        if (schedule.id) {
           await LichLamViecService.updateLichLamViec(
-            this.currentSchedule.id,
-            this.currentSchedule
+            schedule.id,
+            schedule
           );
         } else {
-          await LichLamViecService.createLichLamViec(this.currentSchedule);
+          await LichLamViecService.createLichLamViec(schedule);
         }
         this.resetForm();
         await this.fetchSchedules();
         this.updateCalendarEvents();
+        this.addScheduleModal.hide();
       } catch (error) {
         console.error('Error saving schedule:', error);
       }
@@ -294,6 +302,9 @@ export default {
     await this.fetchSchedules();
     this.updateCalendarEvents();
   },
+  mounted() {
+    this.addScheduleModal = new Modal(document.getElementById('addScheduleModal'));
+  }
 };
 </script>
 
