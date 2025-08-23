@@ -7,7 +7,7 @@ import NotificationModal from '@/components/common/NotificationModal.vue';
 import ToastNotification from '@/components/common/ToastNotification.vue';
 import DataTable from '@/components/common/DataTable.vue';
 import { apiService } from '@/services/api';
-
+import { debounce } from 'lodash';
 import {
   fetchProductsApi,
   fetchIMEIsApi,
@@ -76,7 +76,7 @@ export default {
     const imeiPageSizeOptions = ref([5, 10, 15, 20, 50]);
     // Thêm state cho phân trang sản phẩm
     const productCurrentPage = ref(1);
-    const productItemsPerPage = ref(10);  // Mặc định 10 sản phẩm/trang
+    const productItemsPerPage = ref(5);  // Mặc định 10 sản phẩm/trang
     const productPageSizeOptions = ref([5, 10, 15, 20, 50]);
 
     // Thêm state mới cho hiển thị sản phẩm và IMEI (không trùng với IMEI hiện có)
@@ -105,6 +105,18 @@ export default {
       { label: 'Địa chỉ:', value: invoice.value.diaChiKhachHang || 'N/A', icon: 'bi bi-geo-alt', key: 'diaChi' },
       { label: 'Email:', value: invoice.value.idKhachHang?.email || 'N/A', icon: 'bi bi-envelope', key: 'email' },
       { label: 'Ghi chú:', value: invoice.value.ghiChu || 'Không có', icon: 'bi bi-sticky', key: 'ghiChu' },
+    ]);
+
+    // Cập nhật productHeaders
+    const productHeaders = ref([
+      { text: 'STT', value: 'stt' },
+      // { text: 'Hình ảnh', value: 'image', formatter: (value) => `<img src="${value || '/assets/placeholder-product.png'}" alt="Product Image" style="max-height: 50px;" />` },
+      { text: 'Tên sản phẩm', value: 'tenSanPham' },
+      { text: 'Màu sắc', value: 'mauSac' },
+      { text: 'RAM', value: 'dungLuongRam' },
+      { text: 'Bộ nhớ', value: 'dungLuongBoNhoTrong' },
+      { text: 'Giá', value: 'giaBan', formatter: (value) => formatPrice(value) },
+      { text: 'Thao tác', value: 'actions' },
     ]);
 
     // Thêm computed mới cho lọc sản phẩm
@@ -144,6 +156,21 @@ export default {
         imeiObj.imei ? imeiObj.imei.toLowerCase().includes(searchIMEI.value.toLowerCase()) : false
       );
     });
+
+    // Thêm hàm debouncedSearchProduct
+    const debouncedSearchProduct = debounce((value) => {
+      productSearchQuery.value = value;
+      productCurrentPage.value = 1;
+    }, 300);
+
+    // Thêm hàm resetProductFilters
+    const resetProductFilters = () => {
+      productSearchQuery.value = '';
+      filterColor.value = '';
+      filterRam.value = '';
+      filterStorage.value = '';
+      productCurrentPage.value = 1;
+    };
 
     const totalIMEIPages = computed(() => {
       return Math.ceil(filteredIMEIs.value.length / imeiItemsPerPage.value);
@@ -219,11 +246,19 @@ export default {
       }
     };
 
-    // Thêm methods mới cho gọi API sản phẩm và IMEI (sử dụng selectedNewProduct)
     const fetchProductsNew = async () => {
       try {
         const data = await fetchProductsApi();
-        productList.value = data.content || data;  // Điều chỉnh theo cấu trúc response
+        productList.value = (data.content || data).map(product => ({
+          ...product,
+          image: product.duongDan || product.anhSanPham || '/assets/placeholder-product.png',
+          tenSanPham: product.tenSanPham || product.name,
+          mauSac: product.mauSac || product.color,
+          dungLuongRam: product.dungLuongRam || product.ram,
+          dungLuongBoNhoTrong: product.dungLuongBoNhoTrong || product.capacity,
+          giaBan: product.giaBan || product.price,
+          trangThai: product.trangThai || 'Còn hàng', // Đảm bảo có trường trạng thái
+        }));
       } catch (error) {
         toastNotification.value.addToast({
           type: 'error',
@@ -533,69 +568,63 @@ export default {
 
     // Cập nhật phương thức showConfirmIMEIModal để thêm confirm
     const showConfirmIMEIModal = async (item) => {
-      notificationType.value = 'confirm';
-      notificationMessage.value = `Bạn có chắc chắn muốn xác nhận IMEI cho sản phẩm ${item.name}?`;
-      notificationOnConfirm.value = async () => {
-        selectedProduct.value = { ...item };
-        if (!selectedProduct.value.chiTietSanPhamId) {
+
+      selectedProduct.value = { ...item };
+      if (!selectedProduct.value.chiTietSanPhamId) {
+        toastNotification.value.addToast({
+          type: 'error',
+          message: 'Không tìm thấy ID chi tiết sản phẩm cho sản phẩm này',
+          duration: 5000,
+        });
+        resetNotification();
+        return;
+      }
+      try {
+        const response = await apiService.get(`/api/chi-tiet-san-pham/${selectedProduct.value.chiTietSanPhamId}/id-san-pham`);
+        const idSanPham = response.data;
+        if (!idSanPham) {
           toastNotification.value.addToast({
             type: 'error',
-            message: 'Không tìm thấy ID chi tiết sản phẩm cho sản phẩm này',
+            message: 'Không tìm thấy ID sản phẩm cho chi tiết sản phẩm này',
             duration: 5000,
           });
           resetNotification();
           return;
         }
-        try {
-          const response = await apiService.get(`/api/chi-tiet-san-pham/${selectedProduct.value.chiTietSanPhamId}/id-san-pham`);
-          const idSanPham = response.data;
-          if (!idSanPham) {
-            toastNotification.value.addToast({
-              type: 'error',
-              message: 'Không tìm thấy ID sản phẩm cho chi tiết sản phẩm này',
-              duration: 5000,
-            });
-            resetNotification();
-            return;
-          }
-          selectedProduct.value.idSanPham = idSanPham;
-          isConfirmIMEIModalVisible.value = true;
-          searchIMEI.value = '';
-          imeiCurrentPage.value = 1;
-          await hoaDonStore.fetchImelList({
-            page: 0,
-            size: 100,
-            idSanPham: selectedProduct.value.idSanPham,
-            chiTietSanPhamId: selectedProduct.value.chiTietSanPhamId,
-          });
-          if (hoaDonStore.getError) {
-            toastNotification.value.addToast({
-              type: 'error',
-              message: `${hoaDonStore.getError}${hoaDonStore.getError.response?.data?.message ? `: ${hoaDonStore.getError.response.data.message}` : ''}`,
-              duration: 5000,
-            });
-          } else if (hoaDonStore.getImelList.length === 0) {
-            toastNotification.value.addToast({
-              type: 'warning',
-              message: 'Không có IMEI nào khả dụng cho sản phẩm này',
-              duration: 5000,
-            });
-          }
-          resetNotification();
-        } catch (error) {
-          console.error('Error in showConfirmIMEIModal:', error);
+        selectedProduct.value.idSanPham = idSanPham;
+        isConfirmIMEIModalVisible.value = true;
+        searchIMEI.value = '';
+        imeiCurrentPage.value = 1;
+        await hoaDonStore.fetchImelList({
+          page: 0,
+          size: 100,
+          idSanPham: selectedProduct.value.idSanPham,
+          chiTietSanPhamId: selectedProduct.value.chiTietSanPhamId,
+        });
+        if (hoaDonStore.getError) {
           toastNotification.value.addToast({
             type: 'error',
-            message: `Lỗi khi lấy ID sản phẩm: ${error.message}`,
+            message: `${hoaDonStore.getError}${hoaDonStore.getError.response?.data?.message ? `: ${hoaDonStore.getError.response.data.message}` : ''}`,
             duration: 5000,
           });
-          resetNotification();
+        } else if (hoaDonStore.getImelList.length === 0) {
+          toastNotification.value.addToast({
+            type: 'warning',
+            message: 'Không có IMEI nào khả dụng cho sản phẩm này',
+            duration: 5000,
+          });
         }
-      };
-      notificationOnCancel.value = () => {
         resetNotification();
-      };
-      notificationModal.value.openModal();
+      } catch (error) {
+        console.error('Error in showConfirmIMEIModal:', error);
+        toastNotification.value.addToast({
+          type: 'error',
+          message: `Lỗi khi lấy ID sản phẩm: ${error.message}`,
+          duration: 5000,
+        });
+        resetNotification();
+      }
+
     };
 
     const closeConfirmIMEIModal = () => {
@@ -990,6 +1019,10 @@ export default {
       return item.status === 'Còn hàng' ? 'table-row-valid' : 'table-row-invalid';
     };
 
+    const getProductRowClass = (item) => {
+      return item.trangThai === 'Còn hàng' ? 'table-row-valid' : 'table-row-invalid';
+    };
+
     const updateIMEIPage = (page) => {
       imeiCurrentPage.value = page;
     };
@@ -1072,7 +1105,6 @@ export default {
       getRowClass,
       updateIMEIPage,
       updateIMEIItemsPerPage,
-      // Thêm return mới
       productList,
       availableIMEIsNew,
       selectedIMEIsNew,
@@ -1085,7 +1117,7 @@ export default {
       uniqueColors,
       uniqueRams,
       uniqueStorages,
-      selectedNewProduct,  // Thêm biến riêng
+      selectedNewProduct,
       fetchProductsNew,
       showNewIMEIList,
       closeNewIMEIModal,
@@ -1097,6 +1129,10 @@ export default {
       paginatedProducts,
       updateProductPage,
       updateProductItemsPerPage,
+      getProductRowClass,
+      productHeaders,
+      debouncedSearchProduct,
+      resetProductFilters,
     };
   },
 };

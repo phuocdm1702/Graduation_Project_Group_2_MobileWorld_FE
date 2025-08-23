@@ -117,109 +117,84 @@
       </div>
     </FilterTableSection>
 
-    <!-- Modal thêm sản phẩm mới (mở rộng để hiển thị danh sách sản phẩm với phân trang) -->
-    <div v-if="isAddProductModalVisible" class="modal fade show d-block" tabindex="-1"
-      style="background: rgba(0, 0, 0, 0.5)">
-      <div class="modal-dialog modal-dialog-centered modal-lg">
-        <div class="modal-content shadow-lg p-3 gradient-modal"
-          style="background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(15px); border-radius: 0.5rem;">
-          <div class="modal-header border-0 d-flex justify-content-between align-items-center">
-            <h5 class="modal-title fw-bold text-dark">Thêm Sản Phẩm Mới</h5>
-            <button class="btn btn-outline-secondary btn-close-custom" @click="isAddProductModalVisible = false">
-              <i class="bi bi-x-lg"></i>
-            </button>
-          </div>
-          <div class="modal-body p-4">
+    <!-- Modal thêm sản phẩm mới -->
+    <div v-if="isAddProductModalVisible" class="modal-backdrop-blur" @click.self="isAddProductModalVisible = false">
+      <div class="modal-container glass-modal animate__animated animate__zoomIn">
+        <div class="modal-header">
+          <h5 class="modal-title fw-bold text-dark">Thêm Sản Phẩm Mới</h5>
+          <button class="btn-close-glass" @click="isAddProductModalVisible = false">
+            <i class="bi bi-x-lg"></i>
+          </button>
+        </div>
+        <div class="modal-body">
+          <div class="m-4">
             <!-- Tìm kiếm và lọc sản phẩm -->
-            <div class="row g-3 mb-4">
-              <div class="col-md-3 search-input-wrapper">
-                <i class="bi bi-search search-icon"></i>
-                <input v-model="productSearchQuery" type="text" class="form-control search-input"
-                  style="padding-left: 2rem" placeholder="Tìm sản phẩm..." />
+            <div class="row g-4 align-items-end">
+              <div class="col-lg-12">
+                <div class="search-group">
+                  <label class="filter-label">Tìm kiếm</label>
+                  <div class="search-input-wrapper">
+                    <i class="bi bi-search search-icon"></i>
+                    <input type="text" class="form-control search-input"
+                      placeholder="Nhập tên sản phẩm hoặc mã sản phẩm..." v-model="productSearchQuery"
+                      @input="debouncedSearchProduct($event.target.value)" style="padding-left: 2.5rem;" />
+                  </div>
+                </div>
               </div>
-              <div class="col-md-3">
+              <div class="col-md-4">
+                <label class="filter-label">Màu sắc</label>
                 <select v-model="filterColor" class="form-select search-input">
                   <option value="">Tất cả màu</option>
                   <option v-for="color in uniqueColors" :key="color" :value="color">{{ color }}</option>
                 </select>
               </div>
-              <div class="col-md-3">
+              <div class="col-md-4">
+                <label class="filter-label">RAM</label>
                 <select v-model="filterRam" class="form-select search-input">
                   <option value="">Tất cả RAM</option>
                   <option v-for="ram in uniqueRams" :key="ram" :value="ram">{{ ram }}</option>
                 </select>
               </div>
-              <div class="col-md-3">
+              <div class="col-md-4">
+                <label class="filter-label">Bộ nhớ</label>
                 <select v-model="filterStorage" class="form-select search-input">
                   <option value="">Tất cả bộ nhớ</option>
                   <option v-for="storage in uniqueStorages" :key="storage" :value="storage">{{ storage }}</option>
                 </select>
               </div>
             </div>
-
-            <!-- Danh sách sản phẩm với phân trang -->
-            <div v-if="filteredProducts.length === 0" class="empty-cart-container text-center py-5">
-              <p class="text-muted mb-0 fw-medium">Không tìm thấy sản phẩm</p>
-            </div>
-            <div v-else>
-              <div class="cart-items-container">
-                <div v-for="(product, index) in paginatedProducts" :key="product.id" class="mb-4">
-                  <div class="cart-item-card shadow-sm p-4"
-                    style="background: rgba(255, 255, 255, 0.95); border-radius: 0.5rem;">
-                    <div class="row align-items-center">
-                      <div class="col-md-1 text-center">
-                        <span class="fw-bold text-dark">{{ (productCurrentPage - 1) * productItemsPerPage + index + 1
-                        }}</span>
-                      </div>
-                      <div class="col-md-3 text-center">
-                        <img :src="product.image || product.duongDan" class="img-fluid rounded"
-                          :alt="product.tenSanPham" style="max-height: 120px;" />
-                      </div>
-                      <div class="col-md-5">
-                        <h5 class="fw-bold text-dark mb-0">{{ product.tenSanPham }}</h5>
-                        <div class="d-flex flex-wrap gap-2 mb-2">
-                          <span class="badge text-white px-3 py-1" style="background-color: #1f3a44">{{ product.mauSac
-                          }}</span>
-                          <span class="badge text-white px-3 py-1" style="background-color: #1f3a44">{{
-                            product.dungLuongRam }}</span>
-                          <span class="badge text-white px-3 py-1" style="background-color: #1f3a44">{{
-                            product.dungLuongBoNhoTrong }}</span>
-                        </div>
-                        <div class="fw-semibold">Giá: {{ formatPrice(product.giaBan) }}</div>
-                      </div>
-                      <div class="col-md-3 text-end">
-                        <button class="btn btn-light px-4 py-2 teal text-white" @click="showNewIMEIList(product)">Chọn
-                          IMEI</button>
-                      </div>
-                    </div>
-                  </div>
+            <!-- Thống kê và nút đặt lại -->
+            <div class="filter-actions mt-3 d-flex justify-content-between align-items-center">
+              <div class="filter-stats">
+                <div class="stat-item">
+                  <span class="stat-label">Tổng số sản phẩm: </span>
+                  <span class="stat-value">{{ filteredProducts.length }}</span>
                 </div>
               </div>
-              <!-- Controls phân trang cho sản phẩm -->
-              <div class="d-flex justify-content-between align-items-center mt-3">
-                <div>
-                  <select v-model="productItemsPerPage" class="form-select" style="width: auto;"
-                    @change="updateProductItemsPerPage">
-                    <option v-for="size in productPageSizeOptions" :key="size" :value="size">{{ size }} / trang</option>
-                  </select>
-                </div>
-                <div class="d-flex gap-2">
-                  <button class="btn btn-light" :disabled="productCurrentPage === 1"
-                    @click="updateProductPage(productCurrentPage - 1)">
-                    <i class="bi bi-chevron-left"></i>
-                  </button>
-                  <span class="align-self-center">Trang {{ productCurrentPage }} / {{ totalProductPages }}</span>
-                  <button class="btn btn-light" :disabled="productCurrentPage === totalProductPages"
-                    @click="updateProductPage(productCurrentPage + 1)">
-                    <i class="bi bi-chevron-right"></i>
-                  </button>
-                </div>
+              <div class="action-buttons d-flex gap-2">
+                <button class="btn btn-reset" @click="resetProductFilters">Đặt lại</button>
               </div>
             </div>
           </div>
-          <div class="modal-footer border-0">
-            <button class="btn btn-light px-4 py-2" @click="isAddProductModalVisible = false">Hủy</button>
+          <!-- DataTable cho danh sách sản phẩm -->
+          <div class="table-body">
+            <DataTable title="" :headers="productHeaders" :data="paginatedProducts"
+              :pageSizeOptions="productPageSizeOptions" :currentPage="productCurrentPage"
+              :itemsPerPage="productItemsPerPage" :totalPages="totalProductPages" :rowClass="getProductRowClass"
+              @update:currentPage="updateProductPage" @update:itemsPerPage="updateProductItemsPerPage">
+              <template #stt="{ globalIndex }">
+                {{ globalIndex + 1 }}
+              </template>
+              <template #actions="{ item }">
+                <i class="bi bi-plus-circle-fill action-icon text-success cursor-pointer" @click="showNewIMEIList(item)"
+                  :class="{ 'text-muted': item.trangThai !== 'Còn hàng' }"
+                  :disabled="item.trangThai !== 'Còn hàng'"></i>
+              </template>
+            </DataTable>
           </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-reset" @click="isAddProductModalVisible = false">Đóng</button>
         </div>
       </div>
     </div>
@@ -279,9 +254,10 @@
             </div>
           </div>
           <div class="modal-footer border-0">
-            <button class="btn btn-light px-4 py-2" @click="closeNewIMEIModal">Hủy</button>
-            <button class="btn btn-light px-4 py-2 teal text-white" @click="addProductWithIMEIsNew"
-              :disabled="selectedIMEIsNew.length === 0">Thêm vào hóa đơn</button>
+            <button class="btn btn-reset" @click="closeNewIMEIModal">Hủy</button>
+            <button class="btn btn-action" @click="addProductWithIMEIsNew" :disabled="selectedIMEIsNew.length === 0">
+              Thêm vào hóa đơn
+            </button>
           </div>
         </div>
       </div>
@@ -1505,7 +1481,7 @@ export default {
   border: 1px solid rgba(52, 211, 153, 0.1);
   border-radius: 16px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-  max-width: 800px;
+  max-width: 1200px;
   width: 100%;
   max-height: 90vh;
   overflow-y: auto;
@@ -1824,5 +1800,53 @@ export default {
 
 .ma-imel-code.text-muted {
   color: #6c757d;
+}
+
+.action-icon {
+  font-size: 1.2rem;
+  color: #34d399;
+  transition: all 0.2s ease;
+}
+
+.action-icon:hover {
+  color: #16a34a;
+  transform: scale(1.1);
+}
+
+.action-icon.text-muted {
+  color: #6c757d;
+  cursor: not-allowed;
+}
+
+/* Thêm style mới cho Modal IMEI */
+.modal-dialog.modal-dialog-centered.modal-lg {
+  max-width: 500px;
+  /* Tăng độ rộng tối đa */
+  width: 90%;
+  /* Đảm bảo responsive */
+  margin: 1.75rem auto;
+}
+
+.modal-content.shadow-lg.p-3.gradient-modal {
+  min-height: 600px;
+  /* Tăng chiều cao tối thiểu */
+  max-height: 60vh;
+  /* Giới hạn chiều cao tối đa */
+  overflow-y: auto;
+}
+
+/* Thêm scrollbar style cho modal content */
+.modal-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.modal-content::-webkit-scrollbar-track {
+  background: rgba(52, 211, 153, 0.1);
+  border-radius: 3px;
+}
+
+.modal-content::-webkit-scrollbar-thumb {
+  background: rgba(52, 211, 153, 0.5);
+  border-radius: 3px;
 }
 </style>
