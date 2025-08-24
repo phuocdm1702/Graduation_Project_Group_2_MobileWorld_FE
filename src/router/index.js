@@ -19,6 +19,7 @@ const Ram = () => import("@/pages/products/thuocTinhSp/Ram.vue");
 const BoNhoTrong = () => import("@/pages/products/thuocTinhSp/BoNhoTrong.vue");
 const HoTroBoNhoNgoai = () => import("@/pages/products/thuocTinhSp/HoTroBoNhoNgoai.vue");
 const Cpu = () => import("@/pages/products/thuocTinhSp/Cpu.vue");
+const Gpu = () => import("@/pages/products/thuocTinhSp/Gpu.vue");
 const HoaDon = () => import("@/pages/bills/HoaDon.vue");
 const HoaDonChiTiet = () => import("@/pages/bills/HoaDonChiTiet.vue");
 const PhieuGiamGia = () => import("@/pages/promotions/PhieuGiamGia.vue");
@@ -234,6 +235,20 @@ const routes = [
             { name: "Trang chủ", path: "/trangChu" },
             { name: "Sản phẩm", path: "/sanPham" },
             { name: "CPU", path: "/cpu" },
+          ],
+          requiresAdmin: true,
+        },
+      },
+      {
+        path: "/gpu",
+        name: "Gpu",
+        component: Gpu,
+        meta: {
+          title: "GPU",
+          breadcrumb: [
+            { name: "Trang chủ", path: "/trangChu" },
+            { name: "Sản phẩm", path: "/sanPham" },
+            { name: "GPU", path: "/gpu" },
           ],
           requiresAdmin: true,
         },
