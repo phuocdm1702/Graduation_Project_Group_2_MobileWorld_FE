@@ -291,7 +291,7 @@
                 </p>
               </div>
               <div v-else class="cart-items-container" style="
-                  max-height: 400px;
+                  max-height: 500px;
                   overflow-y: auto;
                   overflow-x: hidden;
                   padding-right: 10px;
