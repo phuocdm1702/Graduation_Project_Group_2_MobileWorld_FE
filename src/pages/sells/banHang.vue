@@ -1010,7 +1010,7 @@ discount, index
                 style="background: linear-gradient(135deg, #f8f9fa, #e9ecef)">
                 <div class="row align-items-center">
                   <div class="col-md-4 text-center">
-                    <img :src="selectedCartItem?.image ||
+                    <img :src="selectedCartItem?.imageUrl ||
                       'https://bachlongstore.vn/vnt_upload/product/04_2024/Untitled_2.png'
                       " class="phone-img img-fluid rounded" :alt="selectedCartItem?.name" style="
                         max-height: 150px;
