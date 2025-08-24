@@ -889,6 +889,7 @@ export default {
           currentPrice: Number(item.giaBan) || 0,
           quantity: item.soLuong,
           ghiChuGia: item.ghiChuGia || "",
+          imageUrl: item.image || '/assets/images/placeholder.jpg',
         }));
         const invoice = pendingInvoices.value.find(
           (inv) => inv.id === activeInvoiceId.value
