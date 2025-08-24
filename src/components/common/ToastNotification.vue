@@ -90,7 +90,7 @@ export default {
   position: fixed;
   top: 1.5rem;
   right: 1.5rem;
-  z-index: 1050;
+  z-index: 9999;
   max-width: 400px;
   width: 100%;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
