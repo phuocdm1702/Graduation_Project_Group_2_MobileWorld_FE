@@ -189,7 +189,7 @@ export const addCustomerApi = async (customerData) => {
     const response = await apiService.post("/khach-hang/add-Bh", customerData);
     return { success: true, data: response.data };
   } catch (error) {
-    throw new Error(error.response?.data?.message || "Lỗi khi thêm khách hàng");
+    return { success: false, message: error.response?.data || "Lỗi không thêm đc khách hàng" };
   }
 };
 
