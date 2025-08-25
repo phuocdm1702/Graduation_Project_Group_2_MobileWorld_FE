@@ -92,8 +92,9 @@
               <span class="table-count">Phiên bản {{ group.ram }}/{{ group.rom }}</span>
               <div class="action-buttons">
                 <div class="filter-group me-3">
-                  <input v-model="groupCommonValues[group.groupKey].price" type="text" placeholder="Nhập giá chung"
-                    class="form-control search-input" @input="updateSelectedVariants(group)"
+                  <input :value="formatPriceToVND(groupCommonValues[group.groupKey]?.price)"
+                    @input="(e) => handleGroupPriceInput(e, group)" type="text" placeholder="Nhập giá chung"
+                    class="form-control search-input text-end"
                     style="border-top-right-radius: 8px; border-bottom-right-radius: 8px;" />
                 </div>
                 <button v-if="hasSelectedInGroup[group.groupKey]" @click="removeMultipleVariants" class="btn btn-reset">
@@ -134,7 +135,8 @@
                       </div>
                     </td>
                     <td>
-                      <input v-model="variant.donGia" type="text" class="form-control search-input-table" />
+                      <input :value="formatPriceToVND(variant.donGia)" @input="(e) => handlePriceInput(e, variant)"
+                        type="text" class="form-control search-input-table text-start" placeholder="Nhập giá..." />
                     </td>
                     <td class="text-center">
                       {{ variantImeis[group.startIndex + variantIndex]?.length || 0 }}
@@ -319,7 +321,7 @@
                     }">
                       {{
                         imei.length !== 15 ? `(Không hợp lệ, cần 15 số, hiện tại ${imei.length} số)` :
-                        duplicateImeis.includes(imei) ? '(Trùng lặp)' : '(Hợp lệ)'
+                          duplicateImeis.includes(imei) ? '(Trùng lặp)' : '(Hợp lệ)'
                       }}
                     </span>
                   </span>
@@ -357,7 +359,7 @@
       </div>
     </div>
 
-        <!-- Toast Notification -->
+    <!-- Toast Notification -->
     <ToastNotification ref="toastNotification" />
 
     <!-- Form Modal for RAM, Bộ Nhớ Trong, Màu Sắc -->
@@ -420,6 +422,7 @@ import FilterTableSection from '@/components/common/FilterTableSection.vue';
 import ToastNotification from '@/components/common/ToastNotification.vue';
 import { getRam, addRam, getBoNhoTrong, addBoNhoTrong, getMauSac, addMauSac } from '@/store/modules/products/chiTietSanPham';
 import * as XLSX from 'xlsx';
+import axios from 'axios';
 
 export default defineComponent({
   name: 'ProductVariants',
@@ -544,11 +547,31 @@ export default defineComponent({
     const currentVariantLabel = computed(() => {
       if (currentVariantIndex.value === null) return '';
       const variant = localProductVariants.value[currentVariantIndex.value];
-      if (!variant) return '';
-      const ram = ramOptions.value.find((r) => r.id === variant.idRam)?.dungLuongRam || 'Unknown';
-      const rom = boNhoTrongOptions.value.find((b) => b.id === variant.idBoNhoTrong)?.dungLuongBoNhoTrong || 'Unknown';
-      const color = mauSacOptions.value.find((m) => m.id === variant.idMauSac)?.mauSac || 'Unknown';
-      return `${ram}/${rom}/${color}`;
+      const ram = ramOptions.value.find((r) => r.id === variant.idRam)?.dungLuongRam || 'N/A';
+      const rom = boNhoTrongOptions.value.find((b) => b.id === variant.idBoNhoTrong)?.dungLuongBoNhoTrong || 'N/A';
+      const mau = mauSacOptions.value.find((m) => m.id === variant.idMauSac)?.mauSac || 'N/A';
+      return `${ram}/${rom} - ${mau}`;
+    });
+
+    const filteredImeiList = computed(() => {
+      return imeiInput.value.split('\n').map((line) => line.trim()).filter((imei) => imei);
+    });
+
+    const validImeis = computed(() => {
+      const existingImeis = new Set(
+        Object.entries(localVariantImeis.value)
+          .filter(([key]) => parseInt(key) !== currentVariantIndex.value)
+          .flatMap(([, imeis]) => imeis)
+      );
+      const imeiCounts = {};
+      filteredImeiList.value.forEach((imei) => {
+        if (imei) {
+          imeiCounts[imei] = (imeiCounts[imei] || 0) + 1;
+        }
+      });
+      return filteredImeiList.value.filter(
+        (imei) => imei.length === 15 && imeiCounts[imei] === 1 && !existingImeis.has(imei)
+      );
     });
 
     const duplicateImeis = computed(() => {
@@ -558,54 +581,25 @@ export default defineComponent({
           imeiCounts[imei] = (imeiCounts[imei] || 0) + 1;
         }
       });
-      return filteredImeiList.value.filter((imei) => imeiCounts[imei] > 1);
-    });
-
-    const filteredImeiList = computed(() => {
-      return imeiInput.value
-        .split('\n')
-        .map((imei) => imei.trim())
-        .filter((imei) => imei.length > 0);
-    });
-
-    const validImeis = computed(() => {
-      const existingImeis = new Set(
-        Object.values(localVariantImeis.value).flat().filter((imei) => imei && imei.length === 15)
-      );
-      const imeiCounts = {};
-      filteredImeiList.value.forEach((imei) => {
-        if (imei) {
-          imeiCounts[imei] = (imeiCounts[imei] || 0) + 1;
-        }
-      });
-      return filteredImeiList.value
-        .filter((imei) => imei.length === 15 && imeiCounts[imei] === 1 && !existingImeis.has(imei))
-        .map((imei) => imei);
+      return Object.keys(imeiCounts).filter((imei) => imeiCounts[imei] > 1);
     });
 
     const filteredRamOptions = computed(() => {
-      if (!variantSearch.value.trim()) return ramOptions.value;
-      const searchTerm = variantSearch.value.toLowerCase();
-      return ramOptions.value.filter(
-        (ram) => ram.dungLuongRam.toLowerCase().includes(searchTerm)
+      return ramOptions.value.filter((ram) =>
+        ram.dungLuongRam.toLowerCase().includes(variantSearch.value.toLowerCase())
       );
     });
 
     const filteredBoNhoTrongOptions = computed(() => {
-      if (!variantSearch.value.trim()) return boNhoTrongOptions.value;
-      const searchTerm = variantSearch.value.toLowerCase();
-      return boNhoTrongOptions.value.filter(
-        (boNho) => boNho.dungLuongBoNhoTrong.toLowerCase().includes(searchTerm)
+      return boNhoTrongOptions.value.filter((boNho) =>
+        boNho.dungLuongBoNhoTrong.toLowerCase().includes(variantSearch.value.toLowerCase())
       );
     });
 
     const filteredMauSacOptions = computed(() => {
-      if (!variantSearch.value.trim()) return mauSacOptions.value;
-      const searchTerm = variantSearch.value.toLowerCase();
-      return mauSacOptions.value.filter(
-        (mau) =>
-          mau.mauSac.toLowerCase().includes(searchTerm) ||
-          mau.maMau.toLowerCase().includes(searchTerm)
+      return mauSacOptions.value.filter((mau) =>
+        mau.mauSac.toLowerCase().includes(variantSearch.value.toLowerCase()) ||
+        mau.maMau.toLowerCase().includes(variantSearch.value.toLowerCase())
       );
     });
 
@@ -619,86 +613,58 @@ export default defineComponent({
     });
 
     const canProceed = computed(() => {
-      if (currentStep.value === 'ram') return currentVariant.value.selectedRams.length > 0;
-      if (currentStep.value === 'boNhoTrong') return currentVariant.value.selectedBoNhoTrongs.length > 0;
-      return true;
+      switch (currentStep.value) {
+        case 'ram':
+          return currentVariant.value.selectedRams.length > 0;
+        case 'boNhoTrong':
+          return currentVariant.value.selectedBoNhoTrongs.length > 0;
+        case 'mauSac':
+          return currentVariant.value.selectedMauSacs.length > 0;
+        default:
+          return false;
+      }
     });
 
-    const isValidHex = (hex) => {
-      return /^#([0-9A-Fa-f]{3}){1,2}$/.test(hex);
+    const isValidHex = (color) => {
+      return /^#[0-9A-F]{6}$/i.test(color);
     };
 
-    // Fetch data from APIs
-    const fetchData = async () => {
+    const loadOptions = async () => {
       try {
-        const [ramRes, boNhoTrongRes, mauSacRes] = await Promise.all([
+        const [ramRes, boNhoRes, mauSacRes] = await Promise.all([
           getRam(),
           getBoNhoTrong(),
           getMauSac(),
         ]);
-        ramOptions.value = ramRes.data || [];
-        boNhoTrongOptions.value = boNhoTrongRes.data || [];
-        mauSacOptions.value = (mauSacRes.data || []).map(item => ({
-          id: item.id,
-          ma: item.ma,
-          mauSac: item.mauSac,
-          maMau: item.maMau,
-          deleted: item.deleted
-        }));
-        isLoading.value = false;
+        ramOptions.value = ramRes.data;
+        boNhoTrongOptions.value = boNhoRes.data;
+        mauSacOptions.value = mauSacRes.data;
+        updateSelectedOptions();
+        validateSelections();
       } catch (error) {
-        console.error('Lỗi tải dữ liệu:', error);
         toastNotification.value?.addToast({
           type: 'error',
-          message: 'Lỗi khi tải dữ liệu: ' + error.message,
+          message: `Lỗi khi tải dữ liệu: ${error.message}`,
           duration: 3000,
         });
+      } finally {
         isLoading.value = false;
       }
     };
 
-    fetchData();
-
-    // Update selected options based on current variants
     const updateSelectedOptions = () => {
-      const rams = new Set();
-      const boNhoTrongs = new Set();
-      const mauSacs = new Set();
-
-      localProductVariants.value.forEach((variant) => {
-        rams.add(variant.idRam);
-        boNhoTrongs.add(variant.idBoNhoTrong);
-        mauSacs.add(variant.idMauSac);
-      });
-
-      currentVariant.value.selectedRams = [...rams].filter(Boolean);
-      currentVariant.value.selectedBoNhoTrongs = [...boNhoTrongs].filter(Boolean);
-      currentVariant.value.selectedMauSacs = [...mauSacs].filter(Boolean);
+      currentVariant.value.selectedRams = [
+        ...new Set(localProductVariants.value.map((v) => v.idRam).filter(Boolean)),
+      ];
+      currentVariant.value.selectedBoNhoTrongs = [
+        ...new Set(localProductVariants.value.map((v) => v.idBoNhoTrong).filter(Boolean)),
+      ];
+      currentVariant.value.selectedMauSacs = [
+        ...new Set(localProductVariants.value.map((v) => v.idMauSac).filter(Boolean)),
+      ];
     };
 
     const generateVariants = () => {
-      if (!props.productData.tenSanPham) {
-        toastNotification.value?.addToast({
-          type: 'error',
-          message: 'Vui lòng chọn một sản phẩm trước khi thêm biến thể!',
-          duration: 3000,
-        });
-        return false;
-      }
-
-      if (
-        currentVariant.value.selectedRams.length === 0 ||
-        currentVariant.value.selectedBoNhoTrongs.length === 0 ||
-        currentVariant.value.selectedMauSacs.length === 0
-      ) {
-        toastNotification.value?.addToast({
-          type: 'error',
-          message: 'Vui lòng chọn ít nhất một RAM, một Bộ Nhớ Trong và một Màu Sắc!',
-          duration: 3000,
-        });
-        return false;
-      }
-
       const oldVariants = [...localProductVariants.value];
       const oldImeis = { ...localVariantImeis.value };
       const newVariants = [];
@@ -773,6 +739,17 @@ export default defineComponent({
       emit('variants-updated', { variants: localProductVariants.value, imeis: localVariantImeis.value });
     };
 
+    // Add this function in the script section, inside setup()
+    const handleGroupPriceInput = (event, group) => {
+      const rawValue = parsePriceFromVND(event.target.value);
+      if (!groupCommonValues.value[group.groupKey]) {
+        groupCommonValues.value[group.groupKey] = {};
+      }
+      groupCommonValues.value[group.groupKey].price = rawValue;
+      updateSelectedVariants(group);
+    };
+
+    // Update the existing updateSelectedVariants function
     const updateSelectedVariants = (group) => {
       const groupKey = group.groupKey;
       const price = groupCommonValues.value[groupKey]?.price || '';
@@ -829,24 +806,27 @@ export default defineComponent({
 
     const handleAddAttribute = async () => {
       try {
-        const newId = `new_${Date.now()}`;
-        const data = { id: newId, ...entityData.value };
+        let response;
+        const data = { ...entityData.value };
+
         switch (currentAttribute.value) {
           case 'ram':
-            await addRam(data);
-            ramOptions.value.push(data);
+            response = await addRam(data);
+            const newItemRam = response.data;
+            ramOptions.value.push(newItemRam);
             break;
           case 'boNhoTrong':
-            await addBoNhoTrong(data);
-            boNhoTrongOptions.value.push(data);
+            response = await addBoNhoTrong(data);
+            const newItemBnt = response.data;
+            boNhoTrongOptions.value.push(newItemBnt);
             break;
           case 'mauSac':
-            data.ma = `MS${Date.now().toString().slice(-5)}`;
-            data.deleted = false;
-            await addMauSac(data);
-            mauSacOptions.value.push(data);
+            response = await addMauSac(data);
+            const newItemMs = response.data;
+            mauSacOptions.value.push(newItemMs);
             break;
         }
+
         toastNotification.value?.addToast({
           type: 'success',
           message: `Thêm ${currentAttributeLabel.value} thành công!`,
@@ -854,10 +834,61 @@ export default defineComponent({
         });
         closeFormModal();
       } catch (error) {
+        console.log('Full error object:', error);
+        console.log('Error response:', error.response);
+        console.log('Error response data:', error.response?.data);
+        console.log('Error status:', error.response?.status);
+
+        let errorMessage = `Lỗi khi thêm ${currentAttributeLabel.value}`;
+
+        // Kiểm tra các trường hợp lỗi cụ thể
+        if (error.response) {
+          const status = error.response.status;
+          const responseData = error.response.data;
+
+          if (status === 400) {
+            // Kiểm tra message từ server
+            if (responseData?.message) {
+              errorMessage = responseData.message;
+            } else if (responseData?.error) {
+              errorMessage = responseData.error;
+            } else if (responseData?.details) {
+              errorMessage = responseData.details;
+            } else if (typeof responseData === 'string') {
+              errorMessage = responseData;
+            } else {
+              // Kiểm tra các trường hợp check trùng phổ biến
+              const dataStr = JSON.stringify(responseData).toLowerCase();
+              if (dataStr.includes('duplicate') || dataStr.includes('already exists') ||
+                dataStr.includes('đã tồn tại') || dataStr.includes('trùng lặp')) {
+                errorMessage = `${currentAttributeLabel.value} này đã tồn tại trong hệ thống!`;
+              } else if (dataStr.includes('unique') || dataStr.includes('constraint')) {
+                errorMessage = `${currentAttributeLabel.value} này đã được sử dụng!`;
+              } else {
+                errorMessage = `Dữ liệu không hợp lệ hoặc đã tồn tại!`;
+              }
+            }
+          } else if (status === 409) {
+            errorMessage = `${currentAttributeLabel.value} này đã tồn tại trong hệ thống!`;
+          } else if (status === 422) {
+            if (responseData?.message) {
+              errorMessage = responseData.message;
+            } else {
+              errorMessage = `Dữ liệu không hợp lệ. Vui lòng kiểm tra lại!`;
+            }
+          } else if (status === 500) {
+            errorMessage = `Lỗi hệ thống. Vui lòng thử lại sau!`;
+          } else {
+            errorMessage = `Lỗi server (${status}): ${responseData?.message || responseData?.error || 'Không xác định'}`;
+          }
+        } else if (error.message) {
+          errorMessage = error.message;
+        }
+
         toastNotification.value?.addToast({
           type: 'error',
-          message: `Lỗi khi thêm ${currentAttributeLabel.value}: ${error.message}`,
-          duration: 3000,
+          message: errorMessage,
+          duration: 4000,
         });
       }
     };
@@ -890,6 +921,102 @@ export default defineComponent({
       }
     };
 
+    // Thay thế function checkImelInDatabase trong ThemPhienBan.vue
+    const checkImelInDatabase = async (imeis) => {
+      const duplicates = [];
+      console.log('=== BẮT ĐẦU KIỂM TRA IMEI VỚI DATABASE ===');
+      console.log('Tổng số IMEI cần kiểm tra:', imeis.length);
+      console.log('Danh sách IMEI:', imeis);
+
+      // Kiểm tra từng IMEI một cách tuần tự để tránh quá tải server
+      for (let i = 0; i < imeis.length; i++) {
+        const imei = imeis[i];
+        try {
+          // Validate và clean IMEI trước khi gửi
+          const cleanImei = imei.toString().trim();
+          console.log(`\n--- Kiểm tra IMEI ${i + 1}/${imeis.length} ---`);
+          console.log('IMEI gốc:', imei);
+          console.log('IMEI sau khi clean:', cleanImei);
+          console.log('Độ dài:', cleanImei.length);
+
+          // Kiểm tra định dạng cơ bản trước khi gửi request
+          if (!cleanImei || cleanImei.length !== 15) {
+            console.warn(`Bỏ qua IMEI không đúng độ dài: ${cleanImei} (${cleanImei.length} ký tự)`);
+            continue;
+          }
+
+          if (!/^\d{15}$/.test(cleanImei)) {
+            console.warn(`Bỏ qua IMEI không phải số: ${cleanImei}`);
+            continue;
+          }
+
+          console.log('Gửi request đến:', '/api/imel/check');
+          console.log('Tham số:', { imel: cleanImei });
+
+          const response = await axios.get('/api/imel/check', {
+            params: {
+              imel: cleanImei  // Đảm bảo dùng đúng tên parameter
+            },
+            timeout: 10000 // 10 giây timeout
+          });
+
+          console.log('Kết quả từ server:', response.data);
+
+          if (response.data.exists === true) {
+            console.log(`✓ IMEI ${cleanImei} ĐÃ TỒN TẠI trong database`);
+            duplicates.push(imei); // Thêm vào danh sách trùng lặp
+          } else {
+            console.log(`✓ IMEI ${cleanImei} CHƯA TỒN TẠI - OK`);
+          }
+
+          // Thêm delay nhỏ giữa các request để tránh spam server
+          if (i < imeis.length - 1) {
+            await new Promise(resolve => setTimeout(resolve, 100));
+          }
+
+        } catch (error) {
+          console.error(`\n!!! LỖI KIỂM TRA IMEI: ${imei} !!!`);
+
+          if (error.response) {
+            console.error('HTTP Status:', error.response.status);
+            console.error('Response Data:', error.response.data);
+
+            // Xử lý các loại lỗi cụ thể
+            if (error.response.status === 400 && error.response.data?.error) {
+              const errorMsg = error.response.data.error;
+              console.error('Lỗi từ server:', errorMsg);
+
+              // Nếu là lỗi validation IMEI, có thể bỏ qua
+              if (errorMsg.includes('15 chữ số') ||
+                errorMsg.includes('chỉ được chứa') ||
+                errorMsg.includes('không được để trống')) {
+                console.warn(`Bỏ qua IMEI không hợp lệ: ${imei} - ${errorMsg}`);
+                continue; // Bỏ qua IMEI này và tiếp tục
+              }
+            } else if (error.response.status === 500) {
+              console.error('Lỗi server 500 - có thể vấn đề database');
+            }
+
+          } else if (error.request) {
+            console.error('Không nhận được response từ server');
+            console.error('Request:', error.request);
+          } else {
+            console.error('Lỗi khi setup request:', error.message);
+          }
+
+          // Throw error để dừng process nếu không phải lỗi validation
+          throw new Error(`Không thể kiểm tra IMEI ${imei} với database: ${error.response?.data?.error || error.message}`);
+        }
+      }
+
+      console.log('\n=== KẾT QUẢ CUỐI CÙNG ===');
+      console.log('Tổng IMEI đã kiểm tra:', imeis.length);
+      console.log('Số IMEI bị trùng lặp:', duplicates.length);
+      console.log('Danh sách IMEI trùng lặp:', duplicates);
+
+      return duplicates;
+    };
+
     const openImeiModal = (index) => {
       currentVariantIndex.value = index;
       imeiInput.value = localVariantImeis.value[index]?.join('\n') || '';
@@ -918,7 +1045,7 @@ export default defineComponent({
       if (invalidLines.length > 0) {
         toastNotification.value?.addToast({
           type: 'warning',
-          message: `Có ${invalidLines.length} IMEI không hợp lệ (cần đúng 15 chữ số)!`,
+          message: `Có ${invalidLines.length} IMEI không hợp lệ (cần đúng 15 số, hiện tại ${imei.length} số)!`,
           duration: 3000,
         });
       }
@@ -990,45 +1117,82 @@ export default defineComponent({
       });
     };
 
-    const saveImei = () => {
+    // Thay thế function saveImei trong ThemPhienBan.vue
+    const saveImei = async () => {
+      console.log('=== BẮT ĐẦU LUU IMEI ===');
+
+      // Kiểm tra IMEI trùng trong input hiện tại
       const existingImeis = new Set(
-        Object.values(localVariantImeis.value)
-          .flat()
+        Object.entries(localVariantImeis.value)
+          .filter(([key]) => parseInt(key) !== currentVariantIndex.value)
+          .flatMap(([, imeis]) => imeis)
           .filter((imei) => imei && imei.length === 15)
       );
+
+      console.log('IMEI đã tồn tại trong các variant khác:', Array.from(existingImeis));
+
+      // Phân tích IMEI trong input
       const imeiCounts = {};
       filteredImeiList.value.forEach((imei) => {
         if (imei) {
           imeiCounts[imei] = (imeiCounts[imei] || 0) + 1;
         }
       });
+
       const duplicatesInInput = filteredImeiList.value.filter((imei) => imeiCounts[imei] > 1);
-      const newImeis = validImeis.value;
-      const duplicatesWithExisting = newImeis.filter((imei) => existingImeis.has(imei));
+      const duplicatesWithExisting = validImeis.value.filter((imei) => existingImeis.has(imei));
       const invalidImeis = filteredImeiList.value.filter((imei) => imei.length !== 15 && imei.length > 0);
 
-      if (filteredImeiList.value.length > 0 && newImeis.length === 0) {
+      console.log('Phân tích IMEI:');
+      console.log('- Tổng IMEI nhập vào:', filteredImeiList.value.length);
+      console.log('- IMEI hợp lệ:', validImeis.value.length);
+      console.log('- IMEI trùng trong input:', duplicatesInInput.length);
+      console.log('- IMEI trùng với variant khác:', duplicatesWithExisting.length);
+      console.log('- IMEI không hợp lệ:', invalidImeis.length);
+
+      // Kiểm tra lỗi cơ bản
+      if (filteredImeiList.value.length === 0) {
         toastNotification.value?.addToast({
-          type: 'error',
-          message: `Không có IMEI hợp lệ để lưu! ${duplicatesInInput.length > 0 ? `${duplicatesInInput.length} IMEI trùng lặp, ` : ''}${invalidImeis.length > 0 ? `${invalidImeis.length} IMEI không hợp lệ.` : ''}`,
+          type: 'warning',
+          message: 'Chưa nhập IMEI nào để lưu!',
           duration: 3000,
         });
         return;
       }
 
-      if (duplicatesInInput.length > 0) {
+      if (filteredImeiList.value.length > 0 && validImeis.value.length === 0) {
+        let errorMsg = 'Không có IMEI hợp lệ để lưu!';
+        if (duplicatesInInput.length > 0) {
+          errorMsg += ` (${duplicatesInInput.length} IMEI trùng lặp trong danh sách)`;
+        }
+        if (invalidImeis.length > 0) {
+          errorMsg += ` (${invalidImeis.length} IMEI không đúng định dạng)`;
+        }
+        if (duplicatesWithExisting.length > 0) {
+          errorMsg += ` (${duplicatesWithExisting.length} IMEI trùng với variant khác)`;
+        }
+
         toastNotification.value?.addToast({
           type: 'error',
-          message: `Có ${duplicatesInInput.length} IMEI trùng lặp trong danh sách nhập, không thể lưu!`,
-          duration: 3000,
+          message: errorMsg,
+          duration: 4000,
         });
         return;
+      }
+
+      // Cảnh báo về các IMEI bị loại bỏ
+      if (duplicatesInInput.length > 0) {
+        toastNotification.value?.addToast({
+          type: 'warning',
+          message: `Có ${duplicatesInInput.length} IMEI trùng lặp trong danh sách sẽ được bỏ qua.`,
+          duration: 3000,
+        });
       }
 
       if (invalidImeis.length > 0) {
         toastNotification.value?.addToast({
           type: 'warning',
-          message: `Có ${invalidImeis.length} IMEI không hợp lệ đã bị bỏ qua.`,
+          message: `Có ${invalidImeis.length} IMEI không hợp lệ sẽ được bỏ qua.`,
           duration: 3000,
         });
       }
@@ -1036,28 +1200,109 @@ export default defineComponent({
       if (duplicatesWithExisting.length > 0) {
         toastNotification.value?.addToast({
           type: 'warning',
-          message: `Có ${duplicatesWithExisting.length} IMEI trùng với các biến thể khác đã bị bỏ qua.`,
+          message: `Có ${duplicatesWithExisting.length} IMEI trùng với variant khác sẽ được bỏ qua.`,
           duration: 3000,
         });
       }
 
-      if (newImeis.length > 0) {
-        localVariantImeis.value[currentVariantIndex.value] = [...(localVariantImeis.value[currentVariantIndex.value] || []), ...newImeis];
-        emit('variants-updated', { variants: localProductVariants.value, imeis: localVariantImeis.value });
-        toastNotification.value?.addToast({
-          type: 'success',
-          message: `Lưu thành công ${newImeis.length} IMEI!`,
-          duration: 3000,
-        });
-      } else {
-        toastNotification.value?.addToast({
-          type: 'info',
-          message: 'Không có IMEI mới nào được lưu.',
-          duration: 3000,
-        });
+      if (validImeis.value.length === 0) {
+        closeImeiModal();
+        return;
       }
 
-      closeImeiModal();
+      // Hiển thị loading
+      toastNotification.value?.addToast({
+        type: 'info',
+        message: `Đang kiểm tra ${validImeis.value.length} IMEI với database...`,
+        duration: 2000,
+      });
+
+      try {
+        console.log('Bắt đầu kiểm tra với database...');
+
+        // Kiểm tra IMEI với database
+        const duplicatesInDatabase = await checkImelInDatabase(validImeis.value);
+
+        console.log('Kết quả kiểm tra database:', {
+          totalChecked: validImeis.value.length,
+          duplicatesFound: duplicatesInDatabase.length,
+          duplicateList: duplicatesInDatabase
+        });
+
+        if (duplicatesInDatabase.length > 0) {
+          const duplicateDisplay = duplicatesInDatabase.slice(0, 3).join(', ');
+          const moreText = duplicatesInDatabase.length > 3 ? '...' : '';
+
+          toastNotification.value?.addToast({
+            type: 'error',
+            message: `Có ${duplicatesInDatabase.length} IMEI đã tồn tại trong hệ thống: ${duplicateDisplay}${moreText}`,
+            duration: 5000,
+          });
+
+          // Lọc ra các IMEI không bị trùng với database
+          const finalValidImeis = validImeis.value.filter(imei => !duplicatesInDatabase.includes(imei));
+
+          if (finalValidImeis.length === 0) {
+            toastNotification.value?.addToast({
+              type: 'error',
+              message: 'Tất cả IMEI đều đã tồn tại trong hệ thống, không có gì để lưu!',
+              duration: 4000,
+            });
+            return;
+          }
+
+          // Lưu các IMEI còn lại
+          if (!localVariantImeis.value[currentVariantIndex.value]) {
+            localVariantImeis.value[currentVariantIndex.value] = [];
+          }
+
+          localVariantImeis.value[currentVariantIndex.value].push(...finalValidImeis);
+          emit('variants-updated', { variants: localProductVariants.value, imeis: localVariantImeis.value });
+
+          toastNotification.value?.addToast({
+            type: 'warning',
+            message: `Đã lưu ${finalValidImeis.length} IMEI hợp lệ. ${duplicatesInDatabase.length} IMEI bị bỏ qua do trùng với database.`,
+            duration: 4000,
+          });
+        } else {
+          // Tất cả IMEI đều hợp lệ
+          if (!localVariantImeis.value[currentVariantIndex.value]) {
+            localVariantImeis.value[currentVariantIndex.value] = [];
+          }
+
+          localVariantImeis.value[currentVariantIndex.value].push(...validImeis.value);
+          emit('variants-updated', { variants: localProductVariants.value, imeis: localVariantImeis.value });
+
+          toastNotification.value?.addToast({
+            type: 'success',
+            message: `Lưu thành công ${validImeis.value.length} IMEI!`,
+            duration: 3000,
+          });
+        }
+
+        closeImeiModal();
+
+      } catch (error) {
+        console.error('Lỗi khi kiểm tra IMEI:', error);
+
+        let errorMessage = 'Lỗi khi kiểm tra IMEI với database.';
+
+        if (error.message) {
+          if (error.message.includes('timeout')) {
+            errorMessage = 'Kiểm tra IMEI bị timeout. Vui lòng thử lại với ít IMEI hơn.';
+          } else if (error.message.includes('Network Error')) {
+            errorMessage = 'Lỗi kết nối mạng. Vui lòng kiểm tra kết nối internet.';
+          } else {
+            errorMessage = `Lỗi: ${error.message}`;
+          }
+        }
+
+        toastNotification.value?.addToast({
+          type: 'error',
+          message: errorMessage + ' Vui lòng thử lại!',
+          duration: 5000,
+        });
+      }
     };
 
     const downloadImeiTemplate = () => {
@@ -1214,6 +1459,37 @@ export default defineComponent({
       });
     };
 
+    onMounted(() => {
+      loadOptions();
+    });
+
+    onUnmounted(() => {
+      resetForm();
+    });
+
+    // Add this function in the script section, inside setup()
+    const handlePriceInput = (event, variant) => {
+      const rawValue = parsePriceFromVND(event.target.value);
+      variant.donGia = rawValue;
+      // Emit update if needed
+      emit('variants-updated', { variants: localProductVariants.value, imeis: localVariantImeis.value });
+    };
+
+    // Add this function in the script section, inside setup()
+    const formatPriceToVND = (price) => {
+      if (!price) return '';
+      // Remove non-digit characters
+      const numericValue = price.toString().replace(/\D/g, '');
+      // Format with thousand separators
+      return numericValue.replace(/\B(?=(\d{3})+(?!\d))/g, ',') + ' ₫';
+    };
+
+    const parsePriceFromVND = (formattedPrice) => {
+      if (!formattedPrice) return '';
+      // Remove currency symbol and thousand separators
+      return formattedPrice.replace(/[^\d]/g, '');
+    };
+
     return {
       toastNotification,
       productVariants: localProductVariants,
@@ -1271,6 +1547,13 @@ export default defineComponent({
       restrictImeiInput,
       removeImei,
       clearImeiInput,
+      handlePriceInput,
+      formatPriceToVND,
+      parsePriceFromVND,
+      formatPriceToVND,
+      parsePriceFromVND,
+      handlePriceInput,
+      handleGroupPriceInput,
     };
   },
 });
