@@ -130,6 +130,16 @@
                 <span class="code-text">{{ item.ma }}</span>
               </div>
             </template>
+            <template #anhNhanVien="{ item }">
+              <div class="employee-image">
+                <img 
+                  :src="item.anhNhanVien || '/images/avatars/default-avatar.png'" 
+                  :alt="item.tenNhanVien"
+                  class="avatar-image"
+                  @error="$event.target.src = '/images/avatars/default-avatar.png'"
+                />
+              </div>
+            </template>
             <template #tenNhanVien="{ item }">
               <span class="employee-name">{{ item.tenNhanVien }}</span>
             </template>
@@ -288,6 +298,7 @@ onMounted(async () => {
 const headers = [
   { value: "stt", text: "STT" },
   { value: "ma", text: "Mã Nhân Viên" },
+  { value: "anhNhanVien", text: "Ảnh" },
   { value: "tenNhanVien", text: "Tên Nhân Viên" },
   { value: "email", text: "Email" },
   { value: "soDienThoai", text: "Số Điện Thoại" },
@@ -915,6 +926,20 @@ const handleExcelUpload = async (event) => {
 .employee-name {
   font-weight: 500;
   color: #1f3a44;
+}
+
+.employee-image {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.avatar-image {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #34d399;
 }
 
 .status-badge {
