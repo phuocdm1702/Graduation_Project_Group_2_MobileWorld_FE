@@ -1176,18 +1176,17 @@ export default defineComponent({
       if (isSubmitting.value) return;
       if (!validateEntityData()) return;
       isSubmitting.value = true;
+      
       try {
         let response;
-        // Bỏ phần tạo newId tạm thời
         const data = { ...entityData.value };
 
         switch (currentAttribute.value) {
           case 'heDieuHanh':
             response = await addHeDieuHanh(data);
-            // Lấy ID từ response API
             const newItem = response.data;
             heDieuHanhOptions.value.push(newItem);
-            localProductData.value.idHeDieuHanh = newItem.id; // Sử dụng ID thực từ response
+            localProductData.value.idHeDieuHanh = newItem.id;
             searchTerms.value.heDieuHanh = `${newItem.heDieuHanh} ${newItem.phienBan}`.trim();
             filteredOptions.value.heDieuHanh.push(newItem);
             break;
@@ -1200,6 +1199,7 @@ export default defineComponent({
             searchTerms.value.congNgheManHinh = `${newItemCnh.congNgheManHinh} ${newItemCnh.chuanManHinh} ${newItemCnh.kichThuoc} ${newItemCnh.doPhanGiai} ${newItemCnh.doSangToiDa} ${newItemCnh.tanSoQuet} ${newItemCnh.kieuManHinh}`.trim();
             filteredOptions.value.congNgheManHinh.push(newItemCnh);
             break;
+
           case 'nhaSanXuat':
             response = await addNhaSanXuat(data);
             const newItemNsx = response.data;
@@ -1208,6 +1208,7 @@ export default defineComponent({
             searchTerms.value.nhaSanXuat = newItemNsx.nhaSanXuat;
             filteredOptions.value.nhaSanXuat.push(newItemNsx);
             break;
+
           case 'cumCamera':
             response = await addCumCamera(data);
             const newItemCc = response.data;
@@ -1216,6 +1217,7 @@ export default defineComponent({
             searchTerms.value.cumCamera = `${newItemCc.thongSoCameraSau} ${newItemCc.thongSoCameraTruoc}`.trim();
             filteredOptions.value.cumCamera.push(newItemCc);
             break;
+
           case 'sim':
             response = await addSim(data);
             const newItemSim = response.data;
@@ -1224,6 +1226,7 @@ export default defineComponent({
             searchTerms.value.sim = `${newItemSim.soLuongSimHoTro} ${newItemSim.cacLoaiSimHoTro}`.trim();
             filteredOptions.value.sim.push(newItemSim);
             break;
+
           case 'thietKe':
             response = await addThietKe(data);
             const newItemTk = response.data;
@@ -1232,6 +1235,7 @@ export default defineComponent({
             searchTerms.value.thietKe = `${newItemTk.chatLieuKhung} ${newItemTk.chatLieuMatLung}`.trim();
             filteredOptions.value.thietKe.push(newItemTk);
             break;
+
           case 'pin':
             response = await addPin(data);
             const newItemPin = response.data;
@@ -1240,6 +1244,7 @@ export default defineComponent({
             searchTerms.value.pin = `${newItemPin.loaiPin} ${newItemPin.dungLuongPin}`.trim();
             filteredOptions.value.pin.push(newItemPin);
             break;
+
           case 'cpu':
             response = await addCpu(data);
             const newItemCpu = response.data;
@@ -1248,6 +1253,7 @@ export default defineComponent({
             searchTerms.value.cpu = `${newItemCpu.tenCpu} (${newItemCpu.soNhan} nhân)`.trim();
             filteredOptions.value.cpu.push(newItemCpu);
             break;
+
           case 'gpu':
             response = await addGpu(data);
             const newItemGpu = response.data;
@@ -1256,6 +1262,7 @@ export default defineComponent({
             searchTerms.value.gpu = newItemGpu.tenGpu;
             filteredOptions.value.gpu.push(newItemGpu);
             break;
+
           case 'congNgheMang':
             response = await addCongNgheMang(data);
             const newItemCnm = response.data;
@@ -1264,6 +1271,7 @@ export default defineComponent({
             searchTerms.value.congNgheMang = newItemCnm.tenCongNgheMang;
             filteredOptions.value.congNgheMang.push(newItemCnm);
             break;
+
           case 'hoTroCongNgheSac':
             response = await addHoTroCongNgheSac(data);
             const newItemHtcns = response.data;
@@ -1272,6 +1280,7 @@ export default defineComponent({
             searchTerms.value.hoTroCongNgheSac = `${newItemHtcns.congSac} ${newItemHtcns.congNgheHoTro}`.trim();
             filteredOptions.value.hoTroCongNgheSac.push(newItemHtcns);
             break;
+
           case 'chiSoKhangBuiVaNuoc':
             response = await addChiSoKhangBuiVaNuoc(data);
             const newItemCskbn = response.data;
@@ -1280,6 +1289,7 @@ export default defineComponent({
             searchTerms.value.chiSoKhangBuiVaNuoc = newItemCskbn.tenChiSo;
             filteredOptions.value.chiSoKhangBuiVaNuoc.push(newItemCskbn);
             break;
+
           case 'hoTroBoNhoNgoai':
             response = await addHoTroBoNhoNgoai(data);
             const newItemHtbnn = response.data;
@@ -1289,6 +1299,7 @@ export default defineComponent({
             filteredOptions.value.hoTroBoNhoNgoai.push(newItemHtbnn);
             break;
         }
+        
         toastNotification.value?.addToast({
           type: 'success', 
           message: `Thêm ${currentAttributeLabel.value} thành công!`,
@@ -1296,11 +1307,63 @@ export default defineComponent({
         });
         emit('update:productData', localProductData.value);
         closeFormModal();
+        
       } catch (error) {
+        console.log('Full error object:', error);
+        console.log('Error response:', error.response);
+        console.log('Error response data:', error.response?.data);
+        console.log('Error status:', error.response?.status);
+        
+        let errorMessage = `Lỗi khi thêm ${currentAttributeLabel.value}`;
+        
+        // Kiểm tra các trường hợp lỗi cụ thể
+        if (error.response) {
+          const status = error.response.status;
+          const responseData = error.response.data;
+          
+          if (status === 400) {
+            // Kiểm tra message từ server
+            if (responseData?.message) {
+              errorMessage = responseData.message;
+            } else if (responseData?.error) {
+              errorMessage = responseData.error;
+            } else if (responseData?.details) {
+              errorMessage = responseData.details;
+            } else if (typeof responseData === 'string') {
+              errorMessage = responseData;
+            } else {
+              // Kiểm tra các trường hợp check trùng phổ biến
+              const dataStr = JSON.stringify(responseData).toLowerCase();
+              if (dataStr.includes('duplicate') || dataStr.includes('already exists') || 
+                  dataStr.includes('đã tồn tại') || dataStr.includes('trùng lặp')) {
+                errorMessage = `${currentAttributeLabel.value} này đã tồn tại trong hệ thống!`;
+              } else if (dataStr.includes('unique') || dataStr.includes('constraint')) {
+                errorMessage = `${currentAttributeLabel.value} này đã được sử dụng!`;
+              } else {
+                errorMessage = `Dữ liệu không hợp lệ hoặc đã tồn tại!`;
+              }
+            }
+          } else if (status === 409) {
+            errorMessage = `${currentAttributeLabel.value} này đã tồn tại trong hệ thống!`;
+          } else if (status === 422) {
+            if (responseData?.message) {
+              errorMessage = responseData.message;
+            } else {
+              errorMessage = `Dữ liệu không hợp lệ. Vui lòng kiểm tra lại!`;
+            }
+          } else if (status === 500) {
+            errorMessage = `Lỗi hệ thống. Vui lòng thử lại sau!`;
+          } else {
+            errorMessage = `Lỗi server (${status}): ${responseData?.message || responseData?.error || 'Không xác định'}`;
+          }
+        } else if (error.message) {
+          errorMessage = error.message;
+        }
+        
         toastNotification.value?.addToast({
           type: 'error',
-          message: `Lỗi khi thêm ${currentAttributeLabel.value}: ${error.message}`,
-          duration: 3000, 
+          message: errorMessage,
+          duration: 4000,
         });
       } finally {
         isSubmitting.value = false;
