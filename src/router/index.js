@@ -24,6 +24,10 @@ const CongNgheMang = () => import("@/pages/products/thuocTinhSp/CongNgheMang.vue
 const CongNgheManHinh = () => import("@/pages/products/thuocTinhSp/CongNgheManHinh.vue");
 const HeDieuHanh = () => import("@/pages/products/thuocTinhSp/HeDieuHanh.vue");
 const ChiSoKhangBuiVaNuoc = () => import("@/pages/products/thuocTinhSp/ChiSoKhangBuiVaNuoc.vue");
+const MauSac = () => import("@/pages/products/thuocTinhSp/MauSac.vue");
+const Pin = () => import("@/pages/products/thuocTinhSp/Pin.vue");
+const Sim = () => import("@/pages/products/thuocTinhSp/Sim.vue");
+const ThietKe = () => import("@/pages/products/thuocTinhSp/ThietKe.vue");
 const HoaDon = () => import("@/pages/bills/HoaDon.vue");
 const HoaDonChiTiet = () => import("@/pages/bills/HoaDonChiTiet.vue");
 const PhieuGiamGia = () => import("@/pages/promotions/PhieuGiamGia.vue");
@@ -309,6 +313,62 @@ const routes = [
             { name: "Trang chủ", path: "/trangChu" },
             { name: "Sản phẩm", path: "/sanPham" },
             { name: "Chỉ số kháng bụi và nước", path: "/khangBuiKhangNuoc" },
+          ],
+          requiresAdmin: true,
+        },
+      },
+      {
+        path: "/mauSac",
+        name: "MauSac",
+        component: MauSac,
+        meta: {
+          title: "Màu sắc",
+          breadcrumb: [
+            { name: "Trang chủ", path: "/trangChu" },
+            { name: "Sản phẩm", path: "/sanPham" },
+            { name: "Màu sắc", path: "/mauSac" },
+          ],
+          requiresAdmin: true,
+        },
+      },
+      {
+        path: "/pin",
+        name: "Pin",
+        component: Pin,
+        meta: {
+          title: "Pin",
+          breadcrumb: [
+            { name: "Trang chủ", path: "/trangChu" },
+            { name: "Sản phẩm", path: "/sanPham" },
+            { name: "Pin", path: "/pin" },
+          ],
+          requiresAdmin: true,
+        },
+      },
+      {
+        path: "/sim",
+        name: "Sim",
+        component: Sim,
+        meta: {
+          title: "Sim",
+          breadcrumb: [
+            { name: "Trang chủ", path: "/trangChu" },
+            { name: "Sản phẩm", path: "/sanPham" },
+            { name: "Sim", path: "/sim" },
+          ],
+          requiresAdmin: true,
+        },
+      },
+      {
+        path: "/thietKe",
+        name: "ThietKe",
+        component: ThietKe,
+        meta: {
+          title: "Thiết kế",
+          breadcrumb: [
+            { name: "Trang chủ", path: "/trangChu" },
+            { name: "Sản phẩm", path: "/sanPham" },
+            { name: "Thiết kế", path: "/thietKe" },
           ],
           requiresAdmin: true,
         },
