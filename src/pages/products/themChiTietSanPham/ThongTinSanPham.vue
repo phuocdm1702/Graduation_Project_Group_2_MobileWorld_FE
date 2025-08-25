@@ -1177,242 +1177,120 @@ export default defineComponent({
       if (!validateEntityData()) return;
       isSubmitting.value = true;
       try {
-        const newId = `new_${Date.now()}`;
-        const data = { id: newId, ...entityData.value };
-
-        // Map các trường cần kiểm tra trùng lặp
-        const requiredFields = {
-          heDieuHanh: ['heDieuHanh', 'phienBan'],
-          congNgheManHinh: [
-            'congNgheManHinh',
-            'chuanManHinh',
-            'kichThuoc',
-            'doPhanGiai',
-            'doSangToiDa',
-            'tanSoQuet',
-            'kieuManHinh',
-          ],
-          nhaSanXuat: ['nhaSanXuat'],
-          cumCamera: ['thongSoCameraSau', 'thongSoCameraTruoc'],
-          sim: ['cacLoaiSimHoTro', 'soLuongSimHoTro'],
-          thietKe: ['chatLieuKhung', 'chatLieuMatLung'],
-          pin: ['loaiPin', 'dungLuongPin'],
-          cpu: ['tenCpu', 'soNhan'],
-          gpu: ['tenGpu'],
-          congNgheMang: ['tenCongNgheMang'],
-          hoTroCongNgheSac: ['congSac', 'congNgheHoTro'],
-          chiSoKhangBuiVaNuoc: ['tenChiSo'],
-          hoTroBoNhoNgoai: ['hoTroBoNhoNgoai'],
-        };
-
-        // Kiểm tra trùng lặp dựa trên tất cả các trường
-        const checkDuplicate = (options, fields) => {
-          return options.some(opt => 
-            fields.every(field => 
-              String(opt[field] || '').trim() === String(data[field] || '').trim()
-            )
-          );
-        };
+        let response;
+        // Bỏ phần tạo newId tạm thời
+        const data = { ...entityData.value };
 
         switch (currentAttribute.value) {
           case 'heDieuHanh':
-            if (checkDuplicate(heDieuHanhOptions.value, requiredFields.heDieuHanh)) {
-              toastNotification.value?.addToast({
-                type: 'info',
-                message: 'Hệ điều hành này đã tồn tại!',
-                duration: 3000,
-              });
-              return;
-            }
-            await addHeDieuHanh(data);
-            heDieuHanhOptions.value.push(data);
-            localProductData.value.idHeDieuHanh = newId;
-            searchTerms.value.heDieuHanh = `${data.heDieuHanh} ${data.phienBan}`.trim();
-            filteredOptions.value.heDieuHanh.push(data);
+            response = await addHeDieuHanh(data);
+            // Lấy ID từ response API
+            const newItem = response.data;
+            heDieuHanhOptions.value.push(newItem);
+            localProductData.value.idHeDieuHanh = newItem.id; // Sử dụng ID thực từ response
+            searchTerms.value.heDieuHanh = `${newItem.heDieuHanh} ${newItem.phienBan}`.trim();
+            filteredOptions.value.heDieuHanh.push(newItem);
             break;
+
           case 'congNgheManHinh':
-            if (checkDuplicate(congNgheManHinhOptions.value, requiredFields.congNgheManHinh)) {
-              toastNotification.value?.addToast({
-                type: 'info',
-                message: 'Công nghệ màn hình này đã tồn tại!',
-                duration: 3000,
-              });
-              return;
-            }
-            await addCongNgheManHinh(data);
-            congNgheManHinhOptions.value.push(data);
-            localProductData.value.idCongNgheManHinh = newId;
-            searchTerms.value.congNgheManHinh = `${data.congNgheManHinh} ${data.chuanManHinh} ${data.kichThuoc} ${data.doPhanGiai} ${data.doSangToiDa} ${data.tanSoQuet} ${data.kieuManHinh}`.trim();
-            filteredOptions.value.congNgheManHinh.push(data);
+            response = await addCongNgheManHinh(data);
+            const newItemCnh = response.data;
+            congNgheManHinhOptions.value.push(newItemCnh);
+            localProductData.value.idCongNgheManHinh = newItemCnh.id;
+            searchTerms.value.congNgheManHinh = `${newItemCnh.congNgheManHinh} ${newItemCnh.chuanManHinh} ${newItemCnh.kichThuoc} ${newItemCnh.doPhanGiai} ${newItemCnh.doSangToiDa} ${newItemCnh.tanSoQuet} ${newItemCnh.kieuManHinh}`.trim();
+            filteredOptions.value.congNgheManHinh.push(newItemCnh);
             break;
           case 'nhaSanXuat':
-            if (checkDuplicate(nhaSanXuatOptions.value, requiredFields.nhaSanXuat)) {
-              toastNotification.value?.addToast({
-                type: 'info',
-                message: 'Nhà sản xuất này đã tồn tại!',
-                duration: 3000,
-              });
-              return;
-            }
-            await addNhaSanXuat(data);
-            nhaSanXuatOptions.value.push(data);
-            localProductData.value.idNhaSanXuat = newId;
-            searchTerms.value.nhaSanXuat = data.nhaSanXuat;
-            filteredOptions.value.nhaSanXuat.push(data);
+            response = await addNhaSanXuat(data);
+            const newItemNsx = response.data;
+            nhaSanXuatOptions.value.push(newItemNsx);
+            localProductData.value.idNhaSanXuat = newItemNsx.id;
+            searchTerms.value.nhaSanXuat = newItemNsx.nhaSanXuat;
+            filteredOptions.value.nhaSanXuat.push(newItemNsx);
             break;
           case 'cumCamera':
-            if (checkDuplicate(cumCameraOptions.value, requiredFields.cumCamera)) {
-              toastNotification.value?.addToast({
-                type: 'info',
-                message: 'Cụm camera này đã tồn tại!',
-                duration: 3000,
-              });
-              return;
-            }
-            await addCumCamera(data);
-            cumCameraOptions.value.push(data);
-            localProductData.value.idCumCamera = newId;
-            searchTerms.value.cumCamera = `${data.thongSoCameraSau} ${data.thongSoCameraTruoc}`.trim();
-            filteredOptions.value.cumCamera.push(data);
+            response = await addCumCamera(data);
+            const newItemCc = response.data;
+            cumCameraOptions.value.push(newItemCc);
+            localProductData.value.idCumCamera = newItemCc.id;
+            searchTerms.value.cumCamera = `${newItemCc.thongSoCameraSau} ${newItemCc.thongSoCameraTruoc}`.trim();
+            filteredOptions.value.cumCamera.push(newItemCc);
             break;
           case 'sim':
-            if (checkDuplicate(simOptions.value, requiredFields.sim)) {
-              toastNotification.value?.addToast({
-                type: 'info',
-                message: 'Sim này đã tồn tại!',
-                duration: 3000,
-              });
-              return;
-            }
-            await addSim(data);
-            simOptions.value.push(data);
-            localProductData.value.idSim = newId;
-            searchTerms.value.sim = `${data.soLuongSimHoTro} ${data.cacLoaiSimHoTro}`.trim();
-            filteredOptions.value.sim.push(data);
+            response = await addSim(data);
+            const newItemSim = response.data;
+            simOptions.value.push(newItemSim);
+            localProductData.value.idSim = newItemSim.id;
+            searchTerms.value.sim = `${newItemSim.soLuongSimHoTro} ${newItemSim.cacLoaiSimHoTro}`.trim();
+            filteredOptions.value.sim.push(newItemSim);
             break;
           case 'thietKe':
-            if (checkDuplicate(thietKeOptions.value, requiredFields.thietKe)) {
-              toastNotification.value?.addToast({
-                type: 'info',
-                message: 'Thiết kế này đã tồn tại!',
-                duration: 3000,
-              });
-              return;
-            }
-            await addThietKe(data);
-            thietKeOptions.value.push(data);
-            localProductData.value.idThietKe = newId;
-            searchTerms.value.thietKe = `${data.chatLieuKhung} ${data.chatLieuMatLung}`.trim();
-            filteredOptions.value.thietKe.push(data);
+            response = await addThietKe(data);
+            const newItemTk = response.data;
+            thietKeOptions.value.push(newItemTk);
+            localProductData.value.idThietKe = newItemTk.id;
+            searchTerms.value.thietKe = `${newItemTk.chatLieuKhung} ${newItemTk.chatLieuMatLung}`.trim();
+            filteredOptions.value.thietKe.push(newItemTk);
             break;
           case 'pin':
-            if (checkDuplicate(pinOptions.value, requiredFields.pin)) {
-              toastNotification.value?.addToast({
-                type: 'info',
-                message: 'Pin này đã tồn tại!',
-                duration: 3000,
-              });
-              return;
-            }
-            await addPin(data);
-            pinOptions.value.push(data);
-            localProductData.value.idPin = newId;
-            searchTerms.value.pin = `${data.loaiPin} ${data.dungLuongPin}`.trim();
-            filteredOptions.value.pin.push(data);
+            response = await addPin(data);
+            const newItemPin = response.data;
+            pinOptions.value.push(newItemPin);
+            localProductData.value.idPin = newItemPin.id;
+            searchTerms.value.pin = `${newItemPin.loaiPin} ${newItemPin.dungLuongPin}`.trim();
+            filteredOptions.value.pin.push(newItemPin);
             break;
           case 'cpu':
-            if (checkDuplicate(cpuOptions.value, requiredFields.cpu)) {
-              toastNotification.value?.addToast({
-                type: 'info',
-                message: 'CPU này đã tồn tại!',
-                duration: 3000,
-              });
-              return;
-            }
-            await addCpu(data);
-            cpuOptions.value.push({ id: newId, tenCpu: data.tenCpu, soNhan: data.soNhan });
-            localProductData.value.idCpu = newId;
-            searchTerms.value.cpu = `${data.tenCpu} (${data.soNhan} nhân)`.trim();
-            filteredOptions.value.cpu.push(data);
+            response = await addCpu(data);
+            const newItemCpu = response.data;
+            cpuOptions.value.push({ id: newItemCpu.id, tenCpu: newItemCpu.tenCpu, soNhan: newItemCpu.soNhan });
+            localProductData.value.idCpu = newItemCpu.id;
+            searchTerms.value.cpu = `${newItemCpu.tenCpu} (${newItemCpu.soNhan} nhân)`.trim();
+            filteredOptions.value.cpu.push(newItemCpu);
             break;
           case 'gpu':
-            if (checkDuplicate(gpuOptions.value, requiredFields.gpu)) {
-              toastNotification.value?.addToast({
-                type: 'info',
-                message: 'GPU này đã tồn tại!',
-                duration: 3000,
-              });
-              return;
-            }
-            await addGpu(data);
-            gpuOptions.value.push(data);
-            localProductData.value.idGpu = newId;
-            searchTerms.value.gpu = data.tenGpu;
-            filteredOptions.value.gpu.push(data);
+            response = await addGpu(data);
+            const newItemGpu = response.data;
+            gpuOptions.value.push(newItemGpu);
+            localProductData.value.idGpu = newItemGpu.id;
+            searchTerms.value.gpu = newItemGpu.tenGpu;
+            filteredOptions.value.gpu.push(newItemGpu);
             break;
           case 'congNgheMang':
-            if (checkDuplicate(congNgheMangOptions.value, requiredFields.congNgheMang)) {
-              toastNotification.value?.addToast({
-                type: 'info',
-                message: 'Công nghệ mạng này đã tồn tại!',
-                duration: 3000,
-              });
-              return;
-            }
-            await addCongNgheMang(data);
-            congNgheMangOptions.value.push(data);
-            localProductData.value.idCongNgheMang = newId;
-            searchTerms.value.congNgheMang = data.tenCongNgheMang;
-            filteredOptions.value.congNgheMang.push(data);
+            response = await addCongNgheMang(data);
+            const newItemCnm = response.data;
+            congNgheMangOptions.value.push(newItemCnm);
+            localProductData.value.idCongNgheMang = newItemCnm.id;
+            searchTerms.value.congNgheMang = newItemCnm.tenCongNgheMang;
+            filteredOptions.value.congNgheMang.push(newItemCnm);
             break;
           case 'hoTroCongNgheSac':
-            if (checkDuplicate(hoTroCongNgheSacOptions.value, requiredFields.hoTroCongNgheSac)) {
-              toastNotification.value?.addToast({
-                type: 'info',
-                message: 'Công nghệ sạc này đã tồn tại!',
-                duration: 3000,
-              });
-              return;
-            }
-            await addHoTroCongNgheSac(data);
-            hoTroCongNgheSacOptions.value.push(data);
-            localProductData.value.idHoTroCongNgheSac = newId;
-            searchTerms.value.hoTroCongNgheSac = `${data.congSac} ${data.congNgheHoTro}`.trim();
-            filteredOptions.value.hoTroCongNgheSac.push(data);
+            response = await addHoTroCongNgheSac(data);
+            const newItemHtcns = response.data;
+            hoTroCongNgheSacOptions.value.push(newItemHtcns);
+            localProductData.value.idHoTroCongNgheSac = newItemHtcns.id;
+            searchTerms.value.hoTroCongNgheSac = `${newItemHtcns.congSac} ${newItemHtcns.congNgheHoTro}`.trim();
+            filteredOptions.value.hoTroCongNgheSac.push(newItemHtcns);
             break;
           case 'chiSoKhangBuiVaNuoc':
-            if (checkDuplicate(chiSoKhangBuiVaNuocOptions.value, requiredFields.chiSoKhangBuiVaNuoc)) {
-              toastNotification.value?.addToast({
-                type: 'info',
-                message: 'Chỉ số kháng bụi nước này đã tồn tại!',
-                duration: 3000,
-              });
-              return;
-            }
-            await addChiSoKhangBuiVaNuoc(data);
-            chiSoKhangBuiVaNuocOptions.value.push(data);
-            localProductData.value.idChiSoKhangBuiVaNuoc = newId;
-            searchTerms.value.chiSoKhangBuiVaNuoc = data.tenChiSo;
-            filteredOptions.value.chiSoKhangBuiVaNuoc.push(data);
+            response = await addChiSoKhangBuiVaNuoc(data);
+            const newItemCskbn = response.data;
+            chiSoKhangBuiVaNuocOptions.value.push(newItemCskbn);
+            localProductData.value.idChiSoKhangBuiVaNuoc = newItemCskbn.id;
+            searchTerms.value.chiSoKhangBuiVaNuoc = newItemCskbn.tenChiSo;
+            filteredOptions.value.chiSoKhangBuiVaNuoc.push(newItemCskbn);
             break;
           case 'hoTroBoNhoNgoai':
-            if (checkDuplicate(hoTroBoNhoNgoaiOptions.value, requiredFields.hoTroBoNhoNgoai)) {
-              toastNotification.value?.addToast({
-                type: 'info',
-                message: 'Hỗ trợ bộ nhớ ngoài này đã tồn tại!',
-                duration: 3000,
-              });
-              return;
-            }
-            await addHoTroBoNhoNgoai(data);
-            hoTroBoNhoNgoaiOptions.value.push(data);
-            localProductData.value.idHoTroBoNhoNgoai = newId;
-            searchTerms.value.hoTroBoNhoNgoai = data.hoTroBoNhoNgoai;
-            filteredOptions.value.hoTroBoNhoNgoai.push(data);
+            response = await addHoTroBoNhoNgoai(data);
+            const newItemHtbnn = response.data;
+            hoTroBoNhoNgoaiOptions.value.push(newItemHtbnn);
+            localProductData.value.idHoTroBoNhoNgoai = newItemHtbnn.id;
+            searchTerms.value.hoTroBoNhoNgoai = newItemHtbnn.hoTroBoNhoNgoai;
+            filteredOptions.value.hoTroBoNhoNgoai.push(newItemHtbnn);
             break;
         }
         toastNotification.value?.addToast({
-          type: 'success',
+          type: 'success', 
           message: `Thêm ${currentAttributeLabel.value} thành công!`,
           duration: 3000,
         });
@@ -1422,7 +1300,7 @@ export default defineComponent({
         toastNotification.value?.addToast({
           type: 'error',
           message: `Lỗi khi thêm ${currentAttributeLabel.value}: ${error.message}`,
-          duration: 3000,
+          duration: 3000, 
         });
       } finally {
         isSubmitting.value = false;
