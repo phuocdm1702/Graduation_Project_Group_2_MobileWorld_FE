@@ -41,6 +41,7 @@ import {
   createPaymentApi,
   completeOrderApi,
   checkVNPayPaymentStatusApi,
+  addProductByBarcodeOrImeiApi,
 } from "./banHangApi";
 
 export default {
@@ -190,17 +191,30 @@ export default {
     }, 300);
 
     // DataTable headers
+    // const cartHeaders = ref([
+    //   { text: "STT", value: "stt" },
+    //   { text: "Ảnh", value: "imageUrl", width: "100px" },
+    //   { text: "Tên sản phẩm", value: "name" },
+    //   { text: "Màu sắc", value: "color" },
+    //   { text: "RAM", value: "ram" },
+    //   { text: "Bộ nhớ", value: "storage" },
+    //   { text: "IMEI", value: "imei" },
+    //   { text: "Đơn giá", value: "currentPrice" },
+    //   { text: "Số lượng", value: "quantity" },
+    //   { text: "Thành tiền", value: "total" },
+    //   { text: "Hành động", value: "actions" },
+    // ]);
+
+    // Cập nhật cartHeaders với các trường từ cartItems
     const cartHeaders = ref([
-      { text: "STT", value: "stt" },
-      { text: "Ảnh", value: "imageUrl", width: "100px" },
-      { text: "Tên sản phẩm", value: "name" },
-      { text: "Màu sắc", value: "color" },
+      { text: "Tên sản phẩm", value: "tenSanPham" },
+      { text: "Màu sắc", value: "mauSac" },
       { text: "RAM", value: "ram" },
-      { text: "Bộ nhớ", value: "storage" },
-      { text: "IMEI", value: "imei" },
-      { text: "Đơn giá", value: "currentPrice" },
-      { text: "Số lượng", value: "quantity" },
-      { text: "Thành tiền", value: "total" },
+      { text: "Bộ nhớ", value: "boNhoTrong" },
+      { text: "IMEI", value: "maImel" },
+      { text: "Số lượng", value: "soLuong" },
+      { text: "Giá bán", value: "giaBan" },
+      { text: "Tổng tiền", value: "tongTien" },
       { text: "Hành động", value: "actions" },
     ]);
 
@@ -1647,86 +1661,113 @@ export default {
       });
     };
 
+    // Hàm quét mã và thêm sản phẩm vào giỏ hàng
+    // Hàm quét mã và thêm sản phẩm vào giỏ hàng
     const startZXingScan = async () => {
-      const videoEl = document.querySelector("#barcode-scanner-video");
-      if (!videoEl) {
-        console.error("Phần tử video không tồn tại!");
-        showToast(
-          "error",
-          "Không tìm thấy phần tử video để quét. Vui lòng làm mới trang."
-        );
+      if (!videoElement.value) {
+        scanError.value = "Không tìm thấy phần tử video.";
+        showToast("error", "Không tìm thấy phần tử video.");
+        isScanning.value = false;
+        showScanModal.value = false;
         return;
       }
-      videoElement.value = videoEl;
 
-      const scanRegionEl = document.querySelector("#scan-region");
-      if (!scanRegionEl) {
-        console.error("Phần tử scan-region không tồn tại!");
-        showToast("error", "Không tìm thấy vùng quét. Vui lòng kiểm tra HTML.");
-        return;
-      }
-      scanRegion.value = scanRegionEl;
+      cleanupZXing(); // Làm sạch trước khi khởi động lại
 
       codeReader.value = new BrowserMultiFormatReader();
+      isScanning.value = true;
+      scanError.value = "";
+
       try {
-        const constraints = {
-          video: {
-            facingMode: "environment",
-            width: { min: 640 },
-            height: { min: 480 },
-          },
-        };
-        const stream = await navigator.mediaDevices.getUserMedia(constraints);
-        videoElement.value.srcObject = stream;
-        videoElement.value.play();
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const videoDevices = devices.filter(device => device.kind === 'videoinput');
+        let selectedDeviceId = videoDevices[videoDevices.length - 1]?.deviceId; // Ưu tiên camera sau
 
-        isCameraActive.value = true;
-        showToast(
-          "info",
-          "Camera đã sẵn sàng, hãy đặt barcode vào vùng quét..."
-        );
+        if (!selectedDeviceId) {
+          scanError.value = "Không tìm thấy camera khả dụng.";
+          showToast("error", "Không tìm thấy camera khả dụng.");
+          isScanning.value = false;
+          showScanModal.value = false;
+          return;
+        }
 
-        codeReader.value.decodeFromVideoDevice(
-          undefined,
+        await codeReader.value.decodeFromVideoDevice(
+          selectedDeviceId,
           videoElement.value,
           (result, error) => {
             if (result) {
-              const scanRect = scanRegion.value.getBoundingClientRect();
-              const videoRect = videoElement.value.getBoundingClientRect();
-              const resultPoints = result.getResultPoints();
-
-              const isInScanRegion = resultPoints.some((point) => {
-                const x =
-                  (point.getX() / videoRect.width) * videoRect.width +
-                  videoRect.left;
-                const y =
-                  (point.getY() / videoRect.height) * videoRect.height +
-                  videoRect.top;
-                return (
-                  x >= scanRect.left &&
-                  x <= scanRect.right &&
-                  y >= scanRect.top &&
-                  y <= scanRect.bottom
-                );
-              });
-
-              if (isInScanRegion) {
-                scannedCode.value = result.getText();
-                handleScan(scannedCode.value);
-                cleanupZXing();
-              }
+              scannedCode.value = result.getText();
+              addScannedProductToCart();
             }
             if (error && !(error instanceof NotFoundException)) {
-              showToast("error", `Lỗi quét: ${error.message}`);
-              cleanupZXing();
+              console.error("Lỗi quét mã:", error);
+              scanError.value = `Lỗi khi quét: ${error.message}`;
+              showToast("error", `Lỗi khi quét: ${error.message}`);
             }
           }
         );
-      } catch (err) {
-        scanError.value = err.message || "Không thể truy cập camera";
-        showToast("error", scanError.value);
+      } catch (error) {
+        console.error("Lỗi khi khởi động camera:", error);
+        scanError.value = "Không thể truy cập camera. Vui lòng kiểm tra quyền truy cập.";
+        showToast("error", "Không thể truy cập camera. Vui lòng kiểm tra quyền truy cập.");
         cleanupZXing();
+        showScanModal.value = false;
       }
+    };
+
+    // Hàm thêm sản phẩm vào giỏ hàng từ mã QR/barcode
+    const addScannedProductToCart = async () => {
+      if (!scannedCode.value || !activeInvoiceId.value) {
+        showToast("error", "Không có mã QR/barcode hoặc hóa đơn chưa được chọn.");
+        cleanupZXing();
+        closeScanModal();
+        return;
+      }
+
+      try {
+        const response = await addProductByBarcodeOrImeiApi(activeInvoiceId.value, scannedCode.value);
+        // Kiểm tra và cập nhật cartItems từ response giống như addProductToCartApi
+        if (response && response.chiTietGioHangDTO) {
+          const newItem = response.chiTietGioHangDTO;
+          // Đảm bảo các trường cần thiết có giá trị, nếu không fallback sang load lại
+          if (newItem.tenSanPham && newItem.giaBan && newItem.soLuong && newItem.tongTien) {
+            cartItems.value = [...cartItems.value, newItem];
+            showToast("success", "Đã thêm sản phẩm vào giỏ hàng từ mã QR/barcode.");
+          } else {
+            // Fallback: Load lại giỏ hàng nếu dữ liệu không đầy đủ
+            const updatedCart = await loadPendingInvoiceApi(activeInvoiceId.value);
+            cartItems.value = updatedCart.chiTietGioHangDTOS || [];
+            showToast("warning", "Dữ liệu không đầy đủ, đã đồng bộ giỏ hàng.");
+          }
+        } else {
+          // Fallback: Load lại giỏ hàng nếu response không chứa chiTietGioHangDTO
+          const updatedCart = await loadPendingInvoiceApi(activeInvoiceId.value);
+          cartItems.value = updatedCart.chiTietGioHangDTOS || [];
+          showToast("warning", "Không tìm thấy dữ liệu sản phẩm, đã đồng bộ giỏ hàng.");
+        }
+      } catch (error) {
+        showToast("error", error.message || "Lỗi khi thêm sản phẩm vào giỏ hàng.");
+      } finally {
+        cleanupZXing();
+        closeScanModal();
+      }
+    };
+
+    // Hàm mở modal quét
+    const openScanModal = async () => {
+      if (!activeInvoiceId.value) {
+        showToast("error", "Vui lòng chọn hoặc tạo hóa đơn chờ trước khi quét mã");
+        return;
+      }
+      showScanModal.value = true;
+      await nextTick(); // Đợi DOM render
+      if (!videoElement.value) {
+        scanError.value = "Không tìm thấy phần tử video.";
+        showToast("error", "Không tìm thấy phần tử video trong modal.");
+        showScanModal.value = false;
+        return;
+      }
+      startZXingScan();
     };
 
     const closeScanModal = () => {
@@ -1735,16 +1776,14 @@ export default {
     };
 
     const cleanupZXing = () => {
-      if (isCameraActive.value && codeReader.value) {
+      if (codeReader.value) {
         codeReader.value.reset();
-        isCameraActive.value = false;
-        if (videoElement.value && videoElement.value.srcObject) {
-          const stream = videoElement.value.srcObject;
-          const tracks = stream.getTracks();
-          tracks.forEach((track) => track.stop());
-          videoElement.value.srcObject = null;
-        }
+        codeReader.value = null;
       }
+      isScanning.value = false;
+      isCameraActive.value = false;
+      scannedCode.value = "";
+      scanError.value = "";
     };
 
     const handleScan = async (code) => {
@@ -2529,6 +2568,9 @@ export default {
       selectAddress,
       applySelectedAddress,
       closeAddressModal,
+      openScanModal,
+      addScannedProductToCart,
+      videoElement,
     };
   },
 };

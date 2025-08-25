@@ -151,42 +151,32 @@
 
     <NotificationModal ref="notificationModal" />
     <ToastNotification ref="toastNotification" />
-    <!-- Scan Barcode Modal -->
-    <div v-if="showScanModal" class="modal fade show d-block" tabindex="-1" style="background: rgba(0, 0, 0, 0.5)">
+    <!-- Modal quét mã QR/Barcode -->
+    <div v-if="showScanModal" class="modal fade show d-block" tabindex="-1" role="dialog"
+      style="background: rgba(0, 0, 0, 0.5);">
       <div class="modal-dialog modal-dialog-centered modal-lg">
-        <div class="modal-content shadow-lg p-3 gradient-modal animate__animated animate__zoomIn" style="
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(15px);
-            border-radius: 0.5rem;
-          ">
-          <div class="modal-header border-0 d-flex justify-content-between align-items-center">
-            <h5 class="modal-title fw-bold text-dark">Quét Barcode</h5>
-            <button class="btn btn-outline-secondary btn-close-custom" @click="closeScanModal">
-              <i class="bi bi-x-lg"></i>
-            </button>
+        <div class="modal-content gradient-modal">
+          <div class="modal-header">
+            <h5 class="modal-title">Quét mã vạch EAN-15</h5>
+            <button type="button" class="btn-close" @click="closeScanModal"></button>
           </div>
-          <div class="modal-body p-4">
-            <div id="barcode-scanner" style="position: relative">
-              <video id="barcode-scanner-video" ref="videoElement" style="width: 100%; height: auto" autoplay></video>
-              <div id="scan-region" ref="scanRegion" class="scan-region">
-                <div class="scan-border"></div>
+          <div class="modal-body text-center position-relative">
+            <div class="scan-container">
+              <video ref="videoElement" class="scan-video" style="max-height: 400px; width: 100%;"></video>
+              <div class="scan-overlay">
+                <div class="scan-frame">
+                  <div class="scan-line"></div>
+                </div>
               </div>
-              <div v-if="isScanning" class="text-center mt-2">
-                <span class="spinner-border spinner-border-sm text-teal" role="status"></span>
-                <span class="text-muted ms-2">Đang quét...</span>
-              </div>
-              <div v-if="scanError" class="text-danger text-center mt-2">
-                {{ scanError }}
+              <div v-if="isScanning" class="scan-status">
+                <p v-if="scannedCode" class="text-success">Mã quét: {{ scannedCode }}</p>
+                <p v-if="scanError" class="text-danger">{{ scanError }}</p>
+                <p v-if="!scannedCode && !scanError" class="text-muted">Đang quét...</p>
               </div>
             </div>
           </div>
-          <div class="modal-footer border-0">
-            <button @click="closeScanModal" class="btn btn-secondary me-2">
-              Đóng
-            </button>
-            <button @click="startZXingScan" class="btn btn-success" :disabled="isCameraActive">
-              Bắt đầu quét
-            </button>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" @click="closeScanModal">Đóng</button>
           </div>
         </div>
       </div>
@@ -1830,6 +1820,88 @@ export default defineComponent({
 
   .carousel-controls {
     flex-direction: column;
+  }
+}
+
+.scan-container {
+  position: relative;
+  overflow: hidden;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.scan-video {
+  display: block;
+  border-radius: 10px;
+}
+
+.scan-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.3);
+  pointer-events: none;
+}
+
+.scan-frame {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 80%;
+  height: 200px;
+  border: 2px solid #34d399;
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(52, 211, 153, 0.5);
+}
+
+.scan-line {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(to right, transparent, #ff4444, transparent);
+  animation: scan 2s infinite linear;
+}
+
+@keyframes scan {
+  0% {
+    top: 0;
+  }
+
+  50% {
+    top: 100%;
+  }
+
+  100% {
+    top: 0;
+  }
+}
+
+.scan-status {
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80%;
+  text-align: center;
+  padding: 10px;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 5px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+@media (max-width: 768px) {
+  .scan-frame {
+    width: 90%;
+    height: 150px;
+  }
+
+  .scan-video {
+    max-height: 300px;
   }
 }
 </style>

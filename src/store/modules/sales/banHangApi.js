@@ -127,9 +127,9 @@ export const getAllAddressesByKhachHangIdApi = async (idKhachHang) => {
     return { success: true, data: validAddresses };
   } catch (error) {
     console.error("Error fetching addresses:", error.response?.data || error.message);
-    return { 
-      success: true, 
-      message: error.response?.data?.error || "Lỗi khi tải danh sách địa chỉ khách hàng" 
+    return {
+      success: true,
+      message: error.response?.data?.error || "Lỗi khi tải danh sách địa chỉ khách hàng"
     };
   }
 };
@@ -145,9 +145,9 @@ export const searchCustomersApi = async (query, hoaDonId) => {
     });
     return { success: true, data: response.data };
   } catch (error) {
-    return { 
-      success: false, 
-      message: error.response?.data || "Không tìm thấy khách hàng hoặc hóa đơn không hợp lệ" 
+    return {
+      success: false,
+      message: error.response?.data || "Không tìm thấy khách hàng hoặc hóa đơn không hợp lệ"
     };
   }
 };
@@ -163,9 +163,9 @@ export const updatePhieuGiamGiaApi = async (hoaDonId, idPhieuGiamGia) => {
     });
     return { success: true, data: response.data };
   } catch (error) {
-    return { 
-      success: false, 
-      message: error.response?.data || "Lỗi khi cập nhật phiếu giảm giá" 
+    return {
+      success: false,
+      message: error.response?.data || "Lỗi khi cập nhật phiếu giảm giá"
     };
   }
 };
@@ -282,5 +282,15 @@ export const checkVNPayPaymentStatusApi = async (urlParams) => {
     return response.data;
   } catch (error) {
     throw new Error(error.response?.data?.message || "Lỗi khi kiểm tra trạng thái thanh toán VNPay");
+  }
+};
+
+// New API: Add product to cart by barcode/IMEI
+export const addProductByBarcodeOrImeiApi = async (idHD, code) => {
+  try {
+    const response = await apiService.post(`/api/products/by-barcode-or-imei/add-to-cart?idHD=${idHD}&code=${code}`);
+    return response.data;
+  } catch (error) {
+    throw new Error(error.response?.data?.message || "Lỗi khi thêm sản phẩm từ IMEI vào giỏ hàng");
   }
 };
