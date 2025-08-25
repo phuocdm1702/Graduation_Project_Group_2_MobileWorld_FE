@@ -12,7 +12,7 @@
             'completed': status.completed,
             'current': status.current,
             'canceled': status.title === 'Đã hủy'
-          }" @click="changeStatus(status.title)">
+          }" @click="changeStatus(status.title)" :disabled="isActionButtonsDisabled">
             <div class="step-circle">
               <i :class="status.icon"></i>
             </div>
@@ -72,11 +72,11 @@
     <!-- Danh sách sản phẩm -->
     <FilterTableSection title="Danh Sách Sản Phẩm" icon="bi bi-box-seam">
       <div class="section-body m-3">
-        <div class="product-actions mb-3 d-flex justify-content-end gap-2">
+        <!-- <div class="product-actions mb-3 d-flex justify-content-end gap-2">
           <button class="btn btn-action" @click="isAddProductModalVisible = true" :disabled="isActionButtonsDisabled">
             Thêm Sản Phẩm
           </button>
-        </div>
+        </div> -->
         <div class="products-list">
           <div v-for="product in products" :key="product.id" class="product-card animate__animated animate__zoomIn"
             style="--animate-delay: 0.4s;">
@@ -180,13 +180,9 @@
             </div>
             <!-- DataTable cho danh sách sản phẩm -->
             <div class="table-body">
-              <DataTable title="" :headers="productHeaders" 
-              :data="paginatedProducts"
-                :pageSizeOptions="productPageSizeOptions" 
-                :currentPage="productCurrentPage"
-                :itemsPerPage="productItemsPerPage" 
-                :totalPages="totalProductPages" 
-                :rowClass="getProductRowClass"
+              <DataTable title="" :headers="productHeaders" :data="paginatedProducts"
+                :pageSizeOptions="productPageSizeOptions" :currentPage="productCurrentPage"
+                :itemsPerPage="productItemsPerPage" :totalPages="totalProductPages" :rowClass="getProductRowClass"
                 @update:currentPage="updateProductPage" @update:itemsPerPage="updateProductItemsPerPage">
                 <template #stt="{ globalIndex }">
                   {{ globalIndex + 1 }}
@@ -696,7 +692,7 @@ export default {
   ...HoaDonChiTiet,
   computed: {
     isActionButtonsDisabled() {
-      return ['Đang giao', 'Hoàn thành', 'Đã hủy'].includes(this.invoice.trangThai);
+      return ['Chờ giao hàng', 'Đang giao', 'Hoàn thành', 'Đã hủy'].includes(this.invoice.trangThai);
     }
   }
 };
