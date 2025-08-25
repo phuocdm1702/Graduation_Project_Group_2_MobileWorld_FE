@@ -6,7 +6,7 @@ import ToastNotification from "@/components/common/ToastNotification.vue";
 import FilterTableSection from "@/components/common/FilterTableSection.vue";
 import QrcodeVue from "qrcode.vue";
 import { useRouter } from "vue-router";
-import { BrowserMultiFormatReader, NotFoundException } from "@zxing/library";
+import { BrowserMultiFormatReader, NotFoundException, BarcodeFormat, DecodeHintType } from "@zxing/library";
 import { useGiaoCaStore } from "@/store/modules/giaoCa";
 
 // Import utility and API functions
@@ -54,6 +54,7 @@ export default {
     QrcodeVue,
   },
   setup() {
+    const selectedDeviceId = ref(null);
     const codeReader = ref(null);
     const isCameraActive = ref(false);
     const showScanModal = ref(false);
@@ -205,16 +206,17 @@ export default {
     //   { text: "Hành động", value: "actions" },
     // ]);
 
-    // Cập nhật cartHeaders với các trường từ cartItems
     const cartHeaders = ref([
-      { text: "Tên sản phẩm", value: "tenSanPham" },
-      { text: "Màu sắc", value: "mauSac" },
+      { text: "STT", value: "stt" },
+      { text: "Ảnh", value: "imageUrl", width: "100px" },
+      { text: "Tên sản phẩm", value: "name" },
+      { text: "Màu sắc", value: "color" },
       { text: "RAM", value: "ram" },
-      { text: "Bộ nhớ", value: "boNhoTrong" },
-      { text: "IMEI", value: "maImel" },
-      { text: "Số lượng", value: "soLuong" },
-      { text: "Giá bán", value: "giaBan" },
-      { text: "Tổng tiền", value: "tongTien" },
+      { text: "Bộ nhớ", value: "storage" },
+      { text: "IMEI", value: "imei" },
+      { text: "Đơn giá", value: "currentPrice" },
+      { text: "Số lượng", value: "quantity" },
+      { text: "Thành tiền", value: "total" },
       { text: "Hành động", value: "actions" },
     ]);
 
@@ -874,6 +876,7 @@ export default {
             dungLuongBoNhoTrong: sp.dungLuongBoNhoTrong || "N/A",
             soLuong: sp.soLuong || 0,
             giaBan: sp.giaBan || 0,
+            imageUrl: sp.image || '/assets/images/placeholder.jpg',
           }))
         );
         totalPages.value = response.totalPages;
@@ -1111,6 +1114,7 @@ export default {
           currentPrice: Number(item.giaBan) || 0,
           quantity: item.soLuong,
           ghiChuGia: item.ghiChuGia || "",
+          imageUrl: item.image || '/assets/images/placeholder.jpg',
         }));
         const invoiceIndex = pendingInvoices.value.findIndex(
           (inv) => inv.id === activeInvoiceId.value
@@ -1661,95 +1665,104 @@ export default {
       });
     };
 
-    // Hàm quét mã và thêm sản phẩm vào giỏ hàng
-    // Hàm quét mã và thêm sản phẩm vào giỏ hàng
+    // // Hàm quét mã và thêm sản phẩm vào giỏ hàng
     const startZXingScan = async () => {
-      if (!videoElement.value) {
-        scanError.value = "Không tìm thấy phần tử video.";
-        showToast("error", "Không tìm thấy phần tử video.");
-        isScanning.value = false;
-        showScanModal.value = false;
-        return;
-      }
-
-      cleanupZXing(); // Làm sạch trước khi khởi động lại
-
       codeReader.value = new BrowserMultiFormatReader();
+
+      // Hints cho CODE128 (giữ nguyên)
+      const hints = new Map();
+      hints.set(DecodeHintType.POSSIBLE_FORMATS, [
+        BarcodeFormat.CODE_128,
+        BarcodeFormat.EAN_13,
+        BarcodeFormat.QR_CODE,
+      ]);
+      hints.set(DecodeHintType.TRY_HARDER, true);
+      codeReader.value.hints = hints;
+
       isScanning.value = true;
       scanError.value = "";
+      scannedCode.value = "";
 
       try {
+        // Liệt kê tất cả camera devices
         const devices = await navigator.mediaDevices.enumerateDevices();
         const videoDevices = devices.filter(device => device.kind === 'videoinput');
-        let selectedDeviceId = videoDevices[videoDevices.length - 1]?.deviceId; // Ưu tiên camera sau
 
-        if (!selectedDeviceId) {
-          scanError.value = "Không tìm thấy camera khả dụng.";
-          showToast("error", "Không tìm thấy camera khả dụng.");
-          isScanning.value = false;
-          showScanModal.value = false;
-          return;
+        if (videoDevices.length === 0) {
+          throw new Error('Không tìm thấy camera trên thiết bị.');
         }
 
+        // Ưu tiên chọn camera rear (thường có label chứa 'back' hoặc 'rear')
+        const rearCamera = videoDevices.find(device =>
+          device.label.toLowerCase().includes('back') || device.label.toLowerCase().includes('rear')
+        ) || videoDevices[0]; // Fallback về camera đầu tiên nếu không tìm thấy rear
+
+        selectedDeviceId.value = rearCamera.deviceId;
+        console.log('Camera được chọn:', rearCamera.label);
+
+        // Decode với deviceId cụ thể và ID của video element
         await codeReader.value.decodeFromVideoDevice(
-          selectedDeviceId,
-          videoElement.value,
-          (result, error) => {
+          selectedDeviceId.value,  // Device ID (null để dùng default, nhưng dùng cụ thể để chọn rear)
+          'videoScan',  // ID string của <video>
+          (result, err) => {
             if (result) {
-              scannedCode.value = result.getText();
-              addScannedProductToCart();
-            }
-            if (error && !(error instanceof NotFoundException)) {
-              console.error("Lỗi quét mã:", error);
-              scanError.value = `Lỗi khi quét: ${error.message}`;
-              showToast("error", `Lỗi khi quét: ${error.message}`);
+              scannedCode.value = result.text;
+              isScanning.value = false;
+              addScannedProductToCart(scannedCode.value);
+              setTimeout(() => closeScanModal(), 1000);
+            } else if (err && !(err instanceof NotFoundException)) {
+              scanError.value = `Lỗi quét: ${err.message}. Hãy thử lại hoặc kiểm tra quyền camera.`;
+              console.error("ZXing Error:", err);
             }
           }
         );
+        isCameraActive.value = true;
       } catch (error) {
-        console.error("Lỗi khi khởi động camera:", error);
-        scanError.value = "Không thể truy cập camera. Vui lòng kiểm tra quyền truy cập.";
-        showToast("error", "Không thể truy cập camera. Vui lòng kiểm tra quyền truy cập.");
-        cleanupZXing();
-        showScanModal.value = false;
+        scanError.value = `Lỗi khởi động camera: ${error.message}. Vui lòng cấp quyền camera và thử lại.`;
+        console.error("ZXing Init Error:", error);
+        // Nếu permission denied, prompt user
+        if (error.name === 'NotAllowedError') {
+          showToast('error', 'Quyền truy cập camera bị từ chối. Vui lòng cấp quyền trong cài đặt trình duyệt.');
+        }
       }
     };
 
-    // Hàm thêm sản phẩm vào giỏ hàng từ mã QR/barcode
+
     const addScannedProductToCart = async () => {
       if (!scannedCode.value || !activeInvoiceId.value) {
-        showToast("error", "Không có mã QR/barcode hoặc hóa đơn chưa được chọn.");
-        cleanupZXing();
-        closeScanModal();
+        showToast("error", "Vui lòng chọn hóa đơn và quét mã hợp lệ");
         return;
       }
 
       try {
         const response = await addProductByBarcodeOrImeiApi(activeInvoiceId.value, scannedCode.value);
-        // Kiểm tra và cập nhật cartItems từ response giống như addProductToCartApi
-        if (response && response.chiTietGioHangDTO) {
-          const newItem = response.chiTietGioHangDTO;
-          // Đảm bảo các trường cần thiết có giá trị, nếu không fallback sang load lại
-          if (newItem.tenSanPham && newItem.giaBan && newItem.soLuong && newItem.tongTien) {
-            cartItems.value = [...cartItems.value, newItem];
-            showToast("success", "Đã thêm sản phẩm vào giỏ hàng từ mã QR/barcode.");
-          } else {
-            // Fallback: Load lại giỏ hàng nếu dữ liệu không đầy đủ
-            const updatedCart = await loadPendingInvoiceApi(activeInvoiceId.value);
-            cartItems.value = updatedCart.chiTietGioHangDTOS || [];
-            showToast("warning", "Dữ liệu không đầy đủ, đã đồng bộ giỏ hàng.");
-          }
-        } else {
-          // Fallback: Load lại giỏ hàng nếu response không chứa chiTietGioHangDTO
-          const updatedCart = await loadPendingInvoiceApi(activeInvoiceId.value);
-          cartItems.value = updatedCart.chiTietGioHangDTOS || [];
-          showToast("warning", "Không tìm thấy dữ liệu sản phẩm, đã đồng bộ giỏ hàng.");
-        }
-      } catch (error) {
-        showToast("error", error.message || "Lỗi khi thêm sản phẩm vào giỏ hàng.");
-      } finally {
-        cleanupZXing();
+
+        // Ánh xạ dữ liệu từ response sang cấu trúc phù hợp với cartHeaders
+        const product = response;
+        cartItems.value.push({
+          id: product.chiTietSanPhamId,
+          name: product.tenSanPham,
+          color: product.mauSac,
+          ram: product.ram,
+          storage: product.boNhoTrong,
+          quantity: product.stock || 1,
+          currentPrice: product.giaBan,
+          imei: product.maImel,
+          imageUrl: product.image || 'default-image.png', // Ánh xạ image, dùng giá trị mặc định nếu null
+          originalPrice: product.tongTien || product.giaBan * 1, // Ánh xạ tổng tiền
+          actions: "Xóa"
+        });
+
+        // Cập nhật tổng tiền
+        tongTien.value = cartItems.value.reduce(
+          (sum, item) => sum + Number(item.currentPrice) * item.quantity,
+          0
+        );
+
+        showToast("success", `Đã thêm sản phẩm ${product.tenSanPham} vào giỏ hàng`);
         closeScanModal();
+      } catch (error) {
+        showToast("error", error.message || "Lỗi khi thêm sản phẩm vào giỏ hàng");
       }
     };
 
@@ -1775,13 +1788,15 @@ export default {
       cleanupZXing();
     };
 
+    // Cập nhật cleanupZXing để reset device
     const cleanupZXing = () => {
       if (codeReader.value) {
         codeReader.value.reset();
         codeReader.value = null;
       }
-      isScanning.value = false;
+      selectedDeviceId.value = null;
       isCameraActive.value = false;
+      isScanning.value = false;
       scannedCode.value = "";
       scanError.value = "";
     };
