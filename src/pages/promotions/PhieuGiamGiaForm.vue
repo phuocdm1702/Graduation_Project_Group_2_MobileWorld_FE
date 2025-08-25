@@ -63,12 +63,11 @@
               <label class="filter-label">Số tiền giảm tối đa</label>
               <div class="input-group">
                 <input
-                  v-model="formData.soTienGiamToiDa"
+                  v-model="formattedSoTienGiamToiDa"
                   type="text"
                   class="form-control date-input"
                   placeholder="Nhập số tiền giảm tối đa"
                   required
-                  @input="updateSoTienGiamToiDa"
                 />
                 <span class="input-group-text">VND</span>
               </div>
@@ -77,12 +76,11 @@
               <label class="filter-label">Hóa đơn tối thiểu</label>
               <div class="input-group">
                 <input
-                  v-model="formData.hoaDonToiThieu"
+                  v-model="formattedHoaDonToiThieu"
                   type="text"
                   class="form-control date-input"
                   placeholder="Nhập hóa đơn tối thiểu"
                   required
-                  @input="updateHoaDonToiThieu"
                 />
                 <span class="input-group-text">VND</span>
               </div>
@@ -525,17 +523,7 @@ export default {
       });
     };
 
-    const updateSoTienGiamToiDa = (event) => {
-      const rawValue =
-        parseFloat(event.target.value.replace(/[^0-9]/g, "")) || 0;
-      formData.value.soTienGiamToiDa = rawValue;
-    };
-
-    const updateHoaDonToiThieu = (event) => {
-      const rawValue =
-        parseFloat(event.target.value.replace(/[^0-9]/g, "")) || 0;
-      formData.value.hoaDonToiThieu = rawValue;
-    };
+    
 
     const submitForm = async () => {
       // Validate ngày bắt đầu và ngày kết thúc
@@ -642,12 +630,12 @@ export default {
       debouncedSearchCustomer,
       toggleCustomerSelection,
       removeCustomer,
-      updateSoTienGiamToiDa,
-      updateHoaDonToiThieu,
       submitForm,
       goBack,
       formatDate,
       today,
+      formattedSoTienGiamToiDa,
+      formattedHoaDonToiThieu,
     };
   },
 };
