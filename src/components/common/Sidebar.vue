@@ -394,6 +394,7 @@ const baseMenuItems = ref([
       { name: 'CPU', path: '/cpu' },
       { name: 'GPU', path: '/gpu' },
       { name: 'Công nghệ mạng', path: '/congNgheMang' },
+      { name: 'Công nghệ màn hình', path: '/congNgheManHinh' },
       { name: 'Hệ điều hành', path: '/heDieuHanh' },
       { name: 'Kháng bụi - Kháng nước', path: '/khangBuiKhangNuoc' },
       { name: 'Màu sắc', path: '/mauSac' },

@@ -20,6 +20,10 @@ const BoNhoTrong = () => import("@/pages/products/thuocTinhSp/BoNhoTrong.vue");
 const HoTroBoNhoNgoai = () => import("@/pages/products/thuocTinhSp/HoTroBoNhoNgoai.vue");
 const Cpu = () => import("@/pages/products/thuocTinhSp/Cpu.vue");
 const Gpu = () => import("@/pages/products/thuocTinhSp/Gpu.vue");
+const CongNgheMang = () => import("@/pages/products/thuocTinhSp/CongNgheMang.vue");
+const CongNgheManHinh = () => import("@/pages/products/thuocTinhSp/CongNgheManHinh.vue");
+const HeDieuHanh = () => import("@/pages/products/thuocTinhSp/HeDieuHanh.vue");
+const ChiSoKhangBuiVaNuoc = () => import("@/pages/products/thuocTinhSp/ChiSoKhangBuiVaNuoc.vue");
 const HoaDon = () => import("@/pages/bills/HoaDon.vue");
 const HoaDonChiTiet = () => import("@/pages/bills/HoaDonChiTiet.vue");
 const PhieuGiamGia = () => import("@/pages/promotions/PhieuGiamGia.vue");
@@ -249,6 +253,62 @@ const routes = [
             { name: "Trang chủ", path: "/trangChu" },
             { name: "Sản phẩm", path: "/sanPham" },
             { name: "GPU", path: "/gpu" },
+          ],
+          requiresAdmin: true,
+        },
+      },
+      {
+        path: "/congNgheMang",
+        name: "CongNgheMang",
+        component: CongNgheMang,
+        meta: {
+          title: "Công nghệ mạng",
+          breadcrumb: [
+            { name: "Trang chủ", path: "/trangChu" },
+            { name: "Sản phẩm", path: "/sanPham" },
+            { name: "Công nghệ mạng", path: "/congNgheMang" },
+          ],
+          requiresAdmin: true,
+        },
+      },
+      {
+        path: "/congNgheManHinh",
+        name: "CongNgheManHinh",
+        component: CongNgheManHinh,
+        meta: {
+          title: "Công nghệ màn hình",
+          breadcrumb: [
+            { name: "Trang chủ", path: "/trangChu" },
+            { name: "Sản phẩm", path: "/sanPham" },
+            { name: "Công nghệ màn hình", path: "/congNgheManHinh" },
+          ],
+          requiresAdmin: true,
+        },
+      },
+      {
+        path: "/heDieuHanh",
+        name: "HeDieuHanh",
+        component: HeDieuHanh,
+        meta: {
+          title: "Hệ điều hành",
+          breadcrumb: [
+            { name: "Trang chủ", path: "/trangChu" },
+            { name: "Sản phẩm", path: "/sanPham" },
+            { name: "Hệ điều hành", path: "/heDieuHanh" },
+          ],
+          requiresAdmin: true,
+        },
+      },
+      {
+        path: "/khangBuiKhangNuoc",
+        name: "ChiSoKhangBuiVaNuoc",
+        component: ChiSoKhangBuiVaNuoc,
+        meta: {
+          title: "Chỉ số kháng bụi và nước",
+          breadcrumb: [
+            { name: "Trang chủ", path: "/trangChu" },
+            { name: "Sản phẩm", path: "/sanPham" },
+            { name: "Chỉ số kháng bụi và nước", path: "/khangBuiKhangNuoc" },
           ],
           requiresAdmin: true,
         },
