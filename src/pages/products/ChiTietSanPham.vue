@@ -128,8 +128,8 @@
           </div>
           <div class="action-buttons">
             <button class="btn btn-action" @click="downloadSelectedBarcodes" :disabled="selectedImeis.length === 0"
-              title="Tải ảnh barcode đã chọn">
-              Tải Barcode
+              title="Tải ảnh QR code đã chọn">
+              Tải QR Code
             </button>
             <button class="btn btn-action" @click="downloadSelectedProductsExcel" :disabled="selectedImeis.length === 0"
               title="Tải danh sách sản phẩm Excel">
@@ -231,8 +231,8 @@
                   title="Chỉnh sửa chi tiết sản phẩm">
                   <i class="bi bi-pencil-fill"></i>
                 </button>
-                <button class="btn btn-sm btn-table" @click="showBarcode(item.imei)" title="Hiển thị mã barcode">
-                  <i class="bi bi-upc-scan"></i>
+                <button class="btn btn-sm btn-table" @click="showBarcode(item.imei)" title="Hiển thị mã QR">
+                  <i class="bi bi-qr-code"></i>
                 </button>
               </div>
             </template>
@@ -276,8 +276,8 @@
               </div>
               <div class="product-amounts mt-2 d-flex justify-content-between">
                 <div class="total-amount">{{ formatPrice(detail.donGia) }}</div>
-                <button class="btn btn-sm btn-table" @click="showBarcode(detail.imei)" title="Hiển thị mã barcode">
-                  <i class="bi bi-upc-scan"></i> Barcode
+                <button class="btn btn-sm btn-table" @click="showBarcode(detail.imei)" title="Hiển thị mã QR">
+                  <i class="bi bi-qr-code"></i> Barcode
                 </button>
               </div>
             </div>
@@ -340,8 +340,8 @@
                   </td>
                   <td>
                     <div class="action-buttons d-flex justify-content-center">
-                      <button class="btn btn-sm btn-table" @click="showBarcode(item.imei)" title="Hiển thị mã barcode">
-                        <i class="bi bi-upc-scan"></i>
+                      <button class="btn btn-sm btn-table" @click="showBarcode(item.imei)" title="Hiển thị mã QR">
+                        <i class="bi bi-qr-code"></i>
                       </button>
                     </div>
                   </td>
@@ -383,7 +383,7 @@
       <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content barcode-modal-content">
           <div class="modal-header barcode-modal-header">
-            <h5 class="modal-title" id="barcodeModalLabel">Mã Barcode IMEI</h5>
+            <h5 class="modal-title" id="barcodeModalLabel">Mã QR IMEI</h5>
           </div>
           <div class="modal-body text-center barcode-modal-body">
             <div class="barcode-container">
@@ -416,7 +416,7 @@ import DataTable from '@/components/common/DataTable.vue';
 import ToastNotification from '@/components/common/ToastNotification.vue';
 import debounce from 'lodash/debounce';
 import { getChiTietSanPhamBySanPhamId, getMauSac, getRam, getBoNhoTrong } from '@/store/modules/products/chiTietSanPham';
-import JsBarcode from 'jsbarcode';
+import QRCode from 'qrcode'
 import * as bootstrap from 'bootstrap';
 import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
@@ -737,22 +737,29 @@ export default {
       });
     };
 
-    const showBarcode = (imei) => {
+    const showBarcode = async (imei) => {
       selectedImei.value = imei;
       const modal = new bootstrap.Modal(document.getElementById('barcodeModal'));
       modal.show();
-      setTimeout(() => {
-        JsBarcode("#barcodeCanvas", imei, {
-          format: "CODE128",
-          displayValue: true,
-          fontSize: 18,
-          height: 100,
-          width: 3,
-          margin: 10,
-          background: "#ffffff",
-          lineColor: "#1f3a44",
+      
+      try {
+        const canvas = document.getElementById('barcodeCanvas');
+        await QRCode.toCanvas(canvas, imei, {
+          width: 200,
+          margin: 2,
+          color: {
+            dark: '#1f3a44',
+            light: '#ffffff'
+          }
         });
-      }, 0);
+      } catch (error) {
+        console.error(error);
+        toast.value?.addToast({
+          type: 'error', 
+          message: 'Lỗi khi tạo mã QR',
+          duration: 3000
+        });
+      }
     };
 
     const copyImei = async (imei) => {
@@ -772,72 +779,79 @@ export default {
       }
     };
 
-    const downloadBarcodeImage = (imei) => {
-      const canvas = document.createElement('canvas');
-      JsBarcode(canvas, imei, {
-        format: "CODE128",
-        displayValue: true,
-        fontSize: 18,
-        height: 100,
-        width: 3,
-        margin: 10,
-        background: "#ffffff",
-        lineColor: "#1f3a44",
-      });
-      const link = document.createElement('a');
-      const url = canvas.toDataURL('image/png');
-      link.setAttribute('href', url);
-      link.setAttribute('download', `barcode_${imei}.png`);
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      toast.value?.addToast({
-        type: 'success',
-        message: `Đã tải xuống ảnh barcode cho IMEI: ${imei}`,
-        duration: 2000,
-      });
+    const downloadBarcodeImage = async (imei) => {
+      try {
+        const canvas = document.createElement('canvas');
+        await QRCode.toCanvas(canvas, imei, {
+          width: 200,
+          margin: 2,
+          color: {
+            dark: '#1f3a44',
+            light: '#ffffff'
+          }
+        });
+        
+        const url = canvas.toDataURL('image/png');
+        const link = document.createElement('a');
+        link.setAttribute('href', url);
+        link.setAttribute('download', `qrcode_${imei}.png`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        toast.value?.addToast({
+          type: 'success',
+          message: `Đã tải xuống mã QR cho IMEI: ${imei}`,
+          duration: 2000,
+        });
+      } catch (error) {
+        toast.value?.addToast({
+          type: 'error',
+          message: 'Lỗi khi tải xuống mã QR: ' + error.message,
+          duration: 3000,
+        });
+      }
     };
 
     const downloadSelectedBarcodes = async () => {
       if (selectedImeis.value.length === 0) {
         toast.value?.addToast({
           type: 'warning',
-          message: 'Vui lòng chọn ít nhất một IMEI để tải barcode',
+          message: 'Vui lòng chọn ít nhất một IMEI để tải mã QR',
           duration: 2000,
         });
         return;
       }
 
       const zip = new JSZip();
-      for (const imei of selectedImeis.value) {
-        const canvas = document.createElement('canvas');
-        JsBarcode(canvas, imei, {
-          format: "CODE128",
-          displayValue: true,
-          fontSize: 18,
-          height: 100,
-          width: 3,
-          margin: 10,
-          background: "#ffffff",
-          lineColor: "#1f3a44",
-        });
-        const dataUrl = canvas.toDataURL('image/png');
-        const base64Data = dataUrl.replace(/^data:image\/png;base64,/, "");
-        zip.file(`barcode_${imei}.png`, base64Data, { base64: true });
-      }
-
       try {
+        for (const imei of selectedImeis.value) {
+          const canvas = document.createElement('canvas');
+          await QRCode.toCanvas(canvas, imei, {
+            width: 200,
+            margin: 2,
+            color: {
+              dark: '#1f3a44',
+              light: '#ffffff'
+            }
+          });
+          
+          const dataUrl = canvas.toDataURL('image/png');
+          const base64Data = dataUrl.replace(/^data:image\/png;base64,/, "");
+          zip.file(`qrcode_${imei}.png`, base64Data, { base64: true });
+        }
+
         const content = await zip.generateAsync({ type: 'blob' });
-        saveAs(content, 'barcodes.zip');
+        saveAs(content, 'qrcodes.zip');
         toast.value?.addToast({
           type: 'success',
-          message: `Đã tải xuống ${selectedImeis.value.length} ảnh barcode`,
+          message: `Đã tải xuống ${selectedImeis.value.length} mã QR`,
           duration: 2000,
         });
       } catch (error) {
         toast.value?.addToast({
           type: 'error',
-          message: 'Lỗi khi tải xuống barcodes: ' + error.message,
+          message: 'Lỗi khi tải xuống mã QR: ' + error.message,
           duration: 3000,
         });
       }
@@ -1544,8 +1558,9 @@ export default {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1.5rem;
+  gap: 2rem;
   width: 100%;
+  padding: 1rem;
 }
 
 .imei-text {
@@ -1560,7 +1575,7 @@ export default {
   max-width: 100%;
   border: 3px solid #34d399;
   border-radius: 12px;
-  padding: 15px;
+  padding: 20px;
   background: white;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
