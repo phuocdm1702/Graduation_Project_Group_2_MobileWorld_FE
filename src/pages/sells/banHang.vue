@@ -162,7 +162,8 @@
           </div>
           <div class="modal-body text-center position-relative">
             <div class="scan-container">
-              <video ref="videoElement" class="scan-video" style="max-height: 400px; width: 100%;"></video>
+              <video ref="videoElement" id="videoScan" class="scan-video"
+                style="max-height: 400px; width: 100%;"></video>
               <div class="scan-overlay">
                 <div class="scan-frame">
                   <div class="scan-line"></div>
@@ -1850,8 +1851,10 @@ export default defineComponent({
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 80%;
-  height: 200px;
+  width: 90%;
+  /* Tăng kích thước vùng quét */
+  height: 250px;
+  /* Tăng chiều cao để phù hợp với CODE_128 */
   border: 2px solid #34d399;
   border-radius: 10px;
   box-shadow: 0 0 10px rgba(52, 211, 153, 0.5);
@@ -1864,7 +1867,8 @@ export default defineComponent({
   width: 100%;
   height: 2px;
   background: linear-gradient(to right, transparent, #ff4444, transparent);
-  animation: scan 2s infinite linear;
+  animation: scan 1.5s infinite linear;
+  /* Tăng tốc độ quét để dễ nhận diện */
 }
 
 @keyframes scan {
