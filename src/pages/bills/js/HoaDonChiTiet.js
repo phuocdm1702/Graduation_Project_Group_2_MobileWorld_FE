@@ -1135,6 +1135,20 @@ export default {
         });
         return;
       }
+
+      const currentStatusNumber = hoaDonStore.mapStatusToNumber(invoice.value.trangThai);
+      const targetStatusNumber = hoaDonStore.mapStatusToNumber(status);
+
+      // Kiểm tra chuyển trạng thái tuần tự
+      if (Math.abs(targetStatusNumber - currentStatusNumber) > 1) {
+        toastNotification.value.addToast({
+          type: 'error',
+          message: 'Chỉ có thể chuyển trạng thái tuần tự (Chờ xác nhận -> Chờ giao hàng -> Đang giao -> Hoàn thành hoặc ngược lại)',
+          duration: 3000,
+        });
+        return;
+      }
+
       if (status === 'Chờ giao hàng' && !checkAllProductsHaveIMEI()) {
         toastNotification.value.addToast({
           type: 'warning',
@@ -1171,7 +1185,6 @@ export default {
               duration: 3000,
             });
 
-            // Nếu chuyển sang trạng thái "Chờ giao hàng", hỏi có muốn in hóa đơn
             if (status === 'Chờ giao hàng') {
               notificationType.value = 'confirm';
               notificationMessage.value = 'Bạn có muốn in hóa đơn ngay bây giờ?';
