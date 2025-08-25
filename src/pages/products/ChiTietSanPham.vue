@@ -394,7 +394,7 @@
                 <i class="bi bi-clipboard"></i> Sao chép IMEI
               </button>
               <button class="btn btn-action" @click="downloadBarcodeImage(selectedImei)" title="Tải ảnh barcode">
-                <i class="bi bi-download"></i> Tải Barcode
+                <i class="bi bi-download"></i> Tải QRcode
               </button>
             </div>
           </div>
