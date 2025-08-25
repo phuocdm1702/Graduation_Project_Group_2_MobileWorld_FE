@@ -151,34 +151,51 @@
 
     <NotificationModal ref="notificationModal" />
     <ToastNotification ref="toastNotification" />
-    <!-- Modal quét mã QR/Barcode -->
-    <div v-if="showScanModal" class="modal fade show d-block" tabindex="-1" role="dialog"
-      style="background: rgba(0, 0, 0, 0.5);">
-      <div class="modal-dialog modal-dialog-centered modal-lg">
-        <div class="modal-content gradient-modal">
-          <div class="modal-header">
-            <h5 class="modal-title">Quét mã vạch EAN-15</h5>
-            <button type="button" class="btn-close" @click="closeScanModal"></button>
-          </div>
-          <div class="modal-body text-center position-relative">
-            <div class="scan-container">
-              <video ref="videoElement" id="videoScan" class="scan-video"
-                style="max-height: 400px; width: 100%;"></video>
-              <div class="scan-overlay">
-                <div class="scan-frame">
-                  <div class="scan-line"></div>
-                </div>
-              </div>
-              <div v-if="isScanning" class="scan-status">
-                <p v-if="scannedCode" class="text-success">Mã quét: {{ scannedCode }}</p>
-                <p v-if="scanError" class="text-danger">{{ scanError }}</p>
-                <p v-if="!scannedCode && !scanError" class="text-muted">Đang quét...</p>
+    <!-- Modal quét mã QR Code -->
+    <!-- Thay thế phần Modal quét mã QR Code cũ bằng code mới này -->
+
+    <!-- QR Code Scanner Container -->
+    <div v-if="showScanModal" class="qr-scanner-container">
+      <div class="scanner-wrapper">
+        <div class="scanner-header">
+          <h5 class="scanner-title">Quét mã QR</h5>
+          <button class="scanner-close" @click="closeScanModal">
+            <i class="bi bi-x-lg"></i>
+          </button>
+        </div>
+
+        <div class="scanner-body">
+          <div class="scanner-viewport">
+            <video ref="videoElement" id="videoScan" class="scanner-video"></video>
+            <div class="scanner-overlay">
+              <div class="scanner-target">
+                <div class="scanner-line"></div>
               </div>
             </div>
           </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" @click="closeScanModal">Đóng</button>
+
+          <div class="scanner-status">
+            <template v-if="isScanning">
+              <p v-if="scannedCode" class="success">
+                <i class="bi bi-check-circle-fill"></i>
+                Mã đã quét: {{ scannedCode }}
+              </p>
+              <p v-else-if="scanError" class="error">
+                <i class="bi bi-exclamation-circle-fill"></i>
+                {{ scanError }}
+              </p>
+              <p v-else class="scanning">
+                <i class="bi bi-camera"></i>
+                Đang quét...
+              </p>
+            </template>
           </div>
+        </div>
+
+        <div class="scanner-footer">
+          <button class="scanner-button cancel" @click="closeScanModal">
+            Đóng
+          </button>
         </div>
       </div>
     </div>
@@ -1036,7 +1053,8 @@ discount, index
                   !selectedCartItem?.imei ||
                   selectedCartItem.imei.split(', ').length === 0
                 " class="text-center text-muted py-4 animate__animated animate__fadeIn">
-                  <i class="bi bi-info-circle me-2"></i>Không có IMEI nào được
+                  <i class="bi bi-info-circle me-2" style="font-size: 1.2rem"></i>
+                  Không có IMEI nào được
                   chọn.
                 </div>
                 <div v-else class="d-flex flex-column gap-3">
@@ -1794,81 +1812,162 @@ export default defineComponent({
   border-radius: 10px;
 }
 
-.qr-code-container {
-  background: rgba(255, 255, 255, 0.9);
-  padding: 1rem;
-  border-radius: 0.5rem;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+.qr-scanner-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(5px);
+  z-index: 1050;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-@media (max-width: 768px) {
-  .cart-item-card {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .cart-item-card img {
-    max-height: 100px;
-  }
-
-  .modal-dialog {
-    max-width: 90%;
-  }
-
-  .voucher-card {
-    min-width: 100%;
-  }
-
-  .carousel-controls {
-    flex-direction: column;
-  }
-}
-
-.scan-container {
-  position: relative;
+.scanner-wrapper {
+  background: white;
+  width: 100%;
+  max-width: 500px;
+  border-radius: 12px;
   overflow: hidden;
-  max-width: 600px;
-  margin: 0 auto;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
 }
 
-.scan-video {
-  display: block;
-  border-radius: 10px;
+.scanner-header {
+  padding: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #eee;
 }
 
-.scan-overlay {
+.scanner-title {
+  margin: 0;
+  font-weight: 600;
+  color: #1f3a44;
+}
+
+.scanner-close {
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  color: #666;
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+}
+
+.scanner-close:hover {
+  background: #f3f4f6;
+  color: #ef4444;
+}
+
+.scanner-body {
+  padding: 1rem;
+}
+
+.scanner-viewport {
+  position: relative;
+  width: 100%;
+  height: 300px;
+  overflow: hidden;
+  border-radius: 8px;
+  background: #000;
+}
+
+.scanner-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.scanner-overlay {
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.3);
-  pointer-events: none;
+  background: rgba(0, 0, 0, 0.2);
 }
 
-.scan-frame {
+.scanner-target {
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 90%;
-  /* Tăng kích thước vùng quét */
-  height: 250px;
-  /* Tăng chiều cao để phù hợp với CODE_128 */
+  width: 200px;
+  height: 200px;
   border: 2px solid #34d399;
-  border-radius: 10px;
-  box-shadow: 0 0 10px rgba(52, 211, 153, 0.5);
+  border-radius: 12px;
+  box-shadow: 0 0 0 100vmax rgba(0, 0, 0, 0.5);
+  animation: pulse 2s infinite;
 }
 
-.scan-line {
+.scanner-line {
   position: absolute;
-  top: 0;
-  left: 0;
   width: 100%;
   height: 2px;
-  background: linear-gradient(to right, transparent, #ff4444, transparent);
-  animation: scan 1.5s infinite linear;
-  /* Tăng tốc độ quét để dễ nhận diện */
+  background: linear-gradient(90deg, transparent, #34d399, transparent);
+  animation: scan 2s linear infinite;
+}
+
+.scanner-status {
+  margin-top: 1rem;
+  text-align: center;
+}
+
+.scanner-status p {
+  margin: 0;
+  padding: 0.5rem;
+  border-radius: 6px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.scanner-status .success {
+  background: #dcfce7;
+  color: #16a34a;
+}
+
+.scanner-status .error {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.scanner-status .scanning {
+  background: #e0f2fe;
+  color: #0284c7;
+}
+
+.scanner-footer {
+  padding: 1rem;
+  display: flex;
+  justify-content: flex-end;
+  border-top: 1px solid #eee;
+}
+
+.scanner-button {
+  padding: 0.5rem 1.5rem;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.scanner-button.cancel {
+  background: #f3f4f6;
+  border: none;
+  color: #666;
+}
+
+.scanner-button.cancel:hover {
+  background: #e5e7eb;
 }
 
 @keyframes scan {
@@ -1885,27 +1984,32 @@ export default defineComponent({
   }
 }
 
-.scan-status {
-  position: absolute;
-  bottom: 10px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 80%;
-  text-align: center;
-  padding: 10px;
-  background: rgba(255, 255, 255, 0.9);
-  border-radius: 5px;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 100vmax rgba(0, 0, 0, 0.5);
+  }
+
+  50% {
+    box-shadow: 0 0 0 100vmax rgba(0, 0, 0, 0.4);
+  }
+
+  100% {
+    box-shadow: 0 0 0 100vmax rgba(0, 0, 0, 0.5);
+  }
 }
 
 @media (max-width: 768px) {
-  .scan-frame {
-    width: 90%;
-    height: 150px;
+  .scanner-wrapper {
+    margin: 1rem;
   }
 
-  .scan-video {
-    max-height: 300px;
+  .scanner-viewport {
+    height: 250px;
+  }
+
+  .scanner-target {
+    width: 180px;
+    height: 180px;
   }
 }
 </style>
