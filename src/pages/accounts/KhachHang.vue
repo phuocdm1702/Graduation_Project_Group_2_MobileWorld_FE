@@ -350,9 +350,8 @@ const exportExcel = () => {
       "Tên Khách Hàng": customer.ten || "N/A",
       Email: customer.idTaiKhoan?.email || "N/A",
       "Số Điện Thoại": customer.idTaiKhoan?.soDienThoai || "N/A",
-      "Ngày Sinh": customer.ngaySinh
-        ? new Date(customer.ngaySinh).toLocaleDateString("vi-VN")
-        : "N/A",
+      // 👇 Sửa chỗ này: để Date object thay vì chuỗi
+      "Ngày Sinh": customer.ngaySinh ? new Date(customer.ngaySinh) : null,
       CCCD: customer.cccd || "N/A",
       "Địa Chỉ Cụ Thể": customer.idDiaChiKhachHang?.macDinh
         ? customer.idDiaChiKhachHang.diaChiCuThe || "N/A"
@@ -410,6 +409,16 @@ const exportExcel = () => {
       }
     }
 
+    // 👇 Format riêng cho cột Ngày Sinh (cột số 5: STT=0 → Ngày Sinh=5)
+    for (let R = range.s.r + 1; R <= range.e.r; ++R) {
+      const cellRef = XLSX.utils.encode_cell({ r: R, c: 5 });
+      const cell = worksheet[cellRef];
+      if (cell && cell.v) {
+        cell.t = "d";          // kiểu date
+        cell.z = "dd/mm/yyyy"; // định dạng hiển thị
+      }
+    }
+
     XLSX.utils.book_append_sheet(workbook, worksheet, "KhachHang");
     const excelBuffer = XLSX.write(workbook, {
       bookType: "xlsx",
@@ -433,6 +442,7 @@ const exportExcel = () => {
     });
   }
 };
+
 
 const downloadTemplate = () => {
   toastNotification.value.addToast({
@@ -499,11 +509,22 @@ const handleExcelUpload = async (event) => {
           // Xử lý ngày sinh
           let ngaySinh = null;
           if (row["Ngày Sinh"]) {
-            const parsedDate = new Date(row["Ngày Sinh"]);
-            if (isNaN(parsedDate.getTime())) {
-              throw new Error(`Dòng ${index + 2}: Ngày Sinh không hợp lệ`);
+            const value = row["Ngày Sinh"];
+            let parsedDate = null;
+
+            if (value instanceof Date) {
+              parsedDate = value; // Excel đã parse thành Date
+            } else {
+              const tryDate = new Date(value);
+              if (!isNaN(tryDate.getTime())) {
+                parsedDate = tryDate;
+              }
             }
-            ngaySinh = parsedDate.toISOString();
+
+            // Nếu parse được thì gán, còn không thì để null
+            if (parsedDate) {
+              ngaySinh = parsedDate.toISOString();
+            }
           }
 
           // Xác thực CCCD
@@ -545,7 +566,6 @@ const handleExcelUpload = async (event) => {
 
         const result = await importKhachHang(khachHangs);
         if (result.success) {
-          // Cập nhật danh sách khách hàng
           const data = await fetchKhachHang();
           customers.value = data;
           toastNotification.value.addToast({
@@ -584,6 +604,7 @@ const handleExcelUpload = async (event) => {
     event.target.value = "";
   }
 };
+
 </script>
 
 <style scoped>
