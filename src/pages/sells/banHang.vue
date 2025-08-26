@@ -550,8 +550,8 @@
                             @change="handleCustomerProvinceChange" style="
                           border-radius: 0 0.5rem 0.5rem 0;
                           transition: all 0.3s ease;
-                        " disabled>
-                            <option value="" disabled>
+                        " >
+                            <option value="" >
                               Chọn tỉnh/thành phố
                             </option>
                             <option v-for="province in provinces" :key="province.code" :value="province.name">
@@ -572,8 +572,8 @@
                             @change="handleCustomerDistrictChange" style="
                           border-radius: 0 0.5rem 0.5rem 0;
                           transition: all 0.3s ease;
-                        " disabled>
-                            <option value="" disabled>Chọn quận/huyện</option>
+                        " >
+                            <option value="" >Chọn quận/huyện</option>
                             <option v-for="district in districts" :key="district.code" :value="district.name">
                               {{ district.name }}
                             </option>
@@ -591,8 +591,8 @@
                           <select v-model="customer.ward" class="form-select search-input border-start-0" style="
                           border-radius: 0 0.5rem 0.5rem 0;
                           transition: all 0.3s ease;
-                        " disabled>
-                            <option value="" disabled>Chọn phường/xã</option>
+                        " >
+                            <option value="" >Chọn phường/xã</option>
                             <option v-for="ward in wards" :key="ward.code" :value="ward.name">
                               {{ ward.name }}
                             </option>
@@ -1088,14 +1088,11 @@ discount, index
       </div>
 
       <!-- IMEI Modal for Product Selection -->
-      <div v-if="showIMEIModal" class="modal fade show d-block" tabindex="-1"
-        style="background: rgba(0, 0, 0, 0.5); gap: 0">
+      <div v-if="showIMEIModal" class="modal fade show d-block" tabindex="-1" style="background: rgba(0, 0, 0, 0.5)">
         <div class="modal-dialog modal-dialog-centered modal-lg">
-          <div class="modal-content shadow-lg p-3 gradient-modal animate__animated animate__zoomIn" style="
-              background: rgba(255, 255, 255, 0.95);
-              backdrop-filter: blur(15px);
-              border-radius: 0.5rem;
-            ">
+          <div class="modal-content shadow-lg p-3 gradient-modal animate__animated animate__zoomIn" 
+            style="background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(15px); border-radius: 0.5rem;">
+            
             <div class="modal-header border-0 d-flex justify-content-between align-items-center">
               <h5 class="modal-title fw-bold text-dark">
                 Chọn IMEI cho sản phẩm
@@ -1104,7 +1101,9 @@ discount, index
                 <i class="bi bi-x-lg"></i>
               </button>
             </div>
+
             <div class="modal-body p-4">
+              <!-- Product Info Card -->
               <div class="product-info-card mb-4 p-3 rounded shadow-sm animate__animated animate__fadeInDown"
                 style="background: linear-gradient(135deg, #f8f9fa, #e9ecef)">
                 <div class="row align-items-center">
@@ -1136,6 +1135,8 @@ discount, index
                   </div>
                 </div>
               </div>
+
+              <!-- IMEI List Container with scroll -->
               <div class="imei-list-container">
                 <h6 class="fw-semibold text-dark mb-3">
                   Danh sách IMEI khả dụng
@@ -1168,11 +1169,14 @@ discount, index
               <button class="btn btn-light px-4 py-2" @click="closeIMEIModal">
                 Hủy
               </button>
-              <button class="btn btn-light px-4 py-2 teal text-white" @click="addProductWithIMEIs"
+              <button 
+                class="btn btn-light px-4 py-2 teal text-white" 
+                @click="addProductWithIMEIs"
                 :disabled="selectedIMEIs.length === 0">
                 Thêm vào giỏ
               </button>
             </div>
+
           </div>
         </div>
       </div>
@@ -1968,6 +1972,39 @@ export default defineComponent({
 
 .scanner-button.cancel:hover {
   background: #e5e7eb;
+}
+
+.imei-list-container {
+  max-height: 400px;
+  overflow-y: auto;
+  padding-right: 10px;
+}
+
+.modal-body {
+  max-height: calc(90vh - 200px); /* Adjust modal body height */
+  overflow-y: auto;
+}
+
+.imei-list-container::-webkit-scrollbar,
+.modal-body::-webkit-scrollbar {
+  width: 6px;
+}
+
+.imei-list-container::-webkit-scrollbar-thumb,
+.modal-body::-webkit-scrollbar-thumb {
+  background-color: #34d399;
+  border-radius: 10px;
+}
+
+.imei-list-container::-webkit-scrollbar-thumb:hover,
+.modal-body::-webkit-scrollbar-thumb:hover {
+  background-color: #2ca37c;
+}
+
+.imei-list-container::-webkit-scrollbar-track,
+.modal-body::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
 }
 
 @keyframes scan {
