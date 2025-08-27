@@ -615,31 +615,39 @@
                         </div>
                       </div>
                       <div class="d-flex align-items-center gap-2 mt-2">
-                        <label class="form-label fw-medium text-dark mb-2" style="font-size: 0.95rem; margin-top: 10px">
-                          Giao hàng tận nhà <span class="text-danger"></span>
-                        </label>
-                        <input type="checkbox" class="form-check-input" v-model="isHomeDelivery" style="
-                        margin-top: 10px;
-                        border-color: #34d399;
-                        margin-left: auto;
-                      " />
-                      </div>
-                      <div v-if="isHomeDelivery" class="mt-2">
-                        <label class="form-label fw-medium text-dark mb-2" style="font-size: 0.95rem">
-                          Phí vận chuyển <span class="text-danger">*</span>
-                        </label>
-                        <div class="input-group">
-                          <span class="input-group-text bg-light border-end-0">
-                            <i class="bi bi-truck text-teal"></i>
-                          </span>
-                          <input v-model.number="shippingFee" type="number"
-                            class="form-control search-input border-start-0" placeholder="Nhập phí vận chuyển (VND)"
-                            min="0" style="
-                          border-radius: 0 0.5rem 0.5rem 0;
-                          transition: all 0.3s ease;
-                        " @input="updateShippingFee" />
-                        </div>
-                      </div>
+                <label class="form-label fw-medium text-dark mb-2" style="font-size: 0.95rem; margin-top: 10px">
+                  Giao hàng tận nhà <span class="text-danger"></span>
+                </label>
+                <input type="checkbox" class="form-check-input" v-model="isHomeDelivery" style="
+                  margin-top: 10px;
+                  border-color: #34d399;
+                  margin-left: auto;
+                " @change="updateShippingFee" />
+              </div>
+              <div v-if="isHomeDelivery" class="mt-2">
+                <label class="form-label fw-medium text-dark mb-2" style="font-size: 0.95rem">
+                  Phí vận chuyển <span class="text-danger">*</span>
+                </label>
+                <div class="input-group">
+                  <span class="input-group-text bg-light border-end-0">
+                    <i class="bi bi-truck text-teal"></i>
+                  </span>
+                  <input v-model.number="shippingFee" type="number" class="form-control search-input border-start-0"
+                    placeholder="Tự động từ GHN" disabled style="
+                    border-radius: 0 0.5rem 0.5rem 0;
+                    transition: all 0.3s ease;
+                  " />
+                  <button class="btn btn-outline-teal ms-2" @click="updateShippingFee" :disabled="shippingLoading">
+                    <i class="bi bi-calculator" v-if="!shippingLoading"></i>
+                    <span v-if="shippingLoading" class="spinner-border spinner-border-sm" role="status"
+                      aria-hidden="true"></span>
+                  </button>
+                </div>
+                <p v-if="shippingError" class="text-danger mt-1">{{ shippingError }}</p>
+                <p v-if="GHNOrderCode" class="text-success mt-1">
+                  Đơn GHN đã tạo: {{ GHNOrderCode }}
+                </p>
+              </div>
                     </div>
                   </div>
                 </div>
@@ -1329,7 +1337,15 @@ export default defineComponent({
         id: null,
         name: "",
         phone: "",
+        city: "",
+        district: "",
+        ward: "",
+        address: "",
       },
+      shippingFee: 0,
+      shippingLoading: false,
+      shippingError: "",
+      GHNOrderCode: null, // Lưu mã đơn GHN sau khi tạo
     };
   },
   computed: {
