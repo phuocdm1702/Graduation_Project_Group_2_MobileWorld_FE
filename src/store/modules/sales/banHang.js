@@ -895,6 +895,7 @@ export default {
           activeInvoiceId.value,
           item.id
         );
+        // Cập nhật cartItems
         cartItems.value = responseData.chiTietGioHangDTOS.map((item) => ({
           id: item.chiTietSanPhamId,
           name: item.tenSanPham,
@@ -908,17 +909,25 @@ export default {
           ghiChuGia: item.ghiChuGia || "",
           imageUrl: item.image || '/assets/images/placeholder.jpg',
         }));
+
+        // Cập nhật trong pendingInvoices
         const invoice = pendingInvoices.value.find(
           (inv) => inv.id === activeInvoiceId.value
         );
-        if (invoice) invoice.items = cartItems.value;
+        if (invoice) {
+          invoice.items = [...cartItems.value];
+        }
+
+        // Hiển thị thông báo giá nếu có
         cartItems.value.forEach((item) => {
           if (item.ghiChuGia) {
             showToast("warning", item.ghiChuGia);
           }
         });
+
+        await fetchProducts(); // Cập nhật lại danh sách sản phẩm
+        await applyBestDiscount(); // Cập nhật lại mã giảm giá
         showToast("success", `Đã xóa sản phẩm ${item.name} khỏi giỏ hàng`);
-        await applyBestDiscount();
       } catch (error) {
         showToast("error", "Lỗi khi xóa sản phẩm khỏi giỏ hàng");
       }
@@ -979,6 +988,7 @@ export default {
       }
 
       try {
+        // Lấy chi tiết sản phẩm ID
         const chiTietSanPhamId = await getProductDetailsByIdApi(
           selectedProduct.value.sanPhamId,
           selectedProduct.value.mauSac,
@@ -987,6 +997,7 @@ export default {
           selectedProduct.value.duongDan
         );
 
+        // Lấy thông tin sản phẩm mới nhất
         const productData = (
           await fetchProductsApi(0, 1, selectedProduct.value.maSanPham)
         ).content[0];
@@ -999,6 +1010,7 @@ export default {
         const latestInitialPrice =
           Number(productData.giaBanBanDau) || latestPrice;
 
+        // Kiểm tra thay đổi giá
         if (latestInitialPrice !== selectedProduct.value.giaBan) {
           const ghiChuGia = `Giá sản phẩm ${selectedProduct.value.tenSanPham
             } đã thay đổi thành ${formatPrice(
@@ -1007,6 +1019,7 @@ export default {
           showToast("warning", ghiChuGia);
         }
 
+        // Chuẩn bị dữ liệu để thêm vào giỏ hàng
         const chiTietGioHangDTO = {
           chiTietSanPhamId: chiTietSanPhamId,
           soLuong: selectedIMEIs.value.length,
@@ -1014,14 +1027,15 @@ export default {
           idPhieuGiamGia: selectedDiscount.value?.id || null,
           giaBan: latestPrice,
           imageUrl: selectedProduct.value.duongDan || '/assets/images/placeholder.jpg',
-
         };
 
+        // Thêm sản phẩm vào giỏ hàng
         const postResponseData = await addProductToCartApi(
           activeInvoiceId.value,
           chiTietGioHangDTO
         );
 
+        // Lọc và map dữ liệu cho cartItems
         const existingItems = cartItems.value.filter(
           (item) => !selectedIMEIs.value.includes(item.imei.split(", ")[0])
         );
@@ -1041,22 +1055,25 @@ export default {
             imageUrl: item.image || '/assets/images/placeholder.jpg',
           }));
 
+        // Cập nhật cartItems
         cartItems.value = [...existingItems, ...newItems];
 
+        // Cập nhật activeInvoiceId
         const invoiceId = parseInt(
           postResponseData.gioHangId.replace("GH_", "")
         );
-        if (isNaN(invoiceId)) {
-          return;
+        if (!isNaN(invoiceId)) {
+          activeInvoiceId.value = invoiceId;
         }
-        activeInvoiceId.value = invoiceId;
 
+        // Hiển thị thông báo về giá nếu có
         newItems.forEach((item) => {
           if (item.ghiChuGia) {
             showToast("warning", item.ghiChuGia);
           }
         });
 
+        // Cập nhật pendingInvoices
         const invoiceIndex = pendingInvoices.value.findIndex(
           (inv) => inv.id === activeInvoiceId.value
         );
@@ -1065,25 +1082,27 @@ export default {
             id: activeInvoiceId.value,
             ma: `HD${activeInvoiceId.value}`,
             status: "Chờ xử lý",
-            items: cartItems.value,
+            items: [...cartItems.value], // Tạo một bản sao mới
           };
           pendingInvoices.value.push(newInvoice);
         } else {
-          pendingInvoices.value[invoiceIndex].items = cartItems.value;
+          pendingInvoices.value[invoiceIndex].items = [...cartItems.value]; // Tạo một bản sao mới
         }
 
-        await applyBestDiscount();
+        // Cập nhật danh sách sản phẩm và mã giảm giá
         await fetchProducts();
+        await applyBestDiscount();
+        
+        showToast(
+          "success",
+          `Đã thêm sản phẩm ${selectedProduct.value.tenSanPham} vào giỏ hàng`
+        );
       } catch (error) {
         showToast(
           "error",
           error.message || "Lỗi khi thêm sản phẩm vào giỏ hàng"
         );
       } finally {
-        showToast(
-          "success",
-          `Đã thêm sản phẩm ${selectedProduct.value.tenSanPham} vào giỏ hàng`
-        );
         closeIMEIModal();
       }
     };
@@ -1901,17 +1920,27 @@ export default {
 
     // Payment-Related Methods
     const selectPayment = (method) => {
+      const oldMethod = paymentMethod.value;
       paymentMethod.value = method;
-      tienChuyenKhoan.value = method === "transfer" ? totalPayment.value : 0;
-      tienMat.value = method === "cash" ? totalPayment.value : 0;
-
-      if (method === "transfer" || method === "both") {
-        showPaymentProviderModal.value = true;
-      } else {
-        showPaymentProviderModal.value = false;
+      
+      // Update payment amounts
+      if (method === "transfer") {
+        tienChuyenKhoan.value = totalPayment.value;
+        tienMat.value = 0;
+      } else if (method === "cash") {
+        tienChuyenKhoan.value = 0;
+        tienMat.value = totalPayment.value;
+        // Only clear provider if switching to cash
         selectedPaymentProvider.value = null;
         qrCodeValue.value = "";
-        showQRCode.value = false;
+      } else if (method === "both") {
+        tienChuyenKhoan.value = 0;
+        tienMat.value = totalPayment.value;
+      }
+
+      // Show payment provider modal only when switching to transfer/both
+      if ((method === "transfer" || method === "both") && !selectedPaymentProvider.value) {
+        showPaymentProviderModal.value = true;
       }
     };
 
@@ -1958,12 +1987,15 @@ export default {
           return;
         }
       } else if (
-        paymentMethod.value === "transfer" &&
-        selectedPaymentProvider.value !== "vnpay" &&
-        !qrCodeValue.value
-      ) {
-        showToast("error", "Không thể tạo mã QR. Vui lòng thử lại.");
-        return;
+        paymentMethod.value === "transfer") {
+        if (!selectedPaymentProvider.value) {
+          showToast("error", "Vui lòng chọn phương thức thanh toán");
+          return;
+        }
+        if (selectedPaymentProvider.value !== "vnpay" && !qrCodeValue.value) {
+          showToast("error", "Không thể tạo mã QR. Vui lòng thử lại.");
+          return;
+        }
       }
 
       try {
