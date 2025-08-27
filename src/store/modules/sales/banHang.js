@@ -2427,7 +2427,7 @@ export default {
           try {
             const response = await checkVNPayPaymentStatusApi(urlParams);
 
-            if (response === "success") {
+            if (response && response.status === "success") {
               const pendingHoaDon = JSON.parse(
                 localStorage.getItem("pendingHoaDon")
               );

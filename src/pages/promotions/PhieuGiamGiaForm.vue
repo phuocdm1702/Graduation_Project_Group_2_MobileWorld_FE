@@ -91,9 +91,10 @@
                 v-model.number="formData.soLuongDung"
                 type="number"
                 class="form-control date-input"
-                placeholder="Nhập số lượng (-1 cho không giới hạn)"
+                placeholder="Nhập số lượng"
                 :disabled="formData.riengTu"
                 required
+                
               />
             </div>
             <div class="mb-3">
@@ -211,7 +212,7 @@
                   >
                     <td>{{ customer.ma }}</td>
                     <td>{{ customer.ten }}</td>
-                    <td>{{ customer.gioiTinh ? "Nam" : "Nữ" }}</td>
+                    <td>{{ customer.gioiTinh ? "Nữ" : "Nam" }}</td>
                     <td>{{ formatDate(customer.ngaySinh) }}</td>
                     <td>{{ customer.totalOrders || 0 }}</td>
                     <td>
@@ -365,7 +366,7 @@ export default {
     const selectedCustomersData = computed(() => {
       return customers.value.filter((customer) =>
         selectedCustomers.value.includes(customer.id)
-      ); 
+      );
     });
 
     const generateRandomCode = () => {
@@ -394,19 +395,12 @@ export default {
           formData.value.soLuongDung = selectedCustomers.length;
           formData.value.customerIds = selectedCustomers;
         } else {
-          if (formData.value.soLuongDung === selectedCustomers.length) {
-            formData.value.soLuongDung = -1;
-          }
           formData.value.customerIds = [];
           selectedCustomers.value = [];
         }
       },
       { deep: true }
     );
-
-    watch(gioiTinhFilter, () => {
-      debouncedSearchCustomer(searchCustomer.value);
-    });
 
     const filterCustomersByGioiTinhWrapper = async (gioiTinh) => {
       try {
@@ -523,14 +517,13 @@ export default {
       });
     };
 
-    
-
     const submitForm = async () => {
       // Validate ngày bắt đầu và ngày kết thúc
       if (
         formData.value.ngayBatDau &&
         formData.value.ngayKetThuc &&
-        new Date(formData.value.ngayKetThuc) <= new Date(formData.value.ngayBatDau)
+        new Date(formData.value.ngayKetThuc) <=
+          new Date(formData.value.ngayBatDau)
       ) {
         toastNotification.value.addToast({
           type: "error",
@@ -553,6 +546,13 @@ export default {
         toastNotification.value.addToast({
           type: "error",
           message: "Vui lòng điền đầy đủ thông tin!",
+        });
+        return;
+      }
+      if (!formData.value.riengTu && formData.value.soLuongDung <= 0) {
+        toastNotification.value.addToast({
+          type: "error",
+          message: "Số lượng phải lớn hơn 0!",
         });
         return;
       }
