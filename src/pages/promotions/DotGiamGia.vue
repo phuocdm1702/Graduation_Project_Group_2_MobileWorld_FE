@@ -37,7 +37,7 @@
             <div class="filter-group">
               <label class="filter-label">Trạng thái</label>
               <select v-model="filterStatus" class="form-select search-input">
-                <option value="">Tất cả trạng thái</option>
+                <option value="">Trạng thái đang/sắp diễn ra</option>
                 <option value="0">Đang diễn ra</option>
                 <option value="1">Sắp diễn ra</option>
                 <option value="deleted">Đã kết thúc</option>

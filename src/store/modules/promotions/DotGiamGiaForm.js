@@ -1,19 +1,19 @@
 import axios from "axios";
-import {onMounted, ref, watch, computed} from "vue";
-import {debounce} from "lodash";
-import {useRoute, useRouter} from 'vue-router';
+import { onMounted, ref, watch, computed } from "vue";
+import { debounce } from "lodash";
+import { useRoute, useRouter } from 'vue-router';
 
 window.handleCheckboxChange = function (id) {
-    const {fetchCTSPData} = useDotGiamGiaInstance || {};
+    const { fetchCTSPData } = useDotGiamGiaInstance || {};
     if (fetchCTSPData) fetchCTSPData(id);
 };
 
 window.handleCheckboxChangeCTSP = function (id, isChecked) {
-    const {ctspList} = useDotGiamGiaInstance || {};
+    const { ctspList } = useDotGiamGiaInstance || {};
     if (ctspList) {
         ctspList.value = ctspList.value.map(item => {
             if (item.ctsp.id === id) {
-                return {...item, selected: isChecked};
+                return { ...item, selected: isChecked };
             }
             return item;
         });
@@ -105,7 +105,7 @@ export const useDotGiamGia = (toastNotification) => {
         let start = Math.max(1, currentPageDSP.value + 1 - half);
         let end = Math.min(totalPagesDSP.value, start + maxPagesToShow - 1);
         start = Math.max(1, end - maxPagesToShow + 1);
-        return Array.from({length: end - start + 1}, (_, i) => start + i);
+        return Array.from({ length: end - start + 1 }, (_, i) => start + i);
     });
 
     const displayedPagesCTSP = computed(() => {
@@ -114,7 +114,7 @@ export const useDotGiamGia = (toastNotification) => {
         let start = Math.max(1, currentPageCTSP.value + 1 - half);
         let end = Math.min(totalPagesCTSP.value, start + maxPagesToShow - 1);
         start = Math.max(1, end - maxPagesToShow + 1);
-        return Array.from({length: end - start + 1}, (_, i) => start + i);
+        return Array.from({ length: end - start + 1 }, (_, i) => start + i);
     });
 
     const fetchData = async () => {
@@ -314,11 +314,11 @@ onchange="handleCheckboxChange(${item.sp.id})"
     />`;
             },
         },
-        {key: "index", label: "#", formatter: (_, __, index) => index + 1},
-        {key: "sp.ma", label: "Mã"},
-        {key: "sp.tenSanPham", label: "Tên sản phẩm"},
-        {key: "nsx.nhaSanXuat", label: "Hãng"},
-        {key: "soLuongCTSP", label: "Số lượng"},
+        { key: "index", label: "#", formatter: (_, __, index) => index + 1 },
+        { key: "sp.ma", label: "Mã" },
+        { key: "sp.tenSanPham", label: "Tên sản phẩm" },
+        { key: "nsx.nhaSanXuat", label: "Hãng" },
+        { key: "soLuongCTSP", label: "Số lượng" },
     ]);
 
     const getNestedValue = (obj, key) => {
@@ -394,13 +394,13 @@ onchange="handleCheckboxChange(${item.sp.id})"
 
     const checkDuplicate = async (field, value, excludeId = null) => {
         try {
-            const {data} = await axios.get(`/api/dotGiamGia/ViewAddDotGiamGia/exists/${field}`, {
-                params: {[field]: value, excludeId},
+            const { data } = await axios.get(`/api/dotGiamGia/ViewAddDotGiamGia/exists/${field}`, {
+                params: { [field]: value, excludeId },
             });
             return data;
         } catch (error) {
             console.error("Error calling API:", error);
-            toast.value?.addToast({type: 'error', message: 'Lỗi khi kiểm tra trùng lặp', duration: 3000});
+            toast.value?.addToast({ type: 'error', message: 'Lỗi khi kiểm tra trùng lặp', duration: 3000 });
             return false;
         }
     };
@@ -413,7 +413,7 @@ onchange="handleCheckboxChange(${item.sp.id})"
             fetchData();
         } catch (error) {
             console.error("Lỗi khi lấy danh sách dòng sản phẩm:", error);
-            toast.value?.addToast({type: 'error', message: 'Lỗi khi tải danh sách dòng sản phẩm', duration: 3000});
+            toast.value?.addToast({ type: 'error', message: 'Lỗi khi tải danh sách dòng sản phẩm', duration: 3000 });
         }
     };
 
@@ -443,23 +443,26 @@ onchange="handleCheckboxChange(${item.sp.id})"
             ctspList: ctspList.value.filter(item => item.selected && item.ctsp?.id),
         };
         try {
-            const toastId = toast.value?.addToast({type: 'info', message: 'Đang xử lý...', isLoading: true});
+            const toastId = toast.value?.addToast({ type: 'info', message: 'Đang xử lý...', duration: 1000 });
             let response;
             if (edit.value) {
                 response = await axios.put(
                     `/api/dotGiamGia/AddDotGiamGia/${dotGiamGia.value.id}`,
                     requestData,
-                    {headers: {"Content-Type": "application/json"}}
+                    { headers: { "Content-Type": "application/json" } }
                 );
-
-                toast.value?.addToast({type: 'success', message: 'Cập nhật thành công', duration: 3000});
+                setTimeout(() => {
+                    toast.value?.addToast({ type: 'success', message: 'Cập nhật thành công', duration: 3000 });
+                }, 1000);                
             } else {
                 response = await axios.post(
                     "/api/dotGiamGia/AddDotGiamGia",
                     requestData,
-                    {headers: {"Content-Type": "application/json"}}
+                    { headers: { "Content-Type": "application/json" } }
                 );
-                toast.value?.addToast({type: 'success', message: 'Thêm thành công', duration: 3000});
+                 setTimeout(() => {
+                    toast.value?.addToast({ type: 'success', message: 'Thêm thành công', duration: 3000 });
+                }, 1000);
             }
             resetForm();
             setTimeout(() => {
@@ -467,9 +470,10 @@ onchange="handleCheckboxChange(${item.sp.id})"
             }, 3000); // Chờ 3 giây để hiển thị toast
         } catch (error) {
             console.error("Lỗi:", error);
-            toast.value?.addToast({type: 'error', message: 'Thao tác thất bại!', duration: 3000});
+            toast.value?.addToast({ type: 'error', message: 'Thao tác thất bại!', duration: 3000 });
         }
     };
+
 
     const formatDateLocal = (dateString) => {
         if (!dateString) return "";
@@ -494,7 +498,7 @@ onchange="handleCheckboxChange(${item.sp.id})"
         () => {
             capNhatGiaSauKhiGiam();
         },
-        {deep: true}
+        { deep: true }
     );
 
     watch(
@@ -516,7 +520,7 @@ onchange="handleCheckboxChange(${item.sp.id})"
                 fetchDongSanPham();
             }
         },
-        {immediate: true}
+        { immediate: true }
     );
 
     watch(selectedDongSanPham, () => {

@@ -6,7 +6,7 @@ export function useDiscountManagement() {
     const toast = ref(null);
     const router = useRouter();
     const currentPage = ref(0);
-    const pageSize = ref(10);
+    const pageSize = ref(100);
     const totalPages = ref(0);
 
     // Tìm kiếm
