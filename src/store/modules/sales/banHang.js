@@ -1902,8 +1902,8 @@ export default {
     // Payment-Related Methods
     const selectPayment = (method) => {
       paymentMethod.value = method;
-      tienChuyenKhoan.value = 0;
-      tienMat.value = 0;
+      tienChuyenKhoan.value = method === "transfer" ? totalPayment.value : 0;
+      tienMat.value = method === "cash" ? totalPayment.value : 0;
 
       if (method === "transfer" || method === "both") {
         showPaymentProviderModal.value = true;
@@ -2260,7 +2260,7 @@ export default {
                 tienMat: totalPayment.value,
                 tienChuyenKhoan: 0,
               });
-            } else if (paymentMethod.value === "transfer") {
+            } else if (paymentMethod.value === "transfer" || (selectedPaymentProvider.value === 'vnpay' && !selectedDiscount.value)) {
               hinhThucThanhToan.push({
                 phuongThucThanhToanId: 2,
                 tienMat: 0,

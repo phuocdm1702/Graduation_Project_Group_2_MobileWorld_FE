@@ -550,8 +550,8 @@
                             @change="handleCustomerProvinceChange" style="
                           border-radius: 0 0.5rem 0.5rem 0;
                           transition: all 0.3s ease;
-                        " >
-                            <option value="" >
+                        ">
+                            <option value="">
                               Chọn tỉnh/thành phố
                             </option>
                             <option v-for="province in provinces" :key="province.code" :value="province.name">
@@ -572,8 +572,8 @@
                             @change="handleCustomerDistrictChange" style="
                           border-radius: 0 0.5rem 0.5rem 0;
                           transition: all 0.3s ease;
-                        " >
-                            <option value="" >Chọn quận/huyện</option>
+                        ">
+                            <option value="">Chọn quận/huyện</option>
                             <option v-for="district in districts" :key="district.code" :value="district.name">
                               {{ district.name }}
                             </option>
@@ -591,8 +591,8 @@
                           <select v-model="customer.ward" class="form-select search-input border-start-0" style="
                           border-radius: 0 0.5rem 0.5rem 0;
                           transition: all 0.3s ease;
-                        " >
-                            <option value="" >Chọn phường/xã</option>
+                        ">
+                            <option value="">Chọn phường/xã</option>
                             <option v-for="ward in wards" :key="ward.code" :value="ward.name">
                               {{ ward.name }}
                             </option>
@@ -1090,9 +1090,9 @@ discount, index
       <!-- IMEI Modal for Product Selection -->
       <div v-if="showIMEIModal" class="modal fade show d-block" tabindex="-1" style="background: rgba(0, 0, 0, 0.5)">
         <div class="modal-dialog modal-dialog-centered modal-lg">
-          <div class="modal-content shadow-lg p-3 gradient-modal animate__animated animate__zoomIn" 
+          <div class="modal-content shadow-lg p-3 gradient-modal animate__animated animate__zoomIn"
             style="background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(15px); border-radius: 0.5rem;">
-            
+
             <div class="modal-header border-0 d-flex justify-content-between align-items-center">
               <h5 class="modal-title fw-bold text-dark">
                 Chọn IMEI cho sản phẩm
@@ -1169,9 +1169,7 @@ discount, index
               <button class="btn btn-light px-4 py-2" @click="closeIMEIModal">
                 Hủy
               </button>
-              <button 
-                class="btn btn-light px-4 py-2 teal text-white" 
-                @click="addProductWithIMEIs"
+              <button class="btn btn-light px-4 py-2 teal text-white" @click="addProductWithIMEIs"
                 :disabled="selectedIMEIs.length === 0">
                 Thêm vào giỏ
               </button>
@@ -1337,22 +1335,57 @@ export default defineComponent({
   },
   computed: {
     filteredAlternativeDiscountsComputed() {
-      if (!this.alternativeSearchQuery) {
-        return this.alternativeDiscounts || [];
+      let filtered = [];
+
+      if (!this.alternativeDiscounts || this.alternativeDiscounts.length === 0) {
+        console.log('No alternative discounts available');
+        return [];
       }
-      const query = this.alternativeSearchQuery.toLowerCase();
-      return (this.alternativeDiscounts || []).filter(
-        (discount) =>
-          discount.code.toLowerCase().includes(query) ||
-          (discount.value && String(discount.value).includes(query)) ||
-          (discount.percent && String(discount.percent).includes(query)) ||
-          String(discount.minOrder).includes(query) ||
-          discount.expiry.toLowerCase().includes(query)
-      );
+
+      if (!this.alternativeSearchQuery || this.alternativeSearchQuery.trim() === '') {
+        filtered = [...this.alternativeDiscounts];
+      } else {
+        const query = this.alternativeSearchQuery.toLowerCase().trim();
+        filtered = this.alternativeDiscounts.filter(discount => {
+          const matchCode = discount.code && discount.code.toLowerCase().includes(query);
+          const matchValue = discount.value && String(discount.value).includes(query);
+          const matchPercent = discount.percent && String(discount.percent).includes(query);
+          const matchMinOrder = discount.minOrder && String(discount.minOrder).includes(query);
+          const matchExpiry = discount.expiry && discount.expiry.toLowerCase().includes(query);
+
+          return matchCode || matchValue || matchPercent || matchMinOrder || matchExpiry;
+        });
+      }
+
+      console.log('Filtered alternative discounts:', filtered);
+      return filtered;
     },
   },
   methods: {
     // Add this method to handle tab switching
+    scrollCarousel(direction) {
+      console.log('ScrollCarousel called:', direction);
+      console.log('Current index:', this.currentAlternativeIndex);
+      console.log('Total items:', this.filteredAlternativeDiscountsComputed.length);
+
+      if (direction === 'left' && this.currentAlternativeIndex > 0) {
+        this.currentAlternativeIndex--;
+      } else if (direction === 'right' && this.currentAlternativeIndex < this.filteredAlternativeDiscountsComputed.length - 1) {
+        this.currentAlternativeIndex++;
+      }
+
+      console.log('New index:', this.currentAlternativeIndex);
+    },
+
+    isCarouselDisabled(direction) {
+      if (direction === 'left') {
+        return this.currentAlternativeIndex === 0;
+      } else if (direction === 'right') {
+        return this.currentAlternativeIndex >= this.filteredAlternativeDiscountsComputed.length - 1;
+      }
+      return false;
+    },
+
     setActiveTab(tab) {
       this.activeTab = tab;
       this.currentAlternativeIndex = 0; // Reset carousel index when switching tabs
@@ -1487,6 +1520,16 @@ export default defineComponent({
         console.log("Thông tin khách hàng thay đổi:", newCustomer);
       },
       deep: true,
+    },
+    filteredAlternativeDiscountsComputed: {
+      handler(newFiltered) {
+        console.log('Filtered discounts changed:', newFiltered.length);
+        // Reset về index 0 khi danh sách thay đổi
+        if (this.currentAlternativeIndex >= newFiltered.length) {
+          this.currentAlternativeIndex = 0;
+        }
+      },
+      immediate: true
     },
   },
   mounted() {
@@ -1981,7 +2024,8 @@ export default defineComponent({
 }
 
 .modal-body {
-  max-height: calc(90vh - 200px); /* Adjust modal body height */
+  max-height: calc(90vh - 200px);
+  /* Adjust modal body height */
   overflow-y: auto;
 }
 
