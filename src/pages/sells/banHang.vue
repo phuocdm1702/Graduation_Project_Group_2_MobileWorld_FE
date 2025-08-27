@@ -731,13 +731,12 @@
                         <div v-for="(
 discount, index
                           ) in filteredAlternativeDiscountsComputed" :key="discount.id"
-                          v-show="index === currentAlternativeIndex" @click="selectDiscount(discount)"
+                          v-show="index === currentAlternativeIndex"
                           class="voucher-card p-3 shadow-sm animate__animated animate__fadeInUp w-100" style="
                             background: #ffffff;
                             border: 1px solid #34d399;
                             border-radius: 0.5rem;
                             transition: all 0.3s ease;
-                            cursor: pointer;
                           " :class="{
                             'selected-voucher':
                               selectedDiscount &&
