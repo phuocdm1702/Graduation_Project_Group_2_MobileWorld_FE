@@ -1430,242 +1430,121 @@ export default {
       showToast("info", "Đã hủy mã giảm giá");
     };
 
-    const applyBestDiscount = async () => {
-      if (!cartItems.value.length || tongTien.value <= 0) {
+    async function applyBestDiscount() {
+  try {
+    // Kiểm tra nếu tổng tiền bằng 0, bỏ qua việc áp dụng mã giảm giá
+    if (tongTien.value <= 0) {
+      if (selectedDiscount.value) {
         selectedDiscount.value = null;
-        manualDiscountSelected.value = false;
-        // Xóa id_phieu_giam_gia khỏi hóa đơn nếu không có giỏ hàng
         if (activeInvoiceId.value) {
-          try {
-            const updateResult = await updatePhieuGiamGiaApi(
-              activeInvoiceId.value,
-              null
-            );
-            if (updateResult.success) {
-              showToast(
-                "info",
-                "Đã xóa mã giảm giá khỏi hóa đơn do giỏ hàng trống"
-              );
-            } else {
-              showToast(
-                "error",
-                updateResult.message || "Lỗi khi xóa mã giảm giá khỏi hóa đơn"
-              );
-            }
-          } catch (error) {
-            showToast("error", `Lỗi khi xóa mã giảm giá: ${error.message}`);
-          }
+          await updatePhieuGiamGiaApi(activeInvoiceId.value, null);
         }
-        return;
+        showToast('info', 'Giỏ hàng rỗng, không thể áp dụng mã giảm giá.');
       }
+      return;
+    }
 
-      if (manualDiscountSelected.value) {
-        const result = await validateDiscountApi(
-          selectedDiscount.value.code,
-          tongTien.value,
-          customer.value?.id || null
-        );
+    // Lấy lại mã giảm giá công khai
+    await fetchPGG();
+    let allDiscounts = [...publicDiscountCodes.value];
+
+    // Lấy mã giảm giá cá nhân nếu có khách hàng
+    if (customer.value?.id) {
+      const pggResult = await getPhieuGiamGiaByKhachHangApi(customer.value.id);
+      if (pggResult.success && Array.isArray(pggResult.data)) {
+        privateDiscountCodes.value = pggResult.data
+          .filter(
+            (item) =>
+              item.idPhieuGiamGia?.riengTu === true &&
+              item.idPhieuGiamGia?.trangThai === true &&
+              isValidDiscount(item.idPhieuGiamGia?.ngayKetThuc) &&
+              Number(item.idPhieuGiamGia?.soLuongDung || item.soLuongDung) > 0
+          )
+          .map((item, index) => ({
+            id: item.id || index + 1,
+            code: item.ma || "Unknown",
+            value: item.idPhieuGiamGia?.soTienGiamToiDa || 0,
+            percent: item.idPhieuGiamGia?.phanTramGiamGia || 0,
+            expiry: formatDate(item.idPhieuGiamGia?.ngayKetThuc),
+            rawExpiry: item.idPhieuGiamGia?.ngayKetThuc,
+            minOrder: item.idPhieuGiamGia?.hoaDonToiThieu || 0,
+            type: "private",
+            soLuongDung: Number(item.idPhieuGiamGia?.soLuongDung || item.soLuongDung) || 0,
+          }));
+        allDiscounts = [...allDiscounts, ...privateDiscountCodes.value];
+      }
+    }
+
+    let bestDiscount = null;
+    for (const code of allDiscounts) {
+      if (code.minOrder && tongTien.value < code.minOrder) {
+        continue; // Bỏ qua mã nếu không đủ tổng tiền
+      }
+      const result = await validateDiscountApi(code.code, tongTien.value, customer.value?.id || null);
+      if (
+        result.success &&
+        result.data &&
+        result.data.trangThai === true &&
+        isValidDiscount(result.data.ngayKetThuc) &&
+        Number(result.data.soLuongDung) > 0
+      ) {
+        const fixedDiscount = code.value || 0;
+        const percentDiscount = code.percent
+          ? Math.min((code.percent / 100) * tongTien.value, code.value || Infinity)
+          : 0;
+        const actualDiscountValue = Math.max(fixedDiscount, percentDiscount);
+
         if (
-          !result.success ||
-          !result.data ||
-          Number(result.data.soLuongDung) <= 0
+          (code.type === "public" && tongTien.value >= code.minOrder) ||
+          code.type === "private"
         ) {
-          selectedDiscount.value = null;
-          manualDiscountSelected.value = false;
-          // Xóa id_phieu_giam_gia khỏi hóa đơn nếu mã không hợp lệ
-          if (activeInvoiceId.value) {
-            try {
-              const updateResult = await updatePhieuGiamGiaApi(
-                activeInvoiceId.value,
-                null
-              );
-              if (updateResult.success) {
-                showToast(
-                  "info",
-                  "Mã giảm giá đã chọn không còn hợp lệ và đã được xóa khỏi hóa đơn"
-                );
-              } else {
-                showToast(
-                  "error",
-                  updateResult.message || "Lỗi khi xóa mã giảm giá khỏi hóa đơn"
-                );
-              }
-            } catch (error) {
-              showToast("error", `Lỗi khi xóa mã giảm giá: ${error.message}`);
-            }
+          if (!bestDiscount || actualDiscountValue > bestDiscount.value) {
+            bestDiscount = { ...code, value: actualDiscountValue };
           }
-          showToast(
-            "info",
-            "Mã giảm giá đã chọn không còn hợp lệ hoặc đã hết số lượng"
-          );
         }
-        return;
       }
+    }
 
-      if (!activeInvoiceId.value) {
-        showToast(
-          "error",
-          "Vui lòng chọn hoặc tạo một hóa đơn trước khi áp dụng mã giảm giá"
-        );
-        return;
-      }
-
-      try {
-        await fetchPGG();
-
-        if (customer.value?.id) {
-          const pggResult = await getPhieuGiamGiaByKhachHangApi(
-            customer.value.id
-          );
-          if (pggResult.success && Array.isArray(pggResult.data)) {
-            privateDiscountCodes.value = pggResult.data
-              .filter((item) => {
-                const pgg = item.idPhieuGiamGia || {};
-                const isPrivate = pgg.riengTu === true;
-                const isValid = isValidDiscount(
-                  pgg.ngayKetThuc || item.ngayHetHan
-                );
-                const hasQuantity =
-                  Number(pgg.soLuongDung || item.soLuongDung) > 0;
-                return isPrivate && isValid && hasQuantity;
-              })
-              .map((item, index) => ({
-                id: item.id || index + 1,
-                code: item.idPhieuGiamGia?.ma || item.ma || "Unknown",
-                tenPhieuGiamGia:
-                  item.idPhieuGiamGia?.tenPhieuGiamGia || "Unknown",
-                value: item.idPhieuGiamGia?.soTienGiamToiDa || 0,
-                percent: item.idPhieuGiamGia?.phanTramGiamGia || 0,
-                expiry: formatDate(
-                  item.idPhieuGiamGia?.ngayKetThuc || item.ngayHetHan
-                ),
-                rawExpiry: item.idPhieuGiamGia?.ngayKetThuc || item.ngayHetHan,
-                minOrder: item.idPhieuGiamGia?.hoaDonToiThieu || 0,
-                soLuongDung:
-                  Number(
-                    item.idPhieuGiamGia?.soLuongDung || item.soLuongDung
-                  ) || 0,
-                type: "private",
-              }));
-          }
-        }
-
-        const allDiscounts = [
-          ...publicDiscountCodes.value.map((code) => ({
-            ...code,
-            type: "public",
-          })),
-          ...privateDiscountCodes.value,
-        ];
-
-        let bestDiscount = null;
-        for (const code of allDiscounts) {
-          const result = await validateDiscountApi(
-            code.code,
-            tongTien.value,
-            customer.value?.id || null
-          );
-          if (
-            result.success &&
-            result.data &&
-            Number(result.data.soLuongDung) > 0
-          ) {
-            const fixedDiscount = code.value || 0;
-            const percentDiscount = code.percent
-              ? Math.min(
-                (code.percent / 100) * tongTien.value,
-                code.value || Infinity
-              )
-              : 0;
-            const actualDiscount = Math.max(fixedDiscount, percentDiscount);
-
-            if (
-              (code.type === "public" && tongTien.value >= code.minOrder) ||
-              code.type === "private"
-            ) {
-              if (!bestDiscount || actualDiscount > bestDiscount.value) {
-                bestDiscount = { ...code, value: actualDiscount };
-              }
-            }
-          }
-        }
-
-        if (bestDiscount) {
-          selectedDiscount.value = { ...bestDiscount };
-          const discountText = bestDiscount.percent
-            ? `${bestDiscount.percent}% (${formatPrice(bestDiscount.value)})`
-            : formatPrice(bestDiscount.value);
-
-          // Gọi API để lưu id_phieu_giam_gia vào hóa đơn
-          const updateResult = await updatePhieuGiamGiaApi(
-            activeInvoiceId.value,
-            bestDiscount.id
-          );
-          if (updateResult.success) {
-            showToast(
-              "success",
-              `Đã áp dụng mã giảm giá ${bestDiscount.tenPhieuGiamGia || bestDiscount.code
-              } (-${discountText}) và lưu vào hóa đơn`
-            );
-          } else {
-            selectedDiscount.value = null;
-            showToast(
-              "error",
-              updateResult.message || "Lỗi khi lưu mã giảm giá vào hóa đơn"
-            );
-          }
+    // Áp dụng mã giảm giá tốt nhất
+    if (bestDiscount && (!selectedDiscount.value || (bestDiscount.id !== selectedDiscount.value.id && !manualDiscountSelected.value))) {
+      selectedDiscount.value = bestDiscount;
+      if (activeInvoiceId.value) {
+        const result = await updatePhieuGiamGiaApi(activeInvoiceId.value, bestDiscount.id);
+        if (result.success) {
+          const responseData = await loadPendingInvoiceApi(activeInvoiceId.value);
+          cartItems.value = responseData.chiTietGioHangDTOS.map((item) => ({
+            id: item.chiTietSanPhamId,
+            name: item.tenSanPham,
+            color: item.mauSac,
+            ram: item.ram,
+            storage: item.boNhoTrong,
+            imei: item.maImel,
+            originalPrice: Number(item.giaBanGoc) || Number(item.giaBan) || 0,
+            currentPrice: Number(item.giaBan) || 0,
+            quantity: item.soLuong,
+            ghiChuGia: item.ghiChuGia || "",
+            imageUrl: item.image || '/assets/images/placeholder.jpg',
+          }));
+          showToast('success', `Đã áp dụng mã giảm giá tốt nhất: ${bestDiscount.code}`);
         } else {
           selectedDiscount.value = null;
-          // Xóa id_phieu_giam_gia khỏi hóa đơn nếu không có mã hợp lệ
-          try {
-            const updateResult = await updatePhieuGiamGiaApi(
-              activeInvoiceId.value,
-              null
-            );
-            if (updateResult.success) {
-              showToast(
-                "info",
-                "Không có mã giảm giá nào khả dụng, đã xóa mã giảm giá khỏi hóa đơn"
-              );
-            } else {
-              showToast(
-                "error",
-                updateResult.message || "Lỗi khi xóa mã giảm giá khỏi hóa đơn"
-              );
-            }
-          } catch (error) {
-            showToast("error", `Lỗi khi xóa mã giảm giá: ${error.message}`);
-          }
-          showToast("info", "Không có mã giảm giá nào khả dụng");
+          showToast('error', 'Lỗi khi áp dụng mã giảm giá tự động');
         }
-      } catch (error) {
-        selectedDiscount.value = null;
-        manualDiscountSelected.value = false;
-        // Xóa id_phieu_giam_gia khỏi hóa đơn nếu có lỗi
-        if (activeInvoiceId.value) {
-          try {
-            const updateResult = await updatePhieuGiamGiaApi(
-              activeInvoiceId.value,
-              null
-            );
-            if (updateResult.success) {
-              showToast("info", "Đã xóa mã giảm giá khỏi hóa đơn do lỗi");
-            } else {
-              showToast(
-                "error",
-                updateResult.message || "Lỗi khi xóa mã giảm giá khỏi hóa đơn"
-              );
-            }
-          } catch (error) {
-            showToast("error", `Lỗi khi xóa mã giảm giá: ${error.message}`);
-          }
-        }
-        showToast(
-          "error",
-          `Lỗi khi tìm mã giảm giá tốt nhất: ${error.message}`
-        );
+      } else {
+        showToast('error', 'Không có hóa đơn đang chọn để áp dụng mã giảm giá');
       }
-    };
+    } else if (!bestDiscount && selectedDiscount.value) {
+      selectedDiscount.value = null;
+      if (activeInvoiceId.value) {
+        await updatePhieuGiamGiaApi(activeInvoiceId.value, null);
+      }
+      showToast('info', 'Không có mã giảm giá nào phù hợp.');
+    }
+  } catch (error) {
+    showToast('error', 'Lỗi khi tìm và áp dụng mã giảm giá tốt nhất');
+  }
+}
+
 
     const scanQR = () => {
       if (!activeInvoiceId.value) {
