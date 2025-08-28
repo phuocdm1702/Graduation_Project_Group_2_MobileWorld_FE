@@ -285,6 +285,40 @@ export const checkVNPayPaymentStatusApi = async (urlParams) => {
   }
 };
 
+// Momo Payment APIs
+export const createMomoPaymentApi = async (amount, orderInfo, returnUrl, notifyUrl) => {
+  try {
+    const params = new URLSearchParams();
+    params.append("amount", amount.toString());
+    params.append("orderInfo", orderInfo);
+    params.append("returnUrl", returnUrl);
+    params.append("notifyUrl", notifyUrl);
+    const response = await apiService.post("/api/payment/momo/create", params.toString(), {
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    });
+    return response.data;
+  } catch (error) {
+    throw new Error(error.response?.data?.message || "Lỗi khi tạo thanh toán Momo");
+  }
+};
+
+export const checkMomoPaymentStatusApi = async (urlParams) => {
+  try {
+    // Momo's return endpoint on backend returns a string, not JSON, so we handle it as text
+    const response = await apiService.get("/api/payment/momo/return", { params: urlParams, responseType: 'text' });
+    // Parse the string response to determine status
+    if (response.data.includes("successful")) {
+      return { status: "success", message: response.data };
+    } else if (response.data.includes("failed")) {
+      return { status: "failed", message: response.data };
+    } else {
+      return { status: "error", message: response.data };
+    }
+  } catch (error) {
+    return { status: "error", message: error.response?.data || error.message || "Lỗi khi kiểm tra trạng thái thanh toán Momo" };
+  }
+};
+
 // New API: Add product to cart by barcode/IMEI
 export const addProductByBarcodeOrImeiApi = async (idHD, code) => {
   try {

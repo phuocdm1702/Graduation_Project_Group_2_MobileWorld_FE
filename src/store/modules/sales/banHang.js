@@ -41,6 +41,7 @@ import {
   createPaymentApi,
   completeOrderApi,
   checkVNPayPaymentStatusApi,
+  createMomoPaymentApi,
   addProductByBarcodeOrImeiApi,
 } from "./banHangApi";
 
@@ -1865,13 +1866,39 @@ export default {
           showToast("error", "Số tiền thanh toán không được âm");
           return;
         }
-      } else if (
-        paymentMethod.value === "transfer") {
+      } else if (paymentMethod.value === "transfer") {
         if (!selectedPaymentProvider.value) {
           showToast("error", "Vui lòng chọn phương thức thanh toán");
           return;
         }
-        if (selectedPaymentProvider.value !== "vnpay" && !qrCodeValue.value) {
+        if (selectedPaymentProvider.value === "vnpay") {
+          try {
+            isCreatingOrder.value = true;
+            const orderInfo = `Thanh toan don hang ${activeInvoiceId.value}`;
+            const returnUrl = `http://localhost:5173/vnpay-return`; // Frontend return URL
+            const paymentUrl = await createPaymentApi(totalPaymentValue, orderInfo, returnUrl);
+            window.location.href = paymentUrl; // Redirect to VNPAY
+            return; // Stop further execution
+          } catch (error) {
+            showToast("error", `Lỗi khi tạo thanh toán VNPAY: ${error.message}`);
+            isCreatingOrder.value = false;
+            return;
+          }
+        } else if (selectedPaymentProvider.value === "momo") { // Added Momo logic
+          try {
+            isCreatingOrder.value = true;
+            const orderInfo = `Thanh toan don hang ${activeInvoiceId.value}`;
+            const returnUrl = `http://localhost:5173/momo-return`; // Frontend return URL for Momo
+            const notifyUrl = `http://localhost:8080/api/payment/momo/return`; // Backend notify URL for Momo
+            const response = await createMomoPaymentApi(totalPaymentValue, orderInfo, returnUrl, notifyUrl);
+            window.location.href = response.payUrl; // Redirect to Momo
+            return; // Stop further execution
+          } catch (error) {
+            showToast("error", `Lỗi khi tạo thanh toán Momo: ${error.message}`);
+            isCreatingOrder.value = false;
+            return;
+          }
+        } else if (!qrCodeValue.value) {
           showToast("error", "Không thể tạo mã QR. Vui lòng thử lại.");
           return;
         }
