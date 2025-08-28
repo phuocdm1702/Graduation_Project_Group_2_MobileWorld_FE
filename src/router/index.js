@@ -46,6 +46,8 @@ const NotFound = () => import("@/pages/NotFound.vue");
 const ThongTin = () => import("@/pages/accounts/ThongTinAccounts.vue");
 const GiaoCa = () => import("@/pages/giaoCa/GiaoCa.vue");
 const LichLamViec = () => import("@/pages/giaoCa/LichLamViec.vue");
+const VNPAYReturn = () => import("@/pages/pay/VNPAYReturn.vue");
+const MomoReturn = () => import("@/pages/pay/MomoReturn.vue"); // New import
 
 const routes = [
   {
@@ -54,6 +56,24 @@ const routes = [
     component: AdminLayout,
     meta: { requiresAuth: true },
     children: [
+      {
+        path: "/vnpay-return", // VNPAY return route
+        name: "VNPAYReturn",
+        component: VNPAYReturn,
+        meta: {
+          title: "Kết quả thanh toán VNPAY",
+          breadcrumb: [{ name: "Kết quả thanh toán VNPAY", path: "/vnpay-return" }],
+        },
+      },
+      {
+        path: "/momo-return", // New Momo return route
+        name: "MomoReturn",
+        component: MomoReturn,
+        meta: {
+          title: "Kết quả thanh toán Momo",
+          breadcrumb: [{ name: "Kết quả thanh toán Momo", path: "/momo-return" }],
+        },
+      },
       {
         path: "/trangChu",
         name: "TrangChu",

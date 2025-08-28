@@ -224,6 +224,11 @@
                 <i class="bi bi-credit-card"></i>
                 <span class="fw-semibold">VNPAY</span>
               </button>
+              <button class="btn btn-light p-3 d-flex align-items-center gap-3" @click="selectPaymentProvider('momo')"
+                style="border: 1px solid #e83e8c; border-radius: 0.5rem">
+                <img src="/src/assets/img/momo_logo.svg" alt="Momo Logo" style="height: 24px; width: 24px;">
+                <span class="fw-semibold">Momo</span>
+              </button>
             </div>
           </div>
           <div class="modal-footer border-0">
