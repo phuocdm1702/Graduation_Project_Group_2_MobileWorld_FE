@@ -46,12 +46,18 @@ export const invoiceManagementLogic = {
     const keyword = ref('');
     const rangeMin = ref(null);
     const rangeMax = ref(null);
+    const rangeMinDisplay = ref('');
+    const rangeMaxDisplay = ref('');
+    const rangeError = ref('');
     const startDate = ref('');
     const endDate = ref('');
     const viewMode = ref('table');
     const currentPage = ref(1);
     const itemsPerPage = ref(99999999);
     const activeTab = ref('all');
+    const activeStatus = ref('all');  // Track selected status filter
+    const sortBy = ref('id');  // Mới
+    const sortDir = ref('DESC');  // Mới
 
     // Notification state
     const notificationType = ref('confirm');
@@ -100,6 +106,29 @@ export const invoiceManagementLogic = {
       },
     ]);
 
+    const groupedProducts = computed(() => {
+      const grouped = {};
+      products.value.forEach(product => {
+        const key = `${product.name}-${product.color}-${product.ram}-${product.capacity}`;
+        if (!grouped[key]) {
+          grouped[key] = {
+            id: product.id,
+            name: product.name,
+            color: product.color,
+            ram: product.ram,
+            capacity: product.capacity,
+            price: product.price,
+            image: product.image,
+            imeis: [],
+            quantity: 0,
+          };
+        }
+        grouped[key].imeis.push(product.imei);
+        grouped[key].quantity += 1;
+      });
+      return Object.values(grouped);
+    });
+
     // Computed properties
     const invoices = computed(() => hoaDonStore.getInvoices);
     const isLoading = computed(() => hoaDonStore.getIsLoading);
@@ -129,74 +158,80 @@ export const invoiceManagementLogic = {
         width: `${width}%`,
       };
     });
+    const filteredInvoices = computed(() => invoices.value);
+    const totalValue = computed(() => filteredInvoices.value.reduce((sum, inv) => sum + (inv.tongTienSauGiam || 0), 0));
+    const totalPages = computed(() => Math.ceil(totalElements.value / itemsPerPage.value));
+    const paginatedInvoices = computed(() => filteredInvoices.value);  // Data đã paginated từ server
 
-    const filteredInvoices = computed(() => {
-      let filtered = invoices.value;
+    // const filteredInvoices = computed(() => {
+    //   let filtered = invoices.value;
 
-      if (activeTab.value === 'in-store') {
-        filtered = filtered.filter((inv) => inv.loaiDon?.toLowerCase() === 'trực tiếp');
-      } else if (activeTab.value === 'online') {
-        filtered = filtered.filter((inv) => inv.loaiDon?.toLowerCase() === 'online');
-      }
+    //   if (activeTab.value === 'in-store') {
+    //     filtered = filtered.filter((inv) => inv.loaiDon?.toLowerCase() === 'trực tiếp');
+    //   } else if (activeTab.value === 'online') {
+    //     filtered = filtered.filter((inv) => inv.loaiDon?.toLowerCase() === 'online');
+    //   }
 
-      if (keyword.value) {
-        const query = keyword.value.toLowerCase();
-        filtered = filtered.filter(
-          (inv) =>
-            (inv.ma || '').toLowerCase().includes(query) ||
-            (inv.tenKhachHang || '').toLowerCase().includes(query) ||
-            (inv.soDienThoaiKhachHang || '').toLowerCase().includes(query) ||
-            (inv.maNhanVien || '').toLowerCase().includes(query)
-        );
-      }
+    //   if (keyword.value) {
+    //     const query = keyword.value.toLowerCase();
+    //     filtered = filtered.filter(
+    //       (inv) =>
+    //         (inv.ma || '').toLowerCase().includes(query) ||
+    //         (inv.tenKhachHang || '').toLowerCase().includes(query) ||
+    //         (inv.soDienThoaiKhachHang || '').toLowerCase().includes(query) ||
+    //         (inv.maNhanVien || '').toLowerCase().includes(query)
+    //     );
+    //   }
 
-      if (rangeMin.value !== null) {
-        filtered = filtered.filter((inv) => (inv.tongTienSauGiam || 0) >= rangeMin.value);
-      }
-      if (rangeMax.value !== null) {
-        filtered = filtered.filter((inv) => (inv.tongTienSauGiam || 0) <= rangeMax.value);
-      }
+    //   if (rangeMin.value !== null) {
+    //     filtered = filtered.filter((inv) => (inv.tongTienSauGiam || 0) >= rangeMin.value);
+    //   }
+    //   if (rangeMax.value !== null) {
+    //     filtered = filtered.filter((inv) => (inv.tongTienSauGiam || 0) <= rangeMax.value);
+    //   }
 
-      if (startDate.value) {
-        filtered = filtered.filter((inv) => {
-          const invDate = new Date(inv.ngayTao)
-            .toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' })
-            .split('/')
-            .reverse()
-            .join('-');
-          return new Date(invDate) >= new Date(startDate.value);
-        });
-      }
-      if (endDate.value) {
-        filtered = filtered.filter((inv) => {
-          const invDate = new Date(inv.ngayTao)
-            .toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' })
-            .split('/')
-            .reverse()
-            .join('-');
-          return new Date(invDate) <= new Date(endDate.value);
-        });
-      }
+    //   if (startDate.value) {
+    //     filtered = filtered.filter((inv) => {
+    //       const invDate = new Date(inv.ngayTao)
+    //         .toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' })
+    //         .split('/')
+    //         .reverse()
+    //         .join('-');
+    //       return new Date(invDate) >= new Date(startDate.value);
+    //     });
+    //   }
+    //   if (endDate.value) {
+    //     filtered = filtered.filter((inv) => {
+    //       const invDate = new Date(inv.ngayTao)
+    //         .toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' })
+    //         .split('/')
+    //         .reverse()
+    //         .join('-');
+    //       return new Date(invDate) <= new Date(endDate.value);
+    //     });
+    //   }
 
-      return filtered;
-    });
+    //   return filtered;
+    // });
 
-    const totalValue = computed(() => {
-      return filteredInvoices.value.reduce((sum, inv) => sum + (inv.tongTienSauGiam || 0), 0);
-    });
+    // const totalValue = computed(() => {
+    //   return filteredInvoices.value.reduce((sum, inv) => sum + (inv.tongTienSauGiam || 0), 0);
+    // });
 
-    const totalPages = computed(() => {
-      return Math.ceil(totalElements.value / itemsPerPage.value);
-    });
+    // const totalPages = computed(() => {
+    //   return Math.ceil(totalElements.value / itemsPerPage.value);
+    // });
 
-    const paginatedInvoices = computed(() => {
-      const start = (currentPage.value - 1) * itemsPerPage.value;
-      const end = start + itemsPerPage.value;
-      return filteredInvoices.value.slice(start, end);
-    });
+    // const paginatedInvoices = computed(() => {
+    //   const start = (currentPage.value - 1) * itemsPerPage.value;
+    //   const end = start + itemsPerPage.value;
+    //   return filteredInvoices.value.slice(start, end);
+    // });
 
     const statusCounts = computed(() => {
-      return filteredInvoices.value.reduce((acc, inv) => {
+      // Always count from all invoices, not filtered ones
+      // This gives users a complete overview of all statuses
+      return invoices.value.reduce((acc, inv) => {
         const status = inv.trangThaiFormatted || 'N/A';
         acc[status] = (acc[status] || 0) + 1;
         return acc;
@@ -235,6 +270,33 @@ export const invoiceManagementLogic = {
       return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
     };
 
+    // Currency formatting functions
+    const formatCurrency = (value) => {
+      if (!value && value !== 0) return '';
+      return new Intl.NumberFormat('vi-VN').format(value);
+    };
+
+    const parseCurrency = (value) => {
+      if (!value) return null;
+      // Remove all non-digit characters except decimal separator
+      const cleanValue = value.toString().replace(/[^\d,]/g, '').replace(/,/g, '');
+      const parsed = parseInt(cleanValue, 10);
+      return isNaN(parsed) ? null : parsed;
+    };
+
+    const validateRange = (min, max) => {
+      if (min !== null && max !== null && min > max) {
+        return 'Giá tối thiểu không được lớn hơn giá tối đa';
+      }
+      if (min !== null && min < 0) {
+        return 'Giá không được âm';
+      }
+      if (max !== null && max < 0) {
+        return 'Giá không được âm';
+      }
+      return '';
+    };
+
     const debouncedSearch = debounce((query) => {
       keyword.value = query;
       currentPage.value = 1;
@@ -243,14 +305,16 @@ export const invoiceManagementLogic = {
 
     const resetFilters = () => {
       keyword.value = '';
-      rangeMin.value = minInvoiceTotal.value;
-      rangeMax.value = maxInvoiceTotal.value;
+      rangeMin.value = null;
+      rangeMax.value = null;
+      rangeMinDisplay.value = '';
+      rangeMaxDisplay.value = '';
+      rangeError.value = '';
       startDate.value = '';
       endDate.value = '';
-      activeTab.value = 'all';
-      currentPage.value = 1;
-      highlightedInvoiceId.value = null;
-
+      activeStatus.value = 'all';  // Reset status filter
+      sortBy.value = 'id';
+      sortDir.value = 'DESC';
       hoaDonStore.updateFilters({
         keyword: '',
         minAmount: null,
@@ -258,34 +322,82 @@ export const invoiceManagementLogic = {
         startDate: null,
         endDate: null,
         trangThai: null,
-        loaiDon: null, // Reset loaiDon
+        loaiDon: null,
+        sortBy: 'id',
+        sortDir: 'DESC',
       });
-
+      currentPage.value = 1;  // Reset UI page
       toastNotification.value?.addToast({
-        type: 'info',
-        message: 'Đã đặt lại tất cả bộ lọc và tab',
+        type: 'success',
+        message: 'Đã đặt lại bộ lọc',
         duration: 2000,
       });
     };
 
     const updateRangeMin = () => {
-      if (rangeMin.value > rangeMax.value) {
+      const parsed = parseCurrency(rangeMinDisplay.value);
+      rangeMin.value = parsed;
+
+      if (rangeMin.value !== null && rangeMax.value !== null && rangeMin.value > rangeMax.value) {
         rangeMin.value = rangeMax.value;
+        rangeMinDisplay.value = formatCurrency(rangeMin.value);
       }
-      hoaDonStore.updateFilters({
-        minAmount: rangeMin.value,
-        maxAmount: rangeMax.value,
-      });
+
+      rangeError.value = validateRange(rangeMin.value, rangeMax.value);
+
+      if (!rangeError.value) {
+        hoaDonStore.updateFilters({
+          minAmount: rangeMin.value,
+          maxAmount: rangeMax.value,
+        });
+      }
     };
 
     const updateRangeMax = () => {
-      if (rangeMax.value < rangeMin.value) {
+      const parsed = parseCurrency(rangeMaxDisplay.value);
+      rangeMax.value = parsed;
+
+      if (rangeMin.value !== null && rangeMax.value !== null && rangeMax.value < rangeMin.value) {
         rangeMax.value = rangeMin.value;
+        rangeMaxDisplay.value = formatCurrency(rangeMax.value);
       }
-      hoaDonStore.updateFilters({
-        minAmount: rangeMin.value,
-        maxAmount: rangeMax.value,
-      });
+
+      rangeError.value = validateRange(rangeMin.value, rangeMax.value);
+
+      if (!rangeError.value) {
+        hoaDonStore.updateFilters({
+          minAmount: rangeMin.value,
+          maxAmount: rangeMax.value,
+        });
+      }
+    };
+
+    // Debounced range handlers (slower timing for better UX)
+    const debouncedRangeMin = debounce(() => {
+      updateRangeMin();
+    }, 1200);
+
+    const debouncedRangeMax = debounce(() => {
+      updateRangeMax();
+    }, 1200);
+
+    // Handle input formatting on blur
+    const handleRangeMinBlur = () => {
+      if (rangeMinDisplay.value) {
+        const parsed = parseCurrency(rangeMinDisplay.value);
+        if (parsed !== null) {
+          rangeMinDisplay.value = formatCurrency(parsed);
+        }
+      }
+    };
+
+    const handleRangeMaxBlur = () => {
+      if (rangeMaxDisplay.value) {
+        const parsed = parseCurrency(rangeMaxDisplay.value);
+        if (parsed !== null) {
+          rangeMaxDisplay.value = formatCurrency(parsed);
+        }
+      }
     };
 
     const exportExcel = async () => {
@@ -463,7 +575,38 @@ export const invoiceManagementLogic = {
     };
 
     const getRowClass = (item) => {
-      return item.id === highlightedInvoiceId.value ? 'highlighted-row' : '';
+      return highlightedInvoiceId.value === item.id ? 'table-row-highlighted' : '';
+    };
+
+    const startDrag = (type, event) => {
+      const slider = event.target.closest('.slider-container');
+      const updatePrice = (e) => {
+        const rect = slider.getBoundingClientRect();
+        const pos = (e.clientX - rect.left) / rect.width;
+        const value = Math.round(minInvoiceTotal.value + pos * (maxInvoiceTotal.value - minInvoiceTotal.value));
+
+        if (type === 'min') {
+          rangeMin.value = Math.max(minInvoiceTotal.value, Math.min(value, rangeMax.value || maxInvoiceTotal.value));
+          debouncedRangeMin();
+        } else {
+          rangeMax.value = Math.min(maxInvoiceTotal.value, Math.max(value, rangeMin.value || minInvoiceTotal.value));
+          debouncedRangeMax();
+        }
+      };
+
+      const handleMouseMove = (e) => {
+        e.preventDefault();
+        updatePrice(e);
+      };
+
+      const handleMouseUp = () => {
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', handleMouseUp);
+      };
+
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+      event.preventDefault();
     };
 
     const viewInvoice = (invoice) => {
@@ -571,20 +714,63 @@ export const invoiceManagementLogic = {
     };
 
     const setActiveTabByStatus = (status) => {
-      const trangThaiNumber = hoaDonStore.mapStatusToNumber(status);
-      hoaDonStore.updateFilters({ trangThai: trangThaiNumber });
-      const statusInvoices = filteredInvoices.value.filter((inv) => inv.trangThaiFormatted === status);
-      if (statusInvoices.length > 0) {
-        const firstType = (statusInvoices[0].loaiDon || '').toLowerCase();
-        activeTab.value = firstType === 'trực tiếp' ? 'in-store' : firstType === 'online' ? 'online' : 'all';
-        highlightedInvoiceId.value = null;
+      currentPage.value = 1;
+      highlightedInvoiceId.value = null;
+      activeStatus.value = status;  // Track selected status
+
+      if (status === 'all') {
+        // "Tất cả" - Reset tất cả filters trạng thái, giữ nguyên các filter khác
+        hoaDonStore.updateFilters({
+          keyword: keyword.value,
+          minAmount: rangeMin.value,
+          maxAmount: rangeMax.value,
+          startDate: startDate.value,
+          endDate: endDate.value,
+          trangThai: null,  // Reset trạng thái để lấy tất cả
+          loaiDon: hoaDonStore.filters.loaiDon,  // Giữ nguyên loại đơn hiện tại
+          sortBy: sortBy.value,
+          sortDir: sortDir.value
+        });
+
         toastNotification.value?.addToast({
           type: 'info',
-          message: `Đã lọc theo trạng thái ${status}`,
+          message: 'Đã hiển thị tất cả trạng thái hóa đơn',
           duration: 2000,
         });
+      } else {
+        // Lọc theo trạng thái cụ thể - chính xác theo mapping
+        console.log(`Original status: "${status}", length: ${status.length}`);
+        const cleanStatus = status.trim(); // Remove any whitespace
+        console.log(`Cleaned status: "${cleanStatus}", length: ${cleanStatus.length}`);
+        const trangThaiNumber = hoaDonStore.mapStatusToNumber(cleanStatus);
+        console.log(`Filtering by status "${cleanStatus}" -> number: ${trangThaiNumber}`);
+
+        if (trangThaiNumber !== null) {
+          hoaDonStore.updateFilters({
+            keyword: keyword.value,
+            minAmount: rangeMin.value,
+            maxAmount: rangeMax.value,
+            startDate: startDate.value,
+            endDate: endDate.value,
+            trangThai: trangThaiNumber,  // Lọc chính xác theo số trạng thái
+            loaiDon: hoaDonStore.filters.loaiDon,  // Giữ nguyên loại đơn hiện tại
+            sortBy: sortBy.value,
+            sortDir: sortDir.value
+          });
+
+          toastNotification.value?.addToast({
+            type: 'info',
+            message: `Đã lọc theo trạng thái: ${status}`,
+            duration: 2000,
+          });
+        } else {
+          toastNotification.value?.addToast({
+            type: 'error',
+            message: `Không tìm thấy mapping cho trạng thái: ${status}`,
+            duration: 3000,
+          });
+        }
       }
-      currentPage.value = 1;
     };
 
     const getStatusBadgeClass = (status) => {
@@ -611,25 +797,57 @@ export const invoiceManagementLogic = {
       hoaDonStore.fetchInvoices({ page: 0, size: itemsPerPage.value });
     });
 
+    // Watch invoices để update range nếu null
     watch(invoices, (newInvoices) => {
       if (newInvoices.length > 0) {
         const min = Math.min(...newInvoices.map((inv) => inv.tongTienSauGiam || 0));
         const max = Math.max(...newInvoices.map((inv) => inv.tongTienSauGiam || 0));
-        if (rangeMin.value === null || rangeMin.value < min) rangeMin.value = min;
-        if (rangeMax.value === null || rangeMax.value > max) rangeMax.value = max;
+        if (rangeMin.value === null) {
+          rangeMin.value = min;
+          rangeMinDisplay.value = formatCurrency(min);
+        }
+        if (rangeMax.value === null) {
+          rangeMax.value = max;
+          rangeMaxDisplay.value = formatCurrency(max);
+        }
       }
     }, { immediate: true });
+
+    // Watch tất cả filter để update store và fetch (đồng bộ)
+    watch([keyword, rangeMin, rangeMax, startDate, endDate, sortBy, sortDir], () => {
+      hoaDonStore.updateFilters({
+        keyword: keyword.value,
+        minAmount: rangeMin.value,
+        maxAmount: rangeMax.value,
+        startDate: startDate.value,
+        endDate: endDate.value,
+        sortBy: sortBy.value,
+        sortDir: sortDir.value,
+      });
+      currentPage.value = 1;  // Reset UI page
+    }, { deep: true });
+
+    // Watch currentPage để fetch page mới (0-based cho API)
+    watch(currentPage, (newPage) => {
+      hoaDonStore.fetchInvoices({ page: newPage - 1, size: itemsPerPage.value });
+    });
 
     return {
       keyword,
       rangeMin,
       rangeMax,
+      rangeMinDisplay,
+      rangeMaxDisplay,
+      rangeError,
       startDate,
       endDate,
       viewMode,
       currentPage,
       itemsPerPage,
       activeTab,
+      activeStatus,  // Track selected status filter
+      sortBy,  // Mới
+      sortDir,  // Mới
       invoices,
       isLoading,
       error,
@@ -637,7 +855,7 @@ export const invoiceManagementLogic = {
       headers,
       minInvoiceTotal,
       maxInvoiceTotal,
-      sliderRangeStyle,
+      // sliderRangeStyle,  // Giữ nếu cần, nhưng không dùng client filter
       filteredInvoices,
       totalValue,
       totalPages,
@@ -648,6 +866,12 @@ export const invoiceManagementLogic = {
       resetFilters,
       updateRangeMin,
       updateRangeMax,
+      debouncedRangeMin,
+      debouncedRangeMax,
+      handleRangeMinBlur,
+      handleRangeMaxBlur,
+      formatCurrency,
+      parseCurrency,
       exportExcel,
       scanQR,
       stopCamera,
@@ -656,7 +880,7 @@ export const invoiceManagementLogic = {
       downloadQrCode,
       confirmDeleteInvoice,
       deleteInvoice,
-      resetNotification,
+      // resetNotification,
       setActiveTab,
       setActiveTabByStatus,
       getStatusBadgeClass,
@@ -672,6 +896,7 @@ export const invoiceManagementLogic = {
       qrError,
       qrMessage,
       highlightedInvoiceId,
+      groupedProducts,
     };
   },
 };
