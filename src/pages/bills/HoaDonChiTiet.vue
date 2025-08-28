@@ -72,42 +72,37 @@
     <!-- Danh sách sản phẩm -->
     <FilterTableSection title="Danh Sách Sản Phẩm" icon="bi bi-box-seam">
       <div class="section-body m-3">
-        <!-- <div class="product-actions mb-3 d-flex justify-content-end gap-2">
-          <button class="btn btn-action" @click="isAddProductModalVisible = true" :disabled="isActionButtonsDisabled">
-            Thêm Sản Phẩm
-          </button>
-        </div> -->
         <div class="products-list">
-          <div v-for="product in products" :key="product.id" class="product-card animate__animated animate__zoomIn"
-            style="--animate-delay: 0.4s;">
+          <div v-for="groupedProduct in groupedProducts" :key="groupedProduct.id"
+            class="product-card animate__animated animate__zoomIn" style="--animate-delay: 0.4s;">
             <div class="product-card-content">
               <div class="product-image">
-                <img :src="product.image || '/assets/placeholder-product.png'" alt="Product Image"
+                <img :src="groupedProduct.image || '/assets/placeholder-product.png'" alt="Product Image"
                   class="product-img" />
               </div>
               <div class="product-details">
-                <h6 class="product-name">{{ product.name }} {{ product.color }} {{ product.ram }} {{ product.capacity }}
-                </h6>
+                <h6 class="product-name">{{ groupedProduct.name }} {{ groupedProduct.color }} {{ groupedProduct.ram }}
+                  {{ groupedProduct.capacity }}</h6>
                 <div class="product-price">
-                  <span class="price-amount">{{ formatPrice(product.price) }}</span>
-                  <span class="quantity">x{{ product.quantity || 1 }}</span>
+                  <span class="price-amount">{{ formatPrice(groupedProduct.price) }}</span>
+                  <span class="quantity">x{{ groupedProduct.quantity }}</span>
                 </div>
-                <div class="product-imei" v-if="product.imei">
+                <div class="product-imei" v-if="groupedProduct.imeis.length">
                   <span class="imei-label">IMEI:</span>
-                  <span class="imei-code">{{ truncateIMEI(product.imei) }}</span>
+                  <span v-for="(imei, index) in groupedProduct.imeis" :key="index" class="imei-code">{{
+                    truncateIMEI(imei) }}{{ index < groupedProduct.imeis.length - 1 ? ', ' : '' }}</span>
                 </div>
               </div>
             </div>
             <div class="product-card-actions">
-              <button class="btn btn-sm btn-view" @click="showIMEIModal(product)" title="Xem IMEI"
-                :disabled="isActionButtonsDisabled">
+              <button class="btn btn-sm btn-view" @click="showIMEIModal(groupedProduct)" title="Xem IMEI">
                 Xem IMEI
               </button>
-              <button class="btn btn-sm btn-view" @click="showConfirmIMEIModal(product)" title="Xác nhận IMEI"
+              <button class="btn btn-sm btn-view" @click="showConfirmIMEIModal(groupedProduct)" title="Xác nhận IMEI"
                 :disabled="isActionButtonsDisabled">
                 Xác nhận
               </button>
-              <button class="btn btn-sm btn-delete" @click="removeProduct(product)" title="Xóa sản phẩm"
+              <button class="btn btn-sm btn-delete" @click="removeProduct(groupedProduct)" title="Xóa sản phẩm"
                 :disabled="isActionButtonsDisabled">
                 Xóa
               </button>
@@ -285,6 +280,98 @@
       <div class="flex-child flex-history">
         <FilterTableSection title="Lịch Sử Thanh Toán" icon="bi bi-cash-stack" class="filter-table-section">
           <div class="section-body m-3">
+            <!-- Form nhập tiền thanh toán -->
+            <div class="payment-input-section mb-4" v-if="invoice.trangThai !== 'Hoàn thành' && invoice.trangThai !== 'Đã hủy'">
+              <div class="payment-input-header mb-3">
+                <h6 class="section-title">
+                  <i class="bi bi-cash-coin me-2"></i>
+                  Nhập Thông Tin Thanh Toán
+                </h6>
+                <small class="text-muted">Nhập số tiền khách hàng thanh toán trước khi xác nhận hoàn thành đơn hàng</small>
+              </div>
+              
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <label class="form-label">
+                    <i class="bi bi-credit-card me-1"></i>
+                    Tiền chuyển khoản (VND)
+                  </label>
+                  <div class="input-group">
+                    <span class="input-group-text">
+                      <i class="bi bi-bank"></i>
+                    </span>
+                    <input 
+                      type="number" 
+                      class="form-control payment-input" 
+                      v-model="paymentData.chuyenKhoan"
+                      placeholder="Nhập số tiền chuyển khoản"
+                      min="0"
+                      :max="totalPrice - discount"
+                      @input="calculateRemainingAmount"
+                    />
+                  </div>
+                </div>
+                
+                <div class="col-md-6">
+                  <label class="form-label">
+                    <i class="bi bi-cash me-1"></i>
+                    Tiền mặt (VND)
+                  </label>
+                  <div class="input-group">
+                    <span class="input-group-text">
+                      <i class="bi bi-wallet2"></i>
+                    </span>
+                    <input 
+                      type="number" 
+                      class="form-control payment-input" 
+                      v-model="paymentData.tienMat"
+                      placeholder="Nhập số tiền mặt"
+                      min="0"
+                      :max="totalPrice - discount"
+                      @input="calculateRemainingAmount"
+                    />
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Thông tin tổng kết thanh toán -->
+              <div class="payment-summary mt-3 p-3 bg-light rounded">
+                <div class="row text-center">
+                  <div class="col-md-3">
+                    <div class="summary-item">
+                      <span class="summary-label">Tổng tiền cần thanh toán</span>
+                      <span class="summary-value text-primary">{{ formatPrice(totalPrice - discount) }}</span>
+                    </div>
+                  </div>
+                  <div class="col-md-3">
+                    <div class="summary-item">
+                      <span class="summary-label">Đã thanh toán</span>
+                      <span class="summary-value text-success">{{ formatPrice(totalPaid) }}</span>
+                    </div>
+                  </div>
+                  <div class="col-md-3">
+                    <div class="summary-item">
+                      <span class="summary-label">Còn lại</span>
+                      <span class="summary-value" :class="remainingAmount > 0 ? 'text-warning' : 'text-success'">
+                        {{ formatPrice(remainingAmount) }}
+                      </span>
+                    </div>
+                  </div>
+                  <div class="col-md-3">
+                    <button 
+                      class="btn btn-success btn-sm"
+                      @click="confirmPayment"
+                      :disabled="remainingAmount > 0 || totalPaid === 0"
+                    >
+                      <i class="bi bi-check-circle me-1"></i>
+                      Xác nhận thanh toán
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Timeline thanh toán hiện tại -->
             <div class="history-timeline">
               <div v-for="payment in payments" :key="payment.id" class="history-item"
                 :class="{ 'completed': payment.status === 'completed' }">
@@ -428,53 +515,75 @@
     </div>
 
     <!-- IMEI Modal -->
-    <div v-if="isIMEIModalVisible" class="modal-backdrop-blur" @click.self="closeIMEIModal">
-      <div class="modal-container glass-modal animate__animated animate__zoomIn">
-        <div class="modal-header">
-          <h5 class="modal-title">
-            IMEI - {{ selectedProduct?.name }} {{ selectedProduct?.color }} {{ selectedProduct?.ram }} {{
-              selectedProduct?.capacity }}
-          </h5>
-          <button class="btn-close-glass" @click="closeIMEIModal">
-            <i class="bi bi-x-lg"></i>
-          </button>
-        </div>
-        <div class="modal-body imei-container">
-          <div class="imei-input mb-3">
-            <div class="input-group">
-              <input v-model="newIMEI" type="text" class="form-control" placeholder="Nhập hoặc quét IMEI"
-                @keyup.enter="addIMEI" />
+    <template>
+      <div v-if="isIMEIModalVisible" class="modal fade show" style="display: block;">
+        <div class="modal-dialog split-modal">
+          <div class="modal-content">
+            <div class="modal-header gradient-header">
+              <h5 class="modal-title">Chọn IMEI cho {{ selectedProduct.name }}</h5>
+              <button class="btn-close-modern" @click="closeIMEIModal"></button>
             </div>
-          </div>
-          <div v-if="selectedProduct?.imeiList?.length" class="imei-list">
-            <div v-for="(imeiObj, index) in selectedProduct.imeiList" :key="imeiObj.imei"
-              class="imei-item animate__animated animate__fadeIn">
-              <div class="imei-content">
-                <span class="imei-code">IMEI: {{ imeiObj.imei }}</span>
-                <span class="imei-status-badge" :class="getIMEIStatusClass(imeiObj.status)">
-                  {{ imeiObj.status }}
-                </span>
+            <div class="modal-body">
+              <div class="imei-selection-container">
+                <div class="product-info-card">
+                  <div class="product-image-wrapper">
+                    <img :src="selectedProduct.image" class="product-preview-image" />
+                  </div>
+                  <div class="product-details-wrapper">
+                    <h6 class="product-title">{{ selectedProduct.name }}</h6>
+                    <div class="product-badges">
+                      <span class="spec-badge">{{ selectedProduct.color }}</span>
+                      <span class="spec-badge">{{ selectedProduct.ram }}</span>
+                      <span class="spec-badge">{{ selectedProduct.capacity }}</span>
+                    </div>
+                    <div class="product-price">
+                      <span class="price-label">Giá:</span>
+                      <span class="price-value">{{ formatPrice(selectedProduct.price) }}</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="imei-selection-section">
+                  <div class="section-header">
+                    <h6 class="section-title">Danh sách IMEI</h6>
+                    <span class="imei-counter">{{ getSelectedIMEICount(selectedProduct.groupKey ||
+                      selectedProduct.chiTietSanPhamId) }}/{{ selectedProduct.quantity }} đã chọn</span>
+                  </div>
+                  <div class="imei-list" v-if="availableIMEIsNew.length > 0">
+                    <div v-for="(imei, index) in paginatedIMEIs" :key="index" class="imei-card"
+                      :class="{ selected: isIMEISelected(imei.imel, selectedProduct.groupKey || selectedProduct.chiTietSanPhamId) }"
+                      @click="selectIMEI(imei.imel, selectedProduct.groupKey || selectedProduct.chiTietSanPhamId)">
+                      <div class="imei-card-content">
+                        <div class="imei-checkbox">
+                          <input type="checkbox" class="custom-checkbox" :value="imei.imel"
+                            :checked="isIMEISelected(imei.imel, selectedProduct.groupKey || selectedProduct.chiTietSanPhamId)"
+                            @change="selectIMEI(imei.imel, selectedProduct.groupKey || selectedProduct.chiTietSanPhamId)" />
+                          <label></label>
+                        </div>
+                        <div class="imei-info">
+                          <span class="imei-number">{{ truncateIMEI(imei.imel) }}</span>
+                          <span class="imei-index">STT: {{ index + 1 }}</span>
+                        </div>
+                        hello_world
+                      </div>
+                    </div>
+                  </div>
+                  <div v-else class="empty-imei-state">
+                    <i class="bi bi-box"></i>
+                    <p>Không có IMEI nào khả dụng</p>
+                  </div>
+                </div>
               </div>
-              <button class="btn btn-sm btn-delete" @click="deleteIMEI(imeiObj.imei)" title="Xóa IMEI">
-                <i class="bi bi-x-lg"></i>
-              </button>
+            </div>
+            <div class="modal-footer">
+              <button class="btn btn-secondary" @click="closeIMEIModal">Hủy</button>
+              <button class="btn btn-primary" @click="confirmSelectedIMEIs"
+                :disabled="isConfirmingIMEI || getSelectedIMEICount(selectedProduct.groupKey || selectedProduct.chiTietSanPhamId) === 0">Xác
+                nhận</button>
             </div>
           </div>
-          <div v-else class="empty-state">
-            <i class="bi bi-info-circle"></i>
-            Không có IMEI nào được chọn.
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button class="btn btn-reset" @click="closeIMEIModal">
-            Đóng
-          </button>
-          <button class="btn btn-action" @click="saveIMEIChanges">
-            Lưu
-          </button>
         </div>
       </div>
-    </div>
+    </template>
 
     <!-- Confirm IMEI Modal -->
     <div v-if="isConfirmIMEIModalVisible" class="modal-backdrop-blur" @click.self="closeConfirmIMEIModal">
@@ -556,9 +665,12 @@
               <template #actions="{ item }">
                 <div class="action-buttons-cell">
                   <button class="btn btn-sm btn-table" @click="selectIMEI(item.imei)" title="Chọn IMEI"
-                    :disabled="item.status !== 'Còn hàng' || isLoadingIMEI">
-                    <i v-if="!isLoadingIMEI" class="bi bi-plus-circle"></i>
-                    <i v-else class="bi bi-spinner spinner-border spinner-border-sm"></i>
+                    :disabled="item.status !== 'Còn hàng' || isLoadingIMEI"
+                    :class="{ 'btn-selected': isIMEISelected(item.imei) }">
+                    <i v-if="!isLoadingIMEI && !isIMEISelected(item.imei)" class="bi bi-plus-circle"></i>
+                    <i v-if="!isLoadingIMEI && isIMEISelected(item.imei)"
+                      class="bi bi-check-square-fill text-success"></i>
+                    <i v-if="isLoadingIMEI" class="bi bi-spinner spinner-border spinner-border-sm"></i>
                   </button>
                 </div>
               </template>
@@ -566,9 +678,26 @@
           </div>
         </div>
         <div class="modal-footer">
-          <button class="btn btn-reset" @click="closeConfirmIMEIModal">
-            Đóng
-          </button>
+          <div class="d-flex justify-content-between align-items-center w-100">
+            <div class="imei-selection-info">
+              <small class="text-muted">
+                <i class="bi bi-info-circle me-1"></i>
+                <span v-if="selectedProduct">
+                  Đã chọn: {{ getSelectedIMEICount() }}/{{ selectedProduct.needsIMEI || selectedProduct.quantity }} IMEI
+                </span>
+              </small>
+            </div>
+            <div>
+              <button class="btn btn-success me-2" @click="confirmSelectedIMEIs" :disabled="isConfirmingIMEI">
+                <i v-if="!isConfirmingIMEI" class="bi bi-check-circle me-1"></i>
+                <i v-else class="bi bi-spinner spinner-border spinner-border-sm me-1"></i>
+                Xác nhận IMEI
+              </button>
+              <button class="btn btn-reset" @click="closeConfirmIMEIModal">
+                Đóng
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </div>

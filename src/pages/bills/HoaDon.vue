@@ -35,27 +35,27 @@
           <!-- Price Range Slider -->
           <div class="col-lg-4 col-md-6">
             <div class="filter-group">
-              <label class="filter-label">Khoảng Giá</label>
+              <label class="filter-label">Khoảng Giá (VND)</label>
               <div class="slider-container">
                 <div class="slider-track"></div>
                 <div class="slider-range" :style="{
-                  left: `${((rangeMin - minInvoiceTotal) / (maxInvoiceTotal - minInvoiceTotal) * 100)}%`,
-                  width: `${((rangeMax - rangeMin) / (maxInvoiceTotal - minInvoiceTotal) * 100)}%`
+                  left: `${((rangeMin || minInvoiceTotal) - minInvoiceTotal) / (maxInvoiceTotal - minInvoiceTotal) * 100}%`,
+                  width: `${((rangeMax || maxInvoiceTotal) - (rangeMin || minInvoiceTotal)) / (maxInvoiceTotal - minInvoiceTotal) * 100}%`
                 }"></div>
                 <div class="slider-thumb"
-                  :style="{ left: `${((rangeMin - minInvoiceTotal) / (maxInvoiceTotal - minInvoiceTotal) * 100)}%` }"
+                  :style="{ left: `${((rangeMin || minInvoiceTotal) - minInvoiceTotal) / (maxInvoiceTotal - minInvoiceTotal) * 100}%` }"
                   @mousedown="(e) => startDrag('min', e)"></div>
                 <div class="slider-thumb"
-                  :style="{ left: `${((rangeMax - minInvoiceTotal) / (maxInvoiceTotal - minInvoiceTotal) * 100)}%` }"
+                  :style="{ left: `${((rangeMax || maxInvoiceTotal) - minInvoiceTotal) / (maxInvoiceTotal - minInvoiceTotal) * 100}%` }"
                   @mousedown="(e) => startDrag('max', e)"></div>
-                <input type="range" v-model.number="rangeMin" :min="minInvoiceTotal" :max="rangeMax"
-                  class="absolute opacity-0 w-full h-full" />
-                <input type="range" v-model.number="rangeMax" :min="rangeMin" :max="maxInvoiceTotal"
-                  class="absolute opacity-0 w-full h-full" />
+                <input type="range" v-model="rangeMin" :min="minInvoiceTotal" :max="rangeMax || maxInvoiceTotal"
+                  class="absolute opacity-0 w-full h-full" @input="debouncedRangeMin" />
+                <input type="range" v-model="rangeMax" :min="rangeMin || minInvoiceTotal" :max="maxInvoiceTotal"
+                  class="absolute opacity-0 w-full h-full" @input="debouncedRangeMax" />
               </div>
-              <div class="d-flex justify-content-between text-sm text-gray-600 mt-1">
-                <span>{{ formatPrice(rangeMin) }}</span>
-                <span>{{ formatPrice(rangeMax) }}</span>
+              <div class="d-flex justify-content-between text-sm text-muted mt-1">
+                <span>{{ formatCurrency(rangeMin || minInvoiceTotal) }}</span>
+                <span>{{ formatCurrency(rangeMax || maxInvoiceTotal) }}</span>
               </div>
             </div>
           </div>
@@ -152,6 +152,14 @@
     <!-- Status Filter Section -->
     <FilterTableSection title="Bộ lọc Trạng thái Hóa đơn" icon="bi bi-funnel">
       <div class="status-badge d-flex gap-3 m-3" style="width: max-content;">
+        <button type="button" class="btn btn-outline-primary position-relative" @click="setActiveTabByStatus('all')">
+          Tất cả
+          <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill badge-all"
+            v-if="filteredInvoices.length">
+            {{ filteredInvoices.length > 99 ? '99+' : filteredInvoices.length }}
+            <span class="visually-hidden">tất cả hóa đơn</span>
+          </span>
+        </button>
         <button type="button" class="btn btn-outline-primary position-relative"
           @click="setActiveTabByStatus('Chờ xác nhận')">
           Chờ xác nhận
@@ -321,6 +329,7 @@ export default {
     opacity: 0;
     transform: translateY(15px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -332,6 +341,7 @@ export default {
     opacity: 0;
     transform: translateX(-15px);
   }
+
   to {
     opacity: 1;
     transform: translateX(0);
@@ -339,9 +349,12 @@ export default {
 }
 
 @keyframes gentleGlow {
-  0%, 100% {
+
+  0%,
+  100% {
     box-shadow: 0 0 5px rgba(52, 211, 153, 0.3);
   }
+
   50% {
     box-shadow: 0 0 12px rgba(52, 211, 153, 0.5);
   }
@@ -351,6 +364,7 @@ export default {
   from {
     background-color: rgba(52, 211, 153, 0.4);
   }
+
   to {
     background-color: rgba(52, 211, 153, 0.2);
   }
@@ -379,6 +393,37 @@ export default {
   color: #1f3a44;
   margin-bottom: 0.5rem;
   font-size: 0.875rem;
+}
+
+/* Currency Input Styling */
+.currency-input {
+  border: 2px solid rgba(52, 211, 153, 0.1);
+  border-radius: 8px;
+  padding: 0.5rem;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+  background: #f8f9fa;
+  font-family: 'Courier New', monospace;
+}
+
+.currency-input:focus {
+  border-color: #34d399;
+  box-shadow: 0 0 10px rgba(52, 211, 153, 0.2);
+  background: white;
+}
+
+.currency-input::placeholder {
+  color: #6c757d;
+  font-style: italic;
+}
+
+.price-range-hint {
+  margin-top: 0.25rem;
+}
+
+.price-range-hint small {
+  font-weight: 500;
+  color: #16a34a !important;
 }
 
 /* Price Range */
@@ -630,6 +675,70 @@ export default {
 .badge-canceled {
   background: #dc3545;
   color: white;
+}
+
+.badge-all {
+  background: #6f42c1;
+  color: white;
+}
+
+/* Price Range Slider Styling */
+.slider-container {
+  position: relative;
+  height: 30px;
+  width: 100%;
+  display: flex;
+  align-items: center;
+}
+
+.slider-track {
+  height: 4px;
+  width: 100%;
+  background-color: #e5e7eb;
+  border-radius: 2px;
+  position: absolute;
+}
+
+.slider-range {
+  height: 4px;
+  background-color: #34d399;
+  border-radius: 2px;
+  position: absolute;
+}
+
+.slider-thumb {
+  width: 18px;
+  height: 18px;
+  background-color: #34d399;
+  border-radius: 50%;
+  border: 2px solid white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  cursor: pointer;
+  z-index: 2;
+  transition: transform 0.2s ease;
+}
+
+.slider-thumb:hover {
+  transform: translate(-50%, -50%) scale(1.1);
+}
+
+.absolute {
+  position: absolute;
+}
+
+.opacity-0 {
+  opacity: 0;
+}
+
+.w-full {
+  width: 100%;
+}
+
+.h-full {
+  height: 100%;
 }
 
 .table-header {
@@ -973,6 +1082,7 @@ export default {
   from {
     opacity: 0;
   }
+
   to {
     opacity: 1;
   }
