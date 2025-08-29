@@ -278,15 +278,11 @@
     <div class="d-flex flex-wrap g-4 mb-4 animate__animated animate__fadeIn" style="--animate-delay: 0.5s;">
       <!-- Lịch sử thanh toán -->
       <div class="flex-child flex-history">
-        <FilterTableSection title="Lịch Sử Thanh Toán" icon="bi bi-cash-stack" class="filter-table-section">
+        <!-- Nhập Thông Tin Thanh Toán -->
+        <FilterTableSection title="Nhập Thông Tin Thanh Toán" icon="bi bi-cash-coin" class="filter-table-section mb-4" v-if="invoice.trangThai !== 'Hoàn thành' && invoice.trangThai !== 'Đã hủy'">
           <div class="section-body m-3">
-            <!-- Form nhập tiền thanh toán -->
-            <div class="payment-input-section mb-4" v-if="invoice.trangThai !== 'Hoàn thành' && invoice.trangThai !== 'Đã hủy'">
+            <div class="payment-input-section">
               <div class="payment-input-header mb-3">
-                <h6 class="section-title">
-                  <i class="bi bi-cash-coin me-2"></i>
-                  Nhập Thông Tin Thanh Toán
-                </h6>
                 <small class="text-muted">Nhập số tiền khách hàng thanh toán trước khi xác nhận hoàn thành đơn hàng</small>
               </div>
               
@@ -370,7 +366,11 @@
                 </div>
               </div>
             </div>
-            
+          </div>
+        </FilterTableSection>
+
+        <FilterTableSection title="Lịch Sử Thanh Toán" icon="bi bi-cash-stack" class="filter-table-section">
+          <div class="section-body m-3">
             <!-- Timeline thanh toán hiện tại -->
             <div class="history-timeline">
               <div v-for="payment in payments" :key="payment.id" class="history-item"
