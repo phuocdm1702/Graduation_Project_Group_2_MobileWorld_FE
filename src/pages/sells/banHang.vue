@@ -932,22 +932,57 @@ discount, index
                   <div v-if="paymentMethod === 'both'" class="row g-3 mt-3">
                     <div class="col-md-6">
                       <label class="form-label fw-medium text-dark">Tiền chuyển khoản</label>
-                      <input v-model.number="tienChuyenKhoan" type="number" class="form-control search-input"
-                        placeholder="Nhập số tiền chuyển khoản" min="0" />
+                      <div class="input-group">
+                        <input v-model="formattedTienChuyenKhoan" type="text" class="form-control search-input"
+                          placeholder="0" min="0" @input="updateTienChuyenKhoan($event.target.value)" @blur="formatTienChuyenKhoan" />
+                        <span class="input-group-text bg-light text-muted">VNĐ</span>
+                      </div>
                     </div>
                     <div class="col-md-6">
                       <label class="form-label fw-medium text-dark">Tiền mặt</label>
-                      <input v-model.number="tienMat" type="number" class="form-control search-input"
-                        placeholder="Nhập số tiền mặt" min="0" />
+                      <div class="input-group">
+                        <input v-model="formattedTienMat" type="text" class="form-control search-input"
+                          placeholder="0" min="0" @input="updateTienMat($event.target.value)" @blur="formatTienMat" />
+                        <span class="input-group-text bg-light text-muted">VNĐ</span>
+                      </div>
                     </div>
                   </div>
                   <div v-if="selectedPaymentProvider" class="mt-3">
-                    <p class="fw-medium text-dark">
-                      Phương thức thanh toán đã chọn:
-                      <span class="text-teal">{{
-                        selectedPaymentProvider
-                      }}</span>
-                    </p>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                      <p class="fw-medium text-dark mb-0">
+                        Phương thức thanh toán đã chọn:
+                      </p>
+                      <button class="btn btn-sm btn-outline-teal" @click="showPaymentProviderModal = true">
+                        <i class="bi bi-arrow-repeat me-1"></i>Đổi
+                      </button>
+                    </div>
+                    <div class="payment-method-display p-3 border rounded" style="background-color: #f8f9fa;">
+                      <div class="d-flex align-items-center gap-3">
+                        <img v-if="selectedPaymentProvider === 'vnpay'" 
+                             src="/src/assets/img/Logo-VNPAY-QR-1.png" 
+                             alt="VNPAY Logo" 
+                             style="height: 32px; width: auto; object-fit: contain;">
+                        <img v-else-if="selectedPaymentProvider === 'momo'" 
+                             src="/src/assets/img/Logo-MoMo-Square.webp" 
+                             alt="Momo Logo" 
+                             style="height: 32px; width: auto; object-fit: contain;">
+                        <i v-else-if="selectedPaymentProvider === 'paypal'" 
+                           class="bi bi-paypal" 
+                           style="color: #0070ba; font-size: 2rem;"></i>
+                        <div>
+                          <span class="fw-semibold" :style="{
+                            color: selectedPaymentProvider === 'vnpay' ? '#1e40af' : 
+                                   selectedPaymentProvider === 'momo' ? 'rgb(100,30,65)' : 
+                                   selectedPaymentProvider === 'paypal' ? '#0070ba' : '#34d399'
+                          }">
+                            {{ selectedPaymentProvider === 'vnpay' ? 'VNPAY' : 
+                               selectedPaymentProvider === 'momo' ? 'Momo' : 
+                               selectedPaymentProvider === 'paypal' ? 'PayPal' : selectedPaymentProvider }}
+                          </span>
+                          <div class="text-muted small">Nhấn "Đổi" để thay đổi phương thức</div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                   <div v-if="showQRCode && selectedPaymentProvider !== 'vnpay'"
                     class="mt-3 text-center qr-code-container">

@@ -111,7 +111,9 @@ export default {
     const publicDiscountCodes = ref([]);
     const paymentMethod = ref("cash");
     const tienChuyenKhoan = ref(0);
+    const formattedTienChuyenKhoan = ref("0");
     const tienMat = ref(0);
+    const formattedTienMat = ref("0");
     const newCustomer = ref({
       name: "",
       phone: "",
@@ -1873,19 +1875,25 @@ export default {
       if (method === "transfer") {
         tienChuyenKhoan.value = totalPayment.value;
         tienMat.value = 0;
+        formattedTienChuyenKhoan.value = formatCurrency(totalPayment.value);
+        formattedTienMat.value = "0";
       } else if (method === "cash") {
         tienChuyenKhoan.value = 0;
         tienMat.value = totalPayment.value;
+        formattedTienChuyenKhoan.value = "0";
+        formattedTienMat.value = formatCurrency(totalPayment.value);
         // Only clear provider if switching to cash
         selectedPaymentProvider.value = null;
         qrCodeValue.value = "";
       } else if (method === "both") {
         tienChuyenKhoan.value = 0;
         tienMat.value = totalPayment.value;
+        formattedTienChuyenKhoan.value = "0";
+        formattedTienMat.value = formatCurrency(totalPayment.value);
       }
 
-      // Show payment provider modal only when switching to transfer/both
-      if ((method === "transfer" || method === "both") && !selectedPaymentProvider.value) {
+      // Show payment provider modal when switching to transfer/both, regardless of current selection
+      if (method === "transfer" || method === "both") {
         showPaymentProviderModal.value = true;
       }
     };
@@ -1906,6 +1914,38 @@ export default {
       selectedPaymentProvider.value = null;
       qrCodeValue.value = "";
       showQRCode.value = false;
+    };
+
+    // Currency formatting methods
+    const formatCurrency = (value) => {
+      if (!value || value === 0) return "0";
+      const numValue = typeof value === 'string' ? parseFloat(value.replace(/[^\d]/g, '')) : value;
+      return new Intl.NumberFormat('vi-VN').format(numValue);
+    };
+
+    const parseCurrency = (value) => {
+      if (!value) return 0;
+      return parseFloat(value.replace(/[^\d]/g, '')) || 0;
+    };
+
+    const updateTienChuyenKhoan = (value) => {
+      const numericValue = parseCurrency(value);
+      tienChuyenKhoan.value = numericValue;
+      formattedTienChuyenKhoan.value = formatCurrency(numericValue);
+    };
+
+    const updateTienMat = (value) => {
+      const numericValue = parseCurrency(value);
+      tienMat.value = numericValue;
+      formattedTienMat.value = formatCurrency(numericValue);
+    };
+
+    const formatTienChuyenKhoan = () => {
+      formattedTienChuyenKhoan.value = formatCurrency(tienChuyenKhoan.value);
+    };
+
+    const formatTienMat = () => {
+      formattedTienMat.value = formatCurrency(tienMat.value);
     };
 
     const ThanhToan = async () => {
@@ -2487,6 +2527,12 @@ export default {
       paymentMethod,
       tienChuyenKhoan,
       tienMat,
+      formattedTienChuyenKhoan,
+      formattedTienMat,
+      updateTienChuyenKhoan,
+      updateTienMat,
+      formatTienChuyenKhoan,
+      formatTienMat,
       newCustomer,
       products,
       filteredProducts,
