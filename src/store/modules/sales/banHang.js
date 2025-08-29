@@ -43,6 +43,8 @@ import {
   checkVNPayPaymentStatusApi,
   createMomoPaymentApi,
   addProductByBarcodeOrImeiApi,
+  calculateGHNShippingFeeApi,
+  getGHNAvailableServicesApi,
 } from "./banHangApi";
 
 export default {
@@ -2379,30 +2381,91 @@ export default {
         isCreatingOrder.value = false;
       }
     };
+    
 
-    const updateShippingFee = async () => {
-      if (!isDelivery.value || !isHomeDelivery.value) {
-        shippingFee.value = 0;
-        return;
-      }
-      if (tongTien.value >= FREE_SHIP_THRESHOLD) {
-        shippingFee.value = 0;
-        showToast(
-          "success",
-          "Miễn phí vận chuyển cho đơn hàng từ 50,000,000 VNĐ trở lên"
-        );
-        return;
-      }
-      try {
-        showToast(
-          "success",
-          `Đã cập nhật phí vận chuyển: ${formatPrice(shippingFee.value)}`
-        );
-      } catch (error) {
-        shippingFee.value = 0;
-        showToast("error", "Lỗi khi tính phí vận chuyển");
-      }
+
+// Trong setup()
+const updateShippingFee = async () => {
+  if (!isDelivery.value || !isHomeDelivery.value) {
+    shippingFee.value = 0;
+    showToast('success', 'Không tính phí vận chuyển cho đơn không giao hàng.');
+    return;
+  }
+  if (tongTien.value >= FREE_SHIP_THRESHOLD) {
+    shippingFee.value = 0;
+    showToast('success', 'Miễn phí vận chuyển cho đơn hàng từ 50,000,000 VNĐ trở lên');
+    return;
+  }
+
+  try {
+    // Lấy province_code từ customer (mặc định TP.HCM code 79)
+    let provinceCode = 79; // Mặc định TP.HCM
+    if (customer.value.city) {
+      const provinces = await fetchProvincesApi();
+      const province = provinces.find(p => p.name === customer.value.city);
+      if (province) provinceCode = province.code;
+    }
+
+    // Lấy to_district_id từ tên quận/huyện
+    let toDistrictId = null;
+    if (customer.value.districtName) {
+      const districts = await fetchDistrictsApi(provinceCode);
+      const district = districts.find(d => d.name.toLowerCase().includes(customer.value.districtName.toLowerCase()));
+      if (district) toDistrictId = district.code; // Chú ý: provinces.open-api.vn dùng 'code' thay vì 'district_id'
+    }
+    if (!toDistrictId) {
+      toDistrictId = 1454; // Mặc định Thủ Đức nếu không tìm thấy
+      showToast('warning', 'Không tìm thấy mã quận/huyện, dùng mặc định');
+    }
+
+    // Lấy to_ward_code từ tên phường/xã
+    let toWardCode = null;
+    if (customer.value.wardName) {
+      const wards = await fetchWardsApi(toDistrictId);
+      const ward = wards.find(w => w.name.toLowerCase().includes(customer.value.wardName.toLowerCase()));
+      if (ward) toWardCode = ward.code; // 'code' là ward_code
+    }
+    if (!toWardCode) {
+      toWardCode = '21009'; // Mặc định Linh Xuân nếu không tìm thấy
+      showToast('warning', 'Không tìm thấy mã phường/xã, dùng mặc định');
+    }
+
+    // Lấy service_id động
+    const services = await getGHNAvailableServicesApi(1452, toDistrictId); // 1452: Bình Thạnh (shop)
+    const serviceId = services.find(s => s.service_type_id === 2)?.service_id || 53321; // Ưu tiên giao nhanh
+
+    // Tạo shippingData
+    const shippingData = {
+      from_district_id: 1452, // Shop: Bình Thạnh (thay bằng shop thực tế)
+      from_ward_code: '21012', // Phường 12 (thay bằng shop thực tế)
+      service_id: serviceId,
+      service_type_id: null,
+      to_district_id: toDistrictId,
+      to_ward_code: toWardCode,
+      weight: cartItems.value.reduce((sum, item) => sum + (item.weight || 200) * item.quantity, 0),
+      length: cartItems.value.reduce((sum, item) => Math.max(sum, item.length || 10), 0),
+      width: cartItems.value.reduce((sum, item) => Math.max(sum, item.width || 20), 0),
+      height: cartItems.value.reduce((sum, item) => sum + (item.height || 15) * item.quantity, 0),
+      insurance_value: tongTien.value || 10000,
+      coupon: null,
+      items: cartItems.value.map(item => ({
+        name: item.name || 'Sản phẩm',
+        quantity: item.quantity,
+        height: item.height || 15,
+        weight: item.weight || 200,
+        length: item.length || 10,
+        width: item.width || 20
+      }))
     };
+
+    const feeData = await calculateGHNShippingFeeApi(shippingData);
+    shippingFee.value = feeData.total;
+    showToast('success', `Đã cập nhật phí vận chuyển: ${formatPrice(shippingFee.value)}`);
+  } catch (error) {
+    shippingFee.value = 0;
+    showToast('error', 'Lỗi khi tính phí vận chuyển: ' + error.message);
+  }
+};
 
     const handleCustomerProvinceChange = () => {
       customer.value.district = "";

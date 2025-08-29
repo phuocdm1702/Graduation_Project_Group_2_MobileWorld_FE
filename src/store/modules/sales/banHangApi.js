@@ -1,6 +1,53 @@
 import apiService from "../../../services/api";
 import axios from "axios";
 
+
+// Tính phí vận chuyển
+export const calculateGHNShippingFeeApi = async (shippingData) => {
+  try {
+    const response = await axios.post(
+      'https://online-gateway.ghn.vn/shiip/public-api/v2/shipping-order/fee',
+      shippingData,
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          'Token': '284962ef-8363-11f0-9fb9-b62928d3d46c',
+          'ShopId': '5977063'
+        }
+      }
+    );
+    return response.data.data; // Trả về { total, service_fee, ... }
+  } catch (error) {
+    console.error('Lỗi khi gọi API tính phí GHN:', error.response?.data || error.message);
+    throw new Error(error.response?.data?.message || 'Lỗi khi tính phí vận chuyển GHN');
+  }
+};
+
+// Lấy danh sách dịch vụ giao hàng
+export const getGHNAvailableServicesApi = async (fromDistrict, toDistrict) => {
+  try {
+    const response = await axios.post(
+      'https://online-gateway.ghn.vn/shiip/public-api/v2/shipping-order/available-services',
+      {
+        shop_id: 5977063,
+        from_district: fromDistrict,
+        to_district: toDistrict
+      },
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          'Token': '284962ef-8363-11f0-9fb9-b62928d3d46c',
+          'ShopId': '5977063'
+        }
+      }
+    );
+    return response.data.data; // Trả về [{ service_id, service_type_id, ... }, ...]
+  } catch (error) {
+    console.error('Lỗi khi lấy dịch vụ GHN:', error.response?.data || error.message);
+    throw new Error(error.response?.data?.message || 'Lỗi khi lấy dịch vụ GHN');
+  }
+};
+
 // Invoice-Related APIs
 export const fetchPendingInvoicesApi = async () => {
   try {
