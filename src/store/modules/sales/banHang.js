@@ -828,6 +828,8 @@ export default {
           selectedDiscount.value = null;
           discount.value = 0;
         }
+        // Load lại danh sách sản phẩm sau khi hủy hóa đơn
+        await fetchProducts();
         showToast("success", `Đã hủy hóa đơn ${invoice.ma}`);
         resetNotification();
       } catch (error) {
