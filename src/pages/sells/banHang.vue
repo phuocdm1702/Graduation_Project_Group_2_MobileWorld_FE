@@ -220,14 +220,18 @@
           <div class="modal-body p-4">
             <div class="d-flex flex-column gap-3">
               <button class="btn btn-light p-3 d-flex align-items-center gap-3" @click="selectPaymentProvider('vnpay')"
-                style="border: 1px solid #34d399; border-radius: 0.5rem">
-                <i class="bi bi-credit-card"></i>
-                <span class="fw-semibold">VNPAY</span>
+                style="border: 1px solid #1e40af; border-radius: 0.5rem">
+                <img src="/src/assets/img/Logo-VNPAY-QR-1.png" alt="VNPAY Logo" style="height: 32px; width: auto; object-fit: contain;">
               </button>
               <button class="btn btn-light p-3 d-flex align-items-center gap-3" @click="selectPaymentProvider('momo')"
-                style="border: 1px solid #e83e8c; border-radius: 0.5rem">
-                <img src="/src/assets/img/momo_logo.svg" alt="Momo Logo" style="height: 24px; width: 24px;">
-                <span class="fw-semibold">Momo</span>
+                style="border: 1px solid #d91a60; border-radius: 0.5rem">
+                <img src="/src/assets/img/Logo-MoMo-Square.webp" alt="Momo Logo" style="height: 32px; width: auto; object-fit: contain;">
+                <span class="fw-semibold" style="color: rgb(100,30,65);">Momo</span>
+              </button>
+              <button class="btn btn-light p-3 d-flex align-items-center gap-3" @click="selectPaymentProvider('paypal')"
+                style="border: 1px solid #0070ba; border-radius: 0.5rem">
+                <i class="bi bi-paypal" style="color: #0070ba; font-size: 1.5rem;"></i>
+                <span class="fw-semibold" style="color: #0070ba;">PayPal</span>
               </button>
             </div>
           </div>
@@ -1148,18 +1152,35 @@ discount, index
                 </div>
               </div>
 
+              <!-- IMEI Search Input -->
+              <div class="mb-4">
+                <div class="input-group">
+                  <span class="input-group-text bg-light border-end-0">
+                    <i class="bi bi-search text-teal"></i>
+                  </span>
+                  <input 
+                    v-model="imeiSearchQuery" 
+                    type="text" 
+                    class="form-control search-input border-start-0"
+                    placeholder="Tìm kiếm IMEI..." 
+                    @input="debouncedImeiSearch($event.target.value)"
+                    style="border-radius: 0 0.5rem 0.5rem 0; transition: all 0.3s ease;"
+                  />
+                </div>
+              </div>
+
               <!-- IMEI List Container with scroll -->
               <div class="imei-list-container">
                 <h6 class="fw-semibold text-dark mb-3">
                   Danh sách IMEI khả dụng
                 </h6>
-                <div v-if="availableIMEIs.length === 0"
+                <div v-if="filteredAvailableIMEIs.length === 0"
                   class="text-center text-muted py-4 animate__animated animate__fadeIn">
                   <i class="bi bi-info-circle me-2"></i>Không có IMEI nào khả
                   dụng.
                 </div>
                 <div v-else class="d-flex flex-column gap-3">
-                  <div v-for="(imei, index) in availableIMEIs" :key="imei.id"
+                  <div v-for="(imei, index) in filteredAvailableIMEIs" :key="imei.id"
                     class="imei-card p-3 rounded shadow-sm animate__animated animate__fadeInUp" style="
                       background: #fff;
                       border: 1px solid rgba(52, 211, 153, 0.1);
@@ -1338,6 +1359,7 @@ export default defineComponent({
       selectedProduct: null,
       selectedIMEIs: [],
       selectedDiscount: null,
+      imeiSearchQuery: "", // Từ khóa tìm kiếm IMEI
       customer: {
         id: null,
         name: "",
@@ -1379,6 +1401,21 @@ export default defineComponent({
 
       console.log('Filtered alternative discounts:', filtered);
       return filtered;
+    },
+    // Computed property để lọc IMEI theo từ khóa tìm kiếm
+    filteredAvailableIMEIs() {
+      if (!this.availableIMEIs || this.availableIMEIs.length === 0) {
+        return [];
+      }
+      
+      if (!this.imeiSearchQuery || this.imeiSearchQuery.trim() === '') {
+        return this.availableIMEIs;
+      }
+      
+      const query = this.imeiSearchQuery.toLowerCase().trim();
+      return this.availableIMEIs.filter(imei => {
+        return imei.imei && imei.imei.toLowerCase().includes(query);
+      });
     },
   },
   methods: {
@@ -1424,6 +1461,11 @@ export default defineComponent({
     debouncedAlternativeSearch: debounce(function (value) {
       this.alternativeSearchQuery = value;
       this.currentAlternativeIndex = 0;
+    }, 300),
+
+    // Debounced search method cho IMEI
+    debouncedImeiSearch: debounce(function (value) {
+      this.imeiSearchQuery = value;
     }, 300),
 
     selectDiscount(discount) {
@@ -2038,35 +2080,29 @@ export default defineComponent({
 }
 
 .imei-list-container {
-  max-height: 400px;
+  max-height: 300px;
   overflow-y: auto;
   padding-right: 10px;
 }
 
 .modal-body {
-  max-height: calc(90vh - 200px);
-  /* Adjust modal body height */
-  overflow-y: auto;
+  max-height: 600px;
 }
 
-.imei-list-container::-webkit-scrollbar,
-.modal-body::-webkit-scrollbar {
+.imei-list-container::-webkit-scrollbar {
   width: 6px;
 }
 
-.imei-list-container::-webkit-scrollbar-thumb,
-.modal-body::-webkit-scrollbar-thumb {
+.imei-list-container::-webkit-scrollbar-thumb {
   background-color: #34d399;
   border-radius: 10px;
 }
 
-.imei-list-container::-webkit-scrollbar-thumb:hover,
-.modal-body::-webkit-scrollbar-thumb:hover {
+.imei-list-container::-webkit-scrollbar-thumb:hover {
   background-color: #2ca37c;
 }
 
-.imei-list-container::-webkit-scrollbar-track,
-.modal-body::-webkit-scrollbar-track {
+.imei-list-container::-webkit-scrollbar-track {
   background: #f1f1f1;
   border-radius: 10px;
 }
