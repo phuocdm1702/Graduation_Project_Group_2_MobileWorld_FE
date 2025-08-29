@@ -501,9 +501,35 @@ export default {
           items: [], // Khởi tạo items rỗng, sẽ load khi người dùng chọn
           customer: null, // Khởi tạo customer null, sẽ load khi người dùng chọn
           isLoaded: false, // Thêm flag để biết hóa đơn đã được load chi tiết chưa
+          itemCount: 0, // Thêm trường để lưu số lượng sản phẩm
         }));
+        
+        // Load số lượng sản phẩm cho từng hóa đơn chờ
+        await loadPendingInvoicesItemCounts();
       } catch (error) {
         showToast("error", "Lỗi khi tải hóa đơn chờ");
+      }
+    };
+
+    // Hàm mới để load số lượng sản phẩm cho các hóa đơn chờ
+    const loadPendingInvoicesItemCounts = async () => {
+      try {
+        const promises = pendingInvoices.value.map(async (invoice) => {
+          try {
+            const responseData = await loadPendingInvoiceApi(invoice.id);
+            const totalQuantity = responseData.chiTietGioHangDTOS.reduce(
+              (sum, item) => sum + item.soLuong, 0
+            );
+            invoice.itemCount = totalQuantity;
+          } catch (error) {
+            // Nếu có lỗi khi load chi tiết hóa đơn, giữ itemCount = 0
+            invoice.itemCount = 0;
+          }
+        });
+        
+        await Promise.all(promises);
+      } catch (error) {
+        console.error("Lỗi khi tải số lượng sản phẩm:", error);
       }
     };
 
@@ -549,6 +575,8 @@ export default {
           status: "Chờ xử lý",
           items: [],
           customer: null, // Khởi tạo customer là null
+          isLoaded: false,
+          itemCount: 0, // Khởi tạo với 0 sản phẩm
         };
         pendingInvoices.value.push(newInvoice);
         activeInvoiceId.value = newInvoice.id;
@@ -597,6 +625,10 @@ export default {
         );
         if (index !== -1) {
           pendingInvoices.value[index].items = cartItems.value;
+          // Cập nhật số lượng sản phẩm
+          pendingInvoices.value[index].itemCount = cartItems.value.reduce(
+            (sum, item) => sum + item.quantity, 0
+          );
           // Khôi phục thông tin khách hàng
           if (invoice.customer) {
             selectedCustomer.value = invoice.customer;
@@ -919,6 +951,10 @@ export default {
         );
         if (invoice) {
           invoice.items = [...cartItems.value];
+          // Cập nhật số lượng sản phẩm
+          invoice.itemCount = cartItems.value.reduce(
+            (sum, item) => sum + item.quantity, 0
+          );
         }
 
         // Hiển thị thông báo giá nếu có
@@ -972,6 +1008,18 @@ export default {
 
     const handleIMEISelection = () => {
       // Update selected IMEIs
+    };
+
+    const toggleIMEISelection = (imeiValue) => {
+      const index = selectedIMEIs.value.indexOf(imeiValue);
+      if (index > -1) {
+        // Remove if already selected
+        selectedIMEIs.value.splice(index, 1);
+      } else {
+        // Add if not selected
+        selectedIMEIs.value.push(imeiValue);
+      }
+      handleIMEISelection();
     };
 
     const removeIMEI = (imei) => {
@@ -1086,10 +1134,15 @@ export default {
             ma: `HD${activeInvoiceId.value}`,
             status: "Chờ xử lý",
             items: [...cartItems.value], // Tạo một bản sao mới
+            itemCount: cartItems.value.reduce((sum, item) => sum + item.quantity, 0),
           };
           pendingInvoices.value.push(newInvoice);
         } else {
           pendingInvoices.value[invoiceIndex].items = [...cartItems.value]; // Tạo một bản sao mới
+          // Cập nhật số lượng sản phẩm
+          pendingInvoices.value[invoiceIndex].itemCount = cartItems.value.reduce(
+            (sum, item) => sum + item.quantity, 0
+          );
         }
 
         // Cập nhật danh sách sản phẩm và mã giảm giá
@@ -1659,6 +1712,17 @@ export default {
           (sum, item) => sum + Number(item.currentPrice) * item.quantity,
           0
         );
+
+        // Cập nhật số lượng sản phẩm trong pending invoice
+        const invoice = pendingInvoices.value.find(
+          (inv) => inv.id === activeInvoiceId.value
+        );
+        if (invoice) {
+          invoice.items = [...cartItems.value];
+          invoice.itemCount = cartItems.value.reduce(
+            (sum, item) => sum + item.quantity, 0
+          );
+        }
 
         showToast("success", `Đã thêm sản phẩm ${product.tenSanPham} vào giỏ hàng`);
         closeScanModal();
@@ -2458,6 +2522,7 @@ export default {
       debouncedProductSearch,
       debouncedCustomerSearch,
       fetchPendingInvoices,
+      loadPendingInvoicesItemCounts,
       createNewPendingInvoice,
       loadPendingInvoice,
       confirmCancelInvoice,
@@ -2470,6 +2535,7 @@ export default {
       closeIMEIModal,
       closeCartIMEIModal,
       handleIMEISelection,
+      toggleIMEISelection,
       removeIMEI,
       addProductWithIMEIs,
       deleteIMEI,
