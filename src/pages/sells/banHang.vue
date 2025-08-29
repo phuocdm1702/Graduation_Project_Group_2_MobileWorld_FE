@@ -68,7 +68,7 @@
                           <span class="badge gradient-custom-yellow text-white px-3 py-1">{{ invoice.status }}</span>
                         </div>
                         <div class="d-flex align-items-center justify-content-between mt-2">
-                          <small class="text-muted">{{ totalQuantity(invoice.items) }} sản phẩm</small>
+                          <small class="text-muted">{{ invoice.itemCount || 0 }} sản phẩm</small>
                           <button class="btn btn-sm btn-outline-danger delete-invoice-btn"
                             @click.stop="confirmCancelInvoice(invoice)">
                             <i class="bi bi-trash"></i>
@@ -1181,14 +1181,17 @@ discount, index
                 </div>
                 <div v-else class="d-flex flex-column gap-3">
                   <div v-for="(imei, index) in filteredAvailableIMEIs" :key="imei.id"
-                    class="imei-card p-3 rounded shadow-sm animate__animated animate__fadeInUp" style="
+                    class="imei-card p-3 rounded shadow-sm animate__animated animate__fadeInUp" 
+                    style="
                       background: #fff;
                       border: 1px solid rgba(52, 211, 153, 0.1);
-                    ">
+                      cursor: pointer;
+                    "
+                    @click="toggleIMEISelection(imei.imei)">
                     <div class="d-flex justify-content-between align-items-center">
                       <div class="d-flex align-items-center">
                         <input type="checkbox" :value="imei.imei" v-model="selectedIMEIs" class="form-check-input me-3"
-                          style="border-color: #34d399" @change="handleIMEISelection" />
+                          style="border-color: #34d399; pointer-events: none;" @change="handleIMEISelection" />
                         <span class="fw-bold text-teal me-3" style="min-width: 30px">{{ index + 1 }}.</span>
                         <i class="bi bi-upc-scan me-3 text-teal" style="font-size: 1.2rem"></i>
                         <span class="text-dark fw-medium">{{ imei.imei }}</span>
@@ -1680,7 +1683,15 @@ export default defineComponent({
   border: 2px solid #34d399;
 }
 
-.cart-items-container,
+.cart-items-container {
+  max-height: 500px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 10px;
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
 .voucher-carousel {
   overflow-x: auto;
   scrollbar-width: thin;
@@ -1689,25 +1700,24 @@ export default defineComponent({
 
 .cart-items-container::-webkit-scrollbar,
 .voucher-carousel::-webkit-scrollbar {
-  height: 8px;
+  width: 6px;
 }
 
 .cart-items-container::-webkit-scrollbar-track,
 .voucher-carousel::-webkit-scrollbar-track {
   background: #f1f1f1;
-  border-radius: 0.5rem;
+  border-radius: 10px;
 }
 
 .cart-items-container::-webkit-scrollbar-thumb,
 .voucher-carousel::-webkit-scrollbar-thumb {
-  background: #34d399;
-  border-radius: 0.5rem;
-  transition: 0.3s ease;
+  background-color: #34d399;
+  border-radius: 10px;
 }
 
 .cart-items-container::-webkit-scrollbar-thumb:hover,
 .voucher-carousel::-webkit-scrollbar-thumb:hover {
-  background: #16a34a;
+  background-color: #2ca37c;
 }
 
 .cart-item-card {
@@ -1882,7 +1892,7 @@ export default defineComponent({
 
 .nav-tabs .nav-link.active {
   background-color: #34d399;
-  color: white;
+  color: white !important;
   border-color: #34d399;
 }
 
@@ -1890,7 +1900,7 @@ export default defineComponent({
   transition: all 0.3s ease;
 }
 
-.nav-tabs .nav-link:hover {
+.nav-tabs .nav-link:hover:not(.active) {
   background-color: rgba(52, 211, 153, 0.1);
 }
 
