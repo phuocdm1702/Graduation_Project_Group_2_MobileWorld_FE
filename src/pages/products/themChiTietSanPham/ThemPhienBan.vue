@@ -108,8 +108,10 @@
                 <thead>
                   <tr>
                     <th class="text-center">
-                      <input type="checkbox" :checked="allSelected[group.groupKey] || false"
-                        @change="toggleGroupSelection(group, $event.target.checked)" />
+                      <div class="d-flex flex-column align-items-center">
+                        <input type="checkbox" :checked="allSelected[group.groupKey] || false"
+                          @change="toggleGroupSelection(group, $event.target.checked)" />
+                      </div>
                     </th>
                     <th class="text-center">STT</th>
                     <th>Tên Sản Phẩm</th>
@@ -393,12 +395,13 @@
               </div>
               <div class="col-12">
                 <label class="filter-label">Mã Màu (Hex)</label>
-                <div class="input-group">
-                  <input v-model="entityData.maMau" type="text" class="form-control search-input"
-                    placeholder="Nhập mã màu (ví dụ: #FFFFFF)" />
-                  <span class="input-group-text color-preview"
-                    :style="{ backgroundColor: isValidHex(entityData.maMau) ? entityData.maMau : '#FFFFFF' }"></span>
+                <div class="color-input-group">
+                  <input type="color" class="color-picker" v-model="entityData.maMau" 
+                    @change="validateColorInput" />
+                  <input v-model="entityData.maMau" type="text" class="form-control color-text"
+                    placeholder="Nhập mã màu (ví dụ: #FFFFFF)" @input="validateColorInput" />
                 </div>
+                <small class="form-hint">Chọn màu từ bảng màu hoặc nhập mã màu hex</small>
               </div>
             </div>
           </div>
@@ -444,7 +447,7 @@ export default defineComponent({
       default: () => ({}),
     },
   },
-  emits: ['variants-updated', 'reset-form'],
+  emits: ['variants-updated', 'reset-form', 'color-added'],
   setup(props, { emit }) {
     const toastNotification = ref(null);
     const isLoading = ref(true);
@@ -539,10 +542,12 @@ export default defineComponent({
       return result;
     });
 
+
     const selectedVariantsInGroup = (group) => {
       const groupIndices = group.variants.map((_, index) => group.startIndex + index);
       return selectedVariants.value.filter((index) => groupIndices.includes(index));
     };
+
 
     const currentVariantLabel = computed(() => {
       if (currentVariantIndex.value === null) return '';
@@ -629,6 +634,21 @@ export default defineComponent({
       return /^#[0-9A-F]{6}$/i.test(color);
     };
 
+    const validateColorInput = () => {
+      if (!entityData.value.maMau) {
+        entityData.value.maMau = '#000000';
+      } else if (!isValidHex(entityData.value.maMau)) {
+        // If invalid hex, try to fix it by adding # if missing
+        if (!entityData.value.maMau.startsWith('#')) {
+          entityData.value.maMau = '#' + entityData.value.maMau;
+        }
+        // If still invalid, reset to black
+        if (!isValidHex(entityData.value.maMau)) {
+          entityData.value.maMau = '#000000';
+        }
+      }
+    };
+
     const loadOptions = async () => {
       try {
         const [ramRes, boNhoRes, mauSacRes] = await Promise.all([
@@ -698,7 +718,9 @@ export default defineComponent({
       localProductVariants.value = [...newVariants];
       localVariantImeis.value = newVariantImeis;
       selectedVariants.value = [];
+      selectedPriceVariants.value = [];
       allSelected.value = {};
+      allPriceSelected.value = {};
       groupCommonValues.value = {};
 
       updateSelectedOptions();
@@ -754,11 +776,52 @@ export default defineComponent({
       const groupKey = group.groupKey;
       const price = groupCommonValues.value[groupKey]?.price || '';
       if (price) {
-        group.variants.forEach((variant, index) => {
-          localProductVariants.value[group.startIndex + index].donGia = price;
-        });
+        const groupIndices = group.variants.map((_, index) => group.startIndex + index);
+        const selectedIndicesInGroup = selectedVariants.value.filter(index => groupIndices.includes(index));
+        
+        // If no variants are selected in this group, apply to all variants in the group
+        if (selectedIndicesInGroup.length === 0) {
+          group.variants.forEach((variant, index) => {
+            localProductVariants.value[group.startIndex + index].donGia = price;
+          });
+        } else {
+          // Apply only to selected variants
+          selectedIndicesInGroup.forEach(index => {
+            localProductVariants.value[index].donGia = price;
+          });
+        }
       }
       emit('variants-updated', { variants: localProductVariants.value, imeis: localVariantImeis.value });
+    };
+
+    const applyPriceToSelected = (group) => {
+      const groupKey = group.groupKey;
+      const price = groupCommonValues.value[groupKey]?.price || '';
+      
+      if (!price) {
+        toastNotification.value?.addToast({
+          type: 'warning',
+          message: 'Vui lòng nhập giá trước khi áp dụng!',
+          duration: 3000,
+        });
+        return;
+      }
+      
+      const groupIndices = group.variants.map((_, index) => group.startIndex + index);
+      const selectedIndicesInGroup = selectedVariants.value.filter(index => groupIndices.includes(index));
+      
+      // Apply price to selected variants
+      selectedIndicesInGroup.forEach(index => {
+        localProductVariants.value[index].donGia = price;
+      });
+      
+      emit('variants-updated', { variants: localProductVariants.value, imeis: localVariantImeis.value });
+      
+      toastNotification.value?.addToast({
+        type: 'success',
+        message: `Đã cập nhật giá cho ${selectedIndicesInGroup.length} biến thể!`,
+        duration: 3000,
+      });
     };
 
     const toggleGroupSelection = (group, checked) => {
@@ -781,6 +844,7 @@ export default defineComponent({
         selectedVariants.value.includes(index)
       );
     };
+
 
     const validateSelections = () => {
       groupVariantsByRamAndRom.value.forEach((group) => {
@@ -824,6 +888,8 @@ export default defineComponent({
             response = await addMauSac(data);
             const newItemMs = response.data;
             mauSacOptions.value.push(newItemMs);
+            // Emit event to notify parent component to refresh color options
+            emit('color-added', newItemMs);
             break;
         }
 
@@ -1440,7 +1506,9 @@ export default defineComponent({
         selectedMauSacs: [],
       };
       selectedVariants.value = [];
+      selectedPriceVariants.value = [];
       allSelected.value = {};
+      allPriceSelected.value = {};
       groupCommonValues.value = {};
       showVariantModal.value = false;
       showImeiModal.value = false;
@@ -1847,5 +1915,49 @@ th {
 .imei-item:hover {
   background: rgba(52, 211, 153, 0.1);
   border-color: #34d399;
+}
+
+/* Color Input Group Styles */
+.color-input-group {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.color-picker {
+  width: 60px;
+  height: 48px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  cursor: pointer;
+  padding: 0;
+  background: none;
+}
+
+.color-picker::-webkit-color-swatch-wrapper {
+  padding: 0;
+  border-radius: 6px;
+}
+
+.color-picker::-webkit-color-swatch {
+  border: none;
+  border-radius: 6px;
+}
+
+.color-text {
+  flex: 1;
+}
+
+.color-picker:focus {
+  border-color: #34d399;
+  box-shadow: 0 0 0 3px rgba(52, 211, 153, 0.2);
+  outline: none;
+}
+
+.form-hint {
+  color: #6b7280;
+  font-size: 0.8rem;
+  margin-top: 4px;
+  display: block;
 }
 </style>
