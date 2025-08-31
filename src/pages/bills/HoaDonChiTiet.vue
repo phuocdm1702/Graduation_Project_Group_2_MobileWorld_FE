@@ -72,6 +72,11 @@
     <!-- Danh sách sản phẩm -->
     <FilterTableSection title="Danh Sách Sản Phẩm" icon="bi bi-box-seam">
       <div class="section-body m-3">
+        <div class="product-actions mb-3 d-flex justify-content-end gap-2">
+          <button class="btn btn-action" @click="isAddProductModalVisible = true" :disabled="isActionButtonsDisabled">
+            Thêm Sản Phẩm
+          </button>
+        </div>
         <div class="products-list">
           <div v-for="groupedProduct in groupedProducts" :key="groupedProduct.id"
             class="product-card animate__animated animate__zoomIn" style="--animate-delay: 0.4s;">
@@ -87,15 +92,15 @@
                   <span class="price-amount">{{ formatPrice(groupedProduct.price) }}</span>
                   <span class="quantity">x{{ groupedProduct.quantity }}</span>
                 </div>
-                <div class="product-imei" v-if="groupedProduct.imeis.length">
+                <!-- <div class="product-imei" v-if="groupedProduct.imeis.length">
                   <span class="imei-label">IMEI:</span>
-                  <span v-for="(imei, index) in groupedProduct.imeis" :key="index" class="imei-code">{{
-                    truncateIMEI(imei) }}{{ index < groupedProduct.imeis.length - 1 ? ', ' : '' }}</span>
-                </div>
+                  <span v-for="(imei, index) in groupedProduct.imeis" :key="index" class="imei-code">
+                    {{ truncateIMEI(imei) }}{{ index < groupedProduct.imeis.length - 1 ? ', ' : '' }}</span>
+                </div> -->
               </div>
             </div>
             <div class="product-card-actions">
-              <button class="btn btn-sm btn-view" @click="showIMEIModal(groupedProduct)" title="Xem IMEI">
+              <button class="btn btn-sm btn-view" @click="showViewIMEIModal(groupedProduct)" title="Xem IMEI">
                 Xem IMEI
               </button>
               <button class="btn btn-sm btn-view" @click="showConfirmIMEIModal(groupedProduct)" title="Xác nhận IMEI"
@@ -279,13 +284,15 @@
       <!-- Lịch sử thanh toán -->
       <div class="flex-child flex-history">
         <!-- Nhập Thông Tin Thanh Toán -->
-        <FilterTableSection title="Nhập Thông Tin Thanh Toán" icon="bi bi-cash-coin" class="filter-table-section mb-4" v-if="invoice.trangThai !== 'Hoàn thành' && invoice.trangThai !== 'Đã hủy'">
+        <FilterTableSection title="Nhập Thông Tin Thanh Toán" icon="bi bi-cash-coin" class="filter-table-section mb-4"
+          v-if="invoice.trangThai !== 'Hoàn thành' && invoice.trangThai !== 'Đã hủy'">
           <div class="section-body m-3">
             <div class="payment-input-section">
               <div class="payment-input-header mb-3">
-                <small class="text-muted">Nhập số tiền khách hàng thanh toán trước khi xác nhận hoàn thành đơn hàng</small>
+                <small class="text-muted">Nhập số tiền khách hàng thanh toán trước khi xác nhận hoàn thành đơn
+                  hàng</small>
               </div>
-              
+
               <div class="row g-3">
                 <div class="col-md-6">
                   <label class="form-label">
@@ -296,18 +303,12 @@
                     <span class="input-group-text">
                       <i class="bi bi-bank"></i>
                     </span>
-                    <input 
-                      type="number" 
-                      class="form-control payment-input" 
-                      v-model="paymentData.chuyenKhoan"
-                      placeholder="Nhập số tiền chuyển khoản"
-                      min="0"
-                      :max="totalPrice - discount"
-                      @input="calculateRemainingAmount"
-                    />
+                    <input type="number" class="form-control payment-input" v-model="paymentData.chuyenKhoan"
+                      placeholder="Nhập số tiền chuyển khoản" min="0" :max="totalPrice - discount"
+                      @input="calculateRemainingAmount" />
                   </div>
                 </div>
-                
+
                 <div class="col-md-6">
                   <label class="form-label">
                     <i class="bi bi-cash me-1"></i>
@@ -317,19 +318,13 @@
                     <span class="input-group-text">
                       <i class="bi bi-wallet2"></i>
                     </span>
-                    <input 
-                      type="number" 
-                      class="form-control payment-input" 
-                      v-model="paymentData.tienMat"
-                      placeholder="Nhập số tiền mặt"
-                      min="0"
-                      :max="totalPrice - discount"
-                      @input="calculateRemainingAmount"
-                    />
+                    <input type="number" class="form-control payment-input" v-model="paymentData.tienMat"
+                      placeholder="Nhập số tiền mặt" min="0" :max="totalPrice - discount"
+                      @input="calculateRemainingAmount" />
                   </div>
                 </div>
               </div>
-              
+
               <!-- Thông tin tổng kết thanh toán -->
               <div class="payment-summary mt-3 p-3 bg-light rounded">
                 <div class="row text-center">
@@ -354,11 +349,8 @@
                     </div>
                   </div>
                   <div class="col-md-3">
-                    <button 
-                      class="btn btn-success btn-sm"
-                      @click="confirmPayment"
-                      :disabled="remainingAmount > 0 || totalPaid === 0"
-                    >
+                    <button class="btn btn-success btn-sm" @click="confirmPayment"
+                      :disabled="remainingAmount > 0 || totalPaid === 0">
                       <i class="bi bi-check-circle me-1"></i>
                       Xác nhận thanh toán
                     </button>
@@ -806,10 +798,82 @@
       </div>
     </div>
 
-    <!-- Notifications -->
+    <!-- View IMEI Modal -->
+    <div v-if="isViewIMEIModalVisible" class="modal-backdrop-blur" @click.self="closeViewIMEIModal">
+      <div class="modal-container glass-modal large-modal animate__animated animate__zoomIn">
+        <div class="modal-header gradient-header">
+          <h5 class="modal-title">
+            <i class="bi bi-eye me-2"></i>
+            Danh Sách IMEI - {{ selectedProduct?.name }} {{ selectedProduct?.color }} {{ selectedProduct?.ram }} {{
+              selectedProduct?.capacity }}
+          </h5>
+          <button class="btn-close-modern" @click="closeViewIMEIModal">
+            <i class="bi bi-x-lg"></i>
+          </button>
+        </div>
+
+        <div class="modal-body">
+          <!-- Loading State -->
+          <div v-if="isLoadingViewIMEI" class="text-center py-5">
+            <div class="spinner-border text-primary" role="status">
+              <span class="visually-hidden">Đang tải...</span>
+            </div>
+            <p class="mt-3 text-muted">Đang tải danh sách IMEI...</p>
+          </div>
+
+          <!-- IMEI Table -->
+          <div v-else-if="viewIMEIData.length > 0" class="table-body">
+            <DataTable title="" :headers="viewIMEIHeaders" :data="viewIMEIData" :pageSizeOptions="[5, 10, 20, 50]">
+              <template #stt="{ globalIndex }">
+                {{ globalIndex + 1 }}
+              </template>
+              <template #imei="{ item }">
+                <span class="imei-code">{{ item.imei || item.maImei || 'N/A' }}</span>
+              </template>
+              <template #tenSanPham="{ item }">
+                <span>{{ item.tenSanPham || item.productName || 'N/A' }}</span>
+              </template>
+              <template #ram="{ item }">
+                <span>{{ item.ram || item.dungLuongRam || 'N/A' }}</span>
+              </template>
+              <template #dungLuongBoNhoTrong="{ item }">
+                <span>{{ item.dungLuongBoNhoTrong || item.boNho || item.capacity || item.dungLuongBoNho || item.storage
+                  || item.memory || '256GB' }}</span>
+              </template>
+              <template #mauSac="{ item }">
+                <span>{{ item.mauSac || item.color || 'N/A' }}</span>
+              </template>
+              <template #giaBan="{ item }">
+                <span>{{ item.giaBan ? formatPrice(item.giaBan) : 'N/A' }}</span>
+              </template>
+              <template #ngayBan="{ item }">
+                <span>{{ formatDate(item.ngayBan || item.saleDate) || 'N/A' }}</span>
+              </template>
+            </DataTable>
+          </div>
+
+          <!-- Empty State -->
+          <div v-else class="empty-state text-center py-5">
+            <i class="bi bi-inbox display-1 text-muted"></i>
+            <h5 class="mt-3 text-muted">Không có IMEI nào</h5>
+            <p class="text-muted">Chưa có IMEI nào được gán cho sản phẩm này trong hóa đơn.</p>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn btn-secondary" @click="closeViewIMEIModal">
+            <i class="bi bi-x-circle me-2"></i>
+            Đóng
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Notification Modal -->
     <NotificationModal ref="notificationModal" :type="notificationType" :message="notificationMessage"
-      :isLoading="isNotificationLoading" :onConfirm="notificationOnConfirm" :onCancel="notificationOnCancel"
-      @close="resetNotification" />
+      :isLoading="isNotificationLoading" @confirm="notificationOnConfirm" @cancel="notificationOnCancel" />
+
+    <!-- Toast Notification -->
     <ToastNotification ref="toastNotification" />
   </div>
 </template>
