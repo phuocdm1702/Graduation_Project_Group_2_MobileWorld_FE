@@ -1,6 +1,38 @@
-<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect x="6" y="2" width="12" height="20" rx="2" ry="2" fill="#333" stroke="#000" stroke-width="1"/>
-  <rect x="7" y="4" width="10" height="14" fill="#fff"/>
-  <circle cx="12" cy="20" r="1" fill="#666"/>
-  <rect x="10" y="3" width="4" height="0.5" rx="0.25" fill="#666"/>
+<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="phoneGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#16a34a;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#15803d;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="screenGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#f0fdf4;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#dcfce7;stop-opacity:1" />
+    </linearGradient>
+    <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
+      <feDropShadow dx="1" dy="2" stdDeviation="2" flood-color="#000000" flood-opacity="0.25"/>
+    </filter>
+  </defs>
+  
+  <!-- Phone body with gradient and shadow -->
+  <rect x="8" y="3" width="16" height="26" rx="3" ry="3" fill="url(#phoneGradient)" filter="url(#shadow)" stroke="#15803d" stroke-width="0.5"/>
+  
+  <!-- Screen -->
+  <rect x="10" y="6" width="12" height="18" rx="1" ry="1" fill="url(#screenGradient)" stroke="#16a34a" stroke-width="0.3"/>
+  
+  <!-- Home button -->
+  <circle cx="16" cy="26.5" r="1.2" fill="#15803d" opacity="0.9"/>
+  <circle cx="16" cy="26.5" r="0.6" fill="#16a34a"/>
+  
+  <!-- Speaker -->
+  <rect x="13" y="4.2" width="6" height="0.8" rx="0.4" fill="#15803d" opacity="0.7"/>
+  
+  <!-- Screen reflection effect -->
+  <rect x="10.5" y="6.5" width="5" height="8" rx="0.5" fill="url(#screenGradient)" opacity="0.4"/>
+  
+  <!-- Camera -->
+  <circle cx="19" cy="4.8" r="0.8" fill="#166534" opacity="0.8"/>
+  <circle cx="19" cy="4.8" r="0.4" fill="#14532d"/>
+  
+  <!-- Brand accent dot -->
+  <circle cx="12" cy="4.8" r="0.3" fill="#16a34a" opacity="0.6"/>
 </svg>

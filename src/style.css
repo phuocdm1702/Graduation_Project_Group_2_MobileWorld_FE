@@ -1,6 +1,7 @@
 /* Global phone cursor for all pages */
 * {
-  cursor: url('/images/phone-cursor.svg') 12 12, auto !important;
+  cursor: url('/images/phone-cursor.svg') 16 16, auto !important;
+  transition: all 0.2s ease-in-out;
 }
 
 /* Specific cursor styles for interactive elements */
@@ -11,7 +12,8 @@ input[type="submit"],
 input[type="reset"],
 .btn,
 .clickable {
-  cursor: url('/images/phone-cursor.svg') 12 12, pointer !important;
+  cursor: url('/images/phone-cursor.svg') 16 16, pointer !important;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 /* Text input fields */
@@ -22,10 +24,54 @@ input[type="number"],
 input[type="search"],
 textarea,
 select {
-  cursor: url('/images/phone-cursor.svg') 12 12, text !important;
+  cursor: url('/images/phone-cursor.svg') 16 16, text !important;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-/* Hover states */
-*:hover {
-  cursor: url('/images/phone-cursor.svg') 12 12, auto !important;
+/* Enhanced hover effects for interactive elements */
+button:hover, 
+a:hover, 
+.btn:hover,
+.clickable:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(21, 128, 61, 0.15);
+  cursor: url('/images/phone-cursor.svg') 16 16, pointer !important;
+}
+
+/* Focus effects for form elements */
+input:focus,
+textarea:focus,
+select:focus {
+  border-color: #15803d;
+  box-shadow: 0 0 0 3px rgba(21, 128, 61, 0.1);
+  cursor: url('/images/phone-cursor.svg') 16 16, text !important;
+}
+
+/* Active states */
+button:active,
+.btn:active {
+  transform: translateY(0);
+  cursor: url('/images/phone-cursor.svg') 16 16, pointer !important;
+}
+
+/* Special cursor for disabled elements */
+button:disabled,
+input:disabled,
+.btn:disabled {
+  cursor: url('/images/phone-cursor.svg') 16 16, not-allowed !important;
+  opacity: 0.6;
+}
+
+/* Cursor for loading states */
+.loading {
+  cursor: url('/images/phone-cursor.svg') 16 16, wait !important;
+}
+
+/* Cursor for draggable elements */
+.draggable {
+  cursor: url('/images/phone-cursor.svg') 16 16, grab !important;
+}
+
+.draggable:active {
+  cursor: url('/images/phone-cursor.svg') 16 16, grabbing !important;
 }
