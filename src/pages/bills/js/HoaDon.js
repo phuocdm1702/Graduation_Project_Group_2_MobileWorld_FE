@@ -57,7 +57,7 @@ export const invoiceManagementLogic = {
     const activeTab = ref('all');
     const activeStatus = ref('all');  // Track selected status filter
     const sortBy = ref('id');  // Mới
-    const sortDir = ref('DESC');  // Mới
+    const sortDir = ref('DESC');  // Mới DESC ASC
 
     // Notification state
     const notificationType = ref('confirm');
@@ -794,6 +794,7 @@ export const invoiceManagementLogic = {
 
     // Khởi tạo
     onMounted(() => {
+      // hoaDonStore.updateFilters({ loaiDon: 'trực tiếp' }); // Mặc định lọc trực tiếp
       hoaDonStore.fetchInvoices({ page: 0, size: itemsPerPage.value });
     });
 
