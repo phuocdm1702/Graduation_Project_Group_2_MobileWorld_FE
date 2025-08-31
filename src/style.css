@@ -1,0 +1,31 @@
+/* Global phone cursor for all pages */
+* {
+  cursor: url('/images/phone-cursor.svg') 12 12, auto !important;
+}
+
+/* Specific cursor styles for interactive elements */
+button, 
+a, 
+input[type="button"], 
+input[type="submit"], 
+input[type="reset"],
+.btn,
+.clickable {
+  cursor: url('/images/phone-cursor.svg') 12 12, pointer !important;
+}
+
+/* Text input fields */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="search"],
+textarea,
+select {
+  cursor: url('/images/phone-cursor.svg') 12 12, text !important;
+}
+
+/* Hover states */
+*:hover {
+  cursor: url('/images/phone-cursor.svg') 12 12, auto !important;
+}
