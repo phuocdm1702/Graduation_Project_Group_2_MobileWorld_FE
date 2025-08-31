@@ -172,12 +172,17 @@ export const useHoaDonStore = defineStore('hoaDon', {
             }
         },
 
-        async fetchImelList({ page = 0, size = 100, idSanPham, chiTietSanPhamId } = {}) {
+        async fetchImelList({ page = 0, size = 100, idSanPham, chiTietSanPhamId, clearPrevious = true } = {}) {
             this.isLoading = true;
             try {
                 if (!idSanPham || !chiTietSanPhamId) {
                     throw new Error('idSanPham and chiTietSanPhamId are required');
                 }
+                
+                // Always clear previous data first
+                this.imelList = [];
+                console.log('Cleared store imelList for new product');
+                
                 const params = { page, size, idSanPham, chiTietSanPhamId };
                 console.log('Fetching IMEI list with params:', params);
                 const response = await apiService.get('/api/hoa-don/hoa-don-chi-tiet/imel', { params });
@@ -194,18 +199,9 @@ export const useHoaDonStore = defineStore('hoaDon', {
                     color: item.mauSac
                 }));
 
-                // Merge new IMEIs with existing ones, avoiding duplicates
-                const existingIMEIs = this.imelList || [];
-                const mergedIMEIs = [...existingIMEIs];
-                
-                newIMEIs.forEach(newIMEI => {
-                    const exists = mergedIMEIs.find(existing => existing.imei === newIMEI.imei);
-                    if (!exists) {
-                        mergedIMEIs.push(newIMEI);
-                    }
-                });
-                
-                this.imelList = mergedIMEIs;
+                // Always use fresh data
+                this.imelList = newIMEIs;
+                console.log('Set fresh IMEI data in store:', newIMEIs.length, 'items');
                 this.totalElements = totalElements;
             } catch (error) {
                 this.error = error.message || 'Không thể tải danh sách IMEI';
@@ -323,183 +319,30 @@ export const useHoaDonStore = defineStore('hoaDon', {
             this.isLoading = true;
             this.error = null;
 
-            // Kiểm tra imelMap với logging chi tiết
-            console.log('Validating imelMap in store:', imelMap);
-            for (const [chiTietSanPhamId, imei] of Object.entries(imelMap)) {
-                console.log(`Validating chiTietSanPhamId: ${chiTietSanPhamId}, imei: "${imei}", type: ${typeof imei}`);
-                
-                if (!imei || typeof imei !== 'string' || imei.trim() === '') {
-                    this.error = `IMEI cho sản phẩm ID ${chiTietSanPhamId} không hợp lệ (giá trị: "${imei}")`;
-                    console.error(this.error);
-                    this.isLoading = false;
-                    return { success: false, message: this.error };
-                }
-                
-                const trimmedImei = imei.trim();
-                const imeiData = this.imelList.find(i => i.imei === trimmedImei);
-                console.log(`Found imeiData for ${trimmedImei}:`, imeiData);
-                
-                if (!imeiData || imeiData.status !== 'Còn hàng') {
-                    this.error = `IMEI ${trimmedImei} không khả dụng (status: ${imeiData?.status || 'not found'})`;
-                    console.error(this.error);
-                    this.isLoading = false;
-                    return { success: false, message: this.error };
-                }
-                
-                // Kiểm tra IMEI có thuộc đúng sản phẩm không
-                if (this.invoiceDetail && this.invoiceDetail.products) {
-                    const product = this.invoiceDetail.products.find(p => 
-                        p.chiTietSanPhamId === parseInt(chiTietSanPhamId) || 
-                        (p.chiTietSanPhamIds && p.chiTietSanPhamIds.includes(parseInt(chiTietSanPhamId)))
-                    );
-                    
-                    if (product) {
-                        console.log(`Product for chiTietSanPhamId ${chiTietSanPhamId}:`, {
-                            productId: product.idSanPham,
-                            chiTietSanPhamId: product.chiTietSanPhamId,
-                            productName: product.tenSanPham,
-                            ram: product.ram,
-                            boNho: product.boNho,
-                            mauSac: product.mauSac
-                        });
-                        
-                        // Kiểm tra IMEI có thuộc đúng sản phẩm không
-                        if (imeiData.idSanPham && product.idSanPham && imeiData.idSanPham !== product.idSanPham) {
-                            console.warn(`IMEI ${trimmedImei} thuộc sản phẩm ID ${imeiData.idSanPham} nhưng đang được gán cho sản phẩm ID ${product.idSanPham}`);
-                        }
-                        
-                        // Kiểm tra chiTietSanPhamId
-                        if (imeiData.chiTietSanPhamId && imeiData.chiTietSanPhamId !== parseInt(chiTietSanPhamId)) {
-                            console.warn(`IMEI ${trimmedImei} có chiTietSanPhamId ${imeiData.chiTietSanPhamId} nhưng đang được gán cho chiTietSanPhamId ${chiTietSanPhamId}`);
-                        }
-                    }
-                }
+            console.log('confirmAndAssignIMEI called with:', { idHD, imelMap });
+
+            // Validate input
+            if (!idHD || !imelMap || Object.keys(imelMap).length === 0) {
+                this.error = 'ID hóa đơn và danh sách IMEI không được để trống';
+                this.isLoading = false;
+                return { success: false, message: this.error };
             }
 
+            // Backend expect Map<Integer, String> - gửi object đơn giản với integer keys
+            const finalPayload = {};
+            Object.entries(imelMap).forEach(([key, value]) => {
+                finalPayload[parseInt(key)] = value.trim();
+            });
+
+            console.log('Sending payload to API:', {
+                endpoint: `/api/hoa-don/xac-nhan-imei/${idHD}`,
+                originalPayload: imelMap,
+                finalPayload: finalPayload
+            });
+
             try {
-                // Auto-detect related products với cùng specs và assign IMEI
-                const enhancedResult = await this.autoAssignRelatedProductIMEIs(imelMap);
-                console.log('Enhanced result after auto-detection:', enhancedResult);
-                
-                // Kiểm tra nếu auto-detection trả về error (cần manual selection)
-                if (enhancedResult && !enhancedResult.success && enhancedResult.requiresManualSelection) {
-                    this.error = enhancedResult.message;
-                    this.isLoading = false;
-                    return enhancedResult; // Return error object để frontend xử lý
-                }
-                
-                const enhancedImelMap = enhancedResult;
-
-                // Thử format khác cho payload
-                const formattedPayload = Object.entries(enhancedImelMap).map(([chiTietSanPhamId, imei]) => ({
-                    chiTietSanPhamId: parseInt(chiTietSanPhamId),
-                    imei: imei.trim()
-                }));
-
-                console.log('Sending payload to API:', {
-                    endpoint: `/api/client/hoa-don/xac-nhan-imei/${idHD}`,
-                    originalPayload: imelMap,
-                    enhancedPayload: enhancedImelMap,
-                    formattedPayload: formattedPayload,
-                    payloadType: typeof formattedPayload
-                });
-                
-                // Thử format khác - có thể backend expect wrapper object
-                const wrapperPayload = {
-                    imeiAssignments: formattedPayload
-                };
-                
-                const simplePayload = {
-                    imeiMap: enhancedImelMap
-                };
-
-                // Thử nhiều format để xem format nào backend accept
-                let response;
-                let lastError;
-                
-                const endpoints = [
-                    `/api/hoa-don/xac-nhan-imei/${idHD}`,
-                    `/api/client/hoa-don/xac-nhan-imei/${idHD}`
-                ];
-
-                // Backend expect Map<Integer, String> - chỉ cần object đơn giản với integer keys
-                const integerKeyMap = {};
-                Object.entries(enhancedImelMap).forEach(([key, value]) => {
-                    integerKeyMap[parseInt(key)] = value.trim();
-                });
-
-                // Thử thêm format với wrapper object như backend có thể expect
-                const wrappedPayload = {
-                    imeiAssignments: integerKeyMap
-                };
-
-                const arrayPayload = Object.entries(enhancedImelMap).map(([chiTietSanPhamId, imei]) => ({
-                    chiTietSanPhamId: parseInt(chiTietSanPhamId),
-                    imei: imei.trim()
-                }));
-
-                const formats = [
-                    { name: 'Integer key map', payload: integerKeyMap },
-                    { name: 'String key map', payload: enhancedImelMap },
-                    { name: 'Wrapped payload', payload: wrappedPayload },
-                    { name: 'Array payload', payload: arrayPayload }
-                ];
-
-                for (const endpoint of endpoints) {
-                    for (const format of formats) {
-                        try {
-                            console.log(`Trying ${endpoint} with ${format.name}:`, format.payload);
-                            response = await apiService.post(endpoint, format.payload);
-                            console.log(`${endpoint} with ${format.name} succeeded!`);
-                            break;
-                        } catch (error) {
-                            console.log(`${endpoint} with ${format.name} failed:`, {
-                                status: error.response?.status,
-                                statusText: error.response?.statusText,
-                                data: error.response?.data,
-                                message: error.message,
-                                fullError: error.response
-                            });
-                            
-                            // Log chi tiết lỗi backend để debug
-                            if (error.response?.data) {
-                                console.error('Backend error details:', error.response.data);
-                                if (typeof error.response.data === 'string') {
-                                    console.error('Backend error message:', error.response.data);
-                                } else if (error.response.data.message) {
-                                    console.error('Backend error message:', error.response.data.message);
-                                } else if (error.response.data.error) {
-                                    console.error('Backend error:', error.response.data.error);
-                                }
-                            }
-                            lastError = error;
-                        }
-                    }
-                    if (response) break;
-                }
-                
-                if (!response) {
-                    // Kiểm tra xem có phải lỗi do thiếu IMEI cho products khác thuộc tính không
-                    if (lastError && lastError.response && lastError.response.data && lastError.response.data.message) {
-                        const errorMessage = lastError.response.data.message;
-                        if (errorMessage.includes('IMEI cho sản phẩm ID') && errorMessage.includes('không được cung cấp')) {
-                            // Extract chiTietSanPhamId từ error message
-                            const match = errorMessage.match(/IMEI cho sản phẩm ID (\d+) không được cung cấp/);
-                            if (match) {
-                                const missingId = match[1];
-                                this.error = `Cần chọn IMEI cho sản phẩm có ID ${missingId}. Vui lòng chọn IMEI cho tất cả sản phẩm có thuộc tính khác nhau.`;
-                                console.error('Missing IMEI for product with different attributes:', missingId);
-                                return { 
-                                    success: false, 
-                                    message: this.error,
-                                    missingProductId: missingId,
-                                    requiresManualSelection: true
-                                };
-                            }
-                        }
-                    }
-                    throw lastError;
-                }
+                // Gọi API với endpoint chính xác
+                const response = await apiService.post(`/api/hoa-don/xac-nhan-imei/${idHD}`, finalPayload);
                 const updatedInvoice = response.data;
 
                 if (this.invoiceDetail && this.invoiceDetail.id === idHD) {
