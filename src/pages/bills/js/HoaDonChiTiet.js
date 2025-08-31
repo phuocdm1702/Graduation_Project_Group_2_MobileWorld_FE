@@ -42,9 +42,15 @@ export default {
     const isConfirmIMEIModalVisible = ref(false);
     const isViewIMEIModalVisible = ref(false);
     const isAddProductModalVisible = ref(false);
+    const isIMEISelectionModalVisible = ref(false);
     const isUpdateModalVisible = ref(false);
     const isDivinationModalVisible = ref(false);
     const selectedProduct = ref(null);
+    const selectedProductForIMEI = ref(null);
+    const selectedIMEIsForProduct = ref([]);
+    const availableIMEIsForProduct = ref([]);
+    const imeiSearchQuery = ref('');
+    const isAddingProduct = ref(false);
     const newIMEI = ref('');
     const searchIMEI = ref('');
     const newProduct = ref({
@@ -95,7 +101,7 @@ export default {
     const imeiPageSizeOptions = ref([5, 10, 15, 20, 50]);
     // Thêm state cho phân trang sản phẩm
     const productCurrentPage = ref(1);
-    const productItemsPerPage = ref(5);  // Mặc định 10 sản phẩm/trang
+    const productItemsPerPage = ref(4);  // Mặc định 4 sản phẩm/trang
     const productPageSizeOptions = ref([5, 10, 15, 20, 50]);
 
     // Thêm state mới cho hiển thị sản phẩm và IMEI (không trùng với IMEI hiện có)
@@ -111,6 +117,16 @@ export default {
     // State mới cho IMEI đã chọn - cải thiện để hỗ trợ nhiều IMEI cho sản phẩm gộp
     const selectedIMEIs = ref(new Map()); // Key: groupKey, Value: Array of selected IMEIs
     const productGroupKeys = ref(new Map()); // Key: chiTietSanPhamId, Value: groupKey
+
+    // Bulk IMEI Confirmation State
+    const isBulkConfirmIMEIModalVisible = ref(false);
+    const bulkConfirmProducts = ref([]);
+    const currentBulkProductIndex = ref(0);
+    const bulkSelectedIMEIs = ref(new Map()); // Key: productGroupKey, Value: Array of selected IMEIs
+    const bulkAvailableIMEIs = ref([]);
+    const bulkSearchIMEI = ref('');
+    const isConfirmingBulkIMEI = ref(false);
+    const isLoadingBulkIMEI = ref(false);
 
     // Computed properties
     const orderInfo = computed(() => [
@@ -260,6 +276,30 @@ export default {
       productCurrentPage.value = 1;
     };
 
+    // New computed properties for IMEI modal
+    const filteredAvailableIMEIs = computed(() => {
+      if (!imeiSearchQuery.value) return availableIMEIsForProduct.value;
+      return availableIMEIsForProduct.value.filter(imei =>
+        imei.imei && imei.imei.toLowerCase().includes(imeiSearchQuery.value.toLowerCase())
+      );
+    });
+
+    const totalIMEIPagesForProduct = computed(() => {
+      return Math.ceil(filteredAvailableIMEIs.value.length / imeiItemsPerPage.value);
+    });
+
+    const paginatedAvailableIMEIs = computed(() => {
+      const start = (imeiCurrentPage.value - 1) * imeiItemsPerPage.value;
+      const end = start + imeiItemsPerPage.value;
+      return filteredAvailableIMEIs.value.slice(start, end);
+    });
+
+    // Debounced IMEI search for new modal
+    const debouncedSearchIMEIForProduct = debounce((value) => {
+      imeiSearchQuery.value = value;
+      imeiCurrentPage.value = 1;
+    }, 300);
+
     const totalIMEIPages = computed(() => {
       return Math.ceil(filteredIMEIs.value.length / imeiItemsPerPage.value);
     });
@@ -378,6 +418,123 @@ export default {
     const updateProductItemsPerPage = (value) => {
       productItemsPerPage.value = value;
       productCurrentPage.value = 1;
+    };
+
+    // New method for selecting product and opening IMEI modal
+    const selectProductForIMEI = async (product) => {
+      selectedProductForIMEI.value = product;
+      selectedIMEIsForProduct.value = [];
+      imeiSearchQuery.value = '';
+      imeiCurrentPage.value = 1;
+      
+      try {
+        availableIMEIsForProduct.value = await fetchIMEIsApi(
+          product.sanPhamId || product.idSanPham,
+          product.mauSac,
+          product.dungLuongRam,
+          product.dungLuongBoNhoTrong
+        );
+        isAddProductModalVisible.value = false;
+        isIMEISelectionModalVisible.value = true;
+      } catch (error) {
+        toastNotification.value.addToast({
+          type: 'error',
+          message: error.message || 'Lỗi khi tải danh sách IMEI',
+          duration: 3000,
+        });
+      }
+    };
+
+    // Close IMEI selection modal
+    const closeIMEISelectionModal = () => {
+      isIMEISelectionModalVisible.value = false;
+      selectedProductForIMEI.value = null;
+      selectedIMEIsForProduct.value = [];
+      availableIMEIsForProduct.value = [];
+      imeiSearchQuery.value = '';
+    };
+
+    // Toggle IMEI selection
+    const toggleIMEISelection = (imei) => {
+      const index = selectedIMEIsForProduct.value.indexOf(imei);
+      if (index > -1) {
+        selectedIMEIsForProduct.value.splice(index, 1);
+      } else {
+        selectedIMEIsForProduct.value.push(imei);
+      }
+    };
+
+    // Toggle select all IMEIs
+    const toggleSelectAllIMEIs = () => {
+      if (selectedIMEIsForProduct.value.length === filteredAvailableIMEIs.value.length) {
+        // If all are selected, deselect all
+        selectedIMEIsForProduct.value = [];
+      } else {
+        // If not all are selected, select all
+        selectedIMEIsForProduct.value = filteredAvailableIMEIs.value.map(imei => imei.imei);
+      }
+    };
+
+    // Toggle select all IMEIs for Confirm Modal
+    const toggleSelectAllConfirmIMEIs = () => {
+      const currentSelectedCount = getSelectedIMEICount();
+      if (currentSelectedCount === filteredIMEIs.value.length) {
+        // If all are selected, deselect all
+        selectedIMEIs.value.clear();
+      } else {
+        // If not all are selected, select all
+        filteredIMEIs.value.forEach(imei => {
+          if (imei.status === 'Còn hàng') {
+            selectedIMEIs.value.set(imei.imei, true);
+          }
+        });
+      }
+    };
+
+    // Update IMEI page for new modal
+    const updateIMEIPageForProduct = (page) => {
+      imeiCurrentPage.value = page;
+    };
+
+    // Confirm add product with selected IMEIs
+    const confirmAddProductWithIMEI = async () => {
+      if (!selectedProductForIMEI.value || selectedIMEIsForProduct.value.length === 0) {
+        toastNotification.value.addToast({
+          type: 'error',
+          message: 'Vui lòng chọn ít nhất một IMEI',
+          duration: 3000,
+        });
+        return;
+      }
+
+      isAddingProduct.value = true;
+      
+      try {
+        const imelMap = {};
+        selectedIMEIsForProduct.value.forEach(imei => {
+          imelMap[selectedProductForIMEI.value.chiTietSanPhamId] = imei;
+        });
+        
+        await apiService.post(`/api/hoa-don/${invoiceId.value}/add-product-to-detail`, imelMap);
+        
+        toastNotification.value.addToast({
+          type: 'success',
+          message: 'Thêm sản phẩm và gán IMEI thành công',
+          duration: 3000,
+        });
+        
+        closeIMEISelectionModal();
+        await hoaDonStore.fetchInvoiceDetail(invoiceId.value);
+        
+      } catch (error) {
+        toastNotification.value.addToast({
+          type: 'error',
+          message: error.response?.data?.message || 'Lỗi khi thêm sản phẩm',
+          duration: 3000,
+        });
+      } finally {
+        isAddingProduct.value = false;
+      }
     };
 
     const showNewIMEIList = async (product) => {
@@ -1094,24 +1251,18 @@ export default {
                 // Trường hợp có nhiều chiTietSanPhamId cùng specs
                 console.log('Multiple chiTietSanPhamIds found:', currentProduct.chiTietSanPhamIds);
 
-                // Nếu chỉ có 1 IMEI được chọn nhưng có nhiều chiTietSanPhamId
-                if (imeis.length === 1 && currentProduct.chiTietSanPhamIds.length > 1) {
-                  // Gửi IMEI cho tất cả chiTietSanPhamId (backend sẽ auto-assign)
-                  currentProduct.chiTietSanPhamIds.forEach((id) => {
-                    if (!imelMap[id]) {
-                      imelMap[id] = imeis[0]; // Sử dụng cùng IMEI
-                      console.log(`Mapped chiTietSanPhamId ${id} to IMEI ${imeis[0]} (auto-assign)`);
-                    }
-                  });
-                } else {
-                  // Trường hợp có đủ IMEI cho từng chiTietSanPhamId
-                  currentProduct.chiTietSanPhamIds.forEach((id, index) => {
-                    if (imeis[index] && !imelMap[id]) {
-                      imelMap[id] = imeis[index];
-                      console.log(`Mapped chiTietSanPhamId ${id} to IMEI ${imeis[index]} (index ${index})`);
-                    }
-                  });
+                // Đảm bảo có đủ IMEI cho tất cả chiTietSanPhamId
+                if (imeis.length < currentProduct.chiTietSanPhamIds.length) {
+                  throw new Error(`Cần chọn ${currentProduct.chiTietSanPhamIds.length} IMEI cho sản phẩm ${currentProduct.tenSanPham}, hiện tại chỉ có ${imeis.length} IMEI được chọn`);
                 }
+
+                // Gán từng IMEI riêng biệt cho từng chiTietSanPhamId
+                currentProduct.chiTietSanPhamIds.forEach((id, index) => {
+                  if (imeis[index] && !imelMap[id]) {
+                    imelMap[id] = imeis[index];
+                    console.log(`Mapped chiTietSanPhamId ${id} to IMEI ${imeis[index]} (index ${index})`);
+                  }
+                });
               } else {
                 // Trường hợp chỉ có 1 chiTietSanPhamId
                 if (!imelMap[chiTietSanPhamId]) {
@@ -1651,20 +1802,42 @@ export default {
       });
     };
 
+    const isActionButtonsDisabled = computed(() => {
+      return invoice.value.trangThai === 'Hoàn thành' || invoice.value.trangThai === 'Đã hủy';
+    });
+
+    // Bulk IMEI Confirmation Computed Properties
+    const hasProductsNeedingIMEI = computed(() => {
+      return groupedProducts.value.some(product => product.needsIMEI > 0);
+    });
+
+    const currentBulkProduct = computed(() => {
+      return bulkConfirmProducts.value[currentBulkProductIndex.value] || null;
+    });
+
+    const filteredBulkIMEIs = computed(() => {
+      if (!bulkSearchIMEI.value) return bulkAvailableIMEIs.value;
+      return bulkAvailableIMEIs.value.filter(imei => 
+        imei.imei.toLowerCase().includes(bulkSearchIMEI.value.toLowerCase())
+      );
+    });
+
+    const canConfirmBulkIMEIs = computed(() => {
+      if (!currentBulkProduct.value) return false;
+      const selectedCount = getBulkSelectedIMEICount();
+      return selectedCount === currentBulkProduct.value.needsIMEI;
+    });
+
+    const isLastBulkProduct = computed(() => {
+      return currentBulkProductIndex.value === bulkConfirmProducts.value.length - 1;
+    });
+
     // Cập nhật phương thức changeStatus để thêm confirm in hóa đơn khi chuyển sang "Chờ giao hàng"
     const changeStatus = async (status) => {
       if (invoice.value.loaiDon === 'trực tiếp') {
         toastNotification.value.addToast({
           type: 'error',
           message: 'Không thể thay đổi trạng thái cho đơn trực tiếp',
-          duration: 3000,
-        });
-        return;
-      }
-      if (invoice.value.trangThai === 'Hoàn thành' || invoice.value.trangThai === 'Đã hủy') {
-        toastNotification.value.addToast({
-          type: 'error',
-          message: 'Không thể thay đổi trạng thái từ trạng thái hiện tại',
           duration: 3000,
         });
         return;
@@ -1868,6 +2041,394 @@ export default {
       imeiCurrentPage.value = 1;
     };
 
+    // Bulk IMEI Confirmation Methods
+    const showBulkConfirmIMEIModal = () => {
+      // Filter products that need IMEI confirmation
+      const productsNeedingIMEI = groupedProducts.value.filter(product => product.needsIMEI > 0);
+      
+      if (productsNeedingIMEI.length === 0) {
+        toastNotification.value.addToast({
+          type: 'info',
+          message: 'Không có sản phẩm nào cần xác nhận IMEI',
+          duration: 3000,
+        });
+        return;
+      }
+
+      bulkConfirmProducts.value = productsNeedingIMEI;
+      currentBulkProductIndex.value = 0;
+      bulkSelectedIMEIs.value.clear();
+      bulkSearchIMEI.value = '';
+      isBulkConfirmIMEIModalVisible.value = true;
+      
+      // Load IMEI for first product
+      loadIMEIForBulkProduct();
+    };
+
+    const closeBulkConfirmIMEIModal = () => {
+      isBulkConfirmIMEIModalVisible.value = false;
+      bulkConfirmProducts.value = [];
+      currentBulkProductIndex.value = 0;
+      bulkSelectedIMEIs.value.clear();
+      bulkAvailableIMEIs.value = [];
+      bulkSearchIMEI.value = '';
+      isLoadingBulkIMEI.value = false;
+    };
+
+    const loadIMEIForBulkProduct = async () => {
+      const product = currentBulkProduct.value;
+      if (!product) return;
+
+      try {
+        isLoadingBulkIMEI.value = true;
+        
+        // Clear previous IMEI data immediately when switching products
+        bulkAvailableIMEIs.value = [];
+        
+        // Also clear store data to ensure fresh fetch
+        hoaDonStore.imelList = [];
+        console.log('Cleared both component and store IMEI data for new product');
+        
+        console.log('Loading IMEIs for product:', product);
+        
+        // Ensure we have idSanPham
+        if (!product.idSanPham) {
+          console.log('Fetching idSanPham for chiTietSanPhamId:', product.chiTietSanPhamId);
+          const response = await apiService.get(`/api/chi-tiet-san-pham/${product.chiTietSanPhamId}/id-san-pham`);
+          product.idSanPham = response.data;
+          console.log('Got idSanPham:', product.idSanPham);
+        }
+
+        // Use the same method as the working IMEI modal
+        console.log('Calling fetchImelList with params:', {
+          page: 0,
+          size: 100,
+          idSanPham: product.idSanPham,
+          chiTietSanPhamId: product.chiTietSanPhamId,
+          clearPrevious: true
+        });
+
+        await hoaDonStore.fetchImelList({
+          page: 0,
+          size: 100,
+          idSanPham: product.idSanPham,
+          chiTietSanPhamId: product.chiTietSanPhamId,
+          clearPrevious: true
+        });
+
+        const storeIMEIs = hoaDonStore.getImelList || [];
+        console.log('Store IMEIs received:', storeIMEIs.length, storeIMEIs);
+        
+        // Log the first IMEI to see its structure
+        if (storeIMEIs.length > 0) {
+          console.log('First IMEI structure:', storeIMEIs[0]);
+          console.log('Available fields:', Object.keys(storeIMEIs[0]));
+        }
+        
+        // First, filter by availability status
+        const availableIMEIs = storeIMEIs.filter(imei => {
+          const isAvailable = imei.status === 'Còn hàng' || imei.trangThai === 'Còn hàng';
+          console.log('IMEI:', imei.imei, 'Status:', imei.status || imei.trangThai, 'Available:', isAvailable);
+          return isAvailable;
+        });
+        
+        console.log('Available IMEIs before product filtering:', availableIMEIs.length, availableIMEIs);
+        
+        // Debug: Log detailed IMEI structure
+        if (availableIMEIs.length > 0) {
+          console.log('Sample IMEI structure:', availableIMEIs[0]);
+          console.log('All IMEI fields:', Object.keys(availableIMEIs[0]));
+        }
+        
+        // Apply strict product-specific filtering
+        let filteredIMEIs = availableIMEIs;
+        
+        console.log('Product attributes for filtering:', {
+          color: product.color,
+          ram: product.ram,
+          capacity: product.capacity,
+          chiTietSanPhamId: product.chiTietSanPhamId
+        });
+        
+        // Temporarily disable strict filtering to debug data mismatch
+        console.log('DEBUG: Checking if filtering is the issue...');
+        
+        // Show all available IMEIs first to debug
+        console.log('All available IMEIs (no filtering):', availableIMEIs.map(imei => ({
+          imei: imei.imei,
+          color: imei.mauSac || imei.color,
+          ram: imei.dungLuongRam || imei.ram,
+          storage: imei.dungLuongBoNhoTrong || imei.capacity || imei.dungLuongBoNho,
+          status: imei.status || imei.trangThai
+        })));
+        
+        // For now, show all available IMEIs to verify data exists
+        filteredIMEIs = availableIMEIs;
+        
+        // Optional: Apply lenient filtering if product has attributes
+        if (product.color || product.ram || product.capacity) {
+          console.log('Product filtering criteria:', {
+            productColor: product.color,
+            productRam: product.ram,
+            productCapacity: product.capacity
+          });
+          
+          // Try lenient filtering - match any one attribute instead of all
+          const lenientFiltered = availableIMEIs.filter(imei => {
+            const imeiColor = imei.mauSac || imei.color;
+            const imeiRam = imei.dungLuongRam || imei.ram;
+            const imeiStorage = imei.dungLuongBoNhoTrong || imei.capacity || imei.dungLuongBoNho;
+            
+            const matchColor = !product.color || (imeiColor === product.color);
+            const matchRam = !product.ram || (imeiRam === product.ram);
+            const matchStorage = !product.capacity || (imeiStorage === product.capacity);
+            
+            // Lenient: match if at least one attribute matches or no attributes specified
+            const hasMatch = matchColor || matchRam || matchStorage;
+            
+            console.log('Lenient IMEI filtering:', {
+              imei: imei.imei,
+              imeiColor,
+              imeiRam, 
+              imeiStorage,
+              matchColor,
+              matchRam,
+              matchStorage,
+              hasMatch
+            });
+            
+            return hasMatch;
+          });
+          
+          console.log('Lenient filtered IMEIs:', lenientFiltered.length, lenientFiltered);
+          // Use lenient filtering if it finds results, otherwise use all
+          if (lenientFiltered.length > 0) {
+            filteredIMEIs = lenientFiltered;
+          }
+        }
+
+        console.log('Final filtered IMEIs for product:', filteredIMEIs.length, filteredIMEIs);
+        bulkAvailableIMEIs.value = filteredIMEIs;
+        
+      } catch (error) {
+        console.error('Error loading IMEIs for bulk confirmation:', error);
+        toastNotification.value.addToast({
+          type: 'error',
+          message: 'Lỗi khi tải danh sách IMEI: ' + (error.message || 'Unknown error'),
+          duration: 3000,
+        });
+        bulkAvailableIMEIs.value = [];
+      } finally {
+        isLoadingBulkIMEI.value = false;
+      }
+    };
+
+    const nextBulkProduct = () => {
+      if (currentBulkProductIndex.value < bulkConfirmProducts.value.length - 1) {
+        // Force clear all IMEI data before switching
+        bulkAvailableIMEIs.value = [];
+        hoaDonStore.imelList = [];
+        console.log('Force cleared data before next product');
+        
+        currentBulkProductIndex.value++;
+        bulkSearchIMEI.value = '';
+        
+        // Add small delay to ensure state is cleared
+        setTimeout(() => {
+          loadIMEIForBulkProduct();
+        }, 100);
+      }
+    };
+
+    const previousBulkProduct = () => {
+      if (currentBulkProductIndex.value > 0) {
+        // Force clear all IMEI data before switching
+        bulkAvailableIMEIs.value = [];
+        hoaDonStore.imelList = [];
+        console.log('Force cleared data before previous product');
+        
+        currentBulkProductIndex.value--;
+        bulkSearchIMEI.value = '';
+        
+        // Add small delay to ensure state is cleared
+        setTimeout(() => {
+          loadIMEIForBulkProduct();
+        }, 100);
+      }
+    };
+
+    const getBulkSelectedIMEICount = () => {
+      const product = currentBulkProduct.value;
+      if (!product) return 0;
+      const selectedIMEIs = bulkSelectedIMEIs.value.get(product.groupKey) || [];
+      return selectedIMEIs.length;
+    };
+
+    const isBulkIMEISelected = (imei) => {
+      const product = currentBulkProduct.value;
+      if (!product) return false;
+      const selectedIMEIs = bulkSelectedIMEIs.value.get(product.groupKey) || [];
+      return selectedIMEIs.includes(imei);
+    };
+
+    const toggleBulkIMEISelection = (imei) => {
+      const product = currentBulkProduct.value;
+      if (!product) return;
+
+      const currentSelected = bulkSelectedIMEIs.value.get(product.groupKey) || [];
+      const isSelected = currentSelected.includes(imei);
+
+      if (isSelected) {
+        // Remove IMEI
+        const newSelected = currentSelected.filter(selectedImei => selectedImei !== imei);
+        bulkSelectedIMEIs.value.set(product.groupKey, newSelected);
+      } else {
+        // Add IMEI if not exceeding limit
+        if (currentSelected.length < product.needsIMEI) {
+          const newSelected = [...currentSelected, imei];
+          bulkSelectedIMEIs.value.set(product.groupKey, newSelected);
+        } else {
+          toastNotification.value.addToast({
+            type: 'warning',
+            message: `Chỉ có thể chọn tối đa ${product.needsIMEI} IMEI cho sản phẩm này`,
+            duration: 3000,
+          });
+        }
+      }
+    };
+
+    const confirmAllBulkIMEIs = async () => {
+      isConfirmingBulkIMEI.value = true;
+      try {
+        const imelMap = {};
+
+        console.log('bulkSelectedIMEIs Map:', bulkSelectedIMEIs.value);
+        console.log('bulkConfirmProducts:', bulkConfirmProducts.value);
+
+        // Use bulkSelectedIMEIs instead of selectedIMEIs
+        bulkSelectedIMEIs.value.forEach((imeis, key) => {
+          if (!key || !imeis || imeis.length === 0) {
+            console.log('Skipping invalid entry:', { key, imeis });
+            return;
+          }
+
+          console.log('Processing key:', key, 'imeis:', imeis);
+
+          // Find the product by groupKey
+          const product = bulkConfirmProducts.value.find(p => p.groupKey === key);
+          if (!product) {
+            console.log('Product not found for key:', key);
+            return;
+          }
+
+          console.log('Found product:', product);
+
+          // Map IMEIs to chiTietSanPhamIds
+          if (product.chiTietSanPhamIds && product.chiTietSanPhamIds.length > 0) {
+            product.chiTietSanPhamIds.forEach((chiTietSanPhamId, index) => {
+              if (imeis[index] && !imelMap[chiTietSanPhamId]) {
+                imelMap[chiTietSanPhamId] = imeis[index];
+                console.log(`Mapped chiTietSanPhamId ${chiTietSanPhamId} to IMEI ${imeis[index]}`);
+              }
+            });
+          } else if (product.chiTietSanPhamId) {
+            // Single chiTietSanPhamId
+            if (imeis.length > 0 && !imelMap[product.chiTietSanPhamId]) {
+              imelMap[product.chiTietSanPhamId] = imeis[0];
+              console.log(`Direct mapped chiTietSanPhamId ${product.chiTietSanPhamId} to IMEI ${imeis[0]}`);
+            }
+          }
+        });
+
+        console.log('Final imelMap:', imelMap);
+
+        // Validation
+        if (Object.keys(imelMap).length === 0) {
+          throw new Error('Vui lòng chọn ít nhất một IMEI để xác nhận');
+        }
+
+        // Gọi API với format đơn giản - backend expect Map<Integer, String>
+        const finalPayload = {};
+        Object.entries(imelMap).forEach(([key, value]) => {
+          finalPayload[parseInt(key)] = value.trim();
+        });
+
+        console.log('Calling confirmAndAssignIMEI with payload:', {
+          invoiceId: invoice.value.id,
+          payload: finalPayload
+        });
+
+        let result;
+        try {
+          result = await hoaDonStore.confirmAndAssignIMEI(invoice.value.id, finalPayload);
+
+          if (result && !result.success && result.requiresManualSelection) {
+            let detailMessage = result.message || 'Cần chọn IMEI cho tất cả sản phẩm có thuộc tính khác nhau';
+
+            if (result.missingProducts && result.missingProducts.length > 0) {
+              const productDetails = result.missingProducts.map(p =>
+                `${p.name} (${p.ram}, ${p.capacity}, ${p.color})`
+              ).join(', ');
+              detailMessage += `\n\nSản phẩm cần chọn IMEI: ${productDetails}`;
+            }
+
+            toastNotification.value.addToast({
+              type: 'warning',
+              message: detailMessage,
+              duration: 8000,
+            });
+            return;
+          }
+        } catch (error) {
+          console.error('Error calling confirmAndAssignIMEI:', error);
+          throw new Error(error.response?.data?.message || error.message || 'Không thể xác nhận IMEI');
+        }
+
+        if (result) {
+          toastNotification.value.addToast({
+            type: 'success',
+            message: 'Xác nhận IMEI thành công',
+            duration: 3000,
+          });
+          
+          // Reload invoice data
+          await hoaDonStore.fetchInvoiceDetail(invoice.value.id);
+          if (hoaDonStore.getInvoiceDetail?.products) {
+            products.value = hoaDonStore.getInvoiceDetail.products.map(product => ({
+              ...product,
+              chiTietSanPhamId: product.chiTietSanPhamId || product.id,
+              idSanPham: product.idSanPham,
+              tenSanPham: product.tenSanPham || product.name,
+              name: product.tenSanPham || product.name,
+              mauSac: product.mauSac || product.color,
+              color: product.mauSac || product.color,
+              dungLuongRam: product.dungLuongRam || product.ram,
+              ram: product.dungLuongRam || product.ram,
+              dungLuongBoNhoTrong: product.dungLuongBoNhoTrong || product.capacity,
+              capacity: product.dungLuongBoNhoTrong || product.capacity,
+              giaBan: product.giaBan || product.price,
+              price: product.giaBan || product.price,
+              duongDan: product.duongDan || product.image,
+              image: product.duongDan || product.image,
+            }));
+          }
+          
+          closeBulkConfirmIMEIModal();
+          bulkSelectedIMEIs.value.clear();
+        } else {
+          throw new Error('Không có phản hồi từ server');
+        }
+      } catch (error) {
+        toastNotification.value.addToast({
+          type: 'error',
+          message: error.message || 'Lỗi khi xác nhận IMEI',
+          duration: 3000,
+        });
+      } finally {
+        isConfirmingBulkIMEI.value = false;
+      }
+    };
+
     return {
       invoice,
       products,
@@ -1994,6 +2555,47 @@ export default {
       changeViewIMEIPage,
       changeViewIMEIPageSize,
       isLoadingViewIMEI,
+      // Bulk IMEI Confirmation
+      isBulkConfirmIMEIModalVisible,
+      bulkConfirmProducts,
+      currentBulkProductIndex,
+      bulkSelectedIMEIs,
+      bulkAvailableIMEIs,
+      bulkSearchIMEI,
+      isConfirmingBulkIMEI,
+      isLoadingBulkIMEI,
+      hasProductsNeedingIMEI,
+      currentBulkProduct,
+      filteredBulkIMEIs,
+      canConfirmBulkIMEIs,
+      isLastBulkProduct,
+      showBulkConfirmIMEIModal,
+      closeBulkConfirmIMEIModal,
+      loadIMEIForBulkProduct,
+      nextBulkProduct,
+      previousBulkProduct,
+      getBulkSelectedIMEICount,
+      isBulkIMEISelected,
+      toggleBulkIMEISelection,
+      confirmAllBulkIMEIs,
+      // New modal methods
+      isIMEISelectionModalVisible,
+      selectedProductForIMEI,
+      selectedIMEIsForProduct,
+      availableIMEIsForProduct,
+      imeiSearchQuery,
+      isAddingProduct,
+      selectProductForIMEI,
+      closeIMEISelectionModal,
+      toggleIMEISelection,
+      toggleSelectAllIMEIs,
+      toggleSelectAllConfirmIMEIs,
+      updateIMEIPageForProduct,
+      confirmAddProductWithIMEI,
+      filteredAvailableIMEIs,
+      totalIMEIPagesForProduct,
+      paginatedAvailableIMEIs,
+      debouncedSearchIMEIForProduct,
     };
   },
 };
