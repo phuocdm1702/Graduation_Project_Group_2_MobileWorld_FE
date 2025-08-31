@@ -40,6 +40,7 @@ export default {
     const discount = ref(0);
     const isIMEIModalVisible = ref(false);
     const isConfirmIMEIModalVisible = ref(false);
+    const isViewIMEIModalVisible = ref(false);
     const isAddProductModalVisible = ref(false);
     const isUpdateModalVisible = ref(false);
     const isDivinationModalVisible = ref(false);
@@ -70,6 +71,11 @@ export default {
     const toastNotification = ref(null);
     const isLoadingIMEI = ref(false); // Trạng thái loading cho selectIMEI
     const isConfirmingIMEI = ref(false); // Trạng thái loading cho confirmSelectedIMEIs
+    const isLoadingViewIMEI = ref(false); // Trạng thái loading cho viewIMEI
+    const viewIMEIData = ref([]);
+    const viewIMEICurrentPage = ref(1);
+    const viewIMEIPageSize = ref(10);
+    const viewIMEITotalPages = ref(0);
 
     // State cho thanh toán
     const paymentData = ref({
@@ -279,6 +285,20 @@ export default {
       { text: 'IMEI', value: 'imei' },
       { text: 'Trạng thái', value: 'status', formatter: (value) => value || 'N/A' },
       { text: 'Thao tác', value: 'actions' },
+    ]);
+
+    // View IMEI Modal Headers
+    const viewIMEIHeaders = ref([
+      { text: 'STT', value: 'stt' },
+      { text: 'IMEI', value: 'imei' },
+      { text: 'Sản phẩm', value: 'tenSanPham' },
+      // { text: 'Thương hiệu', value: 'thuongHieu' },
+      { text: 'RAM', value: 'ram' },
+      { text: 'Bộ nhớ', value: 'dungLuongBoNhoTrong' },
+      { text: 'Màu sắc', value: 'mauSac' },
+      { text: 'Giá bán', value: 'giaBan' },
+      { text: 'Ngày bán', value: 'ngayBan' },
+      // { text: 'Ghi chú', value: 'ghiChu' },
     ]);
 
     // Methods
@@ -505,6 +525,21 @@ export default {
       }).format(price);
     };
 
+    const formatDate = (dateString) => {
+      if (!dateString) return null;
+      try {
+        const date = new Date(dateString);
+        if (isNaN(date.getTime())) return null;
+        return date.toLocaleDateString('vi-VN', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric'
+        });
+      } catch (error) {
+        return null;
+      }
+    };
+
     const truncateIMEI = (imei) => {
       if (!imei || imei === null) return '';
       return imei.length > 10 ? `${imei.slice(0, 10)}...` : imei;
@@ -562,7 +597,92 @@ export default {
       return payment.timestamp ? payment.timestamp.split(' ')[1] : 'N/A';
     };
 
-    // Hàm để hiển thị modal IMEI
+    // Hàm để hiển thị modal xem IMEI đã có trong hóa đơn
+    const showViewIMEIModal = async (groupedProduct) => {
+      try {
+        isLoadingViewIMEI.value = true;
+        selectedProduct.value = groupedProduct;
+        isViewIMEIModalVisible.value = true;
+
+        // Reset pagination
+        viewIMEICurrentPage.value = 1;
+        viewIMEIPageSize.value = 10;
+
+        // Gọi API để lấy danh sách IMEI của hóa đơn
+        await fetchViewIMEIData();
+
+      } catch (error) {
+        console.error('Error in showViewIMEIModal:', error);
+        toastNotification.value.addToast({
+          type: 'error',
+          message: 'Lỗi khi tải danh sách IMEI',
+          duration: 3000,
+        });
+      } finally {
+        isLoadingViewIMEI.value = false;
+      }
+    };
+
+    // Hàm gọi API để lấy danh sách IMEI của hóa đơn
+    const fetchViewIMEIData = async () => {
+      try {
+        isLoadingViewIMEI.value = true;
+        const response = await apiService.get(`/api/hoa-don/${invoiceId.value}/imei`, {
+          params: {
+            page: viewIMEICurrentPage.value - 1,
+            size: viewIMEIPageSize.value
+          }
+        });
+
+        if (response.data) {
+          viewIMEIData.value = response.data.content || response.data;
+          // Debug: Log the first item to see the actual data structure
+          if (viewIMEIData.value.length > 0) {
+            console.log('IMEI Data Structure:', viewIMEIData.value[0]);
+            console.log('Available fields:', Object.keys(viewIMEIData.value[0]));
+          }
+          viewIMEITotalPages.value = response.data.totalPages || Math.ceil((response.data.totalElements || viewIMEIData.value.length) / viewIMEIPageSize.value);
+        } else {
+          viewIMEIData.value = [];
+          viewIMEITotalPages.value = 0;
+        }
+
+      } catch (error) {
+        console.error('Error fetching view IMEI data:', error);
+        viewIMEIData.value = [];
+        viewIMEITotalPages.value = 0;
+        toastNotification.value.addToast({
+          type: 'error',
+          message: 'Không thể tải danh sách IMEI',
+          duration: 3000,
+        });
+      } finally {
+        isLoadingViewIMEI.value = false;
+      }
+    };
+
+    // Hàm đóng modal xem IMEI
+    const closeViewIMEIModal = () => {
+      isViewIMEIModalVisible.value = false;
+      selectedProduct.value = null;
+      viewIMEIData.value = [];
+      viewIMEICurrentPage.value = 1;
+    };
+
+    // Hàm thay đổi trang cho modal xem IMEI
+    const changeViewIMEIPage = (page) => {
+      viewIMEICurrentPage.value = page;
+      fetchViewIMEIData();
+    };
+
+    // Hàm thay đổi kích thước trang cho modal xem IMEI
+    const changeViewIMEIPageSize = (size) => {
+      viewIMEIPageSize.value = size;
+      viewIMEICurrentPage.value = 1;
+      fetchViewIMEIData();
+    };
+
+    // Hàm để hiển thị modal IMEI (cho việc chọn IMEI mới)
     const showIMEIModal = async (groupedProduct) => {
       selectedProduct.value = groupedProduct;
       isIMEIModalVisible.value = true;
@@ -604,7 +724,7 @@ export default {
       const loadIMEIs = async (idSanPham, filters) => {
         try {
           console.log('Fetching IMEIs with filters:', filters);
-          
+
           // Sử dụng store method thay vì API trực tiếp
           if (groupedProduct.chiTietSanPhamId) {
             console.log('Using store fetchImelList method');
@@ -614,11 +734,11 @@ export default {
               idSanPham: idSanPham,
               chiTietSanPhamId: groupedProduct.chiTietSanPhamId
             });
-            
+
             // Lấy danh sách IMEI từ store
             const storeIMEIs = hoaDonStore.getImelList || [];
             console.log('Store IMEIs:', storeIMEIs);
-            
+
             // Filter theo thuộc tính nếu có
             let filteredIMEIs = storeIMEIs;
             if (filters.color || filters.ram || filters.storage) {
@@ -629,17 +749,17 @@ export default {
                 return matchColor && matchRam && matchStorage;
               });
             }
-            
+
             // Chỉ lấy IMEI còn hàng
             const availableIMEIs = filteredIMEIs.filter(imei => imei.status === 'Còn hàng');
             availableIMEIsNew.value = availableIMEIs;
             console.log('Final IMEI list:', availableIMEIs);
-            
+
           } else {
             console.warn('No chiTietSanPhamId available for IMEI fetching');
             availableIMEIsNew.value = [];
           }
-          
+
         } catch (error) {
           console.error('Error fetching IMEIs:', error);
           availableIMEIsNew.value = [];
@@ -656,7 +776,7 @@ export default {
           storage: groupedProduct.capacity,
         }
       });
-      
+
       loadIMEIs(groupedProduct.idSanPham, {
         color: groupedProduct.color,
         ram: groupedProduct.ram,
@@ -1016,19 +1136,19 @@ export default {
         let result;
         try {
           result = await hoaDonStore.confirmAndAssignIMEI(invoice.value.id, imelMap);
-          
+
           // Kiểm tra nếu result có requiresManualSelection
           if (result && !result.success && result.requiresManualSelection) {
             let detailMessage = result.message || 'Cần chọn IMEI cho tất cả sản phẩm có thuộc tính khác nhau';
-            
+
             // Thêm thông tin chi tiết về sản phẩm cần chọn IMEI
             if (result.missingProducts && result.missingProducts.length > 0) {
-              const productDetails = result.missingProducts.map(p => 
+              const productDetails = result.missingProducts.map(p =>
                 `${p.name} (${p.ram}, ${p.capacity}, ${p.color})`
               ).join(', ');
               detailMessage += `\n\nSản phẩm cần chọn IMEI: ${productDetails}`;
             }
-            
+
             toastNotification.value.addToast({
               type: 'warning',
               message: detailMessage,
@@ -1691,7 +1811,7 @@ export default {
       notificationOnConfirm.value = async () => {
         try {
           isNotificationLoading.value = true;
-          
+
           const paymentPayload = {
             hoaDonId: invoiceId.value,
             tienChuyenKhoan: paymentData.value.chuyenKhoan || 0,
@@ -1700,7 +1820,7 @@ export default {
           };
 
           const response = await apiService.post(`/api/hoa-don/${invoiceId.value}/thanh-toan`, paymentPayload);
-          
+
           if (response.data) {
             toastNotification.value.addToast({
               type: 'success',
@@ -1780,11 +1900,13 @@ export default {
       orderInfo,
       customerInfo,
       imeiHeaders,
+      viewIMEIHeaders,
       imeiCurrentPage,
       imeiItemsPerPage,
       imeiPageSizeOptions,
       totalIMEIPages,
       formatPrice,
+      formatDate,
       truncateIMEI,
       getTypeBadgeClass,
       getTypeIcon,
@@ -1860,6 +1982,18 @@ export default {
       groupedProducts,
       getSelectedIMEICount,
       isConfirmingIMEI,
+      // View IMEI functions
+      isViewIMEIModalVisible,
+      showViewIMEIModal,
+      closeViewIMEIModal,
+      fetchViewIMEIData,
+      viewIMEIData,
+      viewIMEICurrentPage,
+      viewIMEIPageSize,
+      viewIMEITotalPages,
+      changeViewIMEIPage,
+      changeViewIMEIPageSize,
+      isLoadingViewIMEI,
     };
   },
 };
