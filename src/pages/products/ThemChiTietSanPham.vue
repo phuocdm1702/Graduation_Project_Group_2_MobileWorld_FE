@@ -10,6 +10,7 @@
       :product-variants="productVariants"
       :variant-imeis="variantImeis"
       @variants-updated="handleVariantsUpdated"
+      @color-added="handleColorAdded"
       @reset-form="handleResetForm"
     />
     <ProductImages
@@ -109,6 +110,13 @@ export default defineComponent({
       handleResetForm();
     };
 
+    const handleColorAdded = (newColor) => {
+      // Add the new color to the mauSacOptions array
+      mauSacOptions.value.push(newColor);
+      console.log('New color added to parent:', newColor);
+      console.log('Updated mauSacOptions:', mauSacOptions.value);
+    };
+
     const handleResetForm = () => {
       productData.value = {
         tenSanPham: '',
@@ -147,6 +155,7 @@ export default defineComponent({
       mauSacOptions,
       updateProductData,
       handleVariantsUpdated,
+      handleColorAdded,
       handleProductSubmitted,
       handleResetForm,
     };
