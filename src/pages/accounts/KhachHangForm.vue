@@ -589,69 +589,62 @@ const getAbbreviatedAddress = (address) => {
 
 // Load provinces
 const fetchProvinces = async () => {
-  try {
-    const response = await axios.get("https://provinces.open-api.vn/api/p/");
-    provinces.value = response.data;
-  } catch (error) {
-    console.error("Lỗi khi tải danh sách tỉnh/thành phố:", error);
-    toastNotification.value.addToast({
-      type: "error",
-      message: "Không thể tải danh sách tỉnh/thành phố!",
-    });
-  }
-};
+      try {
+        const response = await axios.get('https://online-gateway.ghn.vn/shiip/public-api/master-data/province', {
+          headers: {
+            'Content-Type': 'application/json',
+            'Token': '284962ef-8363-11f0-9fb9-b62928d3d46c' // Thay bằng token của bạn
+          }
+        });
+        provinces.value = response.data.data.map(p => ({ name: p.ProvinceName, code: p.ProvinceID }));
+      } catch (error) {
+        console.error('Lỗi khi tải danh sách tỉnh:', error);
+      }
+    };
 
-// Load districts
-const fetchDistricts = async () => {
-  districts.value = [];
-  wards.value = [];
-  newAddress.value.quan = "";
-  newAddress.value.phuong = "";
+    const fetchDistricts = async () => {
+      if (!newAddress.value.thanhPho) return;
+      const province = provinces.value.find(p => p.name === newAddress.value.thanhPho);
+      if (province) {
+        try {
+          const response = await axios.post(
+            'https://online-gateway.ghn.vn/shiip/public-api/master-data/district',
+            { province_id: province.code },
+            {
+              headers: {
+                'Content-Type': 'application/json',
+                'Token': '284962ef-8363-11f0-9fb9-b62928d3d46c'
+              }
+            }
+          );
+          districts.value = response.data.data.map(d => ({ name: d.DistrictName, code: d.DistrictID }));
+        } catch (error) {
+          console.error('Lỗi khi tải danh sách quận:', error);
+        }
+      }
+    };
 
-  const selectedProvince = provinces.value.find(
-    (p) => p.name === newAddress.value.thanhPho
-  );
-  if (selectedProvince) {
-    selectedProvinceCode.value = selectedProvince.code;
-    try {
-      const response = await axios.get(
-        `https://provinces.open-api.vn/api/p/${selectedProvince.code}?depth=2`
-      );
-      districts.value = response.data.districts;
-    } catch (error) {
-      console.error("Lỗi khi tải danh sách quận/huyện:", error);
-      toastNotification.value.addToast({
-        type: "error",
-        message: "Không thể tải danh sách quận/huyện!",
-      });
-    }
-  }
-};
-
-// Load wards
-const fetchWards = async () => {
-  wards.value = [];
-  newAddress.value.phuong = "";
-
-  const selectedDistrict = districts.value.find(
-    (d) => d.name === newAddress.value.quan
-  );
-  if (selectedDistrict) {
-    selectedDistrictCode.value = selectedDistrict.code;
-    try {
-      const response = await axios.get(
-        `https://provinces.open-api.vn/api/d/${selectedDistrict.code}?depth=2`
-      );
-      wards.value = response.data.wards;
-    } catch (error) {
-      console.error("Lỗi khi tải danh sách xã/phường:", error);
-      toastNotification.value.addToast({
-        type: "error",
-        message: "Không thể tải danh sách xã/phường!",
-      });
-    }
-  }
-};
+    const fetchWards = async () => {
+      if (!newAddress.value.quan) return;
+      const district = districts.value.find(d => d.name === newAddress.value.quan);
+      if (district) {
+        try {
+          const response = await axios.post(
+            'https://online-gateway.ghn.vn/shiip/public-api/master-data/ward',
+            { district_id: district.code },
+            {
+              headers: {
+                'Content-Type': 'application/json',
+                'Token': '284962ef-8363-11f0-9fb9-b62928d3d46c'
+              }
+            }
+          );
+          wards.value = response.data.data.map(w => ({ name: w.WardName, code: w.WardCode }));
+        } catch (error) {
+          console.error('Lỗi khi tải danh sách phường:', error);
+        }
+      }
+    };
 
 // Load districts for editing
 const fetchDistrictsForEdit = async (index) => {
@@ -664,10 +657,17 @@ const fetchDistrictsForEdit = async (index) => {
   );
   if (selectedProvince) {
     try {
-      const response = await axios.get(
-        `https://provinces.open-api.vn/api/p/${selectedProvince.code}?depth=2`
+      const response = await axios.post(
+        'https://online-gateway.ghn.vn/shiip/public-api/master-data/district',
+        { province_id: selectedProvince.code },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            'Token': '284962ef-8363-11f0-9fb9-b62928d3d46c' // Thay bằng token của bạn
+          }
+        }
       );
-      address.districts = response.data.districts;
+      address.districts = response.data.data.map(d => ({ name: d.DistrictName, code: d.DistrictID }));
 
       // Kiểm tra xem quan hiện tại có trong danh sách districts không
       const currentDistrict = address.districts.find(
@@ -704,10 +704,17 @@ const fetchWardsForEdit = async (index) => {
   );
   if (selectedDistrict) {
     try {
-      const response = await axios.get(
-        `https://provinces.open-api.vn/api/d/${selectedDistrict.code}?depth=2`
+      const response = await axios.post(
+        'https://online-gateway.ghn.vn/shiip/public-api/master-data/ward',
+        { district_id: selectedDistrict.code },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            'Token': '284962ef-8363-11f0-9fb9-b62928d3d46c' // Thay bằng token của bạn
+          }
+        }
       );
-      address.wards = response.data.wards;
+      address.wards = response.data.data.map(w => ({ name: w.WardName, code: w.WardCode }));
 
       // Kiểm tra xem phuong hiện tại có trong danh sách wards không
       const currentWard = address.wards.find((w) => w.name === address.phuong);
