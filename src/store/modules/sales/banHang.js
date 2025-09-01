@@ -2203,7 +2203,7 @@ export default {
 
         if (selectedPaymentProvider.value === "vnpay") {
           try {
-            const orderInfo = `Thanh toán hóa đơn ${activeInvoiceId.value || "HDXXX"
+            const orderInfo = `Thanh toan hoa don ${activeInvoiceId.value || "HDXXX"
               }`;
             const amountToSend = totalPayment.value || 100000;
 
