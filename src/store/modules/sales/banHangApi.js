@@ -340,7 +340,7 @@ export const createMomoPaymentApi = async (amount, orderInfo, returnUrl, notifyU
     params.append("orderInfo", orderInfo);
     params.append("returnUrl", returnUrl);
     params.append("notifyUrl", notifyUrl);
-    const response = await apiService.post("/api/payment/momo/create", params.toString(), {
+    const response = await apiService.post("/api/momo/create-payment", params.toString(), {
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
     });
     return response.data;
