@@ -38,10 +38,10 @@ import {
   fetchWardsApi,
   fetchPGGApi,
   validateDiscountApi,
-  createPaymentApi,
+  createPaymentApi, // This is now for VNPay
+  createMomoPaymentApi, // New import for MoMo
   completeOrderApi,
   checkVNPayPaymentStatusApi,
-  createMomoPaymentApi,
   addProductByBarcodeOrImeiApi,
   calculateGHNShippingFeeApi,
   getGHNAvailableServicesApi,
@@ -1976,45 +1976,44 @@ export default {
         }
       } else if (paymentMethod.value === "transfer") {
         if (!selectedPaymentProvider.value) {
-          showToast("error", "Vui lòng chọn phương thức thanh toán");
+          showToast("error", "Vui lòng chọn phương thức thanh toán (VNPay/Momo).");
           return;
         }
+
+        let paymentResponse;
+        const orderInfo = `Thanh toan hoa don ${activeInvoiceId.value}`;
+        const returnUrl = "http://localhost:5173/banHang"; // Frontend return URL
+
         if (selectedPaymentProvider.value === "vnpay") {
-          try {
-            isCreatingOrder.value = true;
-            const orderInfo = `Thanh toan don hang ${activeInvoiceId.value}`;
-            const returnUrl = `http://localhost:5173/vnpay-return`; // Frontend return URL
-            const paymentUrl = await createPaymentApi(totalPaymentValue, orderInfo, returnUrl);
-            window.location.href = paymentUrl; // Redirect to VNPAY
-            return; // Stop further execution
-          } catch (error) {
-            showToast("error", `Lỗi khi tạo thanh toán VNPAY: ${error.message}`);
-            isCreatingOrder.value = false;
+          paymentResponse = await createPaymentApi(
+            totalPaymentValue,
+            orderInfo,
+            returnUrl
+          );
+          if (paymentResponse) {
+            window.location.href = paymentResponse; // Redirect to VNPay
+          } else {
+            showToast("error", "Lỗi khi tạo thanh toán VNPay.");
             return;
           }
-        } else if (selectedPaymentProvider.value === "momo") { // Added Momo logic
-          try {
-            isCreatingOrder.value = true;
-            const orderInfo = `Thanh toan don hang ${activeInvoiceId.value}`;
-            const returnUrl = `http://localhost:5173/momo-return`; // Frontend return URL for Momo
-            const notifyUrl = `http://localhost:8080/api/payment/momo/return`; // Backend notify URL for Momo
-            const response = await createMomoPaymentApi(totalPaymentValue, orderInfo, returnUrl, notifyUrl);
-            window.location.href = response.payUrl; // Redirect to Momo
-            return; // Stop further execution
-          } catch (error) {
-            showToast("error", `Lỗi khi tạo thanh toán Momo: ${error.message}`);
-            isCreatingOrder.value = false;
+        } else if (selectedPaymentProvider.value === "momo") {
+          paymentResponse = await createMomoPaymentApi(
+            totalPaymentValue,
+            orderInfo
+          );
+          if (paymentResponse && paymentResponse.payUrl) {
+            window.location.href = paymentResponse.payUrl; // Redirect to MoMo
+          } else {
+            showToast("error", "Lỗi khi tạo thanh toán MoMo.");
             return;
           }
-        } else if (!qrCodeValue.value) {
-          showToast("error", "Không thể tạo mã QR. Vui lòng thử lại.");
-          return;
         }
       }
 
       try {
         const priceChangeMessages = [];
         const priceCheckErrors = [];
+
         for (const item of cartItems.value) {
           try {
             const productData = (await fetchProductsApi(0, 1, item.name))
@@ -2206,7 +2205,7 @@ export default {
 
         if (selectedPaymentProvider.value === "vnpay") {
           try {
-            const orderInfo = `Thanh toán hóa đơn ${activeInvoiceId.value || "HDXXX"
+            const orderInfo = `Thanh toan hoa don ${activeInvoiceId.value || "HDXXX"
               }`;
             const amountToSend = totalPayment.value || 100000;
 
@@ -2254,6 +2253,7 @@ export default {
             );
 
             const returnUrl = "http://localhost:5173/banHang";
+
             const vnpayUrl = await createPaymentApi(
               amountToSend,
               orderInfo,
@@ -2498,44 +2498,17 @@ const updateShippingFee = async () => {
         await applyBestDiscount();
 
         const urlParams = new URLSearchParams(window.location.search);
-        if (urlParams.has("vnp_TransactionStatus")) {
-          try {
-            const response = await checkVNPayPaymentStatusApi(urlParams);
 
-            if (response && response.status === "success") {
-              const pendingHoaDon = JSON.parse(
-                localStorage.getItem("pendingHoaDon")
-              );
-              if (
-                pendingHoaDon &&
-                pendingHoaDon.idHD &&
-                pendingHoaDon.hoaDonRequest
-              ) {
-                await createOrder(
-                  pendingHoaDon.idHD,
-                  pendingHoaDon.hoaDonRequest
-                );
-                localStorage.removeItem("pendingHoaDon");
-                router.replace({ query: {} });
-              } else {
-                showToast(
-                  "error",
-                  "Không tìm thấy thông tin hóa đơn để hoàn tất thanh toán"
-                );
-              }
-            } else {
-              showToast(
-                "error",
-                response || "Thanh toán VNPay không thành công"
-              );
-            }
-          } catch (error) {
-            showToast(
-              "error",
-              `Lỗi khi kiểm tra trạng thái thanh toán: ${error.message}`
-            );
-          }
+        // Handle VNPay return
+        if (urlParams.has("vnp_TransactionStatus")) {
+          this.checkVNPayStatus(urlParams);
         }
+
+        // Handle MoMo return
+        if (urlParams.has('resultCode')) {
+          this.checkMomoStatus(urlParams);
+        }
+
       } catch (error) {
         showToast("error", "Lỗi khi khởi tạo dữ liệu hoặc xử lý thanh toán");
       }
@@ -2548,7 +2521,40 @@ const updateShippingFee = async () => {
       }
     });
 
+    const checkVNPayStatus = async (urlParams) => {
+      try {
+        const response = await checkVNPayPaymentStatusApi(urlParams);
+        if (response.status === "success") {
+          showToast("success", "Thanh toán VNPay thành công!");
+          // Optionally, clear cart or update order status in UI
+        } else {
+          showToast("error", `Thanh toán VNPay thất bại: ${response.message}`);
+        }
+      } catch (error) {
+        showToast("error", `Lỗi khi kiểm tra trạng thái VNPay: ${error.message}`);
+      } finally {
+        // Clear URL parameters to prevent re-processing on refresh
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
+    };
+
+    const checkMomoStatus = async (urlParams) => {
+      const resultCode = urlParams.get('resultCode');
+      if (resultCode === '0') { // MoMo success code
+        // Assuming backend has already updated order status via notifyUrl
+        showToast("success", "Thanh toán MoMo thành công!");
+        // Optionally, clear cart or update order status in UI
+      } else {
+        const message = urlParams.get('message') || 'Thanh toán MoMo thất bại.';
+        showToast("error", `Thanh toán MoMo thất bại: ${message}`);
+      }
+      // Clear URL parameters to prevent re-processing on refresh
+      window.history.replaceState({}, document.title, window.location.pathname);
+    };
+
     return {
+      checkVNPayStatus, // Add to returned object
+      checkMomoStatus,  // Add to returned object
       handleCustomerProvinceChange,
       handleCustomerDistrictChange,
       selectDiscount,
