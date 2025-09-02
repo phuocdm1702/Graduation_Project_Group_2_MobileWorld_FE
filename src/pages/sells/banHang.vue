@@ -634,29 +634,47 @@
                 " @change="updateShippingFee" />
               </div>
               <div v-if="isHomeDelivery" class="mt-2">
-                <label class="form-label fw-medium text-dark mb-2" style="font-size: 0.95rem">
-                  Phí vận chuyển <span class="text-danger">*</span>
-                </label>
-                <div class="input-group">
-                  <span class="input-group-text bg-light border-end-0">
-                    <i class="bi bi-truck text-teal"></i>
-                  </span>
-                  <input v-model.number="shippingFee" type="number" class="form-control search-input border-start-0"
-                    placeholder="Tự động từ GHN" disabled style="
-                    border-radius: 0 0.5rem 0.5rem 0;
-                    transition: all 0.3s ease;
-                  " />
-                  <button class="btn btn-outline-teal ms-2" @click="updateShippingFee" :disabled="shippingLoading">
-                    <i class="bi bi-calculator" v-if="!shippingLoading"></i>
-                    <span v-if="shippingLoading" class="spinner-border spinner-border-sm" role="status"
-                      aria-hidden="true"></span>
-                  </button>
-                </div>
-                <p v-if="shippingError" class="text-danger mt-1">{{ shippingError }}</p>
-                <p v-if="GHNOrderCode" class="text-success mt-1">
-                  Đơn GHN đã tạo: {{ GHNOrderCode }}
-                </p>
-              </div>
+  <label class="form-label fw-medium text-dark mb-2" style="font-size: 0.95rem">
+    Phí vận chuyển <span class="text-danger">*</span>
+  </label>
+  <div class="input-group">
+    <span class="input-group-text bg-light border-end-0">
+      <i class="bi bi-truck text-teal"></i>
+    </span>
+
+    <!-- Hiển thị phí ship dạng VNĐ -->
+    <input
+      :value="formatPrice(shippingFee)"
+      type="text"
+      class="form-control search-input border-start-0"
+      placeholder="Tự động từ GHN"
+      disabled
+      style="
+        border-radius: 0 0.5rem 0.5rem 0;
+        transition: all 0.3s ease;
+      "
+    />
+
+    <button
+      class="btn btn-outline-teal ms-2"
+      @click="updateShippingFee"
+      :disabled="shippingLoading"
+    >
+      <i class="bi bi-calculator" v-if="!shippingLoading"></i>
+      <span
+        v-if="shippingLoading"
+        class="spinner-border spinner-border-sm"
+        role="status"
+        aria-hidden="true"
+      ></span>
+    </button>
+  </div>
+  <p v-if="shippingError" class="text-danger mt-1">{{ shippingError }}</p>
+  <p v-if="GHNOrderCode" class="text-success mt-1">
+    Đơn GHN đã tạo: {{ GHNOrderCode }}
+  </p>
+</div>
+
                     </div>
                   </div>
                 </div>
@@ -1700,6 +1718,12 @@ export default defineComponent({
     });
   },
 });
+
+const formatPrice = (value) => {
+  if (!value) return "0 VNĐ";
+  return new Intl.NumberFormat("vi-VN").format(value) + " VNĐ";
+};
+
 </script>
 
 <style scoped>

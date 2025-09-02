@@ -34,6 +34,7 @@
     "jsqr": "^1.4.0",
     "jszip": "^3.10.1",
     "lodash": "^4.17.21",
+    "moment-timezone": "^0.6.0",
     "pinia": "^3.0.2",
     "pinia-plugin-persistedstate": "^4.4.1",
     "qrcode": "^1.5.4",

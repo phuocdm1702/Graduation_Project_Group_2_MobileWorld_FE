@@ -3,6 +3,7 @@ import axios from 'axios';
 import Chart from 'chart.js/auto';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
 import '@fortawesome/fontawesome-free/css/all.min.css';
+import moment from 'moment-timezone'; // Thêm moment-timezone vào dự án nếu chưa có
 
 Chart.register(ChartDataLabels);
 
@@ -220,21 +221,25 @@ const fetchRevenueChartData = async () => {
     }
 };
 
+
 const fetchOrderStatusStats = async () => {
-    try {
-        const params = {
-            filterType: chartFilterType.value,
-            date: new Date().toISOString().split('T')[0]
-        };
-        const response = await axios.get('http://localhost:8080/api/thongKe/order-status-stats', { params });
-        console.log('Order status stats response:', response.data);
-        orderStatusStats.value = response.data;
-        error.value = null;
-        updateOrderStatusChart();
-    } catch (err) {
-        error.value = 'Lỗi khi tải dữ liệu trạng thái đơn hàng. Vui lòng thử lại sau.';
-        console.error('Error fetching order status stats:', err);
-    }
+  try {
+    // Chuẩn hóa ngày theo múi giờ Asia/Ho_Chi_Minh
+    const currentDate = moment().tz('Asia/Ho_Chi_Minh').format('YYYY-MM-DD');
+    const params = {
+      filterType: chartFilterType.value,
+      date: currentDate,
+      ...(chartFilterType.value === 'custom' && { startDate: startDate.value, endDate: endDate.value })
+    };
+    const response = await axios.get('http://localhost:8080/api/thongKe/order-status-stats', { params });
+    console.log('Order status stats response:', response.data);
+    orderStatusStats.value = response.data;
+    error.value = null;
+    updateOrderStatusChart();
+  } catch (err) {
+    error.value = 'Lỗi khi tải dữ liệu trạng thái đơn hàng. Vui lòng thử lại sau.';
+    console.error('Error fetching order status stats:', err);
+  }
 };
 
 const exportExcel = async () => {
