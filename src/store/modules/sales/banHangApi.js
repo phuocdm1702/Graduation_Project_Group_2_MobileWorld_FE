@@ -110,6 +110,38 @@ export const removeItemApi = async (invoiceId, productId) => {
   }
 };
 
+export const removeIMEIApi = async (invoiceId, imei, productId = null) => {
+  try {
+    console.log('Calling removeIMEIApi with:', { invoiceId, imei, productId });
+    
+    if (!invoiceId || !imei) {
+      throw new Error('Thiếu thông tin cần thiết: invoiceId hoặc IMEI');
+    }
+    
+    // Đảm bảo luôn có productId khi xóa IMEI
+    if (!productId) {
+      throw new Error('Thiếu productId (spId) để xóa IMEI');
+    }
+    
+    // Build URL with both maImel and spId parameters
+    const url = `/api/gio-hang/xoa?hdId=${invoiceId}&maImel=${encodeURIComponent(imei.trim())}&spId=${productId}`;
+    
+    console.log('API URL:', url);
+    console.log('Parameters sent:', {
+      hdId: invoiceId,
+      maImel: imei.trim(),
+      spId: productId
+    });
+    
+    const response = await apiService.delete(url);
+    return response.data;
+  } catch (error) {
+    console.error('removeIMEIApi error:', error.response?.data || error.message);
+    const errorMessage = error.response?.data?.message || error.response?.data || "Lỗi khi xóa IMEI khỏi giỏ hàng";
+    throw new Error(errorMessage);
+  }
+};
+
 // IMEI-Related APIs
 export const fetchIMEIsApi = async (sanPhamId, mauSac, dungLuongRam, dungLuongBoNhoTrong) => {
   try {
