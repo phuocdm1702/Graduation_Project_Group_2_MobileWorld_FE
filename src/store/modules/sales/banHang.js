@@ -22,17 +22,18 @@ import {
   isValidDiscount,
 } from "./banHangUtils";
 import {
-  fetchPendingInvoicesApi,
+   fetchPendingInvoicesApi,
+  createNewPendingInvoiceApi,
   loadPendingInvoiceApi,
   cancelInvoiceApi,
   fetchProductsApi,
   getAllAddressesByKhachHangIdApi,
   removeItemApi,
-  removeIMEIApi,
   fetchIMEIsApi,
   getProductDetailsByIdApi,
   addProductToCartApi,
   updateIMEIStatusApi,
+  deleteIMEIFromCartApi,
   searchCustomersApi,
   updatePhieuGiamGiaApi,
   addCustomerApi,
@@ -42,10 +43,10 @@ import {
   fetchWardsApi,
   fetchPGGApi,
   validateDiscountApi,
-  createPaymentApi,
+  createPaymentApi, // This is now for VNPay
+  createMomoPaymentApi, // New import for MoMo
   completeOrderApi,
   checkVNPayPaymentStatusApi,
-  createMomoPaymentApi,
   addProductByBarcodeOrImeiApi,
   calculateGHNShippingFeeApi,
   getGHNAvailableServicesApi
