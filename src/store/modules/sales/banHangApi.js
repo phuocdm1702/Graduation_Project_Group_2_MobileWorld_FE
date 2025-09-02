@@ -563,3 +563,15 @@ export const addProductByBarcodeOrImeiApi = async (idHD, code) => {
     );
   }
 };
+
+// Get all cart item counts for pending invoices
+export const getAllCartItemCountsApi = async () => {
+  try {
+    const response = await apiService.get("/api/gio-hang/counts/all");
+    return response.data;
+  } catch (error) {
+    throw new Error(
+      error.response?.data?.message || "Lỗi khi lấy số lượng sản phẩm trong giỏ hàng"
+    );
+  }
+};

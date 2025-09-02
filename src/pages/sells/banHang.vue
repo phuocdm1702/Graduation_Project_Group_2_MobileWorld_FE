@@ -100,7 +100,7 @@
                     @input="debouncedCustomerSearch($event.target.value)" style="
                       border-radius: 0 0.5rem 0.5rem 0;
                       transition: all 0.3s ease;
-                    " @focus="this.classList.add('border-teal')" @blur="this.classList.remove('border-teal')" />
+                    " @focus="(e) => e.target.classList.add('border-teal')" @blur="(e) => e.target.classList.remove('border-teal')" />
                 </div>
               </div>
               <div class="row flex-grow-1">
@@ -140,7 +140,7 @@
                   border-radius: 0.5rem;
                   transition: all 0.3s ease;
                   font-size: 1rem;
-                " @mouseover="this.style.transform = 'scale(1.02)'" @mouseout="this.style.transform = 'scale(1)'">
+                " @mouseover="(e) => e.target.style.transform = 'scale(1.02)'" @mouseout="(e) => e.target.style.transform = 'scale(1)'">
                 Thêm khách hàng
               </button>
             </div>
