@@ -23,12 +23,12 @@ import {
 } from "./banHangUtils";
 import {
   fetchPendingInvoicesApi,
-  createNewPendingInvoiceApi,
   loadPendingInvoiceApi,
   cancelInvoiceApi,
   fetchProductsApi,
   getAllAddressesByKhachHangIdApi,
   removeItemApi,
+  removeIMEIApi,
   fetchIMEIsApi,
   getProductDetailsByIdApi,
   addProductToCartApi,
@@ -37,6 +37,7 @@ import {
   searchCustomersApi,
   updatePhieuGiamGiaApi,
   addCustomerApi,
+  getKhachHangByIdApi,
   getPhieuGiamGiaByKhachHangApi,
   fetchProvincesApi,
   fetchDistrictsApi,
@@ -47,9 +48,11 @@ import {
   createMomoPaymentApi, // New import for MoMo
   completeOrderApi,
   checkVNPayPaymentStatusApi,
+  createMomoPaymentApi,
+  checkMomoPaymentStatusApi,
   addProductByBarcodeOrImeiApi,
   calculateGHNShippingFeeApi,
-  getGHNAvailableServicesApi,
+  getGHNAvailableServicesApi
 } from "./banHangApi";
 
 export default {
@@ -170,14 +173,57 @@ export default {
       ...new Set(cartItems.value.map((item) => item.storage)),
     ]);
 
+    // Grouped cart items - combine similar products
+    const groupedCartItems = computed(() => {
+      const groups = new Map();
+      
+      cartItems.value.forEach(item => {
+        // Create a unique key for grouping based on product attributes
+        const groupKey = `${item.name}-${item.color}-${item.ram}-${item.storage}-${item.currentPrice}`;
+        
+        if (groups.has(groupKey)) {
+          const existingGroup = groups.get(groupKey);
+          existingGroup.quantity += item.quantity;
+          existingGroup.imeis.push(item.imei);
+          existingGroup.totalPrice = existingGroup.currentPrice * existingGroup.quantity;
+        } else {
+          groups.set(groupKey, {
+            id: item.id, // Use first item's ID as group ID
+            name: item.name,
+            color: item.color,
+            ram: item.ram,
+            storage: item.storage,
+            imeis: [item.imei], // Array of all IMEIs for this product group
+            originalPrice: item.originalPrice,
+            currentPrice: item.currentPrice,
+            quantity: item.quantity,
+            totalPrice: item.currentPrice * item.quantity,
+            ghiChuGia: item.ghiChuGia,
+            imageUrl: item.imageUrl,
+            // Add properties to identify if this is a grouped item
+            isGrouped: false, // Will be set to true if quantity > 1
+            originalItems: [item] // Keep reference to original items
+          });
+        }
+      });
+      
+      // Mark groups with multiple items as grouped
+      const result = Array.from(groups.values()).map(group => {
+        group.isGrouped = group.quantity > 1;
+        return group;
+      });
+      
+      return result;
+    });
+
     const filteredCartItems = computed(() => {
-      let filtered = cartItems.value;
+      let filtered = groupedCartItems.value;
       if (cartSearchQuery.value) {
         const query = cartSearchQuery.value.toLowerCase();
         filtered = filtered.filter(
           (item) =>
             item.name.toLowerCase().includes(query) ||
-            item.imei.toLowerCase().includes(query) ||
+            item.imeis.some(imei => imei.toLowerCase().includes(query)) ||
             item.color.toLowerCase().includes(query)
         );
       }
@@ -966,11 +1012,35 @@ export default {
 
     const removeItem = async (item) => {
       try {
-        const responseData = await removeItemApi(
-          activeInvoiceId.value,
-          item.id
-        );
-        // Cập nhật cartItems
+        // Nếu item có nhiều IMEI (grouped item), xóa tất cả IMEI của sản phẩm
+        let allIMEIs = [];
+        
+        if (item.imeis && Array.isArray(item.imeis)) {
+          // Grouped item với mảng IMEIs
+          allIMEIs = item.imeis.filter(imei => imei && imei.trim());
+        } else if (item.imei) {
+          // Single item với chuỗi IMEI
+          allIMEIs = item.imei.split(',').map(i => i.trim()).filter(i => i);
+        }
+        
+        // Nếu có IMEI, xóa tất cả IMEI của sản phẩm này
+        if (allIMEIs.length > 0) {
+          // Xóa tất cả IMEI của sản phẩm này
+          for (const imei of allIMEIs) {
+            try {
+              // Pass the product ID (item.id) as the third parameter
+              await removeIMEIApi(activeInvoiceId.value, imei, item.id);
+            } catch (error) {
+              console.error(`Error removing IMEI ${imei}:`, error);
+            }
+          }
+        } else {
+          // Nếu không có IMEI, xóa theo id sản phẩm
+          await removeItemApi(activeInvoiceId.value, item.id);
+        }
+        
+        // Reload giỏ hàng sau khi xóa
+        const responseData = await loadPendingInvoiceApi(activeInvoiceId.value);
         cartItems.value = responseData.chiTietGioHangDTOS.map((item) => ({
           id: item.chiTietSanPhamId,
           name: item.tenSanPham,
@@ -984,7 +1054,7 @@ export default {
           ghiChuGia: item.ghiChuGia || "",
           imageUrl: item.image || "/assets/images/placeholder.jpg",
         }));
-
+    
         // Cập nhật trong pendingInvoices
         const invoice = pendingInvoices.value.find(
           (inv) => inv.id === activeInvoiceId.value
@@ -997,17 +1067,19 @@ export default {
             0
           );
         }
-
+    
         // Hiển thị thông báo giá nếu có
         cartItems.value.forEach((item) => {
           if (item.ghiChuGia) {
             showToast("warning", item.ghiChuGia);
           }
         });
-
+    
         await fetchProducts(); // Cập nhật lại danh sách sản phẩm
         await applyBestDiscount(); // Cập nhật lại mã giảm giá
-        showToast("success", `Đã xóa sản phẩm ${item.name} khỏi giỏ hàng`);
+        
+        const deletedCount = allIMEIs.length || 1;
+        showToast("success", `Đã xóa ${item.name} (${deletedCount} IMEI) khỏi giỏ hàng`);
       } catch (error) {
         showToast("error", "Lỗi khi xóa sản phẩm khỏi giỏ hàng");
       }
@@ -1045,6 +1117,12 @@ export default {
     const closeCartIMEIModal = () => {
       showCartIMEIModal.value = false;
       selectedCartItem.value = null;
+    };
+
+    const showGroupedIMEIModal = (item) => {
+      selectedCartItem.value = item;
+      showCartIMEIModal.value = true;
+      console.log("Hiển thị IMEI modal cho sản phẩm nhóm:", item);
     };
 
     const handleIMEISelection = () => {
@@ -1208,52 +1286,133 @@ export default {
       }
     };
 
-    const deleteIMEI = async (imei) => {
-      if (!selectedCartItem.value) return;
+        const deleteIMEI = async (imei) => {
+      if (!activeInvoiceId.value || !imei) {
+        showToast("error", "Không thể xóa IMEI: Thiếu thông tin cần thiết");
+        return;
+      }
+      
       try {
-        const imeiArray = selectedCartItem.value.imei
-          .split(", ")
-          .filter((i) => i !== imei);
-        const chiTietGioHangDTO = {
-          chiTietSanPhamId: selectedCartItem.value.id,
-          soLuong: imeiArray.length,
-          maImel: imeiArray.join(", "),
-        };
-        const responseData = await deleteIMEIFromCartApi(
-          activeInvoiceId.value,
-          chiTietGioHangDTO
-        );
-        cartItems.value = responseData.chiTietGioHangDTOS.map((item) => ({
-          id: item.chiTietSanPhamId,
-          name: item.tenSanPham,
-          color: item.mauSac,
-          ram: item.ram,
-          storage: item.boNhoTrong,
-          imei: item.maImel,
-          originalPrice: Number(item.giaBanGoc) || Number(item.giaBan) || 0,
-          currentPrice: Number(item.giaBan) || 0,
-          quantity: item.soLuong,
-          ghiChuGia: item.ghiChuGia || "",
-          imageUrl: item.image || "/assets/images/placeholder.jpg",
-        }));
-        const invoiceIndex = pendingInvoices.value.findIndex(
+        console.log('Deleting IMEI:', imei, 'from invoice:', activeInvoiceId.value);
+        console.log('Selected cart item:', selectedCartItem.value);
+        
+        // Đảm bảo có product ID từ selectedCartItem
+        if (!selectedCartItem.value || !selectedCartItem.value.id) {
+          showToast("error", "Không tìm thấy thông tin sản phẩm để xóa IMEI");
+          return;
+        }
+        
+        const productId = selectedCartItem.value.id;
+        console.log('Using productId:', productId, 'for IMEI:', imei);
+        
+        // Use the proper removeIMEIApi to delete specific IMEI
+        const responseData = await removeIMEIApi(activeInvoiceId.value, imei, productId);
+        
+        // Update cart data directly from API response instead of reloading
+        if (responseData && responseData.chiTietGioHangDTOS) {
+          cartItems.value = responseData.chiTietGioHangDTOS.map((item) => ({
+            id: item.chiTietSanPhamId,
+            name: item.tenSanPham,
+            color: item.mauSac,
+            ram: item.ram,
+            storage: item.boNhoTrong,
+            imei: item.maImel,
+            originalPrice: Number(item.giaBanGoc) || Number(item.giaBan) || 0,
+            currentPrice: Number(item.giaBan) || 0,
+            quantity: item.soLuong,
+            ghiChuGia: item.ghiChuGia || "",
+            imageUrl: item.image || '/assets/images/placeholder.jpg',
+          }));
+        } else {
+          // Fallback: reload if no response data
+          console.log('No response data, reloading cart...');
+          await loadPendingInvoice(activeInvoiceId.value);
+        }
+        
+        // Update pending invoices item count
+        const invoice = pendingInvoices.value.find(
           (inv) => inv.id === activeInvoiceId.value
         );
-        if (invoiceIndex !== -1) {
-          pendingInvoices.value[invoiceIndex].items = cartItems.value;
+        if (invoice) {
+          invoice.items = [...cartItems.value];
+          invoice.itemCount = cartItems.value.reduce(
+            (sum, item) => sum + item.quantity, 0
+          );
         }
-        if (imeiArray.length === 0) {
-          closeCartIMEIModal();
-        }
-        cartItems.value.forEach((item) => {
-          if (item.ghiChuGia) {
-            showToast("warning", item.ghiChuGia);
+        
+        // Check if selected cart item still has IMEIs, if not close modal
+        if (selectedCartItem.value) {
+          // Xử lý cục bộ: loại bỏ IMEI đã xóa khỏi danh sách hiện tại
+          if (selectedCartItem.value.imeis && Array.isArray(selectedCartItem.value.imeis)) {
+            // Lọc bỏ IMEI đã xóa khỏi danh sách hiện tại
+            const updatedImeiList = selectedCartItem.value.imeis.filter(existingImei => existingImei !== imei);
+            
+            if (updatedImeiList.length === 0) {
+              console.log('No more IMEIs for this item, closing modal');
+              closeCartIMEIModal();
+            } else {
+              // Cập nhật selectedCartItem với danh sách IMEI mới
+              selectedCartItem.value = {
+                ...selectedCartItem.value,
+                imeis: updatedImeiList,
+                quantity: updatedImeiList.length
+              };
+              console.log('Updated selected cart item after deleting IMEI:', selectedCartItem.value);
+            }
+          } else {
+            // Fallback: nếu chưa có mảng imeis, tìm trong cartItems
+            const updatedItem = cartItems.value.find(item => item.id === selectedCartItem.value.id);
+            if (!updatedItem || !updatedItem.imei || updatedItem.quantity === 0) {
+              console.log('No more IMEIs for this item, closing modal');
+              closeCartIMEIModal();
+            } else {
+              // Parse chuỗi IMEI từ updatedItem
+              let imeiArray = [];
+              if (updatedItem.imei) {
+                // Thử nhiều cách split khác nhau
+                if (updatedItem.imei.includes(', ')) {
+                  imeiArray = updatedItem.imei.split(', ');
+                } else if (updatedItem.imei.includes(',')) {
+                  imeiArray = updatedItem.imei.split(',');
+                } else if (updatedItem.imei.includes(';')) {
+                  imeiArray = updatedItem.imei.split(';');
+                } else {
+                  imeiArray = [updatedItem.imei];
+                }
+                
+                // Loại bỏ khoảng trắng và IMEI rỗng
+                imeiArray = imeiArray
+                  .map(imei => imei.trim())
+                  .filter(imei => imei && imei.length > 0);
+              }
+              
+              const updatedSelectedItem = {
+                ...updatedItem,
+                imeis: imeiArray
+              };
+              selectedCartItem.value = updatedSelectedItem;
+              console.log('Updated selected cart item from cartItems:', updatedSelectedItem);
+            }
           }
-        });
+        }
+        
         showToast("success", `Đã xóa IMEI ${imei}`);
-        await applyBestDiscount();
-        await fetchProducts();
+        
+        // Apply discount and fetch products with error handling
+        try {
+          await applyBestDiscount();
+        } catch (discountError) {
+          console.warn('Error applying discount after IMEI deletion:', discountError);
+        }
+        
+        try {
+          await fetchProducts();
+        } catch (fetchError) {
+          console.warn('Error fetching products after IMEI deletion:', fetchError);
+        }
+        
       } catch (error) {
+        console.error('Error in deleteIMEI:', error);
         showToast("error", error.message || "Lỗi khi xóa IMEI");
       }
     };
@@ -2160,9 +2319,9 @@ export default {
                 code: item.ma || "Unknown",
                 value: item.idPhieuGiamGia?.soTienGiamToiDa || 0,
                 percent: item.idPhieuGiamGia?.phanTramGiamGia || 0,
+                minOrder: item.idPhieuGiamGia?.hoaDonToiThieu || 0,
                 expiry: formatDate(item.idPhieuGiamGia?.ngayKetThuc),
                 rawExpiry: item.idPhieuGiamGia?.ngayKetThuc,
-                minOrder: item.idPhieuGiamGia?.hoaDonToiThieu || 0,
                 type: "private",
                 soLuongDung:
                   Number(
@@ -2900,9 +3059,10 @@ export default {
       cartFilterRam,
       cartFilterStorage,
       uniqueCartColors,
-      uniqueCartRams,
       uniqueCartStorages,
+      groupedCartItems,
       filteredCartItems,
+      showGroupedIMEIModal,
       debouncedCartSearch,
       showProductDetails,
       selectedCartItem,

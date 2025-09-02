@@ -307,8 +307,8 @@
                   Giỏ hàng trống hoặc không tìm thấy sản phẩm
                 </p>
               </div>
-              <div v-else class="cart-items-container" style="
-                  max-height: 500px;
+              <div v-else class="cart-items-container cart-scroll-custom" style="
+                  max-height: 400px;
                   overflow-y: auto;
                   overflow-x: hidden;
                   padding-right: 10px;
@@ -352,14 +352,14 @@
                         </div>
                         <div class="d-flex align-items-center gap-2 mb-2">
                           <span class="text-muted">IMEI:</span>
-                          <button class="btn btn-sm btn-outline-teal" @click="showIMEIModalForItem(item)">
-                            Xem IMEI
+                          <button class="btn btn-sm btn-outline-teal" @click="showGroupedIMEIModal(item)">
+                            Xem IMEI ({{ item.imeis ? item.imeis.length : (item.imei ? item.imei.split(', ').length : 0) }})
                           </button>
                         </div>
                         <div class="d-flex align-items-center gap-2 mb-2">
                           <span class="text-muted">Số lượng:</span>
                           <span class="fw-semibold">{{ item.quantity }}</span>
-                        </div>
+                           </div>
                         <div v-if="item.priceChangeText" class="text-muted small mb-2">
                           {{ item.priceChangeText }}
                         </div>
@@ -485,7 +485,7 @@
               </div>
             </div>
 
-            <div class="card-body p-3 pt-0 d-flex flex-column variant-scroll-container">
+            <div class="card-body p-3 pt-0 d-flex flex-column">
               <!-- Hiển thị placeholder khi giỏ hàng trống -->
               <div v-if="!cartItems || cartItems.length === 0" class="empty-cart-message text-center py-4">
                 <div
@@ -1100,7 +1100,7 @@ discount, index
                     <h4 class="fw-bold text-dark mb-2">
                       {{ selectedCartItem?.name }}
                     </h4>
-                    <div class="d-flex flex-wrap gap-3">
+                    <div class="d-flex flex-wrap gap-3 mb-2">
                       <span class="badge text-white px-3 py-1" style="background-color: #1f3a44">{{
                         selectedCartItem?.color }}</span>
                       <span class="badge text-white px-3 py-1" style="background-color: #1f3a44">{{
@@ -1111,23 +1111,24 @@ discount, index
                         formatPrice(selectedCartItem?.currentPrice)
                       }}</span>
                     </div>
+                    <div class="d-flex align-items-center gap-2">
+                      <span class="text-muted">Số lượng:</span>
+                      <span class="fw-bold text-dark">{{ selectedCartItem?.quantity || 0 }}</span>
+                    </div>
                   </div>
                 </div>
               </div>
               <div class="imei-list-container">
                 <h6 class="fw-semibold text-dark mb-3">
-                  Danh sách IMEI đã chọn
+                  Danh sách IMEI đã chọn ({{ selectedCartItem?.imeis?.length || 0 }})
                 </h6>
-                <div v-if="
-                  !selectedCartItem?.imei ||
-                  selectedCartItem.imei.split(', ').length === 0
-                " class="text-center text-muted py-4 animate__animated animate__fadeIn">
+                <div v-if="!selectedCartItem?.imeis || selectedCartItem.imeis.length === 0" 
+                  class="text-center text-muted py-4 animate__animated animate__fadeIn">
                   <i class="bi bi-info-circle me-2" style="font-size: 1.2rem"></i>
-                  Không có IMEI nào được
-                  chọn.
+                  Không có IMEI nào được chọn.
                 </div>
-                <div v-else class="d-flex flex-column gap-3">
-                  <div v-for="(imei, index) in selectedCartItem.imei.split(', ')" :key="imei"
+                <div v-else class="d-flex flex-column gap-3" style="max-height: 400px;">
+                  <div v-for="(imei, index) in selectedCartItem.imeis" :key="imei"
                     class="imei-card p-3 rounded shadow-sm animate__animated animate__fadeInUp" style="
                       background: #fff;
                       border: 1px solid rgba(52, 211, 153, 0.1);
@@ -1139,7 +1140,7 @@ discount, index
                         <span class="text-dark fw-medium">{{ imei }}</span>
                       </div>
                       <button class="btn btn-danger btn-sm delete-imei-btn animate__animated animate__bounceIn"
-                        @click="deleteIMEI(imei)">
+                        @click="handleDeleteIMEI(imei)">
                         <i class="bi bi-x-lg"></i>
                       </button>
                     </div>
@@ -1416,6 +1417,8 @@ export default defineComponent({
       selectedIMEIs: [],
       selectedDiscount: null,
       imeiSearchQuery: "", // Từ khóa tìm kiếm IMEI
+      showCartIMEIModal: false, // Control cart IMEI modal visibility
+      selectedCartItem: null, // Selected cart item for IMEI modal
       customer: {
         id: null,
         name: "",
@@ -1583,6 +1586,60 @@ export default defineComponent({
         type: "info",
         duration: 3000,
       });
+    },
+
+    // Show IMEI modal for grouped product
+    showGroupedIMEIModal(item) {
+      // Convert comma-separated IMEI string to array if needed
+      const processedItem = {
+        ...item,
+        imeis: item.imei ? item.imei.split(', ').filter(imei => imei.trim()) : []
+      };
+      
+      this.selectedCartItem = processedItem;
+      this.showCartIMEIModal = true;
+      console.log("Hiển thị IMEI modal cho sản phẩm:", processedItem);
+    },
+
+    // Close cart IMEI modal
+    closeCartIMEIModal() {
+      this.showCartIMEIModal = false;
+      this.selectedCartItem = null;
+    },
+
+    // Delete IMEI from cart item
+    async handleDeleteIMEI(imeiToDelete) {
+      try {
+        console.log("DELETE IMEI METHOD CALLED:", imeiToDelete);
+        console.log("Selected cart item:", this.selectedCartItem);
+        
+        if (!imeiToDelete) {
+          console.log("No IMEI provided for deletion");
+          return;
+        }
+
+        if (!this.selectedCartItem || !this.selectedCartItem.id) {
+          console.error("Không tìm thấy thông tin sản phẩm để xóa IMEI");
+          this.$refs.toastNotification.showToast({
+            message: "Không tìm thấy thông tin sản phẩm để xóa IMEI",
+            type: "error",
+            duration: 3000,
+          });
+          return;
+        }
+
+        // Call the store method to delete IMEI via API with product ID
+        console.log("Calling deleteIMEI with productId:", this.selectedCartItem.id);
+        await this.deleteIMEI(imeiToDelete);
+        
+      } catch (error) {
+        console.error("Error in deleteIMEI:", error);
+        this.$refs.toastNotification.showToast({
+          message: `Lỗi khi xóa IMEI: ${error.message}`,
+          type: "error",
+          duration: 3000,
+        });
+      }
     },
     totalQuantity(items) {
       return items.reduce((sum, item) => sum + item.quantity, 0);
@@ -2202,6 +2259,45 @@ const formatPrice = (value) => {
   100% {
     box-shadow: 0 0 0 100vmax rgba(0, 0, 0, 0.5);
   }
+}
+
+/* Custom cart scroll styling */
+.cart-scroll-custom {
+  max-height: 400px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 10px;
+}
+
+.cart-scroll-custom::-webkit-scrollbar {
+  width: 12px;
+}
+
+.cart-scroll-custom::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+.cart-scroll-custom::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #34d399 0%, #10b981 100%) !important;
+  border-radius: 8px;
+  border: 2px solid #f1f5f9;
+  min-height: 30px;
+}
+
+.cart-scroll-custom::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #10b981 0%, #059669 100%) !important;
+}
+
+.cart-scroll-custom::-webkit-scrollbar-thumb:active {
+  background: linear-gradient(180deg, #059669 0%, #047857 100%) !important;
+}
+
+/* Firefox support */
+.cart-scroll-custom {
+  scrollbar-width: thin;
+  scrollbar-color: #34d399 #ffffff;
 }
 
 @media (max-width: 768px) {
