@@ -637,9 +637,9 @@ export default {
           ma: newInvoiceData.ma,
           status: "Chờ xử lý",
           items: [],
-          customer: null, // Khởi tạo customer là null
+          customer: null, 
           isLoaded: false,
-          itemCount: 0, // Khởi tạo với 0 sản phẩm
+          itemCount: 0,
         };
         pendingInvoices.value.push(newInvoice);
         activeInvoiceId.value = newInvoice.id;
@@ -654,7 +654,7 @@ export default {
           ward: "",
           address: "",
         };
-        searchCustomer.value = ""; // Reset ô tìm kiếm khách hàng
+        searchCustomer.value = "";
         privateDiscountCodes.value = [];
         selectedDiscount.value = null;
         showToast("success", `Tạo hóa đơn mới thành công: ${newInvoice.ma}`);
@@ -2150,7 +2150,7 @@ export default {
         if (selectedPaymentProvider.value === "vnpay") {
           try {
             isCreatingOrder.value = true;
-            const orderInfo = `Thanh toan don hang ${activeInvoiceId.value}`;
+            const orderInfo = `Thanh toan hoa don ${activeInvoiceId.value}`;
             const returnUrl = `http://localhost:5173/vnpay-return`; // Frontend return URL
             const paymentUrl = await createPaymentApi(totalPaymentValue, orderInfo, returnUrl);
             window.location.href = paymentUrl; // Redirect to VNPAY
@@ -2163,7 +2163,7 @@ export default {
         } else if (selectedPaymentProvider.value === "momo") { // Added Momo logic
           try {
             isCreatingOrder.value = true;
-            const orderInfo = `Thanh toan don hang ${activeInvoiceId.value}`;
+            const orderInfo = `Thanh toan hoa don ${activeInvoiceId.value}`;
             const returnUrl = `http://localhost:5173/momo-return`; // Frontend return URL for Momo
             const notifyUrl = `http://localhost:8080/api/payment/momo/return`; // Backend notify URL for Momo
             const response = await createMomoPaymentApi(totalPaymentValue, orderInfo, returnUrl, notifyUrl);
