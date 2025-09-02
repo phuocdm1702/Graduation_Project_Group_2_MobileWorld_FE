@@ -45,7 +45,8 @@ import {
   checkVNPayPaymentStatusApi,
   addProductByBarcodeOrImeiApi,
   calculateGHNShippingFeeApi,
-  getGHNAvailableServicesApi
+  getGHNAvailableServicesApi,
+  getAllCartItemCountsApi
 } from "./banHangApi";
 
 export default {
@@ -559,25 +560,39 @@ export default {
       }
     };
 
-    // Hàm mới để load số lượng sản phẩm cho các hóa đơn chờ
+    // Hàm mới để load số lượng sản phẩm cho các hóa đơn chờ từ API
     const loadPendingInvoicesItemCounts = async () => {
       try {
-        const promises = pendingInvoices.value.map(async (invoice) => {
-          try {
-            const responseData = await loadPendingInvoiceApi(invoice.id);
-            const totalQuantity = responseData.chiTietGioHangDTOS.reduce(
-              (sum, item) => sum + item.soLuong, 0
-            );
-            invoice.itemCount = totalQuantity;
-          } catch (error) {
-            // Nếu có lỗi khi load chi tiết hóa đơn, giữ itemCount = 0
-            invoice.itemCount = 0;
-          }
-        });
-        
-        await Promise.all(promises);
+        const response = await getAllCartItemCountsApi();
+        if (response.success && response.cartCounts) {
+          // Cập nhật itemCount cho từng hóa đơn dựa trên dữ liệu từ API
+          pendingInvoices.value.forEach(invoice => {
+            invoice.itemCount = response.cartCounts[invoice.id] || 0;
+          });
+        }
       } catch (error) {
         console.error("Lỗi khi tải số lượng sản phẩm:", error);
+        // Nếu có lỗi, giữ itemCount = 0 cho tất cả hóa đơn
+        pendingInvoices.value.forEach(invoice => {
+          invoice.itemCount = 0;
+        });
+      }
+    };
+
+    // Helper function to update item count for current active invoice
+    const updateActiveInvoiceItemCount = async () => {
+      if (!activeInvoiceId.value) return;
+      
+      try {
+        const response = await getAllCartItemCountsApi();
+        if (response.success && response.cartCounts) {
+          const invoice = pendingInvoices.value.find(inv => inv.id === activeInvoiceId.value);
+          if (invoice) {
+            invoice.itemCount = response.cartCounts[activeInvoiceId.value] || 0;
+          }
+        }
+      } catch (error) {
+        console.error("Lỗi khi cập nhật số lượng sản phẩm:", error);
       }
     };
 
@@ -673,10 +688,8 @@ export default {
         );
         if (index !== -1) {
           pendingInvoices.value[index].items = cartItems.value;
-          // Cập nhật số lượng sản phẩm
-          pendingInvoices.value[index].itemCount = cartItems.value.reduce(
-            (sum, item) => sum + item.quantity, 0
-          );
+          // Cập nhật số lượng sản phẩm từ API
+          await updateActiveInvoiceItemCount();
           // Khôi phục thông tin khách hàng
           if (invoice.customer) {
             selectedCustomer.value = invoice.customer;
@@ -1023,10 +1036,8 @@ export default {
         );
         if (invoice) {
           invoice.items = [...cartItems.value];
-          // Cập nhật số lượng sản phẩm
-          invoice.itemCount = cartItems.value.reduce(
-            (sum, item) => sum + item.quantity, 0
-          );
+          // Cập nhật số lượng sản phẩm từ API
+          await updateActiveInvoiceItemCount();
         }
     
         // Hiển thị thông báo giá nếu có
