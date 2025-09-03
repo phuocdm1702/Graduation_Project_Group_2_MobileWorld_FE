@@ -178,11 +178,11 @@ export const useHoaDonStore = defineStore('hoaDon', {
                 if (!idSanPham || !chiTietSanPhamId) {
                     throw new Error('idSanPham and chiTietSanPhamId are required');
                 }
-                
+
                 // Always clear previous data first
                 this.imelList = [];
                 console.log('Cleared store imelList for new product');
-                
+
                 const params = { page, size, idSanPham, chiTietSanPhamId };
                 console.log('Fetching IMEI list with params:', params);
                 const response = await apiService.get('/api/hoa-don/hoa-don-chi-tiet/imel', { params });
@@ -730,13 +730,13 @@ export const useHoaDonStore = defineStore('hoaDon', {
                 color: p.color,
                 imei: p.imei
             })));
-            
+
             console.log('Full products data:', allProducts);
 
             // Với mỗi chiTietSanPhamId đã có IMEI, chỉ tìm products cùng thuộc tính để auto-assign
             for (const [providedId, providedImei] of Object.entries(originalImelMap)) {
                 const providedProduct = allProducts.find(p => p.chiTietSanPhamId === parseInt(providedId));
-                
+
                 if (!providedProduct) {
                     console.warn(`Product with chiTietSanPhamId ${providedId} not found in invoice`);
                     continue;
@@ -750,7 +750,7 @@ export const useHoaDonStore = defineStore('hoaDon', {
                 });
 
                 // CHỈ tìm products có CÙNG thuộc tính (name, ram, capacity, color) để auto-assign
-                const sameAttributeProducts = allProducts.filter(p => 
+                const sameAttributeProducts = allProducts.filter(p =>
                     p.chiTietSanPhamId !== parseInt(providedId) && // Khác chiTietSanPhamId
                     p.name === providedProduct.name && // Cùng tên sản phẩm
                     p.ram === providedProduct.ram && // Cùng RAM
@@ -760,13 +760,13 @@ export const useHoaDonStore = defineStore('hoaDon', {
                     (!p.imei || p.imei === '' || p.imei === null) // Chưa có IMEI trong database
                 );
 
-                console.log(`Found ${sameAttributeProducts.length} products with SAME attributes for auto-assignment:`, 
+                console.log(`Found ${sameAttributeProducts.length} products with SAME attributes for auto-assignment:`,
                     sameAttributeProducts.map(p => p.chiTietSanPhamId));
 
                 // Chỉ auto-assign cho products có CÙNG thuộc tính
                 for (const sameProduct of sameAttributeProducts) {
                     const availableImei = this.findAvailableIMEIForProduct(sameProduct, Object.values(enhancedMap));
-                    
+
                     if (availableImei) {
                         enhancedMap[sameProduct.chiTietSanPhamId] = availableImei;
                         console.log(`Auto-assigned IMEI ${availableImei} to chiTietSanPhamId ${sameProduct.chiTietSanPhamId} (same attributes)`);
@@ -777,13 +777,13 @@ export const useHoaDonStore = defineStore('hoaDon', {
             }
 
             // Tìm products có thuộc tính KHÁC mà chưa có IMEI - KHÔNG auto-assign, chỉ log để user biết
-            const productsWithDifferentAttributes = allProducts.filter(p => 
+            const productsWithDifferentAttributes = allProducts.filter(p =>
                 !enhancedMap[p.chiTietSanPhamId] && // Chưa có IMEI trong map
                 (!p.imei || p.imei === '' || p.imei === null) // Chưa có IMEI trong database
             );
 
             if (productsWithDifferentAttributes.length > 0) {
-                console.log(`Found ${productsWithDifferentAttributes.length} products with DIFFERENT attributes that need manual IMEI selection:`, 
+                console.log(`Found ${productsWithDifferentAttributes.length} products with DIFFERENT attributes that need manual IMEI selection:`,
                     productsWithDifferentAttributes.map(p => ({
                         chiTietSanPhamId: p.chiTietSanPhamId,
                         name: p.name,
@@ -791,14 +791,14 @@ export const useHoaDonStore = defineStore('hoaDon', {
                         capacity: p.capacity,
                         color: p.color
                     })));
-                
+
                 // Không auto-assign, để user tự chọn IMEI cho products có thuộc tính khác
                 console.log('These products require manual IMEI selection by user.');
-                
+
                 // Return error để ngăn API call khi chưa đủ IMEI
                 this.error = `Cần chọn IMEI cho ${productsWithDifferentAttributes.length} sản phẩm còn lại có thuộc tính khác nhau`;
-                return { 
-                    success: false, 
+                return {
+                    success: false,
                     message: this.error,
                     missingProducts: productsWithDifferentAttributes.map(p => ({
                         chiTietSanPhamId: p.chiTietSanPhamId,
@@ -817,9 +817,9 @@ export const useHoaDonStore = defineStore('hoaDon', {
 
         findAvailableIMEI(idSanPham, usedImeis) {
             // Tìm IMEI khả dụng cho sản phẩm này
-            const availableImeis = this.imelList.filter(imei => 
-                imei.idSanPham === idSanPham && 
-                imei.status === 'Còn hàng' && 
+            const availableImeis = this.imelList.filter(imei =>
+                imei.idSanPham === idSanPham &&
+                imei.status === 'Còn hàng' &&
                 !usedImeis.includes(imei.imei)
             );
 
@@ -845,9 +845,9 @@ export const useHoaDonStore = defineStore('hoaDon', {
 
             // Tìm theo idSanPham trước
             if (product.idSanPham) {
-                const availableImeis = this.imelList.filter(imei => 
-                    imei.idSanPham === product.idSanPham && 
-                    imei.status === 'Còn hàng' && 
+                const availableImeis = this.imelList.filter(imei =>
+                    imei.idSanPham === product.idSanPham &&
+                    imei.status === 'Còn hàng' &&
                     !usedImeis.includes(imei.imei)
                 );
 
@@ -858,8 +858,8 @@ export const useHoaDonStore = defineStore('hoaDon', {
             }
 
             // Fallback: Tìm theo thuộc tính sản phẩm (nếu IMEI có thông tin này)
-            const availableImeis = this.imelList.filter(imei => 
-                imei.status === 'Còn hàng' && 
+            const availableImeis = this.imelList.filter(imei =>
+                imei.status === 'Còn hàng' &&
                 !usedImeis.includes(imei.imei) &&
                 // Có thể match theo các thuộc tính khác nếu có
                 (imei.ram === product.ram || !imei.ram) &&
