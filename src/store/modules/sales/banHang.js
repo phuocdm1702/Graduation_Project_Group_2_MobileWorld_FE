@@ -25,7 +25,7 @@ import {
   getAllAddressesByKhachHangIdApi,
   removeItemApi,
   removeIMEIApi,
-    fetchIMEIsApi,
+  fetchIMEIsApi,
   getProductDetailsByIdApi,
   addProductToCartApi,
   updateIMEIStatusApi,
@@ -46,7 +46,8 @@ import {
   addProductByBarcodeOrImeiApi,
   calculateGHNShippingFeeApi,
   getGHNAvailableServicesApi,
-  getAllCartItemCountsApi
+  getAllCartItemCountsApi,
+  getCustomerByInvoiceIdApi
 } from "./banHangApi";
 
 export default {
@@ -690,41 +691,117 @@ export default {
           pendingInvoices.value[index].items = cartItems.value;
           // Cập nhật số lượng sản phẩm từ API
           await updateActiveInvoiceItemCount();
-          // Khôi phục thông tin khách hàng
-          if (invoice.customer) {
-            selectedCustomer.value = invoice.customer;
-            customer.value = { ...invoice.customer };
-            searchCustomer.value =
-              invoice.customer.name || invoice.customer.phone || "";
-            if (customer.value.city) {
-              await fetchDistricts(customer.value.city);
-              if (customer.value.district) {
-                await fetchWards(customer.value.district);
+          
+          // Lấy thông tin khách hàng từ API riêng
+          try {
+            const customerResult = await getCustomerByInvoiceIdApi(invoice.id);
+            if (customerResult.success && customerResult.data) {
+              const customerData = customerResult.data;
+              
+              // Xử lý thông tin khách hàng từ API response
+              const customerId = customerData.id || null;
+              const customerName = customerData.ten || "";
+              const customerPhone = customerData.idTaiKhoan?.soDienThoai || "";
+              const customerEmail = customerData.idTaiKhoan?.email || "";
+              
+              // Xử lý địa chỉ khách hàng
+              const addressData = customerData.idDiaChiKhachHang;
+              const customerCity = addressData?.thanhPho || "";
+              const customerDistrict = addressData?.quan || "";
+              const customerWard = addressData?.phuong || "";
+              const customerAddress = addressData?.diaChiCuThe || "";
+              
+              // Cập nhật thông tin khách hàng
+              const customerInfo = {
+                id: customerId,
+                name: customerName,
+                phone: customerPhone,
+                email: customerEmail,
+                city: customerCity,
+                district: customerDistrict,
+                ward: customerWard,
+                address: customerAddress
+              };
+              
+              selectedCustomer.value = customerInfo;
+              customer.value = { ...customerInfo };
+              searchCustomer.value = customerName || customerPhone || "";
+              
+              // Cập nhật thông tin khách hàng vào pending invoice
+              pendingInvoices.value[index].customer = customerInfo;
+              
+              // Load địa chỉ nếu có thành phố
+              if (customerCity) {
+                await fetchDistricts(customerCity);
+                if (customerDistrict) {
+                  await fetchWards(customerDistrict);
+                }
               }
-            }
-            // Lấy lại mã giảm giá cá nhân
-            const pggResult = await getPhieuGiamGiaByKhachHangApi(
-              customer.value.id
-            );
-            if (pggResult.success && Array.isArray(pggResult.data)) {
-              privateDiscountCodes.value = pggResult.data
-                .filter(
-                  (item) =>
-                    item.idPhieuGiamGia?.riengTu === true &&
-                    isValidDiscount(item.idPhieuGiamGia?.ngayKetThuc)
-                )
-                .map((item, index) => ({
-                  id: item.id || index + 1,
-                  code: item.ma || "Unknown",
-                  value: item.idPhieuGiamGia?.soTienGiamToiDa || 0,
-                  expiry: formatDate(item.idPhieuGiamGia?.ngayKetThuc),
-                  rawExpiry: item.idPhieuGiamGia?.ngayKetThuc,
-                  type: "private",
-                }));
+              
+              // Lấy danh sách địa chỉ khách hàng nếu có ID
+              if (customerId && customerId > 1) {
+                const addressResult = await getAllAddressesByKhachHangIdApi(customerId);
+                if (addressResult.success && Array.isArray(addressResult.data) && addressResult.data.length > 0) {
+                  customerAddresses.value = addressResult.data.map((addr, index) => ({
+                    id: addr.id || index + 1,
+                    city: addr.thanhPho || "",
+                    district: addr.quan || "",
+                    ward: addr.phuong || "",
+                    address: addr.diaChiCuThe || "",
+                  }));
+                } else {
+                  customerAddresses.value = [];
+                  // Thông báo khách hàng cần cập nhật địa chỉ
+                  if (customerName) {
+                    showToast("info", `Khách hàng ${customerName} cần cập nhật địa chỉ`);
+                  }
+                }
+                  
+                // Lấy lại mã giảm giá cá nhân
+                const pggResult = await getPhieuGiamGiaByKhachHangApi(customerId);
+                if (pggResult.success && Array.isArray(pggResult.data)) {
+                  privateDiscountCodes.value = pggResult.data
+                    .filter(
+                      (item) =>
+                        item.idPhieuGiamGia?.riengTu === true &&
+                        isValidDiscount(item.idPhieuGiamGia?.ngayKetThuc)
+                    )
+                    .map((item, index) => ({
+                      id: item.id || index + 1,
+                      code: item.ma || "Unknown",
+                      value: item.idPhieuGiamGia?.soTienGiamToiDa || 0,
+                      expiry: formatDate(item.idPhieuGiamGia?.ngayKetThuc),
+                      rawExpiry: item.idPhieuGiamGia?.ngayKetThuc,
+                      type: "private",
+                    }));
+                } else {
+                  privateDiscountCodes.value = [];
+                }
+              } else {
+                // Khách vãng lai hoặc không có ID
+                customerAddresses.value = [];
+                privateDiscountCodes.value = [];
+              }
             } else {
+              // Không có khách hàng hoặc lỗi API
+              selectedCustomer.value = null;
+              customer.value = {
+                id: null,
+                name: "",
+                phone: "",
+                city: "",
+                district: "",
+                ward: "",
+                address: "",
+              };
+              searchCustomer.value = "";
+              customerAddresses.value = [];
               privateDiscountCodes.value = [];
+              pendingInvoices.value[index].customer = null;
             }
-          } else {
+          } catch (error) {
+            console.error("Lỗi khi lấy thông tin khách hàng:", error);
+            // Fallback về trạng thái không có khách hàng
             selectedCustomer.value = null;
             customer.value = {
               id: null,
@@ -736,7 +813,9 @@ export default {
               address: "",
             };
             searchCustomer.value = "";
+            customerAddresses.value = [];
             privateDiscountCodes.value = [];
+            pendingInvoices.value[index].customer = null;
           }
         }
         cartItems.value.forEach((item) => {

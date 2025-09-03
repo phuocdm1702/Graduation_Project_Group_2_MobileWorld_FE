@@ -575,3 +575,16 @@ export const getAllCartItemCountsApi = async () => {
     );
   }
 };
+
+// Get customer information by invoice ID
+export const getCustomerByInvoiceIdApi = async (invoiceId) => {
+  try {
+    const response = await apiService.get(`/api/hoa-don/${invoiceId}/khach-hang`);
+    return { success: true, data: response.data };
+  } catch (error) {
+    return {
+      success: false,
+      message: error.response?.data?.message || "Lỗi khi lấy thông tin khách hàng từ hóa đơn"
+    };
+  }
+};
