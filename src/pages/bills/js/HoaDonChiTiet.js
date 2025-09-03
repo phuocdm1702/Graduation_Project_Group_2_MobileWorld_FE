@@ -204,7 +204,7 @@ export default {
           grouped[key].idSanPham = product.idSanPham;
         }
 
-        if (product.imei) {
+        if (product.imei && product.imei.trim() !== '') {
           grouped[key].imeis.push(product.imei);
         } else {
           // Nếu chưa có IMEI thì cần xác nhận - mỗi sản phẩm cần 1 IMEI
@@ -1865,6 +1865,10 @@ export default {
       // Reload dữ liệu hóa đơn trước khi kiểm tra IMEI
       if (status === 'Chờ giao hàng') {
         try {
+          // Preserve IMEI selections before reload
+          const preservedIMEIs = new Map(selectedIMEIs.value);
+          console.log('Preserving IMEI selections before reload:', Object.fromEntries(preservedIMEIs));
+          
           await hoaDonStore.fetchInvoiceDetail(invoice.value.id);
           if (hoaDonStore.getInvoiceDetail?.products) {
             products.value = hoaDonStore.getInvoiceDetail.products.map(product => ({
@@ -1890,6 +1894,11 @@ export default {
               imei: product.imei || '',
             }));
           }
+          
+          // Restore IMEI selections after reload
+          selectedIMEIs.value = preservedIMEIs;
+          console.log('Restored IMEI selections after reload:', Object.fromEntries(selectedIMEIs.value));
+          
         } catch (error) {
           console.error('Error reloading invoice data:', error);
           toastNotification.value.addToast({
@@ -1917,12 +1926,14 @@ export default {
         isNotificationLoading.value = true;
         try {
           const trangThaiNumber = hoaDonStore.mapStatusToNumber(status);
-          const result = await hoaDonStore.updateInvoiceStatus(
+          const result = await hoaDonStore.updateHoaDonStatus(
             invoice.value.id,
             trangThaiNumber,
             null
           );
+          
           if (result.success) {
+            // Cập nhật trạng thái local
             invoice.value.trangThai = status;
             updateTimelineStatuses();
             history.value.push({
@@ -1932,37 +1943,28 @@ export default {
               employee: 'Hệ thống'
             });
 
-            // Gửi email thông báo cho khách hàng
-            try {
-              await hoaDonStore.sendStatusUpdateEmail(invoice.value.id, status, invoice.value.khachHang?.email);
+            // Hiển thị thông báo thành công ngay lập tức
+            toastNotification.value.addToast({
+              type: 'success',
+              message: `✅ Đã cập nhật trạng thái thành "${status}" thành công!`,
+              duration: 3000
+            });
 
-              toastNotification.value.addToast({
-                type: 'success',
-                message: `Đã cập nhật trạng thái thành "${status}". Email thông báo đã được gửi tới ${invoice.value.khachHang?.email || 'khách hàng'}.`,
-                duration: 5000
-              });
-            } catch (emailError) {
-              console.error('Lỗi khi gửi email thông báo:', emailError);
-              toastNotification.value.addToast({
-                type: 'warning',
-                message: `Đã cập nhật trạng thái thành "${status}" nhưng không thể gửi email thông báo.`,
-                duration: 5000
-              });
-            }
-
-            await hoaDonStore.fetchInvoiceDetail(invoice.value.id); // Reload lại dữ liệu hóa đơn
+            // Reload dữ liệu hóa đơn để đồng bộ
+            await hoaDonStore.fetchInvoiceDetail(invoice.value.id);
           } else {
             toastNotification.value.addToast({
               type: 'error',
-              message: result.message,
-              duration: 3000,
+              message: `Lỗi cập nhật trạng thái: ${result.message}`,
+              duration: 4000,
             });
           }
         } catch (error) {
+          console.error('Error updating invoice status:', error);
           toastNotification.value.addToast({
             type: 'error',
-            message: 'Lỗi khi cập nhật trạng thái',
-            duration: 3000,
+            message: `Lỗi hệ thống khi cập nhật trạng thái: ${error.message || 'Vui lòng thử lại'}`,
+            duration: 4000,
           });
         } finally {
           isNotificationLoading.value = false;
@@ -2348,12 +2350,15 @@ export default {
       let errorOccurred = false;
 
       try {
-        const productInstancesNeedingIMEI = products.value.filter(p => !p.imei);
+        const productInstancesNeedingIMEI = products.value.filter(p => !p.imei || p.imei.trim() === '');
 
         bulkSelectedIMEIs.value.forEach((selectedImeis, groupKey) => {
           if (errorOccurred) return;
 
-          const instancesInGroup = productInstancesNeedingIMEI.filter(p => p.groupKey === groupKey);
+          const instancesInGroup = productInstancesNeedingIMEI.filter(p => {
+            const productGroupKey = `${p.tenSanPham || p.name}-${p.mauSac || p.color}-${p.dungLuongRam || p.ram}-${p.dungLuongBoNhoTrong || p.capacity}`;
+            return productGroupKey === groupKey;
+          });
 
           if (selectedImeis.length > instancesInGroup.length) {
             console.warn(`Số lượng IMEI đã chọn (${selectedImeis.length}) nhiều hơn số lượng sản phẩm cần IMEI (${instancesInGroup.length}) cho nhóm ${groupKey}. Chỉ lấy đủ số lượng.`);

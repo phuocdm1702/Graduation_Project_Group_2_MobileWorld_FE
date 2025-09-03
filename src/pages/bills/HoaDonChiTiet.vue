@@ -73,10 +73,12 @@
     <FilterTableSection title="Danh Sách Sản Phẩm" icon="bi bi-box-seam">
       <div class="section-body m-3">
         <div class="product-actions mb-3 d-flex justify-content-end gap-2">
-          <button class="btn btn-custom-green" @click="isAddProductModalVisible = true" :disabled="isActionButtonsDisabled">
+          <button class="btn btn-custom-green" @click="isAddProductModalVisible = true"
+            :disabled="isActionButtonsDisabled">
             Thêm Sản Phẩm
           </button>
-          <button class="btn btn-custom-green" @click="showBulkConfirmIMEIModal" :disabled="isActionButtonsDisabled || !hasProductsNeedingIMEI">
+          <button class="btn btn-custom-green" @click="showBulkConfirmIMEIModal"
+            :disabled="isActionButtonsDisabled || !hasProductsNeedingIMEI">
             Xác Nhận IMEI
           </button>
         </div>
@@ -140,19 +142,14 @@
             <div class="search-bar">
               <div class="search-input-group">
                 <i class="bi bi-search search-icon"></i>
-                <input 
-                  type="text" 
-                  class="form-control search-input" 
-                  placeholder="Tìm kiếm sản phẩm theo tên hoặc mã..." 
-                  v-model="productSearchQuery"
-                  @input="debouncedSearchProduct($event.target.value)"
-                />
+                <input type="text" class="form-control search-input" placeholder="Tìm kiếm sản phẩm theo tên hoặc mã..."
+                  v-model="productSearchQuery" @input="debouncedSearchProduct($event.target.value)" />
                 <button v-if="productSearchQuery" class="clear-search" @click="productSearchQuery = ''">
                   <i class="bi bi-x"></i>
                 </button>
               </div>
             </div>
-            
+
             <div class="filter-row">
               <div class="filter-group">
                 <label class="filter-label">Màu sắc</label>
@@ -181,7 +178,7 @@
                 </button>
               </div>
             </div>
-            
+
             <div class="results-info">
               <span class="results-count">
                 <i class="bi bi-grid me-1"></i>
@@ -199,25 +196,18 @@
               <h5>Không tìm thấy sản phẩm</h5>
               <p>Thử thay đổi bộ lọc hoặc từ khóa tìm kiếm</p>
             </div>
-            
+
             <div v-else class="products-grid">
-              <div 
-                v-for="product in paginatedProducts" 
-                :key="product.chiTietSanPhamId"
-                class="product-card-modern"
-                :class="{ 'unavailable': product.trangThai !== 'Còn hàng' }"
-              >
+              <div v-for="product in paginatedProducts" :key="product.chiTietSanPhamId" class="product-card-modern"
+                :class="{ 'unavailable': product.trangThai !== 'Còn hàng' }">
                 <div class="product-image-container">
-                  <img 
-                    :src="product.duongDan || product.anhSanPham || '/assets/placeholder-product.png'" 
-                    :alt="product.tenSanPham"
-                    class="product-image"
-                  />
+                  <img :src="product.duongDan || product.anhSanPham || '/assets/placeholder-product.png'"
+                    :alt="product.tenSanPham" class="product-image" />
                   <div v-if="product.trangThai !== 'Còn hàng'" class="unavailable-overlay">
                     <span>Hết hàng</span>
                   </div>
                 </div>
-                
+
                 <div class="product-info">
                   <h6 class="product-name">{{ product.tenSanPham }}</h6>
                   <div class="product-specs">
@@ -229,39 +219,34 @@
                     <span class="price">{{ formatPrice(product.giaBan) }}</span>
                   </div>
                 </div>
-                
+
                 <div class="product-actions">
-                  <button 
-                    class="btn btn-custom-green"
-                    :disabled="product.trangThai !== 'Còn hàng'"
-                    @click="selectProductForIMEI(product)"
-                  >
+                  <button class="btn btn-custom-green" :disabled="product.trangThai !== 'Còn hàng'"
+                    @click="selectProductForIMEI(product)">
                     <i class="bi bi-plus-lg me-1"></i>
                     Chọn sản phẩm
                   </button>
                 </div>
               </div>
             </div>
-            
+
             <!-- Pagination -->
             <div v-if="totalProductPages > 1" class="pagination-container">
               <nav>
                 <ul class="pagination pagination-modern">
                   <li class="page-item" :class="{ disabled: productCurrentPage === 1 }">
-                    <button class="page-link" @click="updateProductPage(productCurrentPage - 1)" :disabled="productCurrentPage === 1">
+                    <button class="page-link" @click="updateProductPage(productCurrentPage - 1)"
+                      :disabled="productCurrentPage === 1">
                       <i class="bi bi-chevron-left"></i>
                     </button>
                   </li>
-                  <li 
-                    v-for="page in Math.min(5, totalProductPages)" 
-                    :key="page" 
-                    class="page-item" 
-                    :class="{ active: page === productCurrentPage }"
-                  >
+                  <li v-for="page in Math.min(5, totalProductPages)" :key="page" class="page-item"
+                    :class="{ active: page === productCurrentPage }">
                     <button class="page-link" @click="updateProductPage(page)">{{ page }}</button>
                   </li>
                   <li class="page-item" :class="{ disabled: productCurrentPage === totalProductPages }">
-                    <button class="page-link" @click="updateProductPage(productCurrentPage + 1)" :disabled="productCurrentPage === totalProductPages">
+                    <button class="page-link" @click="updateProductPage(productCurrentPage + 1)"
+                      :disabled="productCurrentPage === totalProductPages">
                       <i class="bi bi-chevron-right"></i>
                     </button>
                   </li>
@@ -296,11 +281,9 @@
           <div class="selected-product-info">
             <div class="product-preview">
               <div class="product-image-wrapper">
-                <img 
-                  :src="selectedProductForIMEI?.duongDan || selectedProductForIMEI?.anhSanPham || '/assets/placeholder-product.png'" 
-                  :alt="selectedProductForIMEI?.tenSanPham"
-                  class="product-preview-image"
-                />
+                <img
+                  :src="selectedProductForIMEI?.duongDan || selectedProductForIMEI?.anhSanPham || '/assets/placeholder-product.png'"
+                  :alt="selectedProductForIMEI?.tenSanPham" class="product-preview-image" />
               </div>
               <div class="product-details">
                 <h5 class="product-name">{{ selectedProductForIMEI?.tenSanPham }}</h5>
@@ -321,13 +304,8 @@
           <div class="imei-search-section">
             <div class="search-input-group">
               <i class="bi bi-search search-icon"></i>
-              <input 
-                type="text" 
-                class="form-control search-input" 
-                placeholder="Tìm kiếm IMEI..." 
-                v-model="imeiSearchQuery"
-                @input="debouncedSearchIMEIForProduct($event.target.value)"
-              />
+              <input type="text" class="form-control search-input" placeholder="Tìm kiếm IMEI..."
+                v-model="imeiSearchQuery" @input="debouncedSearchIMEIForProduct($event.target.value)" />
               <button v-if="imeiSearchQuery" class="clear-search" @click="imeiSearchQuery = ''">
                 <i class="bi bi-x"></i>
               </button>
@@ -360,20 +338,17 @@
               <h5>Không có IMEI khả dụng</h5>
               <p>Không tìm thấy IMEI nào cho sản phẩm này</p>
             </div>
-            
+
             <div v-else class="imei-table-wrapper">
               <div class="imei-table-scroll">
                 <table class="table table-hover imei-table">
                   <thead class="table-header">
                     <tr>
                       <th class="select-column">
-                        <input 
-                          type="checkbox" 
-                          class="form-check-input select-all-checkbox"
+                        <input type="checkbox" class="form-check-input select-all-checkbox"
                           :checked="selectedIMEIsForProduct.length === filteredAvailableIMEIs.length && filteredAvailableIMEIs.length > 0"
                           :indeterminate="selectedIMEIsForProduct.length > 0 && selectedIMEIsForProduct.length < filteredAvailableIMEIs.length"
-                          @change="toggleSelectAllIMEIs"
-                        />
+                          @change="toggleSelectAllIMEIs" />
                       </th>
                       <th class="index-column">#</th>
                       <th class="imei-column">Mã IMEI</th>
@@ -382,22 +357,13 @@
                     </tr>
                   </thead>
                   <tbody>
-                    <tr 
-                      v-for="(imei, index) in paginatedAvailableIMEIs" 
-                      :key="imei.id || imei.imei"
-                      class="imei-row"
+                    <tr v-for="(imei, index) in paginatedAvailableIMEIs" :key="imei.id || imei.imei" class="imei-row"
                       :class="{ 'selected-row': selectedIMEIsForProduct.includes(imei.imei) }"
-                      @click="toggleIMEISelection(imei.imei)"
-                    >
+                      @click="toggleIMEISelection(imei.imei)">
                       <td class="select-column">
-                        <input 
-                          type="checkbox" 
-                          :id="'imei-select-' + (imei.id || index)"
+                        <input type="checkbox" :id="'imei-select-' + (imei.id || index)"
                           :checked="selectedIMEIsForProduct.includes(imei.imei)"
-                          @change="toggleIMEISelection(imei.imei)"
-                          @click.stop
-                          class="form-check-input imei-checkbox"
-                        />
+                          @change="toggleIMEISelection(imei.imei)" @click.stop class="form-check-input imei-checkbox" />
                       </td>
                       <td class="index-column">
                         <span class="row-index">{{ (imeiCurrentPage - 1) * 10 + index + 1 }}</span>
@@ -413,12 +379,10 @@
                         </span>
                       </td>
                       <td class="action-column">
-                        <button 
-                          class="btn btn-sm select-btn"
-                          @click.stop="toggleIMEISelection(imei.imei)"
-                          :class="selectedIMEIsForProduct.includes(imei.imei) ? 'btn-custom-green' : 'btn-outline-custom-green'"
-                        >
-                          <i class="bi" :class="selectedIMEIsForProduct.includes(imei.imei) ? 'bi-check-lg' : 'bi-plus-lg'"></i>
+                        <button class="btn btn-sm select-btn" @click.stop="toggleIMEISelection(imei.imei)"
+                          :class="selectedIMEIsForProduct.includes(imei.imei) ? 'btn-custom-green' : 'btn-outline-custom-green'">
+                          <i class="bi"
+                            :class="selectedIMEIsForProduct.includes(imei.imei) ? 'bi-check-lg' : 'bi-plus-lg'"></i>
                           {{ selectedIMEIsForProduct.includes(imei.imei) ? 'Đã chọn' : 'Chọn' }}
                         </button>
                       </td>
@@ -427,26 +391,24 @@
                 </table>
               </div>
             </div>
-            
+
             <!-- IMEI Pagination -->
             <div v-if="totalIMEIPagesForProduct > 1" class="pagination-container">
               <nav>
                 <ul class="pagination pagination-modern pagination-sm">
                   <li class="page-item" :class="{ disabled: imeiCurrentPage === 1 }">
-                    <button class="page-link" @click="updateIMEIPageForProduct(imeiCurrentPage - 1)" :disabled="imeiCurrentPage === 1">
+                    <button class="page-link" @click="updateIMEIPageForProduct(imeiCurrentPage - 1)"
+                      :disabled="imeiCurrentPage === 1">
                       <i class="bi bi-chevron-left"></i>
                     </button>
                   </li>
-                  <li 
-                    v-for="page in Math.min(3, totalIMEIPagesForProduct)" 
-                    :key="page" 
-                    class="page-item" 
-                    :class="{ active: page === imeiCurrentPage }"
-                  >
+                  <li v-for="page in Math.min(3, totalIMEIPagesForProduct)" :key="page" class="page-item"
+                    :class="{ active: page === imeiCurrentPage }">
                     <button class="page-link" @click="updateIMEIPageForProduct(page)">{{ page }}</button>
                   </li>
                   <li class="page-item" :class="{ disabled: imeiCurrentPage === totalIMEIPagesForProduct }">
-                    <button class="page-link" @click="updateIMEIPageForProduct(imeiCurrentPage + 1)" :disabled="imeiCurrentPage === totalIMEIPagesForProduct">
+                    <button class="page-link" @click="updateIMEIPageForProduct(imeiCurrentPage + 1)"
+                      :disabled="imeiCurrentPage === totalIMEIPagesForProduct">
                       <i class="bi bi-chevron-right"></i>
                     </button>
                   </li>
@@ -465,14 +427,10 @@
           </div>
           <div class="footer-actions">
             <button class="btn btn-outline-secondary" @click="closeIMEISelectionModal">
-              <i class="bi bi-x-lg me-1"></i>
               Hủy bỏ
             </button>
-            <button 
-              class="btn btn-custom-green" 
-              @click="confirmAddProductWithIMEI" 
-              :disabled="selectedIMEIsForProduct.length === 0 || isAddingProduct"
-            >
+            <button class="btn btn-custom-green" @click="confirmAddProductWithIMEI"
+              :disabled="selectedIMEIsForProduct.length === 0 || isAddingProduct">
               <i v-if="!isAddingProduct" class="bi bi-plus-lg me-1"></i>
               <i v-else class="bi bi-spinner spinner-border spinner-border-sm me-1"></i>
               {{ isAddingProduct ? 'Đang thêm...' : 'Thêm vào hóa đơn' }}
@@ -530,35 +488,37 @@
 
               <!-- Thông tin tổng kết thanh toán -->
               <div class="payment-summary mt-3 p-3 bg-light rounded">
-                <div class="row text-center">
-                  <div class="col-md-3">
+                <div class="row text-center g-3">
+                  <div class="col-md-4">
                     <div class="summary-item">
-                      <span class="summary-label">Tổng tiền cần thanh toán</span>
-                      <span class="summary-value text-primary">{{ formatPrice(totalPrice - discount) }}</span>
+                      <div class="summary-label">Tổng tiền cần thanh toán</div>
+                      <div class="summary-value text-primary fw-bold">{{ formatPrice(totalPrice - discount) }}
+                      </div>
                     </div>
                   </div>
-                  <div class="col-md-3">
+                  <div class="col-md-4">
                     <div class="summary-item">
-                      <span class="summary-label">Đã thanh toán</span>
-                      <span class="summary-value text-success">{{ formatPrice(totalPaid) }}</span>
+                      <div class="summary-label">Đã thanh toán</div>
+                      <div class="summary-value text-success fw-bold">{{ formatPrice(totalPaid) }}</div>
                     </div>
                   </div>
-                  <div class="col-md-3">
+                  <div class="col-md-4">
                     <div class="summary-item">
-                      <span class="summary-label">Còn lại</span>
-                      <span class="summary-value" :class="remainingAmount > 0 ? 'text-warning' : 'text-success'">
+                      <div class="summary-label">Còn lại</div>
+                      <div class="summary-value fw-bold" :class="remainingAmount > 0 ? 'text-warning' : 'text-success'">
                         {{ formatPrice(remainingAmount) }}
-                      </span>
+                      </div>
                     </div>
-                  </div>
-                  <div class="col-md-3">
-                    <button class="btn btn-success btn-sm" @click="confirmPayment"
-                      :disabled="remainingAmount > 0 || totalPaid === 0">
-                      <i class="bi bi-check-circle me-1"></i>
-                      Xác nhận thanh toán
-                    </button>
                   </div>
                 </div>
+              </div>
+              <!-- Nút xác nhận thanh toán -->
+              <div class="payment-confirm-section mt-3 mb-3 text-end">
+                <button class="btn btn-success" @click="confirmPayment"
+                  :disabled="remainingAmount > 0 || totalPaid === 0">
+                  <i class="bi bi-check-circle me-1"></i>
+                  Xác nhận thanh toán
+                </button>
               </div>
             </div>
           </div>
@@ -790,7 +750,9 @@
             </div>
             <div class="header-text">
               <h4 class="modal-title">Xác Nhận IMEI</h4>
-              <p class="modal-subtitle">{{ selectedProduct?.name }} {{ selectedProduct?.color }} {{ selectedProduct?.ram }} {{ selectedProduct?.capacity }}</p>
+              <p class="modal-subtitle">{{ selectedProduct?.name }} {{ selectedProduct?.color }} {{ selectedProduct?.ram
+              }}
+                {{ selectedProduct?.capacity }}</p>
             </div>
           </div>
           <button class="btn-close-modern" @click="closeConfirmIMEIModal">
@@ -804,19 +766,14 @@
             <div class="search-bar">
               <div class="search-input-group">
                 <i class="bi bi-search search-icon"></i>
-                <input 
-                  type="text" 
-                  class="form-control search-input" 
-                  placeholder="Tìm kiếm IMEI..." 
-                  v-model="searchIMEI"
-                  @input="debouncedSearchIMEI($event.target.value)"
-                />
+                <input type="text" class="form-control search-input" placeholder="Tìm kiếm IMEI..." v-model="searchIMEI"
+                  @input="debouncedSearchIMEI($event.target.value)" />
                 <button v-if="searchIMEI" class="clear-search" @click="searchIMEI = ''">
                   <i class="bi bi-x"></i>
                 </button>
               </div>
             </div>
-            
+
             <div class="filter-actions">
               <button class="btn btn-custom-green btn-sm" @click="scanQRForIMEI">
                 <i class="bi bi-qr-code-scan me-1"></i>
@@ -827,7 +784,7 @@
                 Đặt lại
               </button>
             </div>
-            
+
             <div class="results-info">
               <span class="results-count">
                 <i class="bi bi-grid me-1"></i>
@@ -843,13 +800,10 @@
                 <thead class="table-header">
                   <tr>
                     <th class="select-column">
-                      <input 
-                        type="checkbox" 
-                        class="form-check-input select-all-checkbox"
+                      <input type="checkbox" class="form-check-input select-all-checkbox"
                         :checked="getSelectedIMEICount() === filteredIMEIs.length && filteredIMEIs.length > 0"
                         :indeterminate="getSelectedIMEICount() > 0 && getSelectedIMEICount() < filteredIMEIs.length"
-                        @change="toggleSelectAllConfirmIMEIs"
-                      />
+                        @change="toggleSelectAllConfirmIMEIs" />
                     </th>
                     <th class="index-column">#</th>
                     <th class="imei-column">Mã IMEI</th>
@@ -858,22 +812,12 @@
                   </tr>
                 </thead>
                 <tbody>
-                  <tr 
-                    v-for="(imei, index) in filteredIMEIs" 
-                    :key="imei.id || imei.imei"
-                    class="imei-row"
-                    :class="{ 'selected-row': isIMEISelected(imei.imei) }"
-                    @click="selectIMEI(imei.imei)"
-                  >
+                  <tr v-for="(imei, index) in filteredIMEIs" :key="imei.id || imei.imei" class="imei-row"
+                    :class="{ 'selected-row': isIMEISelected(imei.imei) }" @click="selectIMEI(imei.imei)">
                     <td class="select-column">
-                      <input 
-                        type="checkbox" 
-                        :id="'confirm-imei-select-' + (imei.id || index)"
-                        :checked="isIMEISelected(imei.imei)"
-                        @change="selectIMEI(imei.imei)"
-                        @click.stop
-                        class="form-check-input imei-checkbox"
-                      />
+                      <input type="checkbox" :id="'confirm-imei-select-' + (imei.id || index)"
+                        :checked="isIMEISelected(imei.imei)" @change="selectIMEI(imei.imei)" @click.stop
+                        class="form-check-input imei-checkbox" />
                     </td>
                     <td class="index-column">
                       <span class="row-index">{{ index + 1 }}</span>
@@ -889,12 +833,9 @@
                       </span>
                     </td>
                     <td class="action-column">
-                      <button 
-                        class="btn btn-sm select-btn"
-                        @click.stop="selectIMEI(imei.imei)"
+                      <button class="btn btn-sm select-btn" @click.stop="selectIMEI(imei.imei)"
                         :class="isIMEISelected(imei.imei) ? 'btn-custom-green' : 'btn-outline-custom-green'"
-                        :disabled="item.status !== 'Còn hàng' || isLoadingIMEI"
-                      >
+                        :disabled="item.status !== 'Còn hàng' || isLoadingIMEI">
                         <i class="bi" :class="isIMEISelected(imei.imei) ? 'bi-check-lg' : 'bi-plus-lg'"></i>
                         {{ isIMEISelected(imei.imei) ? 'Đã chọn' : 'Chọn' }}
                       </button>
@@ -944,13 +885,11 @@
         <!-- Progress Indicator -->
         <div class="bulk-progress-container p-3 bg-light">
           <div class="progress-dots d-flex justify-content-center gap-2 mb-2">
-            <div v-for="(product, index) in bulkConfirmProducts" :key="index" 
-                 class="progress-dot" 
-                 :class="{
-                   'completed': index < currentBulkProductIndex,
-                   'current': index === currentBulkProductIndex,
-                   'pending': index > currentBulkProductIndex
-                 }">
+            <div v-for="(product, index) in bulkConfirmProducts" :key="index" class="progress-dot" :class="{
+              'completed': index < currentBulkProductIndex,
+              'current': index === currentBulkProductIndex,
+              'pending': index > currentBulkProductIndex
+            }">
               <i class="bi bi-check" v-if="index < currentBulkProductIndex"></i>
               <span v-else>{{ index + 1 }}</span>
             </div>
@@ -968,10 +907,8 @@
           <div class="bulk-product-info mb-4">
             <div class="d-flex align-items-center gap-3">
               <div class="product-image-small">
-                <img :src="currentBulkProduct.image || '/assets/placeholder-product.png'" 
-                     :alt="currentBulkProduct.name" 
-                     class="img-fluid rounded" 
-                     style="width: 80px; height: 80px; object-fit: cover;" />
+                <img :src="currentBulkProduct.image || '/assets/placeholder-product.png'" :alt="currentBulkProduct.name"
+                  class="img-fluid rounded" style="width: 80px; height: 80px; object-fit: cover;" />
               </div>
               <div class="product-info-text">
                 <h6 class="mb-2">{{ currentBulkProduct.name }}</h6>
@@ -1004,10 +941,8 @@
             <div class="search-group mb-3">
               <div class="search-input-wrapper">
                 <i class="bi bi-search search-icon"></i>
-                <input type="text" class="form-control search-input" 
-                       placeholder="Tìm kiếm IMEI..." 
-                       v-model="bulkSearchIMEI"
-                       style="padding-left: 2.5rem;" />
+                <input type="text" class="form-control search-input" placeholder="Tìm kiếm IMEI..."
+                  v-model="bulkSearchIMEI" style="padding-left: 2.5rem;" />
               </div>
             </div>
 
@@ -1016,26 +951,22 @@
               <div v-if="isLoadingBulkIMEI" class="text-center py-4 text-muted">
                 <i class="bi bi-hourglass-split me-2"></i>Đang tải IMEI...
               </div>
-              
-              <div v-else-if="!isLoadingBulkIMEI && bulkAvailableIMEIs.length === 0" class="text-center py-4 text-muted">
+
+              <div v-else-if="!isLoadingBulkIMEI && bulkAvailableIMEIs.length === 0"
+                class="text-center py-4 text-muted">
                 <i class="bi bi-inbox me-2"></i>Không có IMEI khả dụng cho sản phẩm này
               </div>
-              
+
               <div v-else-if="filteredBulkIMEIs.length === 0" class="text-center py-4 text-muted">
                 <i class="bi bi-search me-2"></i>Không tìm thấy IMEI phù hợp
               </div>
-              
+
               <div v-else class="bulk-imei-list">
-                <div v-for="(imei, index) in filteredBulkIMEIs" :key="imei.id || index" 
-                     class="bulk-imei-item" 
-                     :class="{ 'selected': isBulkIMEISelected(imei.imei) }"
-                     @click="toggleBulkIMEISelection(imei.imei)">
-                  <input type="checkbox" 
-                         :id="'bulk-imei-' + index" 
-                         :value="imei.imei" 
-                         :checked="isBulkIMEISelected(imei.imei)"
-                         @change="toggleBulkIMEISelection(imei.imei)"
-                         class="me-3" />
+                <div v-for="(imei, index) in filteredBulkIMEIs" :key="imei.id || index" class="bulk-imei-item"
+                  :class="{ 'selected': isBulkIMEISelected(imei.imei) }" @click="toggleBulkIMEISelection(imei.imei)">
+                  <input type="checkbox" :id="'bulk-imei-' + index" :value="imei.imei"
+                    :checked="isBulkIMEISelected(imei.imei)" @change="toggleBulkIMEISelection(imei.imei)"
+                    class="me-3" />
                   <span class="imei-code">{{ imei.imei }}</span>
                 </div>
               </div>
@@ -1047,25 +978,20 @@
         <div class="modal-footer">
           <div class="d-flex justify-content-between align-items-center w-100">
             <div class="navigation-buttons">
-              <button class="btn btn-outline-secondary me-2" 
-                      @click="previousBulkProduct"
-                      :disabled="currentBulkProductIndex === 0">
+              <button class="btn btn-outline-secondary me-2" @click="previousBulkProduct"
+                :disabled="currentBulkProductIndex === 0">
                 <i class="bi bi-chevron-left me-1"></i>Trước
               </button>
-              <button class="btn btn-outline-secondary" 
-                      @click="nextBulkProduct"
-                      :disabled="isLastBulkProduct">
+              <button class="btn btn-outline-secondary" @click="nextBulkProduct" :disabled="isLastBulkProduct">
                 Tiếp <i class="bi bi-chevron-right ms-1"></i>
               </button>
             </div>
-            
+
             <div class="action-buttons">
               <button class="btn btn-secondary me-2" @click="closeBulkConfirmIMEIModal">
                 Hủy
               </button>
-              <button class="btn btn-success" 
-                      @click="confirmAllBulkIMEIs"
-                      :disabled="isConfirmingBulkIMEI">
+              <button class="btn btn-success" @click="confirmAllBulkIMEIs" :disabled="isConfirmingBulkIMEI">
                 <span v-if="isConfirmingBulkIMEI" class="spinner-border spinner-border-sm me-2"></span>
                 Xác nhận tất cả IMEI
               </button>
@@ -2014,17 +1940,20 @@ export default HoaDonChiTietLogic;
 
 .badge-delivering {
   background: #34d399;
-  color: white !important;;
+  color: white !important;
+  ;
 }
 
 .badge-completed {
   background: #16a34a;
-  color: white !important;;
+  color: white !important;
+  ;
 }
 
 .badge-canceled {
   background: #dc3545;
-  color: white !important;;
+  color: white !important;
+  ;
 }
 
 .code-text {
