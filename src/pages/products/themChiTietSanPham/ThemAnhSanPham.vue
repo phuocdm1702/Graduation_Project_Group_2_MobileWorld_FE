@@ -1,7 +1,7 @@
 <template>
   <div class="container-fluid">
     <!-- Ảnh Sản Phẩm Section -->
-    <FilterTableSection v-if="showImageSection && productVariants?.length > 0" title="Thêm Ảnh Sản Phẩm" icon="bi bi-image">
+    <FilterTableSection v-if="showImageSection && productVariants?.length > 0" title="Thêm Ảnh Sản Phẩm (Tùy chọn)" icon="bi bi-image">
       <div class="m-3">
         <div class="card-grid">
           <div v-for="color in uniqueColors" :key="color.colorId" class="product-card">
@@ -196,8 +196,6 @@ export default defineComponent({
           if (!imei || imei.length !== 15 || !/^\d{15}$/.test(imei)) return { valid: false, message: `IMEI "${imei}" không hợp lệ ở phiên bản ${index + 1}! IMEI phải là 15 chữ số.` };
         }
       }
-      const missingImages = uniqueColors.value.filter((color) => !colorImages.value[color.colorId]?.file);
-      if (missingImages.length > 0) return { valid: false, message: `Vui lòng tải ảnh cho màu: ${missingImages.map((c) => c.colorName).join(', ')}!` };
       return { valid: true };
     };
 
@@ -254,16 +252,10 @@ export default defineComponent({
         console.log('Images to send:', images.map((file) => file.name));
 
         if (images.length === 0) {
-          toastNotification.value?.addToast({
-            type: 'error',
-            message: 'Phải có ít nhất một ảnh sản phẩm!',
-            duration: 3000,
-          });
-          isSubmitting.value = false;
-          return;
+          console.log('No images provided, submitting product without images');
         }
 
-        const response = await addChiTietSanPham(productPayload, images, []);
+        const response = await addChiTietSanPham(productPayload, images.length > 0 ? images : [], []);
         console.log('Response from server:', response);
 
         toastNotification.value?.addToast({
