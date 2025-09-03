@@ -285,7 +285,7 @@ export const useHoaDonStore = defineStore('hoaDon', {
             }
         },
 
-        async updateInvoiceStatus(id, trangThai, idNhanVien = null) {
+        async updateHoaDonStatus(id, trangThai, idNhanVien) {
             this.isLoading = true;
             this.error = null;
 
@@ -293,6 +293,8 @@ export const useHoaDonStore = defineStore('hoaDon', {
                 const response = await apiService.put(`/api/hoa-don/${id}/update-status`, null, {
                     params: { trangThai, idNhanVien }
                 });
+                
+                // Update local state if this is the current invoice detail
                 if (this.invoiceDetail && this.invoiceDetail.id === id) {
                     this.invoiceDetail.trangThai = this.mapStatus(response.data.trangThai);
                     this.invoiceDetail.history.push({
@@ -305,13 +307,39 @@ export const useHoaDonStore = defineStore('hoaDon', {
                         status: 'completed',
                     });
                 }
-                return { success: true, data: response.data };
+
+                // Return success immediately without waiting for email
+                const result = { 
+                    success: true, 
+                    data: response.data
+                };
+
+                // Send email asynchronously in background - don't await
+                this.sendStatusUpdateEmailAsync(id);
+
+                return result;
             } catch (error) {
                 this.error = error.message || 'Không thể cập nhật trạng thái hóa đơn';
                 console.error('Lỗi khi cập nhật trạng thái:', error);
                 return { success: false, message: this.error };
             } finally {
                 this.isLoading = false;
+            }
+        },
+
+        async sendStatusUpdateEmailAsync(hoaDonId) {
+            // Send email in background without blocking UI
+            try {
+                console.log('Sending email notification in background for invoice:', hoaDonId);
+                const emailResult = await this.sendStatusUpdateEmail(hoaDonId);
+                
+                if (emailResult.success) {
+                    console.log('Background email sent successfully:', emailResult.message);
+                } else {
+                    console.warn('Background email sending failed:', emailResult.message);
+                }
+            } catch (error) {
+                console.error('Background email sending error:', error);
             }
         },
 
@@ -874,6 +902,54 @@ export const useHoaDonStore = defineStore('hoaDon', {
 
             console.warn(`No available IMEI found for product ${product.chiTietSanPhamId}`);
             return null;
+        },
+
+        async sendStatusUpdateEmail(hoaDonId, customEmail = null) {
+            this.isLoading = true;
+            this.error = null;
+            
+            try {
+                let endpoint;
+                if (customEmail) {
+                    endpoint = `/api/email/send-invoice-status/${hoaDonId}/custom-email?email=${encodeURIComponent(customEmail)}`;
+                } else {
+                    endpoint = `/api/email/send-invoice-status/${hoaDonId}`;
+                }
+                
+                const response = await apiService.post(endpoint);
+                
+                if (response.data.success) {
+                    console.log('Email sent successfully:', response.data.message);
+                    return {
+                        success: true,
+                        message: response.data.message
+                    };
+                } else {
+                    throw new Error(response.data.message || 'Failed to send email');
+                }
+            } catch (error) {
+                console.error('Error sending status update email:', error);
+                this.error = error.response?.data?.message || error.message || 'Lỗi gửi email thông báo';
+                return {
+                    success: false,
+                    message: this.error
+                };
+            } finally {
+                this.isLoading = false;
+            }
+        },
+
+        async checkCustomerEmail(hoaDonId) {
+            try {
+                const response = await apiService.get(`/api/email/check-email/${hoaDonId}`);
+                return response.data;
+            } catch (error) {
+                console.error('Error checking customer email:', error);
+                return {
+                    hasEmail: false,
+                    message: 'Lỗi kiểm tra email khách hàng'
+                };
+            }
         },
     },
 
