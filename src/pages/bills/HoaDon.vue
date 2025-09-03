@@ -39,23 +39,23 @@
               <div class="slider-container">
                 <div class="slider-track"></div>
                 <div class="slider-range" :style="{
-                  left: `${((rangeMin || minInvoiceTotal) - minInvoiceTotal) / (maxInvoiceTotal - minInvoiceTotal) * 100}%`,
-                  width: `${((rangeMax || maxInvoiceTotal) - (rangeMin || minInvoiceTotal)) / (maxInvoiceTotal - minInvoiceTotal) * 100}%`
+                  left: `${((priceRange[0] - minInvoiceTotal) / (maxInvoiceTotal - minInvoiceTotal) * 100)}%`,
+                  width: `${((priceRange[1] - priceRange[0]) / (maxInvoiceTotal - minInvoiceTotal) * 100)}%`
                 }"></div>
                 <div class="slider-thumb"
-                  :style="{ left: `${((rangeMin || minInvoiceTotal) - minInvoiceTotal) / (maxInvoiceTotal - minInvoiceTotal) * 100}%` }"
+                  :style="{ left: `${((priceRange[0] - minInvoiceTotal) / (maxInvoiceTotal - minInvoiceTotal) * 100)}%` }"
                   @mousedown="(e) => startDrag('min', e)"></div>
                 <div class="slider-thumb"
-                  :style="{ left: `${((rangeMax || maxInvoiceTotal) - minInvoiceTotal) / (maxInvoiceTotal - minInvoiceTotal) * 100}%` }"
+                  :style="{ left: `${((priceRange[1] - minInvoiceTotal) / (maxInvoiceTotal - minInvoiceTotal) * 100)}%` }"
                   @mousedown="(e) => startDrag('max', e)"></div>
-                <input type="range" v-model="rangeMin" :min="minInvoiceTotal" :max="rangeMax || maxInvoiceTotal"
-                  class="absolute opacity-0 w-full h-full" @input="debouncedRangeMin" />
-                <input type="range" v-model="rangeMax" :min="rangeMin || minInvoiceTotal" :max="maxInvoiceTotal"
-                  class="absolute opacity-0 w-full h-full" @input="debouncedRangeMax" />
+                <input type="range" v-model="priceRange[0]" :min="minInvoiceTotal" :max="priceRange[1]"
+                  class="absolute opacity-0 w-full h-full" />
+                <input type="range" v-model="priceRange[1]" :min="priceRange[0]" :max="maxInvoiceTotal"
+                  class="absolute opacity-0 w-full h-full" />
               </div>
               <div class="d-flex justify-content-between text-sm text-muted mt-1">
-                <span>{{ formatCurrency(rangeMin || minInvoiceTotal) }}</span>
-                <span>{{ formatCurrency(rangeMax || maxInvoiceTotal) }}</span>
+                <span>{{ formatCurrency(priceRange[0]) }}</span>
+                <span>{{ formatCurrency(priceRange[1]) }}</span>
               </div>
             </div>
           </div>
@@ -154,53 +154,47 @@
       <div class="status-badge d-flex gap-3 m-3" style="width: max-content;">
         <button type="button" class="btn btn-outline-primary position-relative" @click="setActiveTabByStatus('all')">
           Tất cả
-          <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill badge-all"
-            v-if="filteredInvoices.length">
-            {{ filteredInvoices.length > 99 ? '99+' : filteredInvoices.length }}
+          <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill badge-all">
+            {{ (filteredInvoices.length || 0) > 99 ? '99+' : (filteredInvoices.length || 0) }}
             <span class="visually-hidden">tất cả hóa đơn</span>
           </span>
         </button>
         <button type="button" class="btn btn-outline-primary position-relative"
           @click="setActiveTabByStatus('Chờ xác nhận')">
           Chờ xác nhận
-          <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill badge-waiting"
-            v-if="statusCounts['Chờ xác nhận']">
-            {{ statusCounts['Chờ xác nhận'] > 99 ? '99+' : statusCounts['Chờ xác nhận'] }}
+          <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill badge-waiting">
+            {{ (statusCounts['Chờ xác nhận'] || 0) > 99 ? '99+' : (statusCounts['Chờ xác nhận'] || 0) }}
             <span class="visually-hidden">hóa đơn chờ xác nhận</span>
           </span>
         </button>
         <button type="button" class="btn btn-outline-primary position-relative"
           @click="setActiveTabByStatus('Chờ giao hàng')">
           Chờ giao hàng
-          <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill badge-waiting"
-            v-if="statusCounts['Chờ giao hàng']">
-            {{ statusCounts['Chờ giao hàng'] > 99 ? '99+' : statusCounts['Chờ giao hàng'] }}
+          <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill badge-waiting">
+            {{ (statusCounts['Chờ giao hàng'] || 0) > 99 ? '99+' : (statusCounts['Chờ giao hàng'] || 0) }}
             <span class="visually-hidden">hóa đơn chờ giao hàng</span>
           </span>
         </button>
         <button type="button" class="btn btn-outline-primary position-relative"
           @click="setActiveTabByStatus('Đang giao')">
           Đang giao
-          <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill badge-waiting"
-            v-if="statusCounts['Đang giao']">
-            {{ statusCounts['Đang giao'] > 99 ? '99+' : statusCounts['Đang giao'] }}
+          <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill badge-waiting">
+            {{ (statusCounts['Đang giao'] || 0) > 99 ? '99+' : (statusCounts['Đang giao'] || 0) }}
             <span class="visually-hidden">hóa đơn đang giao</span>
           </span>
         </button>
         <button type="button" class="btn btn-outline-primary position-relative"
           @click="setActiveTabByStatus('Hoàn thành')">
           Hoàn thành
-          <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill badge-completed"
-            v-if="statusCounts['Hoàn thành']">
-            {{ statusCounts['Hoàn thành'] > 99 ? '99+' : statusCounts['Hoàn thành'] }}
+          <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill badge-completed">
+            {{ (statusCounts['Hoàn thành'] || 0) > 99 ? '99+' : (statusCounts['Hoàn thành'] || 0) }}
             <span class="visually-hidden">hóa đơn hoàn thành</span>
           </span>
         </button>
         <button type="button" class="btn btn-outline-primary position-relative" @click="setActiveTabByStatus('Đã hủy')">
           Đã hủy
-          <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill badge-canceled"
-            v-if="statusCounts['Đã hủy']">
-            {{ statusCounts['Đã hủy'] > 99 ? '99+' : statusCounts['Đã hủy'] }}
+          <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill badge-canceled">
+            {{ (statusCounts['Đã hủy'] || 0) > 99 ? '99+' : (statusCounts['Đã hủy'] || 0) }}
             <span class="visually-hidden">hóa đơn đã hủy</span>
           </span>
         </button>
@@ -296,10 +290,10 @@ export default {
         const pos = (e.clientX - rect.left) / rect.width;
         const newPrice = Math.round(pos * (logic.maxInvoiceTotal.value - logic.minInvoiceTotal.value) + logic.minInvoiceTotal.value);
 
-        if (type === 'min' && newPrice < logic.rangeMax.value) {
-          logic.rangeMin.value = Math.max(logic.minInvoiceTotal.value, newPrice);
-        } else if (type === 'max' && newPrice > logic.rangeMin.value) {
-          logic.rangeMax.value = Math.min(logic.maxInvoiceTotal.value, newPrice);
+        if (type === 'min' && newPrice < logic.priceRange.value[1]) {
+          logic.priceRange.value[0] = Math.max(logic.minInvoiceTotal.value, newPrice);
+        } else if (type === 'max' && newPrice > logic.priceRange.value[0]) {
+          logic.priceRange.value[1] = Math.min(logic.maxInvoiceTotal.value, newPrice);
         }
         logic.updateRangeMin();
         logic.updateRangeMax();

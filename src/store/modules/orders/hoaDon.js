@@ -37,8 +37,8 @@ export const useHoaDonStore = defineStore('hoaDon', {
                     keyword: this.filters.keyword || undefined,
                     minAmount: this.filters.minAmount ?? undefined,
                     maxAmount: this.filters.maxAmount ?? undefined,
-                    startDate: this.filters.startDate ? new Date(this.filters.startDate).toISOString() : undefined,
-                    endDate: this.filters.endDate ? new Date(this.filters.endDate).toISOString() : undefined,
+                    startDate: this.filters.startDate || undefined,  // Đã được format thành timestamp trong formatDateForFilter
+                    endDate: this.filters.endDate || undefined,      // Đã được format thành timestamp trong formatDateForFilter
                     trangThai: this.filters.trangThai ?? undefined,
                     loaiDon: this.filters.loaiDon || undefined,
                     sortBy: this.filters.sortBy,  // Mới
@@ -85,7 +85,8 @@ export const useHoaDonStore = defineStore('hoaDon', {
                     id: response.data.id,
                     ma: response.data.maHoaDon,
                     loaiDon: response.data.loaiDon,
-                    trangThai: this.mapStatus(response.data.trangThai),
+                    trangThai: response.data.trangThai, // Lưu số trạng thái thay vì text
+                    trangThaiText: this.mapStatus(response.data.trangThai), // Thêm field riêng cho text
                     idPhieuGiamGia: { ma: response.data.maGiamGia || 'Không có' },
                     ngayTao: this.formatDate(response.data.ngayTao),
                     idKhachHang: {
@@ -132,6 +133,8 @@ export const useHoaDonStore = defineStore('hoaDon', {
                         invoice: response.data.maHoaDon,
                         employee: response.data.maNhanVien,
                         action: history.hanhDong,
+                        hanhDong: history.hanhDong, // Keep original field for compatibility
+                        thoiGian: history.thoiGian, // Keep original timestamp
                         timestamp: this.formatDate(history.thoiGian),
                         status: 'completed',
                     })),
@@ -293,7 +296,7 @@ export const useHoaDonStore = defineStore('hoaDon', {
                 const response = await apiService.put(`/api/hoa-don/${id}/update-status`, null, {
                     params: { trangThai, idNhanVien }
                 });
-                
+
                 // Update local state if this is the current invoice detail
                 if (this.invoiceDetail && this.invoiceDetail.id === id) {
                     this.invoiceDetail.trangThai = this.mapStatus(response.data.trangThai);
@@ -309,8 +312,8 @@ export const useHoaDonStore = defineStore('hoaDon', {
                 }
 
                 // Return success immediately without waiting for email
-                const result = { 
-                    success: true, 
+                const result = {
+                    success: true,
                     data: response.data
                 };
 
@@ -332,7 +335,7 @@ export const useHoaDonStore = defineStore('hoaDon', {
             try {
                 console.log('Sending email notification in background for invoice:', hoaDonId);
                 const emailResult = await this.sendStatusUpdateEmail(hoaDonId);
-                
+
                 if (emailResult.success) {
                     console.log('Background email sent successfully:', emailResult.message);
                 } else {
@@ -546,16 +549,23 @@ export const useHoaDonStore = defineStore('hoaDon', {
             }
         },
 
-        async updateHoaDon(id, maHD, loaiHD) {
+        async updateHoaDon(id, maHD, loaiHD, trangThai = null) {
             this.isLoading = true;
             this.error = null;
 
             try {
                 const params = { maHD, loaiHD };
+                if (trangThai !== null) {
+                    params.trangThai = trangThai;
+                }
                 const response = await apiService.put(`/api/hoa-don/${id}/update-hoa-don`, null, { params });
                 if (this.invoiceDetail && this.invoiceDetail.id === id) {
                     this.invoiceDetail.ma = maHD;
                     this.invoiceDetail.loaiDon = loaiHD;
+                    if (trangThai !== null) {
+                        this.invoiceDetail.trangThai = trangThai;
+                        this.invoiceDetail.trangThaiText = this.mapStatus(trangThai);
+                    }
                     this.invoiceDetail.history.push({
                         id: Date.now(),
                         code: `LSHD_${Date.now()}`,
@@ -729,12 +739,43 @@ export const useHoaDonStore = defineStore('hoaDon', {
             // Debug logging
             console.log(`mapStatusToNumber input: "${statusString}", length: ${statusString?.length}`);
             console.log('Available keys:', Object.keys(statusMap));
+            
+            // Check for invisible characters
+            if (statusString) {
+                const charCodes = Array.from(statusString).map(char => char.charCodeAt(0));
+                console.log('Character codes:', charCodes);
+            }
 
             // Trim whitespace and normalize
             const cleanStatus = statusString?.trim();
             const result = statusMap[cleanStatus];
 
-            console.log(`mapStatusToNumber result: ${result}`);
+            console.log(`mapStatusToNumber cleaned: "${cleanStatus}", result: ${result}`);
+            
+            // If direct mapping fails, try exact match with all keys
+            if (result === undefined && cleanStatus) {
+                console.log('Direct mapping failed, trying exact match...');
+                for (const [key, value] of Object.entries(statusMap)) {
+                    console.log(`Comparing "${cleanStatus}" === "${key}": ${cleanStatus === key}`);
+                    if (cleanStatus === key) {
+                        console.log(`Found exact match: ${value}`);
+                        return value;
+                    }
+                }
+                
+                // Final fallback - try partial matching
+                console.log('Trying partial matching...');
+                const normalizedInput = cleanStatus.toLowerCase().replace(/\s+/g, '');
+                for (const [key, value] of Object.entries(statusMap)) {
+                    const normalizedKey = key.toLowerCase().replace(/\s+/g, '');
+                    if (normalizedInput === normalizedKey) {
+                        console.log(`Found partial match: "${key}" -> ${value}`);
+                        return value;
+                    }
+                }
+                console.log('No match found at all');
+            }
+            
             return result !== undefined ? result : null;
         },
 
@@ -907,7 +948,7 @@ export const useHoaDonStore = defineStore('hoaDon', {
         async sendStatusUpdateEmail(hoaDonId, customEmail = null) {
             this.isLoading = true;
             this.error = null;
-            
+
             try {
                 let endpoint;
                 if (customEmail) {
@@ -915,9 +956,9 @@ export const useHoaDonStore = defineStore('hoaDon', {
                 } else {
                     endpoint = `/api/email/send-invoice-status/${hoaDonId}`;
                 }
-                
+
                 const response = await apiService.post(endpoint);
-                
+
                 if (response.data.success) {
                     console.log('Email sent successfully:', response.data.message);
                     return {
