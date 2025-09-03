@@ -132,7 +132,7 @@ export default {
     const orderInfo = computed(() => [
       { label: 'Mã đơn hàng:', value: invoice.value.ma || 'N/A', key: 'ma' },
       { label: 'Loại đơn:', value: invoice.value.loaiDon || 'N/A', key: 'loaiDon', icon: getTypeIcon(invoice.value.loaiDon) },
-      { label: 'Trạng thái:', value: invoice.value.trangThai || 'N/A', key: 'trangThai', icon: getStatusIcon(invoice.value.trangThai) },
+      { label: 'Trạng thái:', value: invoice.value.trangThaiText || hoaDonStore.mapStatus(invoice.value.trangThai) || 'N/A', key: 'trangThai', icon: getStatusIcon(invoice.value.trangThaiText || hoaDonStore.mapStatus(invoice.value.trangThai)) },
       { label: 'Phiếu giảm giá:', value: invoice.value.idPhieuGiamGia?.ma || 'Không có', key: 'idPhieuGiamGia' },
       { label: 'Ngày đặt:', value: invoice.value.ngayTao || 'N/A', key: 'ngayTao' },
     ]);
@@ -216,9 +216,9 @@ export default {
     });
 
     // Thêm computed mới cho lọc sản phẩm
-    const uniqueColors = computed(() => [...new Set(productList.value.map((p) => p.mauSac))]);
-    const uniqueRams = computed(() => [...new Set(productList.value.map((p) => p.dungLuongRam))]);
-    const uniqueStorages = computed(() => [...new Set(productList.value.map((p) => p.dungLuongBoNhoTrong))]);
+    const uniqueColors = computed(() => Array.from(new Set(productList.value.map((p) => p.mauSac))));
+    const uniqueRams = computed(() => Array.from(new Set(productList.value.map((p) => p.dungLuongRam))));
+    const uniqueStorages = computed(() => Array.from(new Set(productList.value.map((p) => p.dungLuongBoNhoTrong))));
 
     const filteredProducts = computed(() => {
       let filtered = productList.value;
@@ -342,12 +342,109 @@ export default {
     ]);
 
     // Methods
+    // Helper function để lấy thời gian từ lịch sử hóa đơn
+    const getTimeFromHistory = (statusTitle) => {
+      console.log('=== DEBUG getTimeFromHistory ===');
+      console.log('statusTitle:', statusTitle);
+      console.log('history.value:', history.value);
+      console.log('history.value type:', typeof history.value);
+      console.log('history.value isArray:', Array.isArray(history.value));
+
+      if (!history.value || !Array.isArray(history.value)) {
+        console.log('History is null or not array, returning default');
+        return 'Chưa cập nhật';
+      }
+
+      // Map từ statusTitle sang action string tương ứng trong lịch sử
+      const statusActionMap = {
+        'Chờ xác nhận': 'Cập nhật trạng thái: Chờ xác nhận',
+        'Chờ giao hàng': 'Cập nhật trạng thái: Chờ giao hàng',
+        'Đang giao': 'Cập nhật trạng thái: Đang giao',
+        'Hoàn thành': 'Cập nhật trạng thái: Hoàn thành',
+        'Đã hủy': 'Cập nhật trạng thái: Đã hủy'
+      };
+
+      const targetAction = statusActionMap[statusTitle];
+      console.log('targetAction:', targetAction);
+
+      if (!targetAction) {
+        console.log('No target action found');
+        return 'Chưa cập nhật';
+      }
+
+      // Log tất cả actions trong history để debug
+      console.log('All actions in history:');
+      history.value.forEach((item, index) => {
+        console.log(`${index}: "${item.hanhDong || item.action}" | All fields:`, Object.keys(item));
+        console.log(`Full item ${index}:`, item);
+      });
+
+      // Tìm lịch sử tương ứng với hành động - thử cả hanhDong và action
+      const lichSu = history.value.find(item => {
+        const actionText = item.hanhDong || item.action || '';
+        return actionText === targetAction || actionText.includes(statusTitle);
+      });
+
+      console.log('Found lichSu:', lichSu);
+
+      if (lichSu) {
+        // Thử tất cả các field có thể chứa thời gian
+        const timeValue = lichSu.thoiGian || lichSu.time || lichSu.timestamp || lichSu.createdAt || lichSu.created_at || lichSu.ngayTao || lichSu.date;
+        console.log('timeValue found:', timeValue);
+        console.log('All lichSu fields:', Object.keys(lichSu));
+
+        if (timeValue) {
+          // Handle different time formats
+          let date;
+          if (typeof timeValue === 'string' && timeValue.includes('/')) {
+            // Already formatted timestamp like "01:53:19 4/9/2025"
+            return timeValue;
+          } else {
+            // ISO string or other formats
+            date = new Date(timeValue);
+          }
+
+          if (!isNaN(date.getTime())) {
+            const formatted = date.toLocaleString('vi-VN', {
+              day: '2-digit',
+              month: '2-digit',
+              year: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit'
+            });
+            console.log('formatted time:', formatted);
+            return formatted;
+          }
+        } else {
+          console.log('No time field found in lichSu object');
+        }
+      }
+
+      // Fallback cho trạng thái đầu tiên
+      if (statusTitle === 'Chờ xác nhận' && invoice.value.ngayTao) {
+        console.log('Using fallback ngayTao:', invoice.value.ngayTao);
+        const date = new Date(invoice.value.ngayTao);
+        const formatted = date.toLocaleString('vi-VN', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        });
+        console.log('fallback formatted:', formatted);
+        return formatted;
+      }
+
+      console.log('No match found, returning default');
+      return 'Chưa cập nhật';
+    };
+
     const updateTimelineStatuses = () => {
       if (invoice.value.loaiDon === 'trực tiếp') {
         timelineStatuses.value = [
           {
             title: 'Hoàn thành',
-            time: invoice.value.ngayTao || 'Đang chờ',
+            time: getTimeFromHistory('Hoàn thành'),
             icon: 'bi bi-check-circle',
             completed: true,
             current: true,
@@ -355,18 +452,18 @@ export default {
         ];
       } else {
         timelineStatuses.value = [
-          { title: 'Chờ xác nhận', time: 'Đang chờ', icon: 'bi bi-hourglass-split', completed: false, current: false },
-          { title: 'Chờ giao hàng', time: 'Đang chờ', icon: 'bi bi-box-seam', completed: false, current: false },
-          { title: 'Đang giao', time: 'Đang chờ', icon: 'bi bi-truck', completed: false, current: false },
-          { title: 'Hoàn thành', time: 'Đang chờ', icon: 'bi bi-check-circle', completed: false, current: false },
+          { title: 'Chờ xác nhận', time: getTimeFromHistory('Chờ xác nhận'), icon: 'bi bi-hourglass-split', completed: false, current: false },
+          { title: 'Chờ giao hàng', time: getTimeFromHistory('Chờ giao hàng'), icon: 'bi bi-box-seam', completed: false, current: false },
+          { title: 'Đang giao', time: getTimeFromHistory('Đang giao'), icon: 'bi bi-truck', completed: false, current: false },
+          { title: 'Hoàn thành', time: getTimeFromHistory('Hoàn thành'), icon: 'bi bi-check-circle', completed: false, current: false },
         ];
 
-        const status = invoice.value.trangThai;
+        const status = invoice.value.trangThaiText || hoaDonStore.mapStatus(invoice.value.trangThai);
         if (status === 'Đã hủy') {
           timelineStatuses.value = [
             {
               title: 'Đã hủy',
-              time: invoice.value.ngayTao || 'Đang chờ',
+              time: getTimeFromHistory('Đã hủy'),
               icon: 'bi bi-x-circle',
               completed: false,
               current: true,
@@ -376,7 +473,6 @@ export default {
           timelineStatuses.value.forEach((item, index) => {
             item.completed = false;
             item.current = false;
-            item.time = invoice.value.ngayTao || 'Đang chờ';
             if (item.title === status) {
               item.current = true;
               item.completed = true;
@@ -612,7 +708,7 @@ export default {
       updateTimelineStatuses();
     }, { immediate: true });
 
-    watch(() => invoice.value.trangThai, () => {
+    watch(() => [invoice.value.trangThai, invoice.value.trangThaiText], () => {
       updateTimelineStatuses();
     });
 
@@ -1427,7 +1523,8 @@ export default {
           const result = await hoaDonStore.updateHoaDon(
             invoice.value.id,
             invoice.value.ma,
-            invoice.value.loaiDon
+            invoice.value.loaiDon,
+            invoice.value.trangThai
           );
           if (result.success) {
             history.value.push({
@@ -1604,16 +1701,16 @@ export default {
         toastNotification.value.addToast({
           type: 'warning',
           message: 'Vui lòng chọn sản phẩm và ít nhất một IMEI hợp lệ',
+        });
+        toastNotification.value.addToast({
+          type: 'success',
+          message: 'Đã cập nhật thông tin hóa đơn thành công',
           duration: 3000,
         });
-        return;
-      }
-
-      // Kiểm tra trạng thái hóa đơn
-      if (invoice.value.trangThai !== 'Chờ xác nhận' || invoice.value.loaiDon !== 'online') {
+      } else {
         toastNotification.value.addToast({
           type: 'error',
-          message: 'Chỉ có thể thêm sản phẩm vào hóa đơn online ở trạng thái "Chờ xác nhận"',
+          message: result.message,
           duration: 3000,
         });
         return;
@@ -1810,7 +1907,13 @@ export default {
     };
 
     const isActionButtonsDisabled = computed(() => {
-      return invoice.value.trangThai === 'Hoàn thành' || invoice.value.trangThai === 'Đã hủy';
+      // Check both text and numeric status values for completed/cancelled states
+      const currentStatus = invoice.value.trangThai;
+      const currentStatusText = invoice.value.trangThaiText || hoaDonStore.mapStatus(currentStatus);
+      
+      return currentStatus === 3 || currentStatus === 4 || 
+             currentStatusText === 'Hoàn thành' || currentStatusText === 'Đã hủy' ||
+             invoice.value.trangThai === 'Hoàn thành' || invoice.value.trangThai === 'Đã hủy';
     });
 
     // Bulk IMEI Confirmation Computed Properties
@@ -1850,7 +1953,20 @@ export default {
         return;
       }
 
-      const currentStatusNumber = hoaDonStore.mapStatusToNumber(invoice.value.trangThai);
+      // Prevent status changes from completed orders
+      const currentStatus = invoice.value.trangThai;
+      const currentStatusText = invoice.value.trangThaiText || hoaDonStore.mapStatus(currentStatus);
+      
+      if (currentStatus === 3 || currentStatusText === 'Hoàn thành' || invoice.value.trangThai === 'Hoàn thành') {
+        toastNotification.value.addToast({
+          type: 'error',
+          message: 'Không thể thay đổi trạng thái từ đơn hàng đã hoàn thành',
+          duration: 3000,
+        });
+        return;
+      }
+
+      const currentStatusNumber = hoaDonStore.mapStatusToNumber(currentStatusText);
       const targetStatusNumber = hoaDonStore.mapStatusToNumber(status);
 
       if (Math.abs(targetStatusNumber - currentStatusNumber) > 1) {
@@ -1868,7 +1984,7 @@ export default {
           // Preserve IMEI selections before reload
           const preservedIMEIs = new Map(selectedIMEIs.value);
           console.log('Preserving IMEI selections before reload:', Object.fromEntries(preservedIMEIs));
-          
+
           await hoaDonStore.fetchInvoiceDetail(invoice.value.id);
           if (hoaDonStore.getInvoiceDetail?.products) {
             products.value = hoaDonStore.getInvoiceDetail.products.map(product => ({
@@ -1894,11 +2010,11 @@ export default {
               imei: product.imei || '',
             }));
           }
-          
+
           // Restore IMEI selections after reload
           selectedIMEIs.value = preservedIMEIs;
           console.log('Restored IMEI selections after reload:', Object.fromEntries(selectedIMEIs.value));
-          
+
         } catch (error) {
           console.error('Error reloading invoice data:', error);
           toastNotification.value.addToast({
@@ -1931,10 +2047,11 @@ export default {
             trangThaiNumber,
             null
           );
-          
+
           if (result.success) {
             // Cập nhật trạng thái local
-            invoice.value.trangThai = status;
+            invoice.value.trangThai = trangThaiNumber;
+            invoice.value.trangThaiText = status;
             updateTimelineStatuses();
             history.value.push({
               id: Date.now(),

@@ -1039,12 +1039,12 @@
             </div>
             <div class="form-group mb-3">
               <label class="form-label">Trạng thái</label>
-              <select v-model="invoice.trangThai" class="form-select" :disabled="invoice.loaiDon === 'trực tiếp'">
-                <option value="Chờ xác nhận">Chờ xác nhận</option>
-                <option value="Chờ giao hàng">Chờ giao hàng</option>
-                <option value="Đang giao">Đang giao</option>
-                <option value="Hoàn thành">Hoàn thành</option>
-                <option value="Đã hủy">Đã hủy</option>
+              <select v-model="invoice.trangThai" class="form-select" :disabled="invoice.loaiDon === 'trực tiếp' || isActionButtonsDisabled">
+                <option :value="0">Chờ xác nhận</option>
+                <option :value="1">Chờ giao hàng</option>
+                <option :value="2">Đang giao</option>
+                <option :value="3">Hoàn thành</option>
+                <option :value="4">Đã hủy</option>
               </select>
             </div>
           </div>

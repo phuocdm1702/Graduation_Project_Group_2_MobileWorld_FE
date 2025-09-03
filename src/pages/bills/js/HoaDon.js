@@ -1,6 +1,7 @@
 import { ref, computed, onMounted, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { useHoaDonStore } from '@/store/modules/orders/hoaDon';
+import { apiService } from '@/services/api';
 import DataTable from '@/components/common/DataTable.vue';
 import NotificationModal from '@/components/common/NotificationModal.vue';
 import ToastNotification from '@/components/common/ToastNotification.vue';
@@ -58,6 +59,11 @@ export const invoiceManagementLogic = {
     const activeStatus = ref('all');  // Track selected status filter
     const sortBy = ref('id');  // Mới
     const sortDir = ref('DESC');  // Mới DESC ASC
+    
+    // Price range state với min/max cố định
+    const minPriceLimit = ref(0);
+    const maxPriceLimit = ref(100000000);
+    const priceRange = ref([0, 100000000]);
 
     // Notification state
     const notificationType = ref('confirm');
@@ -135,17 +141,8 @@ export const invoiceManagementLogic = {
     const error = computed(() => hoaDonStore.getError);
     const totalElements = computed(() => hoaDonStore.getTotalElements);
 
-    const minInvoiceTotal = computed(() => {
-      return invoices.value.length
-        ? Math.min(...invoices.value.map((inv) => inv.tongTienSauGiam || 0))
-        : 0;
-    });
-
-    const maxInvoiceTotal = computed(() => {
-      return invoices.value.length
-        ? Math.max(...invoices.value.map((inv) => inv.tongTienSauGiam || 0))
-        : 0;
-    });
+    const minInvoiceTotal = computed(() => minPriceLimit.value);
+    const maxInvoiceTotal = computed(() => maxPriceLimit.value);
 
     const sliderRangeStyle = computed(() => {
       const min = minInvoiceTotal.value;
@@ -228,15 +225,32 @@ export const invoiceManagementLogic = {
     //   return filteredInvoices.value.slice(start, end);
     // });
 
-    const statusCounts = computed(() => {
-      // Always count from all invoices, not filtered ones
-      // This gives users a complete overview of all statuses
-      return invoices.value.reduce((acc, inv) => {
-        const status = inv.trangThaiFormatted || 'N/A';
-        acc[status] = (acc[status] || 0) + 1;
-        return acc;
-      }, {});
+    // Status counts from API
+    const statusCounts = ref({
+      'Chờ xác nhận': 0,
+      'Chờ giao hàng': 0,
+      'Đang giao': 0,
+      'Hoàn thành': 0,
+      'Đã hủy': 0
     });
+
+    // Fetch status counts from API
+    const fetchStatusCounts = async () => {
+      try {
+        const response = await apiService.get('/api/hoa-don/status-counts');
+        if (response.data) {
+          statusCounts.value = { ...statusCounts.value, ...response.data };
+          console.log('Status counts updated:', statusCounts.value);
+        }
+      } catch (error) {
+        console.error('Error fetching status counts:', error);
+        toastNotification.value?.addToast({
+          type: 'error',
+          message: 'Không thể tải số lượng trạng thái',
+          duration: 3000,
+        });
+      }
+    };
 
     // Hàm confirm dùng chung
     const showConfirm = (message, onConfirm, onCancel = () => { }) => {
@@ -297,6 +311,28 @@ export const invoiceManagementLogic = {
       return '';
     };
 
+    // Format date for filter - convert to Timestamp format for backend
+    const formatDateForFilter = (dateValue) => {
+      if (!dateValue) return null;
+      
+      try {
+        // Parse the date input (YYYY-MM-DD format from date picker)
+        const date = new Date(dateValue);
+        if (isNaN(date.getTime())) {
+          console.warn('Invalid date value:', dateValue);
+          return null;
+        }
+        
+        // Convert to timestamp in milliseconds (backend expects Timestamp)
+        const timestamp = date.getTime();
+        console.log(`Date filter: "${dateValue}" -> ${timestamp} (${new Date(timestamp).toISOString()})`);
+        return timestamp;
+      } catch (error) {
+        console.error('Error formatting date:', error);
+        return null;
+      }
+    };
+
     const debouncedSearch = debounce((query) => {
       keyword.value = query;
       currentPage.value = 1;
@@ -305,28 +341,24 @@ export const invoiceManagementLogic = {
 
     const resetFilters = () => {
       keyword.value = '';
-      rangeMin.value = null;
-      rangeMax.value = null;
+      rangeMin.value = minPriceLimit.value;
+      rangeMax.value = maxPriceLimit.value;
+      priceRange.value = [minPriceLimit.value, maxPriceLimit.value];
       rangeMinDisplay.value = '';
       rangeMaxDisplay.value = '';
       rangeError.value = '';
       startDate.value = '';
       endDate.value = '';
-      activeStatus.value = 'all';  // Reset status filter
-      sortBy.value = 'id';
-      sortDir.value = 'DESC';
-      hoaDonStore.updateFilters({
-        keyword: '',
-        minAmount: null,
-        maxAmount: null,
-        startDate: null,
-        endDate: null,
-        trangThai: null,
-        loaiDon: null,
-        sortBy: 'id',
-        sortDir: 'DESC',
-      });
-      currentPage.value = 1;  // Reset UI page
+      currentPage.value = 1;
+      activeTab.value = 'all';
+      activeStatus.value = 'all';  // Reset active status
+      sortBy.value = 'id';  // Reset sorting
+      sortDir.value = 'DESC';  // Reset sorting
+
+      // Reset store filters
+      hoaDonStore.resetFilters();
+      highlightedInvoiceId.value = null;
+
       toastNotification.value?.addToast({
         type: 'success',
         message: 'Đã đặt lại bộ lọc',
@@ -380,6 +412,22 @@ export const invoiceManagementLogic = {
     const debouncedRangeMax = debounce(() => {
       updateRangeMax();
     }, 1200);
+
+    // Debounced date handlers for better performance
+    const debouncedDateFilter = debounce(() => {
+      hoaDonStore.updateFilters({
+        keyword: keyword.value,
+        minAmount: rangeMin.value,
+        maxAmount: rangeMax.value,
+        startDate: formatDateForFilter(startDate.value),
+        endDate: formatDateForFilter(endDate.value),
+        trangThai: hoaDonStore.filters.trangThai,
+        loaiDon: hoaDonStore.filters.loaiDon,
+        sortBy: sortBy.value,
+        sortDir: sortDir.value
+      });
+      currentPage.value = 1;
+    }, 800);
 
     // Handle input formatting on blur
     const handleRangeMinBlur = () => {
@@ -714,7 +762,6 @@ export const invoiceManagementLogic = {
     };
 
     const setActiveTabByStatus = (status) => {
-      currentPage.value = 1;
       highlightedInvoiceId.value = null;
       activeStatus.value = status;  // Track selected status
 
@@ -724,8 +771,8 @@ export const invoiceManagementLogic = {
           keyword: keyword.value,
           minAmount: rangeMin.value,
           maxAmount: rangeMax.value,
-          startDate: startDate.value,
-          endDate: endDate.value,
+          startDate: formatDateForFilter(startDate.value),
+          endDate: formatDateForFilter(endDate.value),
           trangThai: null,  // Reset trạng thái để lấy tất cả
           loaiDon: hoaDonStore.filters.loaiDon,  // Giữ nguyên loại đơn hiện tại
           sortBy: sortBy.value,
@@ -737,6 +784,9 @@ export const invoiceManagementLogic = {
           message: 'Đã hiển thị tất cả trạng thái hóa đơn',
           duration: 2000,
         });
+        
+        // Refresh status counts after filter change
+        fetchStatusCounts();
       } else {
         // Lọc theo trạng thái cụ thể - chính xác theo mapping
         console.log(`Original status: "${status}", length: ${status.length}`);
@@ -750,8 +800,8 @@ export const invoiceManagementLogic = {
             keyword: keyword.value,
             minAmount: rangeMin.value,
             maxAmount: rangeMax.value,
-            startDate: startDate.value,
-            endDate: endDate.value,
+            startDate: formatDateForFilter(startDate.value),
+            endDate: formatDateForFilter(endDate.value),
             trangThai: trangThaiNumber,  // Lọc chính xác theo số trạng thái
             loaiDon: hoaDonStore.filters.loaiDon,  // Giữ nguyên loại đơn hiện tại
             sortBy: sortBy.value,
@@ -763,6 +813,9 @@ export const invoiceManagementLogic = {
             message: `Đã lọc theo trạng thái: ${status}`,
             duration: 2000,
           });
+          
+          // Refresh status counts after filter change
+          fetchStatusCounts();
         } else {
           toastNotification.value?.addToast({
             type: 'error',
@@ -796,13 +849,20 @@ export const invoiceManagementLogic = {
     onMounted(() => {
       // hoaDonStore.updateFilters({ loaiDon: 'trực tiếp' }); // Mặc định lọc trực tiếp
       hoaDonStore.fetchInvoices({ page: 0, size: itemsPerPage.value });
+      fetchStatusCounts(); // Load status counts on mount
     });
 
-    // Watch invoices để update range nếu null
+    // Watch invoices để set min/max cố định một lần duy nhất
     watch(invoices, (newInvoices) => {
-      if (newInvoices.length > 0) {
+      if (newInvoices.length > 0 && minPriceLimit.value === 0 && maxPriceLimit.value === 100000000) {
         const min = Math.min(...newInvoices.map((inv) => inv.tongTienSauGiam || 0));
         const max = Math.max(...newInvoices.map((inv) => inv.tongTienSauGiam || 0));
+        
+        // Set min/max cố định chỉ lần đầu
+        minPriceLimit.value = min;
+        maxPriceLimit.value = max;
+        priceRange.value = [min, max];
+        
         if (rangeMin.value === null) {
           rangeMin.value = min;
           rangeMinDisplay.value = formatCurrency(min);
@@ -814,14 +874,32 @@ export const invoiceManagementLogic = {
       }
     }, { immediate: true });
 
-    // Watch tất cả filter để update store và fetch (đồng bộ)
-    watch([keyword, rangeMin, rangeMax, startDate, endDate, sortBy, sortDir], () => {
+    // Watch priceRange để update filters nhưng không reset min/max
+    watch(
+      () => priceRange.value,
+      ([min, max]) => {
+        rangeMin.value = min;
+        rangeMax.value = max;
+        
+        // Debounced update để tránh gọi API liên tục
+        debouncedRangeMin();
+      },
+      { deep: true }
+    );
+
+    // Watch date filters separately with debounce
+    watch([startDate, endDate], () => {
+      debouncedDateFilter();
+    }, { deep: true });
+
+    // Watch other filters immediately
+    watch([keyword, rangeMin, rangeMax, sortBy, sortDir], () => {
       hoaDonStore.updateFilters({
         keyword: keyword.value,
         minAmount: rangeMin.value,
         maxAmount: rangeMax.value,
-        startDate: startDate.value,
-        endDate: endDate.value,
+        startDate: formatDateForFilter(startDate.value),
+        endDate: formatDateForFilter(endDate.value),
         sortBy: sortBy.value,
         sortDir: sortDir.value,
       });
@@ -849,6 +927,9 @@ export const invoiceManagementLogic = {
       activeStatus,  // Track selected status filter
       sortBy,  // Mới
       sortDir,  // Mới
+      minPriceLimit,
+      maxPriceLimit,
+      priceRange,  // Thêm priceRange
       invoices,
       isLoading,
       error,
@@ -862,6 +943,7 @@ export const invoiceManagementLogic = {
       totalPages,
       paginatedInvoices,
       statusCounts,
+      fetchStatusCounts,
       formatPrice,
       debouncedSearch,
       resetFilters,
@@ -869,6 +951,7 @@ export const invoiceManagementLogic = {
       updateRangeMax,
       debouncedRangeMin,
       debouncedRangeMax,
+      debouncedDateFilter,
       handleRangeMinBlur,
       handleRangeMaxBlur,
       formatCurrency,
