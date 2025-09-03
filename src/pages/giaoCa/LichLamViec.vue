@@ -7,26 +7,31 @@
       :backgroundOpacity="0.95"
     />
 
-    <!-- Add Schedule Button and Filters -->
-    <FilterTableSection title="Tùy chọn" icon="bi bi-sliders">
-      <div class="d-flex justify-content-between align-items-center m-3">
-        <button class="btn btn-action" @click="openAddModal">
-          <i class="bi bi-plus-circle-fill me-1"></i> Thêm mới lịch làm việc
-        </button>
-        <div class="d-flex">
-          <div class="me-3">
-            <label for="filterEmployee" class="form-label">Nhân viên:</label>
-            <select class="form-select" id="filterEmployee" v-model="filter.employeeId">
+    <!-- Filters and Add Button Section -->
+    <FilterTableSection title="Bộ Lọc Tìm Kiếm" icon="bi bi-funnel">
+      <div class="filter-container m-3">
+        <!-- Left side: Filters -->
+        <div class="filters-section">
+          <div class="filter-group">
+            <label for="filterEmployee" class="filter-label">Nhân viên:</label>
+            <select class="form-select filter-select" id="filterEmployee" v-model="filter.employeeId">
               <option :value="null">Tất cả</option>
               <option v-for="employee in employees" :key="employee.id" :value="employee.id">
                 {{ employee.tenNhanVien }}
               </option>
             </select>
           </div>
-          <div>
-            <label for="filterDate" class="form-label">Ngày làm:</label>
-            <input type="date" class="form-control" id="filterDate" v-model="filter.workDate" />
+          <div class="filter-group">
+            <label for="filterDate" class="filter-label">Ngày làm:</label>
+            <input type="date" class="form-control filter-input" id="filterDate" v-model="filter.workDate" />
           </div>
+        </div>
+        
+        <!-- Right side: Add Button -->
+        <div class="add-button-section">
+          <button class="btn btn-primary-custom" @click="openAddModal">
+            Thêm mới lịch làm việc
+          </button>
         </div>
       </div>
     </FilterTableSection>
@@ -42,7 +47,7 @@
             </div>
           </div>
           <div class="col-lg-6 col-md-6 d-flex justify-content-start">
-            <button class="btn btn-action mt-auto" @click="uploadExcel">
+            <button class="btn btn-primary-custom mt-auto" @click="uploadExcel">
               <i class="bi bi-file-earmark-arrow-up me-1"></i> Import Excel
             </button>
           </div>
@@ -57,46 +62,46 @@
           <span class="table-count">{{ filteredSchedules.length }} lịch làm việc</span>
         </div>
         <div class="view-toggle">
-          <button class="btn btn-action me-2" :class="{ 'active': viewMode === 'table' }" @click="viewMode = 'table'">
+          <button class="btn btn-view-toggle me-2" :class="{ 'active': viewMode === 'table' }" @click="viewMode = 'table'">
             <i class="bi bi-table me-1"></i> Bảng
           </button>
-          <button class="btn btn-action" :class="{ 'active': viewMode === 'calendar' }" @click="viewMode = 'calendar'">
+          <button class="btn btn-view-toggle" :class="{ 'active': viewMode === 'calendar' }" @click="viewMode = 'calendar'">
             <i class="bi bi-calendar3 me-1"></i> Lịch
           </button>
         </div>
       </div>
       <div class="table-body animate__animated animate__zoomIn" v-if="viewMode === 'table'">
         <div class="table-responsive">
-          <table class="table table-hover align-items-center mb-0">
-            <thead class="thead-light">
+          <table class="table table-hover align-items-center mb-0 custom-table">
+            <thead class="thead-blue">
               <tr>
-                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">ID</th>
-                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Nhân viên</th>
-                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Ca làm</th>
-                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Ngày làm</th>
-                <th class="text-secondary opacity-7"></th>
+                <th class="text-uppercase text-xxs font-weight-bolder text-center">STT</th>
+                <th class="text-uppercase text-xxs font-weight-bolder text-center">Nhân viên</th>
+                <th class="text-uppercase text-xxs font-weight-bolder text-center">Ca làm</th>
+                <th class="text-uppercase text-xxs font-weight-bolder text-center">Ngày làm</th>
+                <th class="text-uppercase text-xxs font-weight-bolder text-center">Thao tác</th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="schedule in filteredSchedules" :key="schedule.id">
-                <td>
-                  <p class="text-xs font-weight-bold mb-0">{{ schedule.id }}</p>
+              <tr v-for="(schedule, index) in filteredSchedules" :key="schedule.id" class="table-row-hover">
+                <td class="text-center">
+                  <p class="text-xs font-weight-bold mb-0">{{ index + 1 }}</p>
                 </td>
-                <td>
+                <td class="text-center">
                   <p class="text-xs font-weight-bold mb-0">{{ getEmployeeName(schedule.idNhanVien) }}</p>
                 </td>
-                <td>
+                <td class="text-center">
                   <p class="text-xs font-weight-bold mb-0">{{ schedule.caLam }}</p>
                 </td>
-                <td>
+                <td class="text-center">
                   <p class="text-xs font-weight-bold mb-0">{{ schedule.ngayLam }}</p>
                 </td>
-                <td class="align-middle">
+                <td class="text-center align-middle">
                   <button class="btn btn-sm btn-table me-2" @click="editSchedule(schedule)">
-                    <i class="bi bi-pencil-fill"></i> Sửa
+                    <i class="bi bi-pencil-fill"></i>
                   </button>
                   <button class="btn btn-sm btn-table" @click="deleteSchedule(schedule.id)">
-                    <i class="bi bi-trash-fill"></i> Xóa
+                    <i class="bi bi-trash-fill"></i>
                   </button>
                 </td>
               </tr>
@@ -104,7 +109,7 @@
           </table>
         </div>
       </div>
-      <div class="calendar-body animate__animated animate__zoomIn" v-else>
+      <div class="calendar-body animate__animated animate__zoomIn custom-calendar" v-else>
         <FullCalendar :options="calendarOptions" />
       </div>
     </FilterTableSection>
@@ -309,41 +314,316 @@ export default {
 </script>
 
 <style scoped>
-/* Existing styles remain unchanged */
-.view-toggle {
+/* Filter Container Layout */
+.filter-container {
   display: flex;
-  gap: 0.5rem;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 2rem;
+  padding: 1rem 0;
 }
 
-.view-toggle .btn {
+.filters-section {
+  display: flex;
+  gap: 1.5rem;
+  flex: 1;
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  min-width: 200px;
+}
+
+.add-button-section {
+  display: flex;
+  align-items: flex-end;
+}
+
+/* Filter Inputs */
+.filter-select,
+.filter-input {
+  border: 2px solid rgba(52, 211, 153, 0.1);
+  border-radius: 8px;
+  padding: 0.5rem 0.75rem;
+  transition: all 0.3s ease;
+  background: white;
+  font-size: 0.9rem;
+}
+
+.filter-select:focus,
+.filter-input:focus {
+  border-color: #34d399;
+  box-shadow: 0 0 10px rgba(52, 211, 153, 0.2);
+  outline: none;
+}
+
+/* Primary Button Style */
+.btn-primary-custom {
+  background:#34d399;
+  color: white;
+  border: none;
+  padding: 0.65rem 1.4rem;
+  border-radius: 8px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.btn-primary-custom:hover {
+  background: #059669;
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(52, 211, 153, 0.4);
+}
+
+.btn-table {
+  color: #1f3a44;
+  border: none;
+}
+
+.btn-table:hover {
+  color: #16a34a;
+  text-shadow: 0 0 15px rgba(52, 211, 153, 0.3);
+}
+
+.view-toggle {
+  display: flex;
+}
+
+.btn-view-toggle {
+  background: #f1f5f9;
+  color: #64748b;
+  border: 2px solid #e2e8f0;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-weight: 500;
+  transition: all 0.3s ease;
   min-width: 100px;
 }
 
-.view-toggle .btn.active {
-  background: #16a34a;
+.btn-view-toggle:hover {
+  background: #e2e8f0;
+  color: #475569;
+  border-color: #cbd5e1;
+}
+
+.btn-view-toggle.active {
+  background:#34d399;
+  color: white;
+  border-color: #34d399;
+  box-shadow: 0 2px 8px rgba(52, 211, 153, 0.3);
+}
+
+/* Custom Table Styles */
+.custom-table {
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+}
+
+.thead-blue {
+  background:#34d399;
+}
+
+.thead-blue th {
+  border: none;
+  padding: 1rem 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  vertical-align: middle;
+}
+
+.table-row-hover {
+  border-bottom: 1px solid rgba(52, 211, 153, 0.1);
+}
+
+.table-row-hover:hover {
+  background: rgba(52, 211, 153, 0.05);
+  transform: translateY(-1px);
+  transition: all 0.2s ease;
+}
+
+.table-row-hover td {
+  padding: 1rem 0.75rem;
+  vertical-align: middle;
+  border: none;
+}
+
+.text-blue {
+  color: #34d399 !important;
+  font-weight: 600;
+}
+
+/* Custom Calendar Styles */
+.custom-calendar {
+  padding: 1.5rem;
+  background: white;
+  border-radius: 12px;
+}
+
+.custom-calendar :deep(.fc-toolbar) {
+  background:#34d399;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+}
+
+.custom-calendar :deep(.fc-toolbar-title) {
+  color: white;
+  font-weight: 600;
+}
+
+.custom-calendar :deep(.fc-button) {
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
   color: white;
 }
 
-.calendar-body {
-  padding: 1rem;
+.custom-calendar :deep(.fc-button:hover) {
+  background: rgba(255, 255, 255, 0.3);
+  border-color: rgba(255, 255, 255, 0.4);
 }
 
-.calendar-body :deep(.fc-event) {
+.custom-calendar :deep(.fc-button-active) {
+  background: rgba(255, 255, 255, 0.4) !important;
+  border-color: rgba(255, 255, 255, 0.5) !important;
+}
+
+.custom-calendar :deep(.fc-event) {
+  background:#34d399;
+  border: none;
+  border-radius: 6px;
   cursor: pointer;
+  transition: all 0.2s ease;
 }
 
-/* Remove underline from ALL links in the calendar, but don't touch their color */
-.calendar-body :deep(a) {
+.custom-calendar :deep(.fc-event:hover) {
+  background: linear-gradient(135deg, #10b981, #059669);
+  transform: translateY(-1px);
+}
+
+.custom-calendar :deep(.fc-daygrid-day:hover) {
+  background: rgba(52, 211, 153, 0.05);
+}
+
+.custom-calendar :deep(.fc-day-today) {
+  background: rgba(52, 211, 153, 0.1) !important;
+}
+
+.custom-calendar :deep(a) {
   text-decoration: none !important;
 }
 
-/* For event-specific links, also set the text color to white */
-.calendar-body :deep(.fc-event a) {
+.custom-calendar :deep(.fc-event a) {
   color: white;
 }
 
+.custom-calendar :deep(.fc-daygrid-day-number) {
+  color: #1f3a44;
+  font-weight: 600;
+}
 
-/* Existing styles below */
+.custom-calendar :deep(.fc-col-header-cell a) {
+  color: #1f3a44;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.custom-calendar :deep(.fc-daygrid-day-top) {
+  color: #1f3a44;
+}
+
+.custom-calendar :deep(.fc-day-other .fc-daygrid-day-number) {
+  color: #94a3b8;
+}
+
+/* Responsive Design */
+@media (max-width: 992px) {
+  .filter-container {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1.5rem;
+  }
+  
+  .filters-section {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .add-button-section {
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .filter-group {
+    min-width: auto;
+  }
+}
+
+@media (max-width: 768px) {
+  .filters-section {
+    gap: 0.75rem;
+  }
+  
+  .btn-primary-custom {
+    width: 100%;
+    padding: 0.75rem;
+  }
+}
+
+/* Legacy Styles */
+.gradient-custom-teal {
+  background:#34d399;
+}
+
+.filter-label {
+  display: block;
+  font-weight: 600;
+  color: #1f3a44;
+  margin-bottom: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.search-input {
+  padding-left: 2.5rem;
+  border: 2px solid rgba(52, 211, 153, 0.1);
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  font-size: 0.9rem;
+  background: #f8f9fa;
+}
+
+.search-input:focus {
+  border-color: #34d399;
+  box-shadow: 0 0 10px rgba(52, 211, 153, 0.2);
+}
+
+.table-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.25rem 1.5rem;
+  background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+  border-bottom: 2px solid rgba(52, 211, 153, 0.1);
+  border-radius: 8px 8px 0 0;
+}
+
+.table-title-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.table-count {
+  font-size: 0.875rem;
+  color: #34d399;
+  font-weight: 600;
+  background: rgba(52, 211, 153, 0.1);
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+}
+
+/* Animation Keyframes */
 @keyframes fadeInUp {
   from {
     opacity: 0;
@@ -372,111 +652,6 @@ export default {
   }
   50% {
     box-shadow: 0 0 12px rgba(52, 211, 153, 0.5);
-  }
-}
-
-.gradient-custom-teal {
-  background: linear-gradient(135deg, #34d399, #10b981);
-}
-
-.filter-label {
-  display: block;
-  font-weight: 600;
-  color: #1f3a44;
-  margin-bottom: 0.5rem;
-  font-size: 0.875rem;
-}
-
-.search-input {
-  padding-left: 2.5rem;
-  border: 2px solid rgba(52, 211, 153, 0.1);
-  border-radius: 8px;
-  transition: all 0.2s ease;
-  font-size: 0.9rem;
-  background: #f8f9fa;
-}
-
-.search-input:focus {
-  border-color: #34d399;
-  box-shadow: 0 0 10px rgba(52, 211, 153, 0.2);
-}
-
-.btn-reset,
-.btn-action {
-  padding: 0.6rem 1.2rem;
-  font-size: 0.9rem;
-  border-radius: 8px;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  min-width: 140px;
-}
-
-.btn-reset {
-  background: #6c757d;
-  color: white;
-  border: none;
-}
-
-.btn-reset:hover {
-  background: #5c636a;
-  color: white;
-}
-
-.btn-action {
-  background: #34d399;
-  color: white;
-  border: none;
-}
-
-.btn-action:hover {
-  background: #16a34a;
-  color: white;
-}
-
-.table-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1.25rem 1.5rem;
-  background: #f8f9fa;
-  border-bottom: 1px solid rgba(52, 211, 153, 0.1);
-}
-
-.table-title-wrapper {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.table-count {
-  font-size: 0.875rem;
-  color: #6c757d;
-  font-weight: 500;
-}
-
-.btn-table {
-  color: #1f3a44;
-  border: none;
-}
-
-.btn-table:hover {
-  color: #16a34a;
-}
-
-@media (max-width: 992px) {
-  .filter-actions, .action-buttons {
-    flex-direction: column;
-    align-items: stretch;
-  }
-}
-
-@media (max-width: 768px) {
-  .row.g-4 {
-    margin-left: -0.25rem;
-    margin-right: -0.25rem;
-  }
-  .row.g-4 > [class*="col-"] {
-    padding-left: 0.25rem;
-    padding-right: 0.25rem;
   }
 }
 </style>
